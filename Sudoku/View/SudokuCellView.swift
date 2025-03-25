@@ -156,43 +156,65 @@ struct SudokuCellView: View {
             .fill(getCellBackgroundColor())
             .overlay(
                 RoundedRectangle(cornerRadius: 4)
-                    .stroke(getCellBorderColor(), lineWidth: isSelected ? 2 : 0.5)
+                    .stroke(getCellBorderColor(), lineWidth: isSelected ? 2 : (isMatchingValue ? 1.5 : 0.5))
             )
-            .powerSavingAwareEffect(isEnabled: isSelected)
+            .powerSavingAwareEffect(isEnabled: isSelected || isMatchingValue)
     }
     
-    // Hücre arka plan rengi
+    // Hücre arka plan rengi - Tek renk temali modern tasarım
     private func getCellBackgroundColor() -> Color {
+        // Ana tema rengi: Teal (turkuaz)
+        let themeColor = Color.teal
+        
         if isSelected {
-            return colorScheme == .dark ? Color.blue.opacity(0.2) : Color.blue.opacity(0.15)
+            // Seçili hücre - en koyu ton
+            return colorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.25)
         } else if isHighlighted {
-            return colorScheme == .dark ? Color(UIColor.tertiarySystemBackground).opacity(0.9) : Color(UIColor.secondarySystemBackground).opacity(0.8)
+            // Aynı satır/sütun - orta ton
+            return colorScheme == .dark ? themeColor.opacity(0.25) : themeColor.opacity(0.15) 
         } else if isMatchingValue {
-            return colorScheme == .dark ? Color.blue.opacity(0.1) : Color.blue.opacity(0.05)
+            // Aynı değerli hücreler - DAHA BELİRGİN TON
+            return colorScheme == .dark ? themeColor.opacity(0.35) : themeColor.opacity(0.2)
         } else {
+            // Normal hücreler - çok hafif ton veya beyaz
             return colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white
         }
     }
     
-    // Hücre kenar rengi
+    // Hücre kenar rengi - Tek renk temalı kenarlar
     private func getCellBorderColor() -> Color {
+        // Ana tema rengi: Teal (turkuaz)
+        let themeColor = Color.teal
+        
         if isSelected {
-            return .blue
+            // Seçili hücre kenarı - tam yoğunluk
+            return themeColor
+        } else if isMatchingValue {
+            // Aynı değerli hücrelerin kenarları - DAHA BELİRGİN
+            return colorScheme == .dark ? themeColor.opacity(0.8) : themeColor.opacity(0.6)
         } else if isHighlighted {
-            return colorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.3)
+            // Aynı satır/sütun kenarı - orta yoğunluk
+            return colorScheme == .dark ? themeColor.opacity(0.6) : themeColor.opacity(0.4)
         } else {
-            return colorScheme == .dark ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2)
+            // Normal kenarlar - çok hafif
+            return colorScheme == .dark ? themeColor.opacity(0.3) : themeColor.opacity(0.2)
         }
     }
     
-    // Metin rengi
+    // Metin rengi - Tek renk temalı yazılar
     private func getTextColor() -> Color {
+        // Ana tema rengi: Teal (turkuaz)
+        let themeColor = Color.teal
+        
         if isFixed {
-            return colorScheme == .dark ? Color.white : Color.primary
+            // Sabit sayılar - standart siyah/beyaz (maksimum okunabilirlik)
+            return colorScheme == .dark ? Color.white : Color.black
         } else if isUserEntered {
-            return colorScheme == .dark ? Color.blue : Color.blue
+            // Kullanıcı girişleri - tema rengi
+            return colorScheme == .dark ? themeColor : themeColor
         } else {
-            return colorScheme == .dark ? Color.gray : Color.primary
+            // Diğer metinler - gri
+            return colorScheme == .dark ? Color.gray : Color.gray
         }
     }
 }

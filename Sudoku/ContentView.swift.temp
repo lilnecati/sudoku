@@ -1,0 +1,750 @@
+//
+//  ContentView.swift
+//  Sudoku
+//
+//  Created by Necati Yıldırım on 23.03.2025.
+//
+
+import SwiftUI
+import CoreData
+
+// Navigasyon sayfalarını enum olarak tanımla
+enum AppPage: Int, CaseIterable, Identifiable {
+    case home = 0
+    case scoreboard = 1
+    case savedGames = 2
+    case settings = 3
+    
+    var id: Int { self.rawValue }
+    
+    var title: String {
+        switch self {
+        case .home: return "Ana Sayfa"
+        case .scoreboard: return "Skor Tablosu"
+        case .savedGames: return "Kayıtlı Oyunlar"
+        case .settings: return "Ayarlar"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .home: return "house.fill"
+        case .scoreboard: return "trophy.fill"
+        case .savedGames: return "square.stack.fill"
+        case .settings: return "gearshape.fill"
+        }
+    }
+}
+
+// Buton stil tanımı
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.easeInOut, value: configuration.isPressed)
+    }
+}
+
+struct ContentView: View {
+    // MARK: - Properties
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.colorScheme) var colorScheme
+    
+    // Kaydedilmiş oyun açma
+    @State private var gameToLoad: NSManagedObject? = nil
+    @State private var showSavedGame = false
+    
+    @StateObject private var viewModel = SudokuViewModel()
+    @State private var currentPage: AppPage = .home
+    
+    @AppStorage("selectedDifficulty") private var selectedDifficulty = 0
+    @AppStorage("hasSeenTutorial") private var hasSeenTutorial = false
+    @AppStorage("powerSavingMode") private var powerSavingMode = false
+    
+    @State private var showGame = false
+    @State private var showTutorial = false
+    @State private var showTutorialPrompt = false
+    @State private var selectedCustomDifficulty: SudokuBoard.Difficulty = .easy
+    
+    @State private var isLoading = false
+    @State private var loadError: Error?
+    
+    // Helper metodlar - önceki tanımları silindi
+    
+    // Animasyon değişkenleri
+    @State private var titleScale = 0.9
+    @State private var titleOpacity = 0.0
+    @State private var buttonsOffset: CGFloat = 50
+    @State private var buttonsOpacity = 0.0
+    @State private var rotationDegree: Double = 0
+    
+    var difficulty: SudokuBoard.Difficulty {
+        SudokuBoard.Difficulty.allCases[selectedDifficulty]
+    }
+    
+    func difficultyIcon(for index: Int) -> String {
+        switch index {
+        case 0: return "tortoise.fill" // Kolay
+        case 1: return "hare.fill" // Orta
+        case 2: return "flame.fill" // Zor
+        case 3: return "bolt.fill" // Uzman
+        default: return "questionmark"
+        }
+    }
+    
+    // Zorluk seviyesi için renk secimi
+    func difficultyColor(for index: Int) -> Color {
+        switch index {
+        case 0: return .blue       // Kolay - Mavi
+        case 1: return .green      // Orta - Yeşil
+        case 2: return .orange     // Zor - Turuncu
+        case 3: return .red        // Uzman - Kırmızı
+        default: return .gray
+        }
+    }
+    
+    // MARK: - Initialization
+    init() {
+        // TabBar ayarları
+        let appearance = UITabBarAppearance()
+        appearance.configureWithDefaultBackground()
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+        UITabBar.appearance().standardAppearance = appearance
+    }
+    
+    // Bildirim dinleyicilerini ayarla
+    private func setupSavedGameNotification() {
+        // "Ana sayfaya geç" bildirimini dinle
+        NotificationCenter.default.addObserver(forName: Notification.Name("NavigateToHome"),
+                                               object: nil, queue: .main) { _ in
+            withAnimation {
+                self.currentPage = .home
+            }
+        }
+        
+        // Kaydedilmiş oyun yükleme bildirimini dinle
+        NotificationCenter.default.addObserver(forName: Notification.Name("LoadSavedGame"),
+                                               object: nil, queue: .main) { notification in
+            // Kaydedilmiş oyunu bildirimden al
+            if let savedGame = notification.userInfo?["savedGame"] as? SavedGame {
+                // Önce ana sayfaya geç
+                withAnimation {
+                    self.currentPage = .home
+                }
+                
+                // Kaydedilmiş oyunu yükle
+                // Önemli: Seçili zorluk ayarını değiştirmeden mevcut viewModel'e yüklüyoruz
+                self.viewModel.loadGame(from: savedGame)
+                
+                // Oyun durumunu oynamaya ayarla
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    // Oyunu göster
+                    withAnimation(.spring()) {
+                        self.showGame = true
+                    }
+                }
+            }
+        }
+        
+        // Bildirim tabanlı sistemi kaldırdık, yerine callback tabanlı sistemi kullanıyoruz
+    }
+    
+    // MARK: - Body
+    var body: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                Group {
+                    if case .home = currentPage {
+                        if showSavedGame, let savedGame = gameToLoad {
+                            // Direkt olarak oyun görünümünü göster
+                            GameView(savedGame: savedGame)
+                        } else {
+                            mainContentView
+                                .transition(.opacity)
+                        }
+                    } else if case .scoreboard = currentPage {
+                        ScoreboardView()
+                            .environment(\.managedObjectContext, viewContext)
+                            .transition(.opacity)
+                    } else if case .savedGames = currentPage {
+                        SavedGamesView(viewModel: viewModel, gameSelected: { game in
+                            // Seçilen oyunu ayarla
+                            gameToLoad = game
+                            // Oyun görünümünü aktifleştir
+                            withAnimation {
+                                currentPage = .home
+                                showSavedGame = true
+                            }
+                        })
+                        .transition(.opacity)
+                        .environment(\.managedObjectContext, viewContext)
+                    } else if case .settings = currentPage {
+                        SettingsView()
+                            .transition(.opacity)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+                // Tab bar
+                HStack(spacing: 0) {
+                    ForEach(AppPage.allCases) { page in
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                currentPage = page
+                            }
+                        }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: page.icon)
+                                    .font(.system(size: 20))
+                                
+                                Text(page.title)
+                                    .font(.caption2)
+                            }
+                            .foregroundColor(currentPage == page ? .accentColor : .gray)
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(Color(UIColor.systemBackground))
+                .shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.1),
+                        radius: 15, x: 0, y: -5)
+            }
+            .edgesIgnoringSafeArea(.bottom)
+            .fullScreenCover(isPresented: $showGame) {
+                // viewModel oyun durumuna göre GameView'u oluştur
+                if viewModel.gameState == .playing {
+                    // Kayıtlı oyun yüklendiyse
+                    GameView(existingViewModel: viewModel)
+                } else {
+                    // Yeni bir oyun başlatılıyorsa
+                    GameView(difficulty: selectedCustomDifficulty)
+                }
+            }
+            .sheet(isPresented: $showTutorial) {
+                TutorialView()
+                    .onDisappear {
+                        hasSeenTutorial = true
+                    }
+            }
+            .alert("Sudoku Rehberi", isPresented: $showTutorialPrompt) {
+                Button("Rehberi Göster") {
+                    showTutorial = true
+                }
+                Button("Daha Sonra", role: .cancel) {}
+            } message: {
+                Text("Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim.")
+            }
+            .onAppear {
+                // Eski kayıtları temizle
+                if !UserDefaults.standard.bool(forKey: "savedGamesCleanedUp") {
+                    PersistenceController.shared.deleteAllSavedGames()
+                    UserDefaults.standard.set(true, forKey: "savedGamesCleanedUp")
+                }
+                
+                // İlk kez açılışta rehberi göster
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    if !hasSeenTutorial {
+                        showTutorialPrompt = true
+                    }
+                }
+            }
+        }
+        
+        // MARK: - Helper Views
+        // MARK: - Title View
+        var titleView: some View {
+            VStack(spacing: 10) {
+                // Logo ve başlık bölümü
+                ZStack {
+                    // Arka plan halkası
+                    Circle()
+                        .fill(LinearGradient(
+                            gradient: Gradient(colors: [.blue.opacity(0.7), .purple.opacity(0.5)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ))
+                        .frame(width: 100, height: 100)
+                    
+                    // Sudoku simgesi
+                    VStack(spacing: 2) {
+                        ForEach(0..<3) { row in
+                            HStack(spacing: 2) {
+                                ForEach(0..<3) { column in
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(Color.white.opacity(0.9))
+                                        .frame(width: 15, height: 15)
+                                }
+                            }
+                        }
+                    }
+                }
+                .scaleEffect(titleScale)
+                .opacity(titleOpacity)
+                .onAppear {
+                    if !powerSavingMode {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.6, blendDuration: 0.5)) {
+                            titleScale = 1.0
+                            titleOpacity = 1.0
+                        }
+                    } else {
+                        titleScale = 1.0
+                        titleOpacity = 1.0
+                    }
+                }
+                
+                Text("SUDOKU")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                    .padding(.top, 5)
+            }
+        }
+        
+        // MARK: - Game Modes Section
+        var gameModesSection: some View {
+            VStack(spacing: 25) {
+                // Devam Et butonu
+                continueGameButton
+                
+                // Yeni Oyun bölümü
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("Yeni Oyun")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .padding(.leading)
+                    
+                    // Zorluk seviyeleri
+                    VStack(spacing: 12) {
+                        ForEach(0..<SudokuBoard.Difficulty.allCases.count, id: \.self) { index in
+                            Button(action: {
+                                selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[index]
+                                withAnimation {
+                                    showGame = true
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: difficultyIcon(for: index))
+                                        .foregroundColor(.white)
+                                        .padding(10)
+                                        .background(difficultyColor(for: index))
+                                        .clipShape(Circle())
+                                    
+                                    Text(SudokuBoard.Difficulty.allCases[index].localizedName)
+                                        .fontWeight(.medium)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.gray)
+                                        .font(.caption)
+                                }
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(UIColor.secondarySystemBackground))
+                                )
+                            }
+                            .buttonStyle(ScaleButtonStyle())
+                        }
+                    }
+                    .offset(y: buttonsOffset)
+                    .opacity(buttonsOpacity)
+                    .onAppear {
+                        if powerSavingMode {
+                            buttonsOffset = 0
+                            buttonsOpacity = 1.0
+                        } else {
+                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3)) {
+                                buttonsOffset = 0
+                                buttonsOpacity = 1.0
+                            }
+                        }
+                    }
+                }
+                
+                // Rehber butonu
+                Button(action: {
+                    if !hasSeenTutorial {
+                        showTutorial = true
+                    } else {
+                        showTutorialPrompt = true
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "questionmark.circle.fill")
+                            .foregroundColor(.white)
+                            .padding(10)
+                            .background(Color.blue)
+                            .clipShape(Circle())
+                        
+                        Text("Nasıl Oynanır?")
+                            .fontWeight(.medium)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.gray)
+                            .font(.caption)
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(UIColor.secondarySystemBackground))
+                    )
+                }
+                .buttonStyle(ScaleButtonStyle())
+                .offset(y: buttonsOffset)
+                .opacity(buttonsOpacity)
+            }
+        }
+        
+        // MARK: - Continue Game Button
+        var continueGameButton: some View {
+            Button(action: {
+                // Son kaydedilen oyunu yükle
+                let fetchRequest: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
+                fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \SavedGame.timestamp, ascending: false)]
+                fetchRequest.fetchLimit = 1
+                
+                do {
+                    let result = try viewContext.fetch(fetchRequest)
+                    if let lastGame = result.first {
+                        // Yükleme işlemi başladı
+                        isLoading = true
+                        
+                        // Kaydedilmiş oyunu yükle
+                        viewModel.loadGame(from: lastGame)
+                        
+                        // Oyun görünümünü göster
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            isLoading = false
+                            withAnimation {
+                                showGame = true
+                            }
+                        }
+                    }
+                } catch {
+                    // Hata durumunda
+                    isLoading = false
+                    loadError = error
+                    print("Yükleme hatası: \(error)")
+                }
+            }) {
+                HStack {
+                    Image(systemName: "arrow.clockwise.circle.fill")
+                        .foregroundColor(.white)
+                        .padding(10)
+                        .background(Color.green)
+                        .clipShape(Circle())
+                    
+                    Text("Devam Et")
+                        .fontWeight(.medium)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.gray)
+                        .font(.caption)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(UIColor.secondarySystemBackground))
+                )
+            }
+            .buttonStyle(ScaleButtonStyle())
+        }
+        
+        // MARK: - Main Content View
+        var mainContentView: some View {
+            ZStack {
+                // Arka plan gradyanı (güç tasarrufu modu açıksa basit arka plan, değilse gradyan)
+                if powerSavingMode {
+                    Color(UIColor.systemBackground)
+                        .edgesIgnoringSafeArea(.all)
+                } else {
+                    // Daha çekici arka plan tasarımı
+                    ZStack {
+                        LinearGradient(gradient: Gradient(colors: [
+                            Color.blue.opacity(0.1),
+                            Color.purple.opacity(0.15)
+                        ]), startPoint: .topLeading, endPoint: .bottomTrailing)
+                        
+                        // Arka planda dekoratif sudoku şablonu
+                        VStack(spacing: 0) {
+                            ForEach(0..<9) { row in
+                                HStack(spacing: 0) {
+                                    ForEach(0..<9) { column in
+                                        Rectangle()
+                                            .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
+                                            .background(((row/3 + column/3) % 2 == 0) ?
+                                                        Color.gray.opacity(0.03) : Color.clear)
+                                            .frame(width: 20, height: 20)
+                                    }
+                                }
+                            }
+                        }
+                        .rotationEffect(.degrees(10))
+                        .scaleEffect(2)
+                        .offset(x: 50, y: -150)
+                        .opacity(0.4)
+                    }
+                    .edgesIgnoringSafeArea(.all)
+                }
+                
+                // Yükleme/hata durumları veya ana içerik
+                if isLoading {
+                    ProgressView("Yükleniyor...")
+                        .progressViewStyle(CircularProgressViewStyle())
+                } else if let error = loadError {
+                    VStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(.red)
+                        Text(error.localizedDescription)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                    }
+                } else {
+                    ScrollView {
+                        VStack(spacing: 30) {
+                            titleView
+                                .rotation3DEffect(
+                                    .degrees(rotationDegree),
+                                    axis: (x: 0, y: 1, z: 0)
+                                )
+                                .onAppear {
+                                    // 3D dönme efekti
+                                    if !powerSavingMode {
+                                        withAnimation(.easeInOut(duration: 1.5)) {
+                                            rotationDegree = 360
+                                        }
+                                    }
+                                }
+                            
+                            gameModesSection
+                        }
+                        .padding()
+                    }
+                }
+            }
+
+
+                    
+                    // Metin bölümü
+                    VStack(spacing: 5) {
+                        Text("Sudoku")
+                            .font(.system(size: 42, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                            .shadow(color: Color.black.opacity(0.2), radius: 2, x: 1, y: 1)
+                        
+                        Text("Zihinsel Egzersiz")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 5)
+                            .background(
+                                Capsule()
+                                    .fill(Color(.systemBackground).opacity(0.5))
+                            )
+                    }
+                }
+                .padding(.top, 30)
+                .scaleEffect(titleScale)
+                .opacity(titleOpacity)
+                .onAppear {
+                    // Güç tasarrufu modunda basit animasyon, normal modda yay animasyonu
+                    if powerSavingMode {
+                        withAnimation(.easeIn(duration: 0.3)) {
+                            titleScale = 1.0
+                            titleOpacity = 1.0
+                        }
+                    } else {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2)) {
+                            titleScale = 1.0
+                            titleOpacity = 1.0
+                        }
+                    }
+                }
+            }
+            
+            var gameModesSection: some View {
+                VStack(spacing: 25) {
+                    // Zorluk seçimi grubu - daha modern tasarım
+                    VStack(alignment: .leading, spacing: 15) {
+                        HStack {
+                            // Çekici bir başlık bölümü
+                            ZStack {
+                                Circle()
+                                    .fill(Color.blue.opacity(0.2))
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: "chart.bar.fill")
+                                    .foregroundColor(.blue)
+                                    .font(.system(size: 18))
+                            }
+                            
+                            Text("Zorluk Seviyenizi Seçin")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            // Bilgi ikonu
+                            Button(action: {
+                                // Zorluk seviyesi hakkında bilgi gösterilecek
+                            }) {
+                                Image(systemName: "info.circle")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        // Daha güzel zorluk seçici
+                        HStack(spacing: 8) {
+                            ForEach(0..<SudokuBoard.Difficulty.allCases.count, id: \.self) { index in
+                                Button(action: {
+                                    // Yeni bir oyun başlatmak istediğimiz için önce viewModel'i resetleyelim
+                                    // Bu, kayıtlı oyun durumunu temizleyecek
+                                    viewModel.resetGameState()
+                                    
+                                    // Zorluk seviyesini ayarla
+                                    selectedDifficulty = index
+                                    selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[index]
+                                    
+                                    // Oyunu başlat
+                                    withAnimation(.spring()) {
+                                        showGame = true
+                                    }
+                                }) {
+                                    VStack(spacing: 5) {
+                                        // Zorluk seviyesi ikonu
+                                        Image(systemName: difficultyIcon(for: index))
+                                            .font(.system(size: 22, weight: .semibold))
+                                            .foregroundStyle(difficultyColor(for: index))
+                                        
+                                        Text(SudokuBoard.Difficulty.allCases[index].localizedName)
+                                            .font(.footnote)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 70)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(selectedDifficulty == index ?
+                                                  difficultyColor(for: index).opacity(0.15) : Color(.systemGray6))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(selectedDifficulty == index ?
+                                                            difficultyColor(for: index) : Color.clear, lineWidth: 2)
+                                            )
+                                    )
+                                    .foregroundColor(selectedDifficulty == index ? difficultyColor(for: index) : .primary)
+                                    .animation(.easeInOut(duration: 0.2), value: selectedDifficulty)
+                                }
+                                .buttonStyle(ScaleButtonStyle())
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                    )
+                    .padding(.horizontal, 5)
+                    
+                    // Hızlı oyun başlatma için açıklama
+                    HStack {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.secondary)
+                        Text("Zorluk seviyesi seçerek hemen oyuna başlayabilirsiniz")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    
+                    // Boş alan - buton kaldırıldı
+                    .buttonStyle(ScaleButtonStyle())
+                    
+                    // Rehber butonu (yeni başlayanlar için)
+                    Button(action: {
+                        showTutorial = true
+                    }) {
+                        HStack {
+                            Image(systemName: "questionmark.circle")
+                                .font(.subheadline)
+                            Text("Nasıl Oynanır?")
+                                .font(.subheadline)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .foregroundColor(.primary)
+                        .cornerRadius(12)
+                    }
+                    .buttonStyle(ScaleButtonStyle())
+                }
+                .offset(y: buttonsOffset)
+                .opacity(buttonsOpacity)
+                .onAppear {
+                    // Güç tasarrufu modunda basit animasyon, normal modda yay animasyonu
+                    if powerSavingMode {
+                        withAnimation(.easeIn(duration: 0.3)) {
+                            buttonsOffset = 0
+                            buttonsOpacity = 1.0
+                        }
+                    } else {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3)) {
+                            buttonsOffset = 0
+                            buttonsOpacity = 1.0
+                        }
+                    }
+                }
+            }
+            
+            var customTabBar: some View {
+                HStack(spacing: 0) {
+                    ForEach(AppPage.allCases) { page in
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                currentPage = page
+                            }
+                        }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: page.icon)
+                                    .font(.system(size: 20))
+                                
+                                Text(page.title)
+                                    .font(.caption2)
+                            }
+                            .foregroundColor(currentPage == page ? .accentColor : .gray)
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(Color(UIColor.systemBackground))
+                .shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.1),
+                        radius: 15, x: 0, y: -5)
+            }
+            
+            // GroupBox stil tanımı
+            struct CardGroupBoxStyle: GroupBoxStyle {
+                @Environment(\.colorScheme) var colorScheme
+                
+                func makeBody(configuration: Configuration) -> some View {
+                    configuration.content
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemBackground))
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        )
+                }
+            }
+            
+        }
+

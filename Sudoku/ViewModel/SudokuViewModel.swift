@@ -928,7 +928,7 @@ class SudokuViewModel: ObservableObject {
                                         fixed: fixed, 
                                         difficulty: boardDifficultyEnum2)
             
-            // Kullanıcı tarafından girilen değerler bilgisini JSON'dan a l
+            // Kullanıcı tarafından girilen değerler bilgisini JSON'dan al
             let userEntered = jsonDict["userEnteredValues"] as? [[Bool]] ?? Array(repeating: Array(repeating: false, count: 9), count: 9)
             
             // Başarılı mesajı yazdır

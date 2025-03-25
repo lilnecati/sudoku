@@ -58,7 +58,7 @@ struct ContentView: View {
     
     @AppStorage("selectedDifficulty") private var selectedDifficulty = 0
     @AppStorage("hasSeenTutorial") private var hasSeenTutorial = false
-    @AppStorage("powerSavingMode") private var powerSavingMode = false
+    @AppStorage("powerSavingMode") private var powerSavingMode = false // Animasyonlar için false (kapalı) olmalı
     
     @State private var showGame = false
     @State private var showTutorial = false
@@ -74,6 +74,9 @@ struct ContentView: View {
     @State private var buttonsOffset: CGFloat = 50
     @State private var buttonsOpacity = 0.0
     @State private var rotationDegree: Double = 0
+    @State private var logoNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    @State private var animatingCellIndex = 4 // Merkez hücre
+    @State private var cellAnimationProgress: CGFloat = 0
     
     var difficulty: SudokuBoard.Difficulty {
         SudokuBoard.Difficulty.allCases[selectedDifficulty]
@@ -148,39 +151,79 @@ struct ContentView: View {
     // MARK: - Title View
     var titleView: some View {
         VStack(spacing: 15) {
-            // Logo ve başlık bölümü
+            // Logo ve başlık bölümü - Yeni diktdörtgen derinlikli tasarım
             ZStack {
-                // Arka plan etkisi - iki halka
-                Circle()
-                    .fill(LinearGradient(
-                        gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.purple.opacity(0.6)]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ))
+                // Daha derinlikli dikdörtgen konteyneri
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.blue.opacity(0.05),
+                                Color.purple.opacity(0.1)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 110, height: 110)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                    )
+                    // İçeri oyulmuş görünüm için gölge
+                    .shadow(color: Color.black.opacity(0.2), radius: 3, x: 2, y: 2)
+                    .shadow(color: Color.white.opacity(0.6), radius: 3, x: -2, y: -2)
+                
+                // Derinlik hissi için iç arka plan
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.blue.opacity(0.2),
+                                Color.purple.opacity(0.3)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: 100, height: 100)
-                    .shadow(color: Color.purple.opacity(0.3), radius: 10, x: 0, y: 5)
+                    .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 1)
                 
-                // Dış parlama efekti
-                Circle()
-                    .stroke(Color.white.opacity(0.8), lineWidth: 1.5)
-                    .frame(width: 105, height: 105)
-                    .blur(radius: 3)
-                
-                // Sudoku simgesi - gelişmiş 3x3 grid
+                // Sudoku simgesi - içinde hareketli sayılar olan 3x3 grid
                 VStack(spacing: 3) {
                     ForEach(0..<3) { row in
                         HStack(spacing: 3) {
                             ForEach(0..<3) { column in
-                                RoundedRectangle(cornerRadius: 3)
-                                    .fill(Color.white.opacity(0.9))
-                                    .frame(width: 18, height: 18)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 3)
-                                            .stroke(Color.white.opacity(0.4), lineWidth: 0.5)
-                                    )
-                                    .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 1)
-                                    // Dönüş animasyonu - belirli hücreler için
-                                    .rotationEffect(Angle(degrees: (row == 1 && column == 1) ? rotationDegree : 0))
+                                let index = row * 3 + column
+                                let currentNumber = logoNumbers[index]
+                                let isAnimating = index == animatingCellIndex
+                                
+                                ZStack {
+                                    // Hücre arka planı - içeri oyulmuş görünüm
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .fill(Color.white.opacity(0.8))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 3)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                        )
+                                        // İçeri oyulmuş görünüm
+                                        .shadow(color: Color.black.opacity(0.2), radius: 1, x: 1, y: 1)
+                                        .shadow(color: Color.white.opacity(0.5), radius: 1, x: -1, y: -1)
+                                        .frame(width: 18, height: 18)
+                                    
+                                    // Hücrelerdeki sayılar
+                                    if !(row == 1 && column == 1) { // Orta hücre hariç sayılar
+                                        Text("\(currentNumber)")
+                                            .font(.system(size: 9, weight: .bold))
+                                            .foregroundColor(Color.blue.opacity(0.8))
+                                            .scaleEffect(isAnimating ? 1.0 + cellAnimationProgress * 0.3 : 1.0)
+                                            .opacity(isAnimating ? 1.0 - cellAnimationProgress : 1.0)
+                                            // Derinlik hissi için metin gölgesi
+                                            .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0.5, y: 0.5)
+                                    }
+                                }
+                                // Orta hücre için özel dönme efekti
+                                .rotationEffect(Angle(degrees: (row == 1 && column == 1) ? rotationDegree : 0))
                             }
                         }
                     }
@@ -189,21 +232,16 @@ struct ContentView: View {
             .scaleEffect(titleScale)
             .opacity(titleOpacity)
             .onAppear {
-                if !powerSavingMode {
-                    // Logo gelişmiş animasyonu
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.6, blendDuration: 0.5)) {
-                        titleScale = 1.0
-                        titleOpacity = 1.0
-                    }
-                    
-                    // Merkez hücrenin hafif döndürme animasyonu
-                    withAnimation(Animation.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
-                        rotationDegree = 180
-                    }
-                } else {
-                    titleScale = 1.0
-                    titleOpacity = 1.0
-                }
+                // Logonun görünürlük ayarlarını anında etkinleştir, animasyon olmadan
+                titleScale = 1.0
+                titleOpacity = 1.0
+                
+                // Rotasyon ve animasyon yok
+                rotationDegree = 0
+                cellAnimationProgress = 0.0
+                
+                // Sabit sayılar, değişmeyecek
+                // Timer ve animasyon yok
             }
             
             // İyileştirilmiş başlık
@@ -758,34 +796,70 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
-                // Tab bar
+                // Neumorfik Tab Bar
                 VStack {
                     Spacer()
                     
-                    HStack(spacing: 0) {
-                        ForEach(AppPage.allCases) { page in
-                            Button(action: {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    currentPage = page
+                    // Tab Bar Arka Planı
+                    ZStack {
+                        // Bar arka planı
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color(UIColor.systemBackground))
+                            .shadow(color: colorScheme == .dark ? Color.black.opacity(0.3) : Color.black.opacity(0.15), 
+                                    radius: 8, x: 5, y: 5)
+                            .shadow(color: colorScheme == .dark ? Color.gray.opacity(0.1) : Color.white.opacity(0.7), 
+                                    radius: 8, x: -5, y: -5)
+                            .padding(.horizontal, 10)
+                            .padding(.bottom, 5)
+                        
+                        // Tab butonları
+                        HStack(spacing: 0) {
+                            ForEach(AppPage.allCases) { page in
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        currentPage = page
+                                    }
+                                }) {
+                                    VStack(spacing: 4) {
+                                        // Seçili sekme için kare gösterge
+                                        ZStack {
+                                            if currentPage == page {
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .fill(
+                                                        LinearGradient(
+                                                            gradient: Gradient(colors: [
+                                                                Color.purple.opacity(0.6),
+                                                                Color.blue.opacity(0.6)
+                                                            ]),
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        )
+                                                    )
+                                                    .frame(width: 38, height: 38)
+                                                    .shadow(color: Color.purple.opacity(0.2), radius: 3, x: 2, y: 2)
+                                            }
+                                            
+                                            Image(systemName: page.icon)
+                                                .font(.system(size: 18, weight: currentPage == page ? .bold : .regular))
+                                                .foregroundColor(currentPage == page ? .white : .gray)
+                                                .frame(width: 40, height: 40)
+                                                .contentShape(Rectangle())
+                                        }
+                                        
+                                        Text(page.title.count > 10 ? "\(page.title.prefix(10))..." : page.title)
+                                            .font(.system(size: 11, weight: currentPage == page ? .medium : .regular))
+                                            .foregroundColor(currentPage == page ? .primary : .gray)
+                                    }
+                                    .padding(.vertical, 8)
+                                    .frame(maxWidth: .infinity)
                                 }
-                            }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName: page.icon)
-                                        .font(.system(size: 20))
-                                    
-                                    Text(page.title)
-                                        .font(.caption2)
-                                }
-                                .foregroundColor(currentPage == page ? .accentColor : .gray)
-                                .frame(maxWidth: .infinity)
+                                .buttonStyle(ScaleButtonStyle())
                             }
                         }
+                        .padding(.horizontal, 15)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
-                    .background(Color(UIColor.systemBackground))
-                    .shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.1),
-                            radius: 15, x: 0, y: -5)
+                    .frame(height: 90)
+                    .padding(.bottom, getSafeAreaBottom())
                 }
             }
             .edgesIgnoringSafeArea(.bottom)
@@ -826,6 +900,18 @@ struct CardGroupBoxStyle: GroupBoxStyle {
                     .fill(Color(.systemBackground))
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
+    }
+}
+
+// UIKit'ten guncel API kullanarak safe area bottom degerini alma
+func getSafeAreaBottom() -> CGFloat {
+    // iOS 15+ icin guncel API
+    if #available(iOS 15.0, *) {
+        let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+        return scene?.keyWindow?.safeAreaInsets.bottom ?? 0
+    } else {
+        // iOS 15 oncesi icin eski yontem (artik deprecated)
+        return UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
     }
 }
 

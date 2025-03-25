@@ -1037,9 +1037,22 @@ class SudokuBoard: ObservableObject, Codable {
         return nil
     }
     
-    // Elimine yöntemi ile bir çözüm bul
+    // Constraint Propagation ve Elimine yöntemi ile bir çözüm bul
     private func solveSudokuElimination(_ board: [[Int?]]) -> [[Int?]]? {
         var boardCopy = board
+        
+        // Önce Constraint Propagation uygula
+        if let propagatedBoard = applyConstraintPropagation(boardCopy) {
+            // Constraint Propagation ile tamamen çözülebildi mi kontrol et
+            if isCompleteSolution(propagatedBoard) {
+                return propagatedBoard
+            }
+            boardCopy = propagatedBoard
+        } else {
+            // Constraint Propagation çelişki buldu, çözüm yok
+            return nil
+        }
+        
         var emptyPositions = [(Int, Int)]()
         
         // Boş pozisyonları bul
@@ -1056,7 +1069,7 @@ class SudokuBoard: ObservableObject, Codable {
             return boardCopy
         }
         
-        // Boş pozisyonları, mümkün olan değer sayısına göre sırala
+        // Boş pozisyonları, mümkün olan değer sayısına göre sırala (MRV heuristiği)
         emptyPositions.sort { pos1, pos2 in
             let (row1, col1) = pos1
             let (row2, col2) = pos2
@@ -1094,6 +1107,358 @@ class SudokuBoard: ObservableObject, Codable {
         
         // Çözüm bulunamadı
         return nil
+    }
+    
+    // Constraint Propagation tekniğini uygula
+    private func applyConstraintPropagation(_ board: [[Int?]]) -> [[Int?]]? {
+        var boardCopy = board
+        var changed = true
+        
+        // Değişiklik olmayıncaya kadar devam et
+        while changed {
+            changed = false
+            
+            // 1. Naked Singles: Her hücre için tek olasılık varsa, o değeri yerleştir
+            if applyNakedSingles(&boardCopy) {
+                changed = true
+            }
+            
+            // 2. Hidden Singles: Birim (satır, sütun, blok) içinde benzersiz olasılıkları bul
+            if applyHiddenSingles(&boardCopy) {
+                changed = true
+            }
+            
+            // 3. Pointing Pairs/Triples: Blok içindeki aynı satır/sütundaki olasılıklar
+            if applyPointingPairs(&boardCopy) {
+                changed = true
+            }
+        }
+        
+        // Tahta geçerli mi kontrol et
+        if !isBoardValid(boardCopy) {
+            return nil
+        }
+        
+        return boardCopy
+    }
+    
+    // Naked Singles: Tek olasılığı olan hücreleri doldur
+    private func applyNakedSingles(_ board: inout [[Int?]]) -> Bool {
+        var changed = false
+        
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if board[row][col] == nil {
+                    let possibilities = possibleValues(for: row, col: col, in: board)
+                    
+                    if possibilities.count == 1, let value = possibilities.first {
+                        board[row][col] = value
+                        changed = true
+                    } else if possibilities.isEmpty {
+                        // Hiç olasılık yoksa, bu tahta çözülemez
+                        return false
+                    }
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // Hidden Singles: Birim içinde sadece bir hücrede olabilen değerleri bul
+    private func applyHiddenSingles(_ board: inout [[Int?]]) -> Bool {
+        var changed = false
+        
+        // Her birim türünü kontrol et: satır, sütun ve blok
+        // 1. Satırları kontrol et
+        for row in 0..<9 {
+            changed = changed || findHiddenSinglesInRow(row, board: &board)
+        }
+        
+        // 2. Sütunları kontrol et
+        for col in 0..<9 {
+            changed = changed || findHiddenSinglesInColumn(col, board: &board)
+        }
+        
+        // 3. 3x3 blokları kontrol et
+        for blockRow in 0..<3 {
+            for blockCol in 0..<3 {
+                changed = changed || findHiddenSinglesInBlock(blockRow, blockCol, board: &board)
+            }
+        }
+        
+        return changed
+    }
+    
+    // Bir satırda hidden singles bul
+    private func findHiddenSinglesInRow(_ row: Int, board: inout [[Int?]]) -> Bool {
+        var changed = false
+        var valueCounts = [Int: [Int]]()
+        
+        // Her değer için, o değerin yerleştirilebileceği sütunları bul
+        for value in 1...9 {
+            valueCounts[value] = []
+        }
+        
+        // Satırdaki boş hücreleri ve olasılıkları incele
+        for col in 0..<9 {
+            if board[row][col] == nil {
+                let possibilities = possibleValues(for: row, col: col, in: board)
+                for value in possibilities {
+                    valueCounts[value]?.append(col)
+                }
+            }
+        }
+        
+        // Sadece bir hücrede olabilen değerleri bul
+        for (value, columns) in valueCounts {
+            if columns.count == 1 {
+                let col = columns[0]
+                if board[row][col] == nil {
+                    board[row][col] = value
+                    changed = true
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // Bir sütunda hidden singles bul
+    private func findHiddenSinglesInColumn(_ col: Int, board: inout [[Int?]]) -> Bool {
+        var changed = false
+        var valueCounts = [Int: [Int]]()
+        
+        // Her değer için, o değerin yerleştirilebileceği satırları bul
+        for value in 1...9 {
+            valueCounts[value] = []
+        }
+        
+        // Sütundaki boş hücreleri ve olasılıkları incele
+        for row in 0..<9 {
+            if board[row][col] == nil {
+                let possibilities = possibleValues(for: row, col: col, in: board)
+                for value in possibilities {
+                    valueCounts[value]?.append(row)
+                }
+            }
+        }
+        
+        // Sadece bir hücrede olabilen değerleri bul
+        for (value, rows) in valueCounts {
+            if rows.count == 1 {
+                let row = rows[0]
+                if board[row][col] == nil {
+                    board[row][col] = value
+                    changed = true
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // Bir 3x3 blokta hidden singles bul
+    private func findHiddenSinglesInBlock(_ blockRow: Int, _ blockCol: Int, board: inout [[Int?]]) -> Bool {
+        var changed = false
+        var valueCounts = [Int: [(Int, Int)]]()
+        
+        // Her değer için, o değerin yerleştirilebileceği hücreleri bul
+        for value in 1...9 {
+            valueCounts[value] = []
+        }
+        
+        // Bloktaki boş hücreleri ve olasılıkları incele
+        for r in 0..<3 {
+            for c in 0..<3 {
+                let row = blockRow * 3 + r
+                let col = blockCol * 3 + c
+                
+                if board[row][col] == nil {
+                    let possibilities = possibleValues(for: row, col: col, in: board)
+                    for value in possibilities {
+                        valueCounts[value]?.append((row, col))
+                    }
+                }
+            }
+        }
+        
+        // Sadece bir hücrede olabilen değerleri bul
+        for (value, cells) in valueCounts {
+            if cells.count == 1 {
+                let (row, col) = cells[0]
+                if board[row][col] == nil {
+                    board[row][col] = value
+                    changed = true
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // Pointing Pairs/Triples: Blok içindeki aynı satır/sütundaki olasılıkları kullanarak eleme
+    private func applyPointingPairs(_ board: inout [[Int?]]) -> Bool {
+        var changed = false
+        
+        // Her 3x3 blok için
+        for blockRow in 0..<3 {
+            for blockCol in 0..<3 {
+                // Her olası değer için
+                for value in 1...9 {
+                    // Bu değerin bu blokta hangi satırlarda ve sütunlarda olabileceğini bul
+                    var rowOccurrences = [Int: Int]()
+                    var colOccurrences = [Int: Int]()
+                    
+                    for r in 0..<3 {
+                        for c in 0..<3 {
+                            let row = blockRow * 3 + r
+                            let col = blockCol * 3 + c
+                            
+                            if board[row][col] == nil && possibleValues(for: row, col: col, in: board).contains(value) {
+                                rowOccurrences[r, default: 0] += 1
+                                colOccurrences[c, default: 0] += 1
+                            }
+                        }
+                    }
+                    
+                    // Pointing Pair/Triple for Rows
+                    let rowsWithValue = rowOccurrences.filter { $0.value > 0 }
+                    if rowsWithValue.count == 1, let (blockRowIndex, _) = rowsWithValue.first {
+                        let actualRow = blockRow * 3 + blockRowIndex
+                        // Bu değer sadece bir satırda ve bu blokta olabiliyorsa, satırın diğer bloklardaki hücrelerinden bu değeri çıkar
+                        changed = changed || removeValueFromOtherBlocksInRow(value, row: actualRow, exceptBlockCol: blockCol, board: &board)
+                    }
+                    
+                    // Pointing Pair/Triple for Columns
+                    let colsWithValue = colOccurrences.filter { $0.value > 0 }
+                    if colsWithValue.count == 1, let (blockColIndex, _) = colsWithValue.first {
+                        let actualCol = blockCol * 3 + blockColIndex
+                        // Bu değer sadece bir sütunda ve bu blokta olabiliyorsa, sütunun diğer bloklardaki hücrelerinden bu değeri çıkar
+                        changed = changed || removeValueFromOtherBlocksInColumn(value, col: actualCol, exceptBlockRow: blockRow, board: &board)
+                    }
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // Bir satırın diğer bloklarındaki hücrelerden belirli bir değeri çıkar
+    private func removeValueFromOtherBlocksInRow(_ value: Int, row: Int, exceptBlockCol: Int, board: inout [[Int?]]) -> Bool {
+        var changed = false
+        _ = row / 3 // blockRow kullanılmıyor, uyarıyı engellemek için _ kullanıyoruz
+        
+        for col in 0..<9 {
+            let blockCol = col / 3
+            if blockCol != exceptBlockCol && board[row][col] == nil {
+                let possibilities = possibleValues(for: row, col: col, in: board)
+                if possibilities.contains(value) {
+                    // Bu hücrenin yeni olasılıkları
+                    var newPossibilities = possibilities
+                    newPossibilities.removeAll { $0 == value }
+                    
+                    // Eğer sadece bir olasılık kaldıysa, o değeri yerleştir
+                    if newPossibilities.count == 1 {
+                        board[row][col] = newPossibilities.first
+                        changed = true
+                    }
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // Bir sütunun diğer bloklarındaki hücrelerden belirli bir değeri çıkar
+    private func removeValueFromOtherBlocksInColumn(_ value: Int, col: Int, exceptBlockRow: Int, board: inout [[Int?]]) -> Bool {
+        var changed = false
+        _ = col / 3 // blockCol kullanılmıyor, uyarıyı engellemek için _ kullanıyoruz
+        
+        for row in 0..<9 {
+            let blockRow = row / 3
+            if blockRow != exceptBlockRow && board[row][col] == nil {
+                let possibilities = possibleValues(for: row, col: col, in: board)
+                if possibilities.contains(value) {
+                    // Bu hücrenin yeni olasılıkları
+                    var newPossibilities = possibilities
+                    newPossibilities.removeAll { $0 == value }
+                    
+                    // Eğer sadece bir olasılık kaldıysa, o değeri yerleştir
+                    if newPossibilities.count == 1 {
+                        board[row][col] = newPossibilities.first
+                        changed = true
+                    }
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // Tahtanın geçerli olup olmadığını kontrol et (çelişki var mı)
+    private func isBoardValid(_ board: [[Int?]]) -> Bool {
+        // Satır kontrolü
+        for row in 0..<9 {
+            var seen = Set<Int>()
+            for col in 0..<9 {
+                if let value = board[row][col] {
+                    if seen.contains(value) {
+                        return false
+                    }
+                    seen.insert(value)
+                }
+            }
+        }
+        
+        // Sütun kontrolü
+        for col in 0..<9 {
+            var seen = Set<Int>()
+            for row in 0..<9 {
+                if let value = board[row][col] {
+                    if seen.contains(value) {
+                        return false
+                    }
+                    seen.insert(value)
+                }
+            }
+        }
+        
+        // 3x3 blok kontrolü
+        for blockRow in 0..<3 {
+            for blockCol in 0..<3 {
+                var seen = Set<Int>()
+                for r in 0..<3 {
+                    for c in 0..<3 {
+                        let row = blockRow * 3 + r
+                        let col = blockCol * 3 + c
+                        if let value = board[row][col] {
+                            if seen.contains(value) {
+                                return false
+                            }
+                            seen.insert(value)
+                        }
+                    }
+                }
+            }
+        }
+        
+        return true
+    }
+    
+    // Tahtanın tamamen doldurulup doldurulmadığını kontrol et
+    private func isCompleteSolution(_ board: [[Int?]]) -> Bool {
+        // Tüm hücrelerin dolu olduğunu kontrol et
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if board[row][col] == nil {
+                    return false
+                }
+            }
+        }
+        
+        // Genel geçerlilik kontrolü
+        return isBoardValid(board)
     }
     
     // Belirli bir hücre için olası değerleri bul
