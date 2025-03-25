@@ -345,11 +345,13 @@ struct ContentView: View {
                 }
                 .padding(.horizontal)
                 
-                // Zorluk seviyeleri - modernizeştirilmiş tasarım
+                // Zorluk seviyeleri - 2x2 grid formatında
                 VStack(spacing: 16) {
-                    ForEach(0..<SudokuBoard.Difficulty.allCases.count, id: \.self) { index in
+                    // Üst sıra: Kolay ve Orta
+                    HStack(spacing: 15) {
+                        // Kolay (index 0)
                         Button(action: {
-                            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[index]
+                            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[0]
                             withAnimation(.spring()) {
                                 showGame = true
                             }
@@ -360,21 +362,21 @@ struct ContentView: View {
                                     Circle()
                                         .fill(LinearGradient(
                                             gradient: Gradient(colors: [
-                                                difficultyColor(for: index),
-                                                difficultyColor(for: index).opacity(0.7)
+                                                difficultyColor(for: 0),
+                                                difficultyColor(for: 0).opacity(0.7)
                                             ]),
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         ))
                                         .frame(width: 44, height: 44)
-                                        .shadow(color: difficultyColor(for: index).opacity(0.3), radius: 4, x: 0, y: 2)
+                                        .shadow(color: difficultyColor(for: 0).opacity(0.3), radius: 4, x: 0, y: 2)
                                     
-                                    Image(systemName: difficultyIcon(for: index))
+                                    Image(systemName: difficultyIcon(for: 0))
                                         .foregroundColor(.white)
                                         .font(.system(size: 18, weight: .semibold))
                                 }
                                 
-                                Text(SudokuBoard.Difficulty.allCases[index].localizedName)
+                                Text(SudokuBoard.Difficulty.allCases[0].localizedName)
                                     .font(.headline)
                                     .foregroundColor(.primary)
                                     .fontWeight(.semibold)
@@ -382,7 +384,7 @@ struct ContentView: View {
                                 Spacer()
                                 
                                 Image(systemName: "chevron.forward")
-                                    .foregroundColor(difficultyColor(for: index).opacity(0.7))
+                                    .foregroundColor(difficultyColor(for: 0).opacity(0.7))
                                     .font(.subheadline)
                             }
                             .padding(.vertical, 14)
@@ -395,7 +397,175 @@ struct ContentView: View {
                                     
                                     // Kenar vurgusu
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(difficultyColor(for: index).opacity(0.2), lineWidth: 1.5)
+                                        .stroke(difficultyColor(for: 0).opacity(0.2), lineWidth: 1.5)
+                                }
+                                .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
+                            )
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        
+                        // Orta (index 1)
+                        Button(action: {
+                            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[1]
+                            withAnimation(.spring()) {
+                                showGame = true
+                            }
+                        }) {
+                            HStack {
+                                // Güzel gradient ikon arka planı
+                                ZStack {
+                                    Circle()
+                                        .fill(LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                difficultyColor(for: 1),
+                                                difficultyColor(for: 1).opacity(0.7)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ))
+                                        .frame(width: 44, height: 44)
+                                        .shadow(color: difficultyColor(for: 1).opacity(0.3), radius: 4, x: 0, y: 2)
+                                    
+                                    Image(systemName: difficultyIcon(for: 1))
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 18, weight: .semibold))
+                                }
+                                
+                                Text(SudokuBoard.Difficulty.allCases[1].localizedName)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                    .fontWeight(.semibold)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.forward")
+                                    .foregroundColor(difficultyColor(for: 1).opacity(0.7))
+                                    .font(.subheadline)
+                            }
+                            .padding(.vertical, 14)
+                            .padding(.horizontal, 18)
+                            .background(
+                                ZStack {
+                                    // Arka plan
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(UIColor.secondarySystemBackground))
+                                    
+                                    // Kenar vurgusu
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(difficultyColor(for: 1).opacity(0.2), lineWidth: 1.5)
+                                }
+                                .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
+                            )
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                    }
+                    
+                    // Alt sıra: Zor ve Uzman
+                    HStack(spacing: 15) {
+                        // Zor (index 2)
+                        Button(action: {
+                            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[2]
+                            withAnimation(.spring()) {
+                                showGame = true
+                            }
+                        }) {
+                            HStack {
+                                // Güzel gradient ikon arka planı
+                                ZStack {
+                                    Circle()
+                                        .fill(LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                difficultyColor(for: 2),
+                                                difficultyColor(for: 2).opacity(0.7)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ))
+                                        .frame(width: 44, height: 44)
+                                        .shadow(color: difficultyColor(for: 2).opacity(0.3), radius: 4, x: 0, y: 2)
+                                    
+                                    Image(systemName: difficultyIcon(for: 2))
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 18, weight: .semibold))
+                                }
+                                
+                                Text(SudokuBoard.Difficulty.allCases[2].localizedName)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                    .fontWeight(.semibold)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.forward")
+                                    .foregroundColor(difficultyColor(for: 2).opacity(0.7))
+                                    .font(.subheadline)
+                            }
+                            .padding(.vertical, 14)
+                            .padding(.horizontal, 18)
+                            .background(
+                                ZStack {
+                                    // Arka plan
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(UIColor.secondarySystemBackground))
+                                    
+                                    // Kenar vurgusu
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(difficultyColor(for: 2).opacity(0.2), lineWidth: 1.5)
+                                }
+                                .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
+                            )
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        
+                        // Uzman (index 3)
+                        Button(action: {
+                            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[3]
+                            withAnimation(.spring()) {
+                                showGame = true
+                            }
+                        }) {
+                            HStack {
+                                // Güzel gradient ikon arka planı
+                                ZStack {
+                                    Circle()
+                                        .fill(LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                difficultyColor(for: 3),
+                                                difficultyColor(for: 3).opacity(0.7)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ))
+                                        .frame(width: 44, height: 44)
+                                        .shadow(color: difficultyColor(for: 3).opacity(0.3), radius: 4, x: 0, y: 2)
+                                    
+                                    Image(systemName: difficultyIcon(for: 3))
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 18, weight: .semibold))
+                                }
+                                
+                                Text(SudokuBoard.Difficulty.allCases[3].localizedName)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                    .fontWeight(.semibold)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.forward")
+                                    .foregroundColor(difficultyColor(for: 3).opacity(0.7))
+                                    .font(.subheadline)
+                            }
+                            .padding(.vertical, 14)
+                            .padding(.horizontal, 18)
+                            .background(
+                                ZStack {
+                                    // Arka plan
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(UIColor.secondarySystemBackground))
+                                    
+                                    // Kenar vurgusu
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(difficultyColor(for: 3).opacity(0.2), lineWidth: 1.5)
                                 }
                                 .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
                             )
