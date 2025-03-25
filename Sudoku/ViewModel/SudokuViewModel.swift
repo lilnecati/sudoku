@@ -402,19 +402,35 @@ class SudokuViewModel: ObservableObject {
             return
         }
         
-        guard let selectedCell = selectedCell else { return }
-        let row = selectedCell.row
-        let col = selectedCell.column
+        // Boş hücrelerin listesini oluştur
+        var emptyPositions: [(row: Int, col: Int)] = []
         
-        // Eğer hücre zaten doluysa veya sabit bir hücre ise ipucu verme
-        if board.isFixed(at: row, col: col) || board.getValue(at: row, col: col) != nil {
+        // Tüm tahtayı tarayarak boş hücreleri bul
+        for row in 0..<9 {
+            for col in 0..<9 {
+                // Boş ve sabit olmayan hücreleri listeye ekle
+                if !board.isFixed(at: row, col: col) && board.getValue(at: row, col: col) == nil {
+                    emptyPositions.append((row: row, col: col))
+                }
+            }
+        }
+        
+        // Boş hücre yoksa işlem yapma
+        if emptyPositions.isEmpty {
             return
         }
         
+        // Rastgele bir boş hücre seç
+        let randomIndex = Int.random(in: 0..<emptyPositions.count)
+        let randomPosition = emptyPositions[randomIndex]
+        
+        // Seçilen hücreyi otomatik olarak seçili hücre yap (görsel geri bildirim için)
+        selectCell(row: randomPosition.row, column: randomPosition.col)
+        
         // Orijinal değeri al
-        if let solution = board.getOriginalValue(at: row, col: col) {
+        if let solution = board.getOriginalValue(at: randomPosition.row, col: randomPosition.col) {
             // Hücreyi çöz
-            enterValue(solution, at: row, col: col)
+            enterValue(solution, at: randomPosition.row, col: randomPosition.col)
             
             // İpucu sayısını artır
             hintCount += 1
