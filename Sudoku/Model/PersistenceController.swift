@@ -104,20 +104,25 @@ class PersistenceController {
     // MARK: - Game Management
     
     // Benzersiz ID ile yeni bir oyun kaydet
-    func saveGame(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval) {
+    func saveGame(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval, jsonData: Data? = nil) {
         let context = container.viewContext
         let game = SavedGame(context: context)
         
         // Benzersiz tanımlayıcı ata
         game.setValue(gameID, forKey: "id")
         
-        // Tahtayı serialleştir (boardState artık dizi olarak serialleştirilecek)
-        let boardDict: [String: Any] = [
-            "board": board,
-            "difficulty": difficulty
-        ]
-        
-        game.boardState = try? JSONSerialization.data(withJSONObject: boardDict)
+        // Eğer tam JSON verisi varsa onu kullan, yoksa basit bir versiyonu kaydet
+        if let jsonData = jsonData {
+            game.boardState = jsonData
+        } else {
+            // Tahtayı serialleştir (boardState artık dizi olarak serialleştirilecek)
+            let boardDict: [String: Any] = [
+                "board": board,
+                "difficulty": difficulty
+            ]
+            
+            game.boardState = try? JSONSerialization.data(withJSONObject: boardDict)
+        }
         game.difficulty = difficulty
         game.elapsedTime = elapsedTime
         game.dateCreated = Date()
@@ -136,7 +141,7 @@ class PersistenceController {
     }
     
     // Mevcut bir oyunu güncelle
-    func updateSavedGame(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval) {
+    func updateSavedGame(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval, jsonData: Data? = nil) {
         let context = container.viewContext
         
         // ID'ye göre oyunu bul
@@ -147,13 +152,18 @@ class PersistenceController {
             let games = try context.fetch(request)
             
             if let existingGame = games.first {
-                // Veri güncellemesi
-                let boardDict: [String: Any] = [
-                    "board": board,
-                    "difficulty": difficulty
-                ]
-                
-                existingGame.boardState = try? JSONSerialization.data(withJSONObject: boardDict)
+                // Eğer tam JSON verisi varsa onu kullan, yoksa basit bir versiyonu kaydet
+                if let jsonData = jsonData {
+                    existingGame.boardState = jsonData
+                } else {
+                    // Veri güncellemesi
+                    let boardDict: [String: Any] = [
+                        "board": board,
+                        "difficulty": difficulty
+                    ]
+                    
+                    existingGame.boardState = try? JSONSerialization.data(withJSONObject: boardDict)
+                }
                 existingGame.elapsedTime = elapsedTime
                 existingGame.dateCreated = Date()  // Son değişiklik zamanı
                 

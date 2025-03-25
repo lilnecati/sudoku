@@ -588,7 +588,8 @@ class SudokuViewModel: ObservableObject {
                     gameID: gameID,
                     board: boardArray,
                     difficulty: currentBoard.difficulty.rawValue,
-                    elapsedTime: elapsedTime
+                    elapsedTime: elapsedTime,
+                    jsonData: jsonData
                 )
                 print("✅ Oyun başarıyla güncellendi, ID: \(gameID)")
             } else {
@@ -602,7 +603,8 @@ class SudokuViewModel: ObservableObject {
                     gameID: newGameID,
                     board: boardArray,
                     difficulty: currentBoard.difficulty.rawValue,
-                    elapsedTime: elapsedTime
+                    elapsedTime: elapsedTime,
+                    jsonData: jsonData
                 )
                 print("✅ Yeni oyun başarıyla kaydedildi, ID: \(newGameID)")
             }
@@ -658,14 +660,16 @@ class SudokuViewModel: ObservableObject {
         let difficultyString = savedGame.value(forKey: "difficulty") as? String ?? "Kolay"
         print("Kayıtlı oyun yükleniyor, zorluk seviyesi: \(difficultyString)")
         
-        // Doğrudan oyun verilerinden SudokuBoard oluşturuyoruz
-        guard let loadedBoard = loadBoardFromData(boardData) else {
+        // Doğrudan oyun verilerinden SudokuBoard ve userEnteredValues oluşturuyoruz
+        guard let (loadedBoard, userValues) = loadBoardFromData(boardData) else {
             print("❌ Oyun tahta verisi yüklenemedi")
             return
         }
         
-        // SudokuBoard'u kaydedilmiş oyundan yükledik
+        // SudokuBoard'u ve kullanıcı değerlerini kaydedilmiş oyundan yükledik
         self.board = loadedBoard
+        self.userEnteredValues = userValues
+        print("✅ Kullanıcı tarafından girilen değerler doğrudan yüklendi: \(userValues.flatMap { $0.filter { $0 } }.count) değer")
         self.elapsedTime = savedGame.getDouble(key: "elapsedTime")
         self.pausedElapsedTime = self.elapsedTime
         self.gameState = .playing
@@ -690,11 +694,9 @@ class SudokuViewModel: ObservableObject {
                     print("✅ Oyun istatistikleri güncellendi")
                 }
                 
-                // Kullanıcı tarafından girilen değerleri yükle
-                if let userEntered = jsonObject["userEnteredValues"] as? [[Bool]] {
-                    self.userEnteredValues = userEntered
-                    print("✅ Kullanıcı tarafından girilen değerler yüklendi")
-                }
+                // Kullanıcı tarafından girilen değerler zaten yüklendi
+                // Bu kısmı atlıyoruz çünkü yeni fonksiyon imzasıyla doğrudan alıyoruz
+                print("ℹ️ userEnteredValues zaten loadBoardFromData fonksiyonundan alındı - tekrar yüklemeye gerek yok")
             }
         } catch {
             print("⚠️ İstatistikleri yüklerken hata: \(error)")
@@ -742,8 +744,8 @@ class SudokuViewModel: ObservableObject {
         print("✅ Oyun başarıyla yüklendi, ID: \(currentGameID?.uuidString ?? "ID yok")")
     }
     
-    // Veri objesinden SudokuBoard oluştur - daha esnek çözümleme
-    private func loadBoardFromData(_ data: Data) -> SudokuBoard? {
+    // Veri objesinden SudokuBoard ve kullanıcı tarafından girilen değerleri oluştur
+    private func loadBoardFromData(_ data: Data) -> (board: SudokuBoard, userValues: [[Bool]])? {
         print("\n\n💻 KAYDEDILMIŞ OYUN YÜKLEME BAŞLADI 💻")
         print("Veri boyutu: \(data.count) byte")
         
@@ -926,14 +928,18 @@ class SudokuViewModel: ObservableObject {
                                         fixed: fixed, 
                                         difficulty: boardDifficultyEnum2)
             
-            print("✅ Kaydedilmiş verilerden board başarıyla oluşturuldu")
-            return newBoard
+            // Kullanıcı tarafından girilen değerler bilgisini JSON'dan al
+            let userEntered = jsonDict["userEnteredValues"] as? [[Bool]] ?? Array(repeating: Array(repeating: false, count: 9), count: 9)
+            
+            // Başarılı mesajı yazdır
+            print("✅ Kaydedilmiş verilerden board ve userEnteredValues başarıyla oluşturuldu")
+            
+            // Tuple olarak (tahta, kullanıcı değerleri) döndür
+            return (board: newBoard, userValues: userEntered)
         } catch {
             print("❌ JSON işleme hatası: \(error)")
-            return nil
+            return nil as (board: SudokuBoard, userValues: [[Bool]])?
         }
-        
-        return nil
     }
     
     // Kaydedilmiş oyunu sil

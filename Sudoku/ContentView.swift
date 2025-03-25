@@ -147,26 +147,40 @@ struct ContentView: View {
     
     // MARK: - Title View
     var titleView: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 15) {
             // Logo ve başlık bölümü
             ZStack {
-                // Arka plan halkası
+                // Arka plan etkisi - iki halka
                 Circle()
                     .fill(LinearGradient(
-                        gradient: Gradient(colors: [.blue.opacity(0.7), .purple.opacity(0.5)]),
+                        gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.purple.opacity(0.6)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ))
                     .frame(width: 100, height: 100)
+                    .shadow(color: Color.purple.opacity(0.3), radius: 10, x: 0, y: 5)
                 
-                // Sudoku simgesi
-                VStack(spacing: 2) {
+                // Dış parlama efekti
+                Circle()
+                    .stroke(Color.white.opacity(0.8), lineWidth: 1.5)
+                    .frame(width: 105, height: 105)
+                    .blur(radius: 3)
+                
+                // Sudoku simgesi - gelişmiş 3x3 grid
+                VStack(spacing: 3) {
                     ForEach(0..<3) { row in
-                        HStack(spacing: 2) {
+                        HStack(spacing: 3) {
                             ForEach(0..<3) { column in
-                                RoundedRectangle(cornerRadius: 2)
+                                RoundedRectangle(cornerRadius: 3)
                                     .fill(Color.white.opacity(0.9))
-                                    .frame(width: 15, height: 15)
+                                    .frame(width: 18, height: 18)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 3)
+                                            .stroke(Color.white.opacity(0.4), lineWidth: 0.5)
+                                    )
+                                    .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 1)
+                                    // Dönüş animasyonu - belirli hücreler için
+                                    .rotationEffect(Angle(degrees: (row == 1 && column == 1) ? rotationDegree : 0))
                             }
                         }
                     }
@@ -176,9 +190,15 @@ struct ContentView: View {
             .opacity(titleOpacity)
             .onAppear {
                 if !powerSavingMode {
+                    // Logo gelişmiş animasyonu
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.6, blendDuration: 0.5)) {
                         titleScale = 1.0
                         titleOpacity = 1.0
+                    }
+                    
+                    // Merkez hücrenin hafif döndürme animasyonu
+                    withAnimation(Animation.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                        rotationDegree = 180
                     }
                 } else {
                     titleScale = 1.0
@@ -186,9 +206,20 @@ struct ContentView: View {
                 }
             }
             
+            // İyileştirilmiş başlık
             Text("SUDOKU")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.system(size: 38, weight: .bold, design: .rounded))
                 .foregroundColor(.primary)
+                .overlay(
+                    // Metin için altın gölge efekti
+                    Text("SUDOKU")
+                        .font(.system(size: 38, weight: .bold, design: .rounded))
+                        .foregroundColor(Color.blue.opacity(0.3))
+                        .offset(x: 2, y: 2)
+                        .blur(radius: 2)
+                        .mask(Text("SUDOKU")
+                                .font(.system(size: 38, weight: .bold, design: .rounded)))
+                )
                 .padding(.top, 5)
         }
     }
@@ -211,10 +242,10 @@ struct ContentView: View {
                     // Kaydedilmiş oyunu SudokuViewModel'e yükle
                     viewModel.loadGame(from: lastGame)
                     
-                    // Oyun görünümünü göster
+                    // Oyun görünümünü göster - daha akıcı geçiş
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         isLoading = false
-                        withAnimation {
+                        withAnimation(.spring()) {
                             // Doğrudan showGame'i aktif et
                             showGame = true
                         }
@@ -222,7 +253,7 @@ struct ContentView: View {
                 } else {
                     print("Kaydedilmiş oyun bulunamadı, yeni oyun başlatılıyor")
                     // Kaydedilmiş oyun yoksa yeni oyun başlat
-                    withAnimation {
+                    withAnimation(.spring()) {
                         selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[selectedDifficulty]
                         viewModel.newGame(difficulty: selectedCustomDifficulty)
                         showGame = true
@@ -236,69 +267,137 @@ struct ContentView: View {
             }
         }) {
             HStack {
-                Image(systemName: "arrow.clockwise.circle.fill")
-                    .foregroundColor(.white)
-                    .padding(10)
-                    .background(Color.green)
-                    .clipShape(Circle())
+                // Daha özel ve modern bir buton tasarımı
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(
+                            gradient: Gradient(colors: [Color.green, Color.green.opacity(0.7)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ))
+                        .frame(width: 48, height: 48)
+                        .shadow(color: Color.green.opacity(0.3), radius: 5, x: 0, y: 2)
+                    
+                    Image(systemName: "play.circle.fill")
+                        .foregroundColor(.white)
+                        .font(.system(size: 24, weight: .semibold))
+                        .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 1)
+                }
                 
-                Text("Devam Et")
-                    .fontWeight(.medium)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Devam Et")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    
+                    Text("Kaldığın yerden devam et")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.leading, 6)
                 
                 Spacer()
                 
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.gray)
-                    .font(.caption)
+                Image(systemName: "chevron.forward")
+                    .foregroundColor(Color.green.opacity(0.8))
+                    .font(.subheadline)
             }
-            .padding()
+            .padding(.vertical, 16)
+            .padding(.horizontal, 18)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(UIColor.secondarySystemBackground))
+                ZStack {
+                    // Modern arka plan
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(Color(UIColor.secondarySystemBackground))
+                    
+                    // Özel kenar vurgusu
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(Color.green.opacity(0.2), lineWidth: 1.5)
+                }
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
             )
         }
         .buttonStyle(ScaleButtonStyle())
+        // Ekstra hoş bir giriş animasyonu
+        .transition(.asymmetric(
+            insertion: .scale(scale: 0.9).combined(with: .opacity).animation(.spring(response: 0.4, dampingFraction: 0.7)),
+            removal: .opacity.animation(.easeOut(duration: 0.2))
+        ))
     }
     
     // MARK: - Game Modes Section
     var gameModesSection: some View {
         VStack(spacing: 25) {
-            // Yeni Oyun bölümü
-            VStack(alignment: .leading, spacing: 15) {
-                Text("Yeni Oyun")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .padding(.leading)
+            // Yeni Oyun bölümü - görsel iyileştirmeler
+            VStack(alignment: .leading, spacing: 18) {
+                HStack {
+                    Text("Yeni Oyun")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    // Dekoratif öğe - küçük bir zar
+                    Image(systemName: "die.face.5")
+                        .foregroundColor(Color.blue.opacity(0.7))
+                        .font(.headline)
+                        .rotationEffect(Angle(degrees: 15))
+                }
+                .padding(.horizontal)
                 
-                // Zorluk seviyeleri
-                VStack(spacing: 12) {
+                // Zorluk seviyeleri - modernizeştirilmiş tasarım
+                VStack(spacing: 16) {
                     ForEach(0..<SudokuBoard.Difficulty.allCases.count, id: \.self) { index in
                         Button(action: {
                             selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[index]
-                            withAnimation {
+                            withAnimation(.spring()) {
                                 showGame = true
                             }
                         }) {
                             HStack {
-                                Image(systemName: difficultyIcon(for: index))
-                                    .foregroundColor(.white)
-                                    .padding(10)
-                                    .background(difficultyColor(for: index))
-                                    .clipShape(Circle())
+                                // Güzel gradient ikon arka planı
+                                ZStack {
+                                    Circle()
+                                        .fill(LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                difficultyColor(for: index),
+                                                difficultyColor(for: index).opacity(0.7)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ))
+                                        .frame(width: 44, height: 44)
+                                        .shadow(color: difficultyColor(for: index).opacity(0.3), radius: 4, x: 0, y: 2)
+                                    
+                                    Image(systemName: difficultyIcon(for: index))
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 18, weight: .semibold))
+                                }
                                 
                                 Text(SudokuBoard.Difficulty.allCases[index].localizedName)
-                                    .fontWeight(.medium)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                    .fontWeight(.semibold)
                                 
                                 Spacer()
                                 
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.gray)
-                                    .font(.caption)
+                                Image(systemName: "chevron.forward")
+                                    .foregroundColor(difficultyColor(for: index).opacity(0.7))
+                                    .font(.subheadline)
                             }
-                            .padding()
+                            .padding(.vertical, 14)
+                            .padding(.horizontal, 18)
                             .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(UIColor.secondarySystemBackground))
+                                ZStack {
+                                    // Arka plan
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(UIColor.secondarySystemBackground))
+                                    
+                                    // Kenar vurgusu
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(difficultyColor(for: index).opacity(0.2), lineWidth: 1.5)
+                                }
+                                .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
                             )
                         }
                         .buttonStyle(ScaleButtonStyle())
@@ -311,6 +410,7 @@ struct ContentView: View {
                         buttonsOffset = 0
                         buttonsOpacity = 1.0
                     } else {
+                        // Daha akıcı görünüm için animasyonları kademeli olarak göster
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3)) {
                             buttonsOffset = 0
                             buttonsOpacity = 1.0
@@ -358,36 +458,52 @@ struct ContentView: View {
     // MARK: - Main Content View
     var mainContentView: some View {
         ZStack {
-            // Arka plan gradyanı (güç tasarrufu modu açıksa basit arka plan, değilse gradyan)
+            // Arka plan tasarımı - güç tasarrufu ve visual appeal arasında denge
             if powerSavingMode {
+                // Güç tasarrufu modu açıkken basit arka plan
                 Color(UIColor.systemBackground)
                     .edgesIgnoringSafeArea(.all)
             } else {
-                // Daha çekici arka plan tasarımı
+                // Gelişmiş ve modern arka plan tasarımı
                 ZStack {
+                    // Yumuşak gradient
                     LinearGradient(gradient: Gradient(colors: [
-                        Color.blue.opacity(0.1),
-                        Color.purple.opacity(0.15)
-                    ]), startPoint: .topLeading, endPoint: .bottomTrailing)
+                        Color.blue.opacity(0.08),
+                        Color.purple.opacity(0.12),
+                        Color(UIColor.systemBackground)
+                    ]), startPoint: .topLeading, endPoint: .bottom)
                     
-                    // Arka planda dekoratif sudoku şablonu
+                    // Arka planda dekoratif sudoku şablonu - daha yumuşak
                     VStack(spacing: 0) {
                         ForEach(0..<9) { row in
                             HStack(spacing: 0) {
                                 ForEach(0..<9) { column in
                                     Rectangle()
-                                        .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
+                                        .stroke(Color.gray.opacity(0.08), lineWidth: 0.5)
                                         .background(((row/3 + column/3) % 2 == 0) ?
-                                                    Color.gray.opacity(0.03) : Color.clear)
-                                        .frame(width: 20, height: 20)
+                                                    Color.gray.opacity(0.02) : Color.clear)
+                                        .frame(width: 22, height: 22)
                                 }
                             }
                         }
                     }
-                    .rotationEffect(.degrees(10))
-                    .scaleEffect(2)
-                    .offset(x: 50, y: -150)
-                    .opacity(0.4)
+                    .rotationEffect(.degrees(8))
+                    .scaleEffect(2.2)
+                    .offset(x: 60, y: -180)
+                    .opacity(0.3)
+                    
+                    // Dekoratif parlama efektleri
+                    Circle()
+                        .fill(Color.blue.opacity(0.1))
+                        .frame(width: 250, height: 250)
+                        .blur(radius: 80)
+                        .offset(x: -120, y: -200)
+                    
+                    Circle()
+                        .fill(Color.purple.opacity(0.1))
+                        .frame(width: 200, height: 200)
+                        .blur(radius: 70)
+                        .offset(x: 150, y: 250)
                 }
                 .edgesIgnoringSafeArea(.all)
             }
