@@ -2,34 +2,16 @@ import SwiftUI
 import CoreData
 import UIKit
 
-// Navigation bar'ı tamamen gizlemek için özel ViewModifier
-struct HideNavigationBar: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .navigationBarHidden(true)
-            .navigationBarBackButtonHidden(true)
-            .navigationBarTitle("", displayMode: .inline)
-            .toolbar(.hidden, for: .navigationBar)
-            .onAppear {
-                // UIKit navigation controller'ı gizle
-                let appearance = UINavigationBarAppearance()
-                appearance.configureWithTransparentBackground()
-                appearance.backgroundColor = .clear
-                appearance.shadowColor = .clear
-                
-                UINavigationBar.appearance().standardAppearance = appearance
-                UINavigationBar.appearance().compactAppearance = appearance
-                UINavigationBar.appearance().scrollEdgeAppearance = appearance
-            }
-    }
-}
+// Not: HideNavigationBar ViewModifier'a artık ihtiyaç yok çünkü fullScreenCover kullanıyoruz
 
 struct GameView: View {
     @StateObject var viewModel: SudokuViewModel
     @State private var showDifficultyPicker = false
     @State private var showingGameComplete = false
     @State private var showSettings = false
+    // Geri butonu için state'e gerek yok
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     
     // Önbellekleme ve performans için
@@ -175,6 +157,38 @@ struct GameView: View {
             // Uyarı ve bilgi ekranları
             overlayViews
             
+            // Geri butonu - sol üst köşede
+            VStack {
+                HStack {
+                    Button(action: {
+                        // Direkt olarak ana sayfaya dön
+                        dismiss()
+                    }) {
+                        HStack(spacing: 5) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .semibold))
+                            
+                            Text("Geri")
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color.black.opacity(0.5))
+                        )
+                    }
+                    .padding(.leading, 16)
+                    .padding(.top, 8)
+                    
+                    Spacer()
+                }
+                
+                Spacer()
+            }
+            .zIndex(10)
+            
             // Rehber katmanı
             if tutorialManager.isActive {
                 TutorialOverlayView(tutorialManager: tutorialManager) {
@@ -224,7 +238,7 @@ struct GameView: View {
                 }
             }
         }
-        .modifier(HideNavigationBar())
+        // Artık HideNavigationBar modifier'a ihtiyaç yok, fullScreenCover kullanıyoruz
         .onAppear {
             setupInitialAnimations()
             setupTimerUpdater()
@@ -246,6 +260,7 @@ struct GameView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
+        // Onay iletişim kutusuna gerek yok, otomatik kayıt var
     }
     
     // MARK: - Bileşen Özellikleri

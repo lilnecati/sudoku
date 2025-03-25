@@ -123,22 +123,7 @@ struct ContentView: View {
             }
         }
         
-        // Navigation bar'ı gizleme bildirimini dinle
-        NotificationCenter.default.addObserver(forName: Notification.Name("HideNavigationBar"),
-                                               object: nil, queue: .main) { _ in
-            // Navigation bar'ı gizlemek için UIKit kodunu çalıştır
-            DispatchQueue.main.async {
-                // UIKit navigation controller'ı gizle
-                let appearance = UINavigationBarAppearance()
-                appearance.configureWithTransparentBackground()
-                appearance.backgroundColor = .clear
-                appearance.shadowColor = .clear
-                
-                UINavigationBar.appearance().standardAppearance = appearance
-                UINavigationBar.appearance().compactAppearance = appearance
-                UINavigationBar.appearance().scrollEdgeAppearance = appearance
-            }
-        }
+        // Not: Navigation bar'ı gizleme bildirimine artık ihtiyaç yok, fullScreenCover kullanıyoruz
         
         // Kaydedilmiş oyunu gösterme bildirimini dinle
         NotificationCenter.default.addObserver(forName: Notification.Name("ShowSavedGame"),
