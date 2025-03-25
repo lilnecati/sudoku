@@ -6,166 +6,138 @@ struct HintExplanationView: View {
     
     // Animasyon durumları
     @State private var isShowing = false
-    @State private var pulseValue = false
+    @State private var offsetY: CGFloat = 120 // Panel alt kısımdan yükselecek
     @StateObject private var powerManager = PowerSavingManager.shared
     
-    var body: some View {
-        // Sabit test verisi
-        let testData = SudokuViewModel.HintData(
+    // Önizleme için test verisi
+    private static let testData: SudokuViewModel.HintData = {
+        let data = SudokuViewModel.HintData(
             row: 3, 
             column: 4, 
-            value: 7, 
-            reason: "Bu hücreye 7 değeri konabilir çünkü aynı satır, sütun ve 3x3 bloktaki diğer sayılarla çakışmaz."
+            value: 5, 
+            reason: "Bu hücreye 5 değeri konabilir."
         )
         
+        // Test verisi için vurgulama ekleyelim
+        data.highlightCell(row: data.row, column: data.column, type: SudokuViewModel.CellInteractionType.target)
+        return data
+    }()
+    
+    var body: some View {
         // Veri kaynağı
-        let hintData = viewModel.hintExplanationData ?? testData
+        let hintData = viewModel.hintExplanationData ?? Self.testData
         
-        ZStack {
-            // Karartma
-            Color.black.opacity(0.4)
+        ZStack(alignment: .bottom) {
+            // Saydam arka plan, sadece dokunma işlemlerini yakalamak için
+            Color.clear
+                .contentShape(Rectangle())
                 .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
                     dismissHint()
                 }
             
-            // Ana içerik
-            VStack(spacing: 12) {
-                Text("İpucu Açıklaması")
+            // Alt panel - görsellerdeki gibi sadece altta, tablo içeriğini kapatmadan
+            VStack(spacing: 0) {
+                // Başlık 
+                Text("Son Kalan Hücre")
                     .font(.headline)
-                    .foregroundColor(.teal)
+                    .fontWeight(.semibold)
+                    .padding(.top, 15)
+                    .padding(.bottom, 10)
                 
-                Divider()
+                // Açıklama - mavi veya yeşil renkli metinler (görsellerdeki gibi)
+                Text(hintData.stepDescription)
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 15)
+                    .foregroundColor(getStepColor(for: viewModel.currentHintStep, hint: hintData))
                 
-                // Hücre ve değer bilgisi
-                HStack(spacing: 16) {
-                    ZStack {
-                        // Arka plan şekli
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(LinearGradient(
-                                gradient: Gradient(colors: [Color.teal.opacity(0.3), Color.teal.opacity(0.15)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing))
-                            .frame(width: 60, height: 60)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.teal.opacity(0.5), lineWidth: 1.5)
-                            )
-                            .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
-                        
-                        // Rakam
-                        Text("\(hintData.value)")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.teal)
-                            .scaleEffect(pulseValue ? 1.1 : 1.0)
-                    }
-                    
-                    Spacer()
-                    
-                    // Konum bilgisi
-                    VStack(alignment: .trailing, spacing: 8) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.down.to.line")
-                                .font(.caption)
-                                .foregroundColor(.secondary.opacity(0.7))
-                            Text("Satır: \(hintData.row + 1)")
-                                .font(.subheadline)
+                // Adım göstergeleri - görsellerdeki gibi alt kısımda
+                HStack(spacing: 20) {
+                    // Geri butonu
+                    Button(action: {
+                        if viewModel.currentHintStep > 0 {
+                            viewModel.currentHintStep -= 1
                         }
-                        
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.right.to.line")
-                                .font(.caption)
-                                .foregroundColor(.secondary.opacity(0.7))
-                            Text("Sütun: \(hintData.column + 1)")
-                                .font(.subheadline)
-                        }
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(viewModel.currentHintStep > 0 ? .blue : .gray.opacity(0.5))
                     }
-                }
-                .padding(.vertical, 10)
-                
-                // Açıklama metni
-                VStack(alignment: .leading, spacing: 10) {
+                    .disabled(viewModel.currentHintStep == 0)
+                    
+                    // Sayfa indikatörleri (noktalar) - görsellerdeki gibi
                     HStack(spacing: 6) {
-                        Image(systemName: "lightbulb.fill")
-                            .font(.subheadline)
-                            .foregroundColor(.yellow.opacity(0.8))
-                        
-                        Text("Neden bu değer?")
-                            .font(.headline)
-                            .foregroundColor(.teal)
+                        ForEach(0..<hintData.totalSteps, id: \.self) { index in
+                            Circle()
+                                .fill(index == viewModel.currentHintStep ? Color.blue : Color.gray.opacity(0.3))
+                                .frame(width: 6, height: 6)
+                                .animation(.easeInOut(duration: 0.2), value: viewModel.currentHintStep)
+                        }
                     }
                     
-                    Text(hintData.reason)
-                        .lineSpacing(4)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(10)
-                        .background(Color.teal.opacity(0.07))
-                        .cornerRadius(8)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 8)
-                
-                Spacer()
-                
-                // Kapat butonu
-                Button {
-                    dismissHint()
-                } label: {
-                    Text("Anladım")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.teal)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                }
-                .scaleEffect(isShowing ? 1.0 : 0.95)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: viewModel.showHintExplanation)
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
-            )
-            .padding()
-            .frame(maxWidth: 400)
-            .scaleEffect(isShowing ? 1.0 : 0.8)
-            .opacity(isShowing ? 1.0 : 0)
-            .onAppear {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                    isShowing = true
-                }
-                
-                // Güç tasarrufu modunda animasyonları azaltalım
-                if !powerManager.isPowerSavingEnabled {
-                    withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
-                        pulseValue.toggle()
+                    // İleri/Bitti butonu
+                    Button(action: {
+                        if viewModel.currentHintStep < hintData.totalSteps - 1 {
+                            viewModel.currentHintStep += 1
+                        } else {
+                            dismissHint()
+                        }
+                    }) {
+                        Text(viewModel.currentHintStep < hintData.totalSteps - 1 ? "İleri" : "Bitti")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.blue)
                     }
+                }
+                .padding(.bottom, 15)
+            }
+            .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+            .cornerRadius(16)
+            .frame(maxWidth: .infinity, minHeight: 200) // Yüksekliğini daha fazla artırdım, yukarıya doğru uzaması için
+            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: -2)
+            .offset(y: isShowing ? 0 : offsetY) // Alt kısımdan yükselme efekti
+            .animation(.spring(response: powerManager.isPowerSavingEnabled ? 0.3 : 0.5, 
+                             dampingFraction: 0.8), value: isShowing)
+            .animation(.spring(response: powerManager.isPowerSavingEnabled ? 0.3 : 0.5, 
+                             dampingFraction: 0.8), value: offsetY)
+            .onAppear {
+                // Güç tasarrufu moduna göre animasyon ayarları
+                withAnimation {
+                    isShowing = true
+                    offsetY = 0
                 }
             }
         }
+    }
+    
+    // Adıma ve ipucu tekniğine göre renk belirleme - görsellerdeki gibi
+    private func getStepColor(for step: Int, hint: SudokuViewModel.HintData) -> Color {
+        // Görsellerde mavi ve yeşil vurgulamalar vardı
+        if hint.technique == .nakedSingle || hint.technique == .hiddenSingle {
+            return .green // Yeşil renkli metinler
+        } else if hint.technique == .nakedPair || hint.technique == .hiddenPair {
+            return .blue // Mavi renkli metinler
+        }
+        return .blue // Varsayılan renk
     }
     
     // Hint ekranını kapatma fonksiyonu
     private func dismissHint() {
-        withAnimation(.easeOut(duration: powerManager.isPowerSavingEnabled ? 0.2 : 0.3)) {
+        // Güç tasarrufu moduna göre animasyon süresi ayarlanır
+        let animationDuration = powerManager.isPowerSavingEnabled ? 0.2 : 0.3
+        
+        // Aşağı doğru kayarak kapanma animasyonu
+        withAnimation(.easeInOut(duration: animationDuration)) {
             isShowing = false
-            viewModel.showHintExplanation = false
+            offsetY = 120 // Ekranın altına doğru kayma
         }
-    }
-    
-    // Madde işareti için yardımcı fonksiyon
-    private func bulletPoint(text: String) -> some View {
-        HStack(alignment: .top, spacing: 6) {
-            Text("•")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            Text(text)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+        
+        // Animasyon tamamlandıktan sonra viewModel'deki değerleri sıfırla
+        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration + 0.05) {
+            viewModel.hintExplanationData = nil
+            viewModel.currentHintStep = 0
+            viewModel.showHintExplanation = false
         }
     }
 
@@ -175,12 +147,16 @@ struct HintExplanationView: View {
 struct HintExplanationView_Previews: PreviewProvider {
     static var previews: some View {
         let viewModel = SudokuViewModel()
-        viewModel.hintExplanationData = SudokuViewModel.HintData(
+        let hintData = SudokuViewModel.HintData(
             row: 2, 
-            column: 3, 
-            value: 5, 
-            reason: "Bu değer 3. satırda ve 4. sütunda başka 5 bulunmadığı için uygundur."
+            column: 3,
+            value: 5,
+            reason: "Bu hücreye 5 değeri konabilir çünkü aynı satır, sütun ve 3x3 bloktaki diğer sayılarla çakışmaz.",
+            technique: SudokuViewModel.HintTechnique.general
         )
+        hintData.addStep(title: "Adım 1", description: "İlk adım açıklaması")
+        hintData.addStep(title: "Adım 2", description: "İkinci adım açıklaması")
+        viewModel.hintExplanationData = hintData
         viewModel.showHintExplanation = true
         
         return Group {

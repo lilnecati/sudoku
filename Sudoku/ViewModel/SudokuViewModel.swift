@@ -397,35 +397,547 @@ class SudokuViewModel: ObservableObject {
     
     // İpucu açıklama bilgisi
     @Published var showHintExplanation: Bool = false
-    // Hint açıklama veri modeli - sınıf olarak tanımlayalım
+    
+    // İpucu tekniklerini belirten enum
+    enum HintTechnique: String {
+        case nakedSingle = "Tek Olasılık (Naked Single)"
+        case hiddenSingle = "Tek Konum (Hidden Single)"
+        case nakedPair = "Açık Çift (Naked Pair)"
+        case hiddenPair = "Gizli Çift (Hidden Pair)"
+        case nakedTriple = "Açık Üçlü (Naked Triple)"
+        case hiddenTriple = "Gizli Üçlü (Hidden Triple)"
+        case xWing = "X-Wing"
+        case swordfish = "Swordfish"
+        case general = "Son Kalan Hücre"
+        case none = "Tespit Edilebilen İpucu Yok"
+        
+        var description: String {
+            switch self {
+            case .nakedSingle:
+                return "Bu hücreye sadece tek bir sayı konabilir"
+            case .hiddenSingle:
+                return "Bu sayı, bu bölgede yalnızca tek bir hücreye konabilir"
+            case .nakedPair:
+                return "Bu iki hücre, aynı iki adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir"
+            case .hiddenPair:
+                return "Bu iki aday, yalnızca bu iki hücreye konabilir, dolayısıyla bu hücrelerden diğer adaylar çıkarılabilir"
+            case .nakedTriple:
+                return "Bu üç hücre, üç adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir"
+            case .hiddenTriple:
+                return "Bu üç aday, yalnızca bu üç hücreye konabilir"
+            case .xWing:
+                return "X-Wing deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir"
+            case .swordfish:
+                return "Swordfish deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir"
+            case .general:
+                return "Sudoku kurallarına göre bu hücreye bu değer konabilir"
+            case .none:
+                return "Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir."
+            }
+        }
+    }
+    
+    // Hücre etkileşim türü
+    enum CellInteractionType {
+        case target          // Hedef hücre (değer girilecek)
+        case highlight      // Vurgulanmış hücre 
+        case related        // İlişkili hücre (aynı satır, sütun veya blok)
+        case elimination    // Elenen aday
+        case candidate      // Aday değer
+    }
+    
+    // İpucu açıklama veri modeli - gelişmiş sınıf
     class HintData: ObservableObject, Identifiable {
         let id = UUID()
         let row: Int
         let column: Int
         let value: Int
-        let reason: String
         
-        init(row: Int, column: Int, value: Int, reason: String) {
+        // Açıklama ve teknik
+        var technique: HintTechnique = .general
+        var reason: String
+        
+        // Adım adım ipucu için özellikler
+        var highlightedCells: [(row: Int, column: Int, type: CellInteractionType)] = []
+        var highlightedBlock: Int? = nil // 0-8 arası 3x3 blok numarası
+        var step: Int = 0
+        var totalSteps: Int = 1
+        
+        // Adımlara göre açıklamalar
+        var stepTitles: [String] = []
+        var stepDescriptions: [String] = []
+        
+        // İpucu için ek bilgiler
+        var candidateValues: [Int] = []  // Aday değerler
+        var eliminatedCandidates: [(row: Int, column: Int, value: Int)] = [] // Elenen adaylar
+        
+        init(row: Int, column: Int, value: Int, reason: String, technique: HintTechnique = .general) {
             self.row = row
             self.column = column
             self.value = value
             self.reason = reason
+            self.technique = technique
+            
+            // Varsayılan olarak bu hücreyi hedef olarak vurgula
+            self.highlightedCells = [(row, column, .target)]
+            
+            // Varsayılan adım bilgilerini ayarla
+            self.stepTitles = [technique.rawValue]
+            self.stepDescriptions = [reason]
+        }
+        
+        // Vurgulanan blok indeksini hesaplama
+        func calculateBlockIndex(row: Int, column: Int) -> Int {
+            let blockRow = row / 3
+            let blockCol = column / 3
+            return blockRow * 3 + blockCol
+        }
+        
+        // Vurgulanacak 3x3 bloku ayarla
+        func highlightBlock(forRow row: Int, column: Int) {
+            self.highlightedBlock = calculateBlockIndex(row: row, column: column)
+        }
+        
+        // Adım bilgisi ekle
+        func addStep(title: String, description: String) {
+            stepTitles.append(title)
+            stepDescriptions.append(description)
+            totalSteps += 1
+        }
+        
+        // Güncel adım başlığını al (HintExplanationView için)
+        var stepTitle: String {
+            // Dizi sınırlarını kontrol et
+            guard step < stepTitles.count else {
+                return step == 0 ? technique.rawValue : "Adım \(step + 1)"
+            }
+            return stepTitles[step]
+        }
+        
+        // Güncel adım açıklamasını al (HintExplanationView için) 
+        var stepDescription: String {
+            // Dizi sınırlarını kontrol et
+            guard step < stepDescriptions.count else {
+                return reason
+            }
+            return stepDescriptions[step]
+        }
+        
+        // Hücre vurgulama (belirli bir türde)
+        func highlightCell(row: Int, column: Int, type: CellInteractionType = .highlight) {
+            // Aynı hücre zaten eklenmişse ekleme
+            for cell in highlightedCells {
+                if cell.row == row && cell.column == column && cell.type == type {
+                    return
+                }
+            }
+            highlightedCells.append((row, column, type))
+        }
+        
+        // Belirli bir bloğun tüm hücrelerini vurgula
+        func highlightAllCellsInBlock(blockIndex: Int, type: CellInteractionType = .highlight) {
+            let startRow = (blockIndex / 3) * 3
+            let startCol = (blockIndex % 3) * 3
+            
+            for r in startRow..<startRow+3 {
+                for c in startCol..<startCol+3 {
+                    highlightCell(row: r, column: c, type: type)
+                }
+            }
+        }
+        
+        // Aynı satır, sütun veya bloktaki tüm hücreler
+        func highlightRelatedCells(row: Int, column: Int, type: CellInteractionType = .related) {
+            // Aynı satırdaki hücreler
+            for c in 0..<9 {
+                if c != column {
+                    highlightCell(row: row, column: c, type: type)
+                }
+            }
+            
+            // Aynı sütundaki hücreler
+            for r in 0..<9 {
+                if r != row {
+                    highlightCell(row: r, column: column, type: type)
+                }
+            }
+            
+            // Aynı bloktaki hücreler
+            let blockIndex = calculateBlockIndex(row: row, column: column)
+            let blockStartRow = (blockIndex / 3) * 3
+            let blockStartCol = (blockIndex % 3) * 3
+            
+            for r in blockStartRow..<blockStartRow+3 {
+                for c in blockStartCol..<blockStartCol+3 {
+                    if r != row || c != column {
+                        highlightCell(row: r, column: c, type: type)
+                    }
+                }
+            }
         }
     }
     
+    // İpucu verileri ve kontrol
     @Published var hintExplanationData: HintData? = nil
+    @Published var currentHintStep: Int = 0
     
-    // İpucu talep et - optimize edildi
+    // Adım adım ipucu talep et
     func requestHint() {
         // İpucu hakkı kalmadıysa ipucu verme
         if remainingHints <= 0 {
             return
         }
         
-        // Boş hücrelerin listesini oluştur
+        // 1. İpucu Algoritması - En Basit Çözülebilir Hücreyi Bul
+        
+        // Boş hücreleri ve adayları analiz et
+        analyzeBoardCandidates()
+        
+        // 1. Önce en basit çözüm yöntemlerini dene
+        
+        // 1.1 Tek Olasılık (Naked Single) kontrolı
+        if let hint = findNakedSingleHint() {
+            // İpucu bulundu, göster
+            showHintFound(hint)
+            return
+        }
+        
+        // 1.2 Tek Konum (Hidden Single) kontrolı
+        if let hint = findHiddenSingleHint() {
+            showHintFound(hint)
+            return
+        }
+        
+        // 2. Orta seviye yöntemleri dene
+        
+        // 2.1 Açık Çiftler (Naked Pairs) kontrolı
+        if let hint = findNakedPairsHint() {
+            showHintFound(hint)
+            return
+        }
+        
+        // 2.2 Gizli Çiftler (Hidden Pairs) kontrolı
+        if let hint = findHiddenPairsHint() {
+            showHintFound(hint)
+            return
+        }
+        
+        // 3. Hiçbir ipucu bulunamazsa, en azından bir rastgele hücre öner
+        if let hint = findRandomHint() {
+            showHintFound(hint)
+            return
+        }
+        
+        // Hiçbir ipucu bulunamazsa, kullanıcıya bildir
+        showNoHintAvailable()
+    }
+    
+    // Hücre aday değerlerini saklayan matris
+    private var candidatesMatrix: [[[Int]]] = Array(repeating: Array(repeating: [], count: 9), count: 9)
+    
+    // Tahta üzerindeki tüm hücreler için adayları hesapla
+    private func analyzeBoardCandidates() {
+        // Boş bir aday matrisi oluştur
+        candidatesMatrix = Array(repeating: Array(repeating: [], count: 9), count: 9)
+        
+        // Tüm hücreler için adayları hesapla
+        for row in 0..<9 {
+            for col in 0..<9 {
+                // Hücre boşsa, adayları hesapla
+                if board.getValue(at: row, col: col) == nil {
+                    candidatesMatrix[row][col] = calculateCandidates(forRow: row, col: col)
+                }
+            }
+        }
+    }
+    
+    // Bir hücre için olası tüm adayları hesapla
+    private func calculateCandidates(forRow row: Int, col: Int) -> [Int] {
+        var candidates: [Int] = []
+        
+        // Satır, sütun ve bloktaki mevcut değerleri toplama
+        var usedValues = Set<Int>()
+        
+        // Aynı satırdaki değerler
+        for c in 0..<9 {
+            if let value = board.getValue(at: row, col: c), value > 0 {
+                usedValues.insert(value)
+            }
+        }
+        
+        // Aynı sütundaki değerler
+        for r in 0..<9 {
+            if let value = board.getValue(at: r, col: col), value > 0 {
+                usedValues.insert(value)
+            }
+        }
+        
+        // Aynı bloktaki değerler
+        let blockStartRow = (row / 3) * 3
+        let blockStartCol = (col / 3) * 3
+        
+        for r in blockStartRow..<blockStartRow+3 {
+            for c in blockStartCol..<blockStartCol+3 {
+                if let value = board.getValue(at: r, col: c), value > 0 {
+                    usedValues.insert(value)
+                }
+            }
+        }
+        
+        // Kullanılmayan değerleri aday olarak ekle
+        for value in 1...9 {
+            if !usedValues.contains(value) {
+                candidates.append(value)
+            }
+        }
+        
+        return candidates
+    }
+    
+    // 1.1 Tek Olasılık (Naked Single) - Bir hücreye sadece tek bir sayı konabiliyorsa
+    private func findNakedSingleHint() -> HintData? {
+        for row in 0..<9 {
+            for col in 0..<9 {
+                // Boş hücre ve sadece tek bir aday varsa
+                if board.getValue(at: row, col: col) == nil && candidatesMatrix[row][col].count == 1 {
+                    if let value = candidatesMatrix[row][col].first {
+                        // Doğru değeri kontrol et
+                        if let solution = board.getOriginalValue(at: row, col: col), solution == value {
+                            // İpucu oluştur
+                            let hint = createNakedSingleHint(row: row, col: col, value: value)
+                            return hint
+                        }
+                    }
+                }
+            }
+        }
+        return nil
+    }
+    
+    // Naked Single ipucu oluştur
+    private func createNakedSingleHint(row: Int, col: Int, value: Int) -> HintData {
+        let reason = "Bu hücreye sadece \(value) değeri konabilir, çünkü diğer tüm değerler aynı satır, sütun veya blokta zaten kullanılmış."
+        
+        let hint = HintData(row: row, column: col, value: value, reason: reason, technique: HintTechnique.nakedSingle)
+        
+        // Adım 1: İlişkili hücreleri vurgula
+        hint.addStep(title: "Satır, Sütun ve Blok İnceleme", 
+                  description: "Bu hücrenin aynı satır, sütun ve blokta bulunan diğer hücreler incelendi.")
+        hint.highlightRelatedCells(row: row, column: col, type: CellInteractionType.related)
+        
+        // Adım 2: Tek aday olduğunu göster
+        hint.addStep(title: "Tek Olasılık Tespiti", 
+                  description: "Bu hücreye sadece \(value) değeri konabilir, diğer tüm sayılar elendi.")
+        
+        // Aday değerleri göster
+        hint.candidateValues = [value]
+        
+        // Hücreyi çöz
+        enterValue(value, at: row, col: col)
+        hintCount += 1
+        remainingHints -= 1
+        
+        // Tahtayı güncelle
+        validateBoard()
+        updateUsedNumbers()
+        
+        return hint
+    }
+    
+    // 1.2 Tek Konum (Hidden Single) - Bir sayı, bir blok, satır veya sütunda sadece tek bir yere konabiliyorsa
+    private func findHiddenSingleHint() -> HintData? {
+        // Bloklar için kontrol
+        for blockIndex in 0..<9 {
+            let blockStartRow = (blockIndex / 3) * 3
+            let blockStartCol = (blockIndex % 3) * 3
+            
+            // 1-9 arası her değer için kontrol
+            for value in 1...9 {
+                var possiblePositions: [(row: Int, col: Int)] = []
+                
+                // Blok içindeki hücreler için kontrol
+                for r in blockStartRow..<blockStartRow+3 {
+                    for c in blockStartCol..<blockStartCol+3 {
+                        // Hücre boşsa ve adaylar arasında değer varsa
+                        if board.getValue(at: r, col: c) == nil && candidatesMatrix[r][c].contains(value) {
+                            possiblePositions.append((r, c))
+                        }
+                    }
+                }
+                
+                // Eğer değer sadece tek bir yere konabiliyorsa
+                if possiblePositions.count == 1 {
+                    let pos = possiblePositions[0]
+                    
+                    // Doğru değeri kontrol et
+                    if let solution = board.getOriginalValue(at: pos.row, col: pos.col), solution == value {
+                        // İpucu oluştur
+                        let hint = createHiddenSingleHint(row: pos.row, col: pos.col, value: value, region: .block, regionIndex: blockIndex)
+                        return hint
+                    }
+                }
+            }
+        }
+        
+        // Satırlar için kontrol
+        for row in 0..<9 {
+            // 1-9 arası her değer için kontrol
+            for value in 1...9 {
+                var possiblePositions: [(row: Int, col: Int)] = []
+                
+                // Satır içindeki hücreler için kontrol
+                for col in 0..<9 {
+                    // Hücre boşsa ve adaylar arasında değer varsa
+                    if board.getValue(at: row, col: col) == nil && candidatesMatrix[row][col].contains(value) {
+                        possiblePositions.append((row, col))
+                    }
+                }
+                
+                // Eğer değer sadece tek bir yere konabiliyorsa
+                if possiblePositions.count == 1 {
+                    let pos = possiblePositions[0]
+                    
+                    // Doğru değeri kontrol et
+                    if let solution = board.getOriginalValue(at: pos.row, col: pos.col), solution == value {
+                        // İpucu oluştur
+                        let hint = createHiddenSingleHint(row: pos.row, col: pos.col, value: value, region: .row, regionIndex: row)
+                        return hint
+                    }
+                }
+            }
+        }
+        
+        // Sütunlar için kontrol
+        for col in 0..<9 {
+            // 1-9 arası her değer için kontrol
+            for value in 1...9 {
+                var possiblePositions: [(row: Int, col: Int)] = []
+                
+                // Sütun içindeki hücreler için kontrol
+                for row in 0..<9 {
+                    // Hücre boşsa ve adaylar arasında değer varsa
+                    if board.getValue(at: row, col: col) == nil && candidatesMatrix[row][col].contains(value) {
+                        possiblePositions.append((row, col))
+                    }
+                }
+                
+                // Eğer değer sadece tek bir yere konabiliyorsa
+                if possiblePositions.count == 1 {
+                    let pos = possiblePositions[0]
+                    
+                    // Doğru değeri kontrol et
+                    if let solution = board.getOriginalValue(at: pos.row, col: pos.col), solution == value {
+                        // İpucu oluştur
+                        let hint = createHiddenSingleHint(row: pos.row, col: pos.col, value: value, region: .column, regionIndex: col)
+                        return hint
+                    }
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+    // Bölge türü enum'u
+    enum SudokuRegion {
+        case row, column, block
+    }
+    
+    // Hidden Single ipucu oluştur
+    private func createHiddenSingleHint(row: Int, col: Int, value: Int, region: SudokuRegion, regionIndex: Int) -> HintData {
+        var regionName = ""
+        var description = ""
+        
+        switch region {
+        case .row:
+            regionName = "\(row+1). satırda"
+            description = "\(value) sayısı, \(row+1). satırda sadece bu hücreye konabilir"
+        case .column:
+            regionName = "\(col+1). sütunda"
+            description = "\(value) sayısı, \(col+1). sütunda sadece bu hücreye konabilir"
+        case .block:
+            let blockRow = (regionIndex / 3) + 1
+            let blockCol = (regionIndex % 3) + 1
+            regionName = "\(blockRow). satır, \(blockCol). sütundaki 3x3 blokta"
+            description = "\(value) sayısı, bu 3x3 blokta sadece bu hücreye konabilir"
+        }
+        
+        let reason = "\(regionName) \(value) sayısı sadece bu hücreye konabilir."
+        
+        let hint = HintData(row: row, column: col, value: value, reason: reason, technique: HintTechnique.hiddenSingle)
+        
+        // Adım 1: Bölgeyi vurgula
+        hint.addStep(title: "Bölge İncelemesi", 
+                  description: "\(regionName) tüm hücreler incelendi.")
+        
+        // Bölgeye göre vurgulama yap
+        switch region {
+        case .row:
+            for c in 0..<9 {
+                if c != col {
+                    hint.highlightCell(row: row, column: c, type: CellInteractionType.related)
+                }
+            }
+        case .column:
+            for r in 0..<9 {
+                if r != row {
+                    hint.highlightCell(row: r, column: col, type: CellInteractionType.related)
+                }
+            }
+        case .block:
+            // 3x3 bloğu başlangıç koordinatlarını hesapla
+            let blockStartRow = (regionIndex / 3) * 3
+            let blockStartCol = (regionIndex % 3) * 3
+            
+            // Bloğu vurgula - highlightBlock bir metot olduğu için değer atayamayız
+            hint.highlightBlock(forRow: blockStartRow, column: blockStartCol)
+            
+            for r in blockStartRow..<blockStartRow+3 {
+                for c in blockStartCol..<blockStartCol+3 {
+                    if r != row || c != col {
+                        hint.highlightCell(row: r, column: c, type: CellInteractionType.related)
+                    }
+                }
+            }
+        }
+        
+        // Adım 2: Tek konumu göster
+        hint.addStep(title: "Tek Konum Tespiti", 
+                  description: description)
+        
+        // Hedef hücreyi vurgula
+        hint.highlightCell(row: row, column: col, type: CellInteractionType.target)
+        hint.candidateValues = [value]
+        
+        // Hücreyi çöz
+        enterValue(value, at: row, col: col)
+        hintCount += 1
+        remainingHints -= 1
+        
+        // Tahtayı güncelle
+        validateBoard()
+        updateUsedNumbers()
+        
+        return hint
+    }
+    
+    // 2.1 Naked Pairs (Açık Çiftler) - Aynı satır, sütun veya blokta aynı iki adaya sahip iki hücre
+    private func findNakedPairsHint() -> HintData? {
+        // Şimdilik basit bir yapıda, ileride geliştirilebilir
+        return nil as HintData?
+    }
+    
+    // 2.2 Hidden Pairs (Gizli Çiftler)
+    private func findHiddenPairsHint() -> HintData? {
+        // Şimdilik basit bir yapıda, ileride geliştirilebilir
+        return nil as HintData?
+    }
+    
+    // Son çare: Rastgele bir ipucu oluştur
+    private func findRandomHint() -> HintData? {
+        // Boş hücreleri bul
         var emptyPositions: [(row: Int, col: Int)] = []
         
-        // Tüm tahtayı tarayarak boş hücreleri bul
         for row in 0..<9 {
             for col in 0..<9 {
                 // Boş ve sabit olmayan hücreleri listeye ekle
@@ -435,54 +947,69 @@ class SudokuViewModel: ObservableObject {
             }
         }
         
-        // Boş hücre yoksa işlem yapma
+        // Boş hücre yoksa null dön
         if emptyPositions.isEmpty {
-            return
+            return nil as HintData?
         }
         
         // Rastgele bir boş hücre seç
         let randomIndex = Int.random(in: 0..<emptyPositions.count)
         let randomPosition = emptyPositions[randomIndex]
         
-        // Seçilen hücreyi otomatik olarak seçili hücre yap (görsel geri bildirim için)
-        selectCell(row: randomPosition.row, column: randomPosition.col)
-        
         // Orijinal değeri al
         if let solution = board.getOriginalValue(at: randomPosition.row, col: randomPosition.col) {
-            // Hücreyi çöz
-            enterValue(solution, at: randomPosition.row, col: randomPosition.col)
-            
-            // İpucu sayısını artır
-            hintCount += 1
-            
-            // Kalan ipucu hakkını azalt
-            remainingHints -= 1
-            
-            // Geçersiz hücreleri temizle
-            validateBoard()
-            
-            // Kullanılan rakamları güncelle
-            updateUsedNumbers()
-            
-            // İpucu açıklama bilgisini hazırla
-            let reason = generateHintExplanation(row: randomPosition.row, col: randomPosition.col, value: solution)
-            
-            // Debug log - ipucu verileri oluşturuluyor mu?
-            print("Hint data hazırlanıyor: Satır \(randomPosition.row+1), Sütun \(randomPosition.col+1), Değer \(solution)")
-            print("Açıklama: \(reason)")
-            
-            // Yeni ipucu veri sınıfı oluşturalım
-            let hintData = HintData(row: randomPosition.row, column: randomPosition.col, value: solution, reason: reason)
-            
-            // Önce verinin kendisini ayarla
-            self.hintExplanationData = hintData
-            
-            // Hemen görüntüle
-            self.showHintExplanation = true
+            return createRandomHint(row: randomPosition.row, col: randomPosition.col, value: solution)
         }
+        
+        return nil
     }
     
-    // Hata ayıklama - test için her zaman bir açıklama dönsün
+    // Rastgele ipucu oluştur
+    private func createRandomHint(row: Int, col: Int, value: Int) -> HintData {
+        let reason = "Sudoku kurallarına göre bu hücreye \(value) değeri konabilir."
+        
+        let hint = HintData(row: row, column: col, value: value, reason: reason, technique: HintTechnique.general)
+        
+        // Adım 1: İlişkili hücreleri vurgula
+        hint.addStep(title: "Boş Hücre Analizi", 
+                  description: "Bu hücre, sudoku tahtasında çözülebilir bir hücre olarak belirlendi.")
+        
+        // İlişkili hücreleri vurgula
+        hint.highlightRelatedCells(row: row, column: col, type: CellInteractionType.related)
+        
+        // Adım 2: Değeri göster
+        hint.addStep(title: "Değer Önerisi", 
+                  description: "Bu hücreye \(value) değeri konabilir.")
+        
+        // Hücreyi çöz
+        enterValue(value, at: row, col: col)
+        hintCount += 1
+        remainingHints -= 1
+        
+        // Tahtayı güncelle
+        validateBoard()
+        updateUsedNumbers()
+        
+        return hint
+    }
+    
+    // İpucu bulunamıyorsa bildiri göster
+    private func showNoHintAvailable() {
+        // Boş bir ipucu nesnesi oluştur
+        let hint = HintData(row: 0, column: 0, value: 0, reason: "Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir.", technique: .none)
+        
+        // Görüntüle
+        showHintFound(hint)
+    }
+    
+    // Bulunan ipucunu gösterir
+    private func showHintFound(_ hint: HintData) {
+        hintExplanationData = hint
+        currentHintStep = 0
+        showHintExplanation = true
+    }
+    
+    // Satır kontrolü
     private func generateHintExplanation(row: Int, col: Int, value: Int) -> String {
         var reasons: [String] = ["Sudoku kurallarına göre bu hücreye \(value) değeri en uygun değerdir."]
         

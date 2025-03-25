@@ -299,74 +299,85 @@ struct GameView: View {
     
     // Kontrol alanı - performans için önbelleklenmiş
     private var controlsView: some View {
-        VStack(spacing: 15) {
-            // Oyun durumu çubuğu
-            HStack {
-                // Oyun durumu bilgisi
-                Text(gameStateText)
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(gameStateColor)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(gameStateColor.opacity(0.15))
-                    )
-                
-                Spacer()
-                
-                // İpucu butonu
-                Button {
-                    if viewModel.remainingHints > 0 {
-                        viewModel.requestHint()
-                    } else {
-                        showNoHintsMessage = true
-                        // Otomatik olarak mesajı 2 saniye sonra gizle
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            showNoHintsMessage = false
+        ZStack(alignment: .bottom) {
+            // Ana kontrol konteynerı
+            VStack(spacing: 15) {
+                // Oyun durumu çubuğu
+                HStack {
+                    // Oyun durumu bilgisi
+                    Text(gameStateText)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(gameStateColor)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(gameStateColor.opacity(0.15))
+                        )
+                    
+                    Spacer()
+                    
+                    // İpucu butonu
+                    Button {
+                        if viewModel.remainingHints > 0 {
+                            viewModel.requestHint()
+                        } else {
+                            showNoHintsMessage = true
+                            // Otomatik olarak mesajı 2 saniye sonra gizle
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                showNoHintsMessage = false
+                            }
                         }
+                    } label: {
+                        HStack {
+                            Image(systemName: "lightbulb.fill")
+                            Text("İpucu (\(viewModel.remainingHints))")
+                        }
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color.orange)
+                        )
                     }
-                } label: {
-                    HStack {
-                        Image(systemName: "lightbulb.fill")
-                        Text("İpucu (\(viewModel.remainingHints))")
+                    .opacity(viewModel.remainingHints <= 0 ? 0.5 : 1.0)
+                    
+                    // Düzenleme butonu (Yeni oyun butonu yerine)
+                    Button {
+                        // Düzenleme işlemi (kalem modunu aktif et/deaktif et)
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            viewModel.pencilMode.toggle()
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: viewModel.pencilMode ? "pencil.circle.fill" : "pencil")
+                            Text(viewModel.pencilMode ? "Not Aktif" : "Not Modu")
+                        }
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(viewModel.pencilMode ? Color.purple : Color.gray)
+                        )
                     }
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule()
-                            .fill(Color.orange)
-                    )
                 }
-                .opacity(viewModel.remainingHints <= 0 ? 0.5 : 1.0)
+                .padding(.vertical, 5)
                 
-                // Düzenleme butonu (Yeni oyun butonu yerine)
-                Button {
-                    // Düzenleme işlemi (kalem modunu aktif et/deaktif et)
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        viewModel.pencilMode.toggle()
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: viewModel.pencilMode ? "pencil.circle.fill" : "pencil")
-                        Text(viewModel.pencilMode ? "Not Aktif" : "Not Modu")
-                    }
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule()
-                            .fill(viewModel.pencilMode ? Color.purple : Color.gray)
-                    )
-                }
+                // Numara tuşları
+                NumberPadView(viewModel: viewModel, isEnabled: viewModel.gameState == .playing)
             }
-            .padding(.vertical, 5)
             
-            // Numara tuşları
-            NumberPadView(viewModel: viewModel, isEnabled: viewModel.gameState == .playing)
+            // İpucu açıklama paneli - tüm butonların üstünde gösterilecek
+            if viewModel.showHintExplanation {
+                HintExplanationView(viewModel: viewModel)
+                    .transition(.move(edge: .bottom))
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showHintExplanation)
+                    .zIndex(100) // En üst katmanda göster
+            }
         }
     }
     

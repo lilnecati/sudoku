@@ -81,16 +81,7 @@ struct SudokuBoardView: View {
                 }
             }
             
-            // İpucu açıklama ekranı
-            if viewModel.showHintExplanation {
-                HintExplanationView(viewModel: viewModel)
-                    .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .scale(scale: 0.95)),
-                        removal: .opacity.combined(with: .scale(scale: 0.9))
-                    ))
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showHintExplanation)
-                    .zIndex(100) // En üst katmanda göster
-            }
+            // İpucu açıklama ekranı artık GameView'da gösteriliyor
         }
         .aspectRatio(1, contentMode: .fit)
     }
