@@ -6,6 +6,7 @@
 
 import SwiftUI
 import CoreData
+import Combine
 
 // Navigasyon sayfalarını enum olarak tanımla
 enum AppPage: Int, CaseIterable, Identifiable {
@@ -166,85 +167,13 @@ struct ContentView: View {
     
     // MARK: - Title View
     var titleView: some View {
-        VStack(spacing: 15) {
-            // Logo ve başlık bölümü - Yeni diktdörtgen derinlikli tasarım
-            ZStack {
-                // Daha derinlikli dikdörtgen konteyneri
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.blue.opacity(0.05),
-                                Color.purple.opacity(0.1)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 110, height: 110)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                    )
-                    // İçeri oyulmuş görünüm için gölge
-                    .shadow(color: Color.black.opacity(0.2), radius: 3, x: 2, y: 2)
-                    .shadow(color: Color.white.opacity(0.6), radius: 3, x: -2, y: -2)
-                
-                // Derinlik hissi için iç arka plan
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.blue.opacity(0.2),
-                                Color.purple.opacity(0.3)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 100, height: 100)
-                    .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 1)
-                
-                // Sudoku simgesi - içinde hareketli sayılar olan 3x3 grid
-                VStack(spacing: 3) {
-                    ForEach(0..<3) { row in
-                        HStack(spacing: 3) {
-                            ForEach(0..<3) { column in
-                                let index = row * 3 + column
-                                let currentNumber = logoNumbers[index]
-                                let isAnimating = index == animatingCellIndex
-                                
-                                ZStack {
-                                    // Hücre arka planı - içeri oyulmuş görünüm
-                                    RoundedRectangle(cornerRadius: 3)
-                                        .fill(Color.white.opacity(0.8))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 3)
-                                                .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
-                                        )
-                                        // İçeri oyulmuş görünüm
-                                        .shadow(color: Color.black.opacity(0.2), radius: 1, x: 1, y: 1)
-                                        .shadow(color: Color.white.opacity(0.5), radius: 1, x: -1, y: -1)
-                                        .frame(width: 18, height: 18)
-                                    
-                                    // Hücrelerdeki sayılar
-                                    if !(row == 1 && column == 1) { // Orta hücre hariç sayılar
-                                        Text("\(currentNumber)")
-                                            .font(.system(size: 9, weight: .bold))
-                                            .foregroundColor(Color.blue.opacity(0.8))
-                                            .scaleEffect(isAnimating ? 1.0 + cellAnimationProgress * 0.3 : 1.0)
-                                            .opacity(isAnimating ? 1.0 - cellAnimationProgress : 1.0)
-                                            // Derinlik hissi için metin gölgesi
-                                            .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0.5, y: 0.5)
-                                    }
-                                }
-                                // Orta hücre için özel dönme efekti
-                                .rotationEffect(Angle(degrees: (row == 1 && column == 1) ? rotationDegree : 0))
-                            }
-                        }
-                    }
-                }
-            }
+        VStack(spacing: 25) {
+            // Logoyu yukarı taşıyorum, boşluğu kaldırıyorum
+            
+            // 3D Animasyonlu Sudoku logosu
+            AnimatedSudokuLogo()
+                .frame(width: 140, height: 140)
+                .padding(10)
             .scaleEffect(titleScale)
             .opacity(titleOpacity)
             .onAppear {

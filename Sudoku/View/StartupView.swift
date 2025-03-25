@@ -25,7 +25,7 @@ struct StartupView: View {
     @State private var backgroundOpacity: Double = 0
     @State private var showGrid = false
     @State private var gridOpacity: Double = 0
-    @State private var rotationAngle: Double = 0
+    @State private var rotationDegrees: Double = 0
     @State private var showNumbers = false
     
     // Rastgele sayılar için
@@ -88,22 +88,11 @@ struct StartupView: View {
                     // Logo ve başlık - Ekranın ortasında
                     VStack(spacing: 20) {
                         Spacer()
-                        // Logo
-                        ZStack {
-                            ForEach(0..<4) { i in
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(gridColors[i % gridColors.count])
-                                    .frame(width: 100, height: 100)
-                                    .rotationEffect(.degrees(Double(i) * 90 / 4 + rotationAngle))
-                            }
-                            
-                            Text("9")
-                                .font(.system(size: 50, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
-                        }
-                        .frame(width: 120, height: 120)
-                        .scaleEffect(logoScale)
-                        .opacity(logoOpacity)
+                        // Logo - AnimatedSudokuLogo kullanıyoruz
+                        AnimatedSudokuLogo(isStartupScreen: true, continuousRotation: true)
+                            .frame(width: 120, height: 120)
+                            .scaleEffect(logoScale)
+                            .opacity(logoOpacity)
                         
                         // Uygulama adı
                         Text("SUDOKU")
@@ -200,70 +189,57 @@ struct StartupView: View {
             backgroundOpacity = 1.0
         }
         
-        // Logo animasyonu
-        withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) {
-            logoScale = 1.0
-            logoOpacity = 1.0
+        // Grid animasyonunu başlat
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            showGrid = true
+            withAnimation(.easeOut(duration: 1.0)) {
+                gridOpacity = 0.5
+            }
         }
         
-        // Metin animasyonu (logo animasyonundan sonra)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            withAnimation(.easeInOut(duration: 0.6)) {
+        // Logo animasyonu
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(.easeOut(duration: 1.0)) {
+                logoScale = 1.0
+                logoOpacity = 1.0
+            }
+        }
+        
+        // Metin animasyonu
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation(.easeOut(duration: 1.0)) {
                 textOpacity = 1.0
             }
         }
         
-        // Logo dönme animasyonu
-        withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
-            rotationAngle = 360
-        }
-        
-        // Grid animasyonu
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            showGrid = true
-            withAnimation(.easeInOut(duration: 1.0)) {
-                gridOpacity = 0.3
-            }
-        }
-        
-        // Sayıları göster
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        // Sayılar animasyonu
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
             showNumbers = true
         }
     }
     
     // Rastgele sayılar oluştur
     private func generateRandomNumbers() {
-        let count = 15 // Sayı adedi
-        var newNumbers: [Int] = []
-        var newPositions: [CGPoint] = []
-        var newColors: [Color] = []
-        var newSizes: [CGFloat] = []
-        
         // Ekran boyutları
         let screenWidth = UIScreen.main.bounds.width
         let screenHeight = UIScreen.main.bounds.height
         
-        for _ in 0..<count {
-            // 1-9 arası rastgele sayı
-            newNumbers.append(Int.random(in: 1...9))
+        // 15 rastgele sayı oluştur
+        for _ in 0..<15 {
+            numbers.append(Int.random(in: 1...9))
             
-            // Rastgele konum - alt kısımdan uzak tut
-            let x = CGFloat.random(in: 50...(screenWidth - 50))
-            let y = CGFloat.random(in: 100...(screenHeight - 180)) // Alt kısımdan daha uzak tut
-            newPositions.append(CGPoint(x: x, y: y))
+            // Rastgele pozisyon
+            let x = CGFloat.random(in: 20...(screenWidth - 20))
+            let y = CGFloat.random(in: 20...(screenHeight - 20))
+            numberPositions.append(CGPoint(x: x, y: y))
             
             // Rastgele renk
-            newColors.append(gridColors.randomElement() ?? .blue)
+            let randomColor = gridColors[Int.random(in: 0..<gridColors.count)]
+            numberColors.append(randomColor.opacity(Double.random(in: 0.5...0.9)))
             
             // Rastgele boyut
-            newSizes.append(CGFloat.random(in: 20...40))
+            numberSizes.append(CGFloat.random(in: 14...32))
         }
-        
-        numbers = newNumbers
-        numberPositions = newPositions
-        numberColors = newColors
-        numberSizes = newSizes
     }
 }
 
@@ -273,24 +249,20 @@ struct SudokuGridAnimation: View {
     
     var body: some View {
         ZStack {
-            // Yatay çizgiler
-            ForEach(0..<10) { i in
-                Rectangle()
-                    .fill(Color.primary.opacity(i % 3 == 0 ? 0.3 : 0.1))
-                    .frame(width: 300, height: i % 3 == 0 ? 2 : 1)
-                    .offset(y: CGFloat(i * 30) - 135)
-            }
+            // Arka plan grid
+            GridPattern(rows: 9, columns: 9, lineWidth: 1)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                .background(Color.clear)
+                .scaleEffect(isAnimating ? 1.1 : 1.0)
+                .opacity(isAnimating ? 0.3 : 0.5)
             
-            // Dikey çizgiler
-            ForEach(0..<10) { i in
-                Rectangle()
-                    .fill(Color.primary.opacity(i % 3 == 0 ? 0.3 : 0.1))
-                    .frame(width: i % 3 == 0 ? 2 : 1, height: 300)
-                    .offset(x: CGFloat(i * 30) - 135)
-            }
+            // Ön plan grid
+            GridPattern(rows: 3, columns: 3, lineWidth: 2)
+                .stroke(Color.primary.opacity(0.2), lineWidth: 2)
+                .background(Color.clear)
+                .scaleEffect(isAnimating ? 1.05 : 1.0)
+                .opacity(isAnimating ? 0.5 : 0.3)
         }
-        .rotationEffect(.degrees(isAnimating ? 5 : -5))
-        .scaleEffect(isAnimating ? 1.05 : 0.95)
         .onAppear {
             withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
                 isAnimating = true
@@ -299,6 +271,31 @@ struct SudokuGridAnimation: View {
     }
 }
 
-#Preview {
-    StartupView()
+// Grid deseni
+struct GridPattern: Shape {
+    let rows: Int
+    let columns: Int
+    let lineWidth: CGFloat
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        
+        // Yatay çizgiler
+        let rowHeight = rect.height / CGFloat(rows)
+        for i in 0...rows {
+            let y = rowHeight * CGFloat(i)
+            path.move(to: CGPoint(x: 0, y: y))
+            path.addLine(to: CGPoint(x: rect.width, y: y))
+        }
+        
+        // Dikey çizgiler
+        let columnWidth = rect.width / CGFloat(columns)
+        for i in 0...columns {
+            let x = columnWidth * CGFloat(i)
+            path.move(to: CGPoint(x: x, y: 0))
+            path.addLine(to: CGPoint(x: x, y: rect.height))
+        }
+        
+        return path
+    }
 }

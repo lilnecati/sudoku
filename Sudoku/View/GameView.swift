@@ -157,38 +157,6 @@ struct GameView: View {
             // Uyarı ve bilgi ekranları
             overlayViews
             
-            // Geri butonu - sol üst köşede
-            VStack {
-                HStack {
-                    Button(action: {
-                        // Direkt olarak ana sayfaya dön
-                        dismiss()
-                    }) {
-                        HStack(spacing: 5) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 16, weight: .semibold))
-                            
-                            Text("Geri")
-                                .font(.system(size: 16, weight: .medium))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(Color.black.opacity(0.5))
-                        )
-                    }
-                    .padding(.leading, 16)
-                    .padding(.top, 8)
-                    
-                    Spacer()
-                }
-                
-                Spacer()
-            }
-            .zIndex(10)
-            
             // Rehber katmanı
             if tutorialManager.isActive {
                 TutorialOverlayView(tutorialManager: tutorialManager) {

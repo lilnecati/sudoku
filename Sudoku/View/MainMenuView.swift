@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import Combine
 
 struct MainMenuView: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -8,8 +9,9 @@ struct MainMenuView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 25) {
-                // Logo ve başlık
+                // Animasyonlu logo ve başlık
                 VStack(spacing: 10) {
+                    // Sistem ikonu kullanarak logo
                     Image(systemName: "grid.circle.fill")
                         .font(.system(size: 80))
                         .foregroundStyle(
