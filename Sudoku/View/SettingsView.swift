@@ -655,6 +655,23 @@ struct SettingsView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                
+                Divider()
+                    .padding(.vertical, 8)
+                
+                HStack(spacing: 12) {
+                    Image(systemName: "person.fill.badge.plus")
+                        .foregroundColor(.blue)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Geliştirici")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
+                        Text("Necati YILDIRIM")
+                            .font(.headline)
+                    }
+                }
             }
             .padding()
             .background(

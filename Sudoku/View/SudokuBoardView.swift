@@ -176,6 +176,9 @@ struct SudokuBoardView: View {
         let isSameValue = self.hasSameValue(row: row, column: column)
         let isInvalid = viewModel.invalidCells.contains(Position(row: row, col: column))
         
+        // İpucu hedef hücresi mi kontrol et
+        let isHintTarget = isHintTargetCell(row: row, column: column)
+        
         // Kalem işaretlerini al
         let pencilMarks = viewModel.getPencilMarks(at: row, col: column)
         
@@ -190,6 +193,7 @@ struct SudokuBoardView: View {
             isMatchingValue: isSameValue,
             isInvalid: isInvalid,
             pencilMarks: pencilMarks,
+            isHintTarget: isHintTarget,
 
             onCellTapped: {
                 // Sadece oyun devam ederken hücre seçimine izin ver
@@ -284,6 +288,22 @@ struct SudokuBoardView: View {
         return Color.blue.opacity(0.8)
     }
     
+    // İpucu hedef hücresi mi kontrol et
+    private func isHintTargetCell(row: Int, column: Int) -> Bool {
+        guard let hintData = viewModel.hintExplanationData,
+              viewModel.showHintExplanation else {
+            return false
+        }
+        
+        // İpucu hedef hücresi veya vurgulanan hücrelerden biriyse true döndür
+        if hintData.row == row && hintData.column == column {
+            return true
+        }
+        
+        // Vurgulanan diğer hücreler
+        return hintData.highlightedCells.contains { $0.row == row && $0.column == column && $0.type == .target }
+    }
+    
     // Hücre vurgulanmış mı
     private func isHighlighted(row: Int, column: Int) -> Bool {
         guard let selectedCell = viewModel.selectedCell else {
@@ -328,6 +348,7 @@ extension SudokuCellView: Equatable {
         lhs.isSelected == rhs.isSelected &&
         lhs.isHighlighted == rhs.isHighlighted &&
         lhs.isMatchingValue == rhs.isMatchingValue &&
-        lhs.isInvalid == rhs.isInvalid
+        lhs.isInvalid == rhs.isInvalid &&
+        lhs.isHintTarget == rhs.isHintTarget
     }
 }

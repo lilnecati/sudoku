@@ -11,6 +11,7 @@ struct SudokuCellView: View {
     let isMatchingValue: Bool
     let isInvalid: Bool
     let pencilMarks: Set<Int>
+    let isHintTarget: Bool // İpucu gösterildiğinde hedef olup olmadığı
     let onCellTapped: () -> Void
     
     @Environment(\.colorScheme) var colorScheme
@@ -163,10 +164,15 @@ struct SudokuCellView: View {
     
     // Hücre arka plan rengi - Tek renk temali modern tasarım
     private func getCellBackgroundColor() -> Color {
-        // Ana tema rengi: Teal (turkuaz)
+        // Ana tema rengi: Teal (turkuaz) - ipucu için mavi renk
         let themeColor = Color.teal
+        let hintColor = Color.blue
         
-        if isSelected {
+        // İpucu hedefiyse mavi renkle vurgula (görsellerdeki gibi)
+        if isHintTarget {
+            return colorScheme == .dark ? hintColor.opacity(0.45) : hintColor.opacity(0.25) 
+        }
+        else if isSelected {
             // Seçili hücre - en koyu ton
             return colorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.25)
         } else if isHighlighted {
@@ -183,10 +189,15 @@ struct SudokuCellView: View {
     
     // Hücre kenar rengi - Tek renk temalı kenarlar
     private func getCellBorderColor() -> Color {
-        // Ana tema rengi: Teal (turkuaz)
+        // Ana tema rengi: Teal (turkuaz), ipucu için mavi
         let themeColor = Color.teal
+        let hintColor = Color.blue
         
-        if isSelected {
+        // İpucu hedefiyse daha koyu mavi kenarlık (görsellerdeki gibi)
+        if isHintTarget {
+            return colorScheme == .dark ? hintColor.opacity(1.0) : hintColor.opacity(0.8)
+        }
+        else if isSelected {
             // Seçili hücre kenarı - tam yoğunluk
             return themeColor
         } else if isMatchingValue {
@@ -206,7 +217,10 @@ struct SudokuCellView: View {
         // Ana tema rengi: Teal (turkuaz)
         let themeColor = Color.teal
         
-        if isFixed {
+        if isHintTarget {
+            // İpucu hedefi - mavi (görseldeki gibi)
+            return Color.blue
+        } else if isFixed {
             // Sabit sayılar - standart siyah/beyaz (maksimum okunabilirlik)
             return colorScheme == .dark ? Color.white : Color.black
         } else if isUserEntered {
@@ -224,14 +238,14 @@ struct SudokuCellView_Previews: PreviewProvider {
     static var previews: some View {
         VStack {
             HStack {
-                SudokuCellView(row: 0, column: 0, value: 5, isFixed: true, isUserEntered: false, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [], onCellTapped: {})
-                SudokuCellView(row: 0, column: 1, value: 3, isFixed: false, isUserEntered: true, isSelected: true, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [], onCellTapped: {})
-                SudokuCellView(row: 0, column: 2, value: 8, isFixed: false, isUserEntered: true, isSelected: false, isHighlighted: true, isMatchingValue: false, isInvalid: false, pencilMarks: [], onCellTapped: {})
+                SudokuCellView(row: 0, column: 0, value: 5, isFixed: true, isUserEntered: false, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [], isHintTarget: false, onCellTapped: {})
+                SudokuCellView(row: 0, column: 1, value: 3, isFixed: false, isUserEntered: true, isSelected: true, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [], isHintTarget: false, onCellTapped: {})
+                SudokuCellView(row: 0, column: 2, value: 8, isFixed: false, isUserEntered: true, isSelected: false, isHighlighted: true, isMatchingValue: false, isInvalid: false, pencilMarks: [], isHintTarget: false, onCellTapped: {})
             }
             HStack {
-                SudokuCellView(row: 1, column: 0, value: 5, isFixed: false, isUserEntered: true, isSelected: false, isHighlighted: false, isMatchingValue: true, isInvalid: false, pencilMarks: [], onCellTapped: {})
-                SudokuCellView(row: 1, column: 1, value: 4, isFixed: false, isUserEntered: true, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: true, pencilMarks: [], onCellTapped: {})
-                SudokuCellView(row: 1, column: 2, value: nil, isFixed: false, isUserEntered: false, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [1, 2, 5], onCellTapped: {})
+                SudokuCellView(row: 1, column: 0, value: 5, isFixed: false, isUserEntered: true, isSelected: false, isHighlighted: false, isMatchingValue: true, isInvalid: false, pencilMarks: [], isHintTarget: false, onCellTapped: {})
+                SudokuCellView(row: 1, column: 1, value: 4, isFixed: false, isUserEntered: true, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: true, pencilMarks: [], isHintTarget: false, onCellTapped: {})
+                SudokuCellView(row: 1, column: 2, value: nil, isFixed: false, isUserEntered: false, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [1, 2, 5], isHintTarget: false, onCellTapped: {})
             }
         }
         .padding()
