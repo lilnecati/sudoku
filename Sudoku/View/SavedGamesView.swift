@@ -239,12 +239,18 @@ struct SavedGamesView: View {
                     
                     Spacer()
                     
-                    // Devam et butonu - direkt callback ile oyunu ContentView'a gönder
+                    // Devam et butonu - oyunu yükle ve ContentView'a dön
                     Button(action: {
                         // Animasyon ile yükleme göster
                         withAnimation {
                             isAnimating = true
                         }
+                        
+                        print("\n📌 SavedGamesView: Oyun yükleniyor ID: \(game.value(forKey: "id") ?? "ID yok")")
+                        
+                        // Önce SudokuViewModel'e oyunu yükle
+                        viewModel.loadGame(from: game)
+                        print("📌 SavedGamesView: Oyun yüklendi, callback çağrılıyor")
                         
                         // Kısa bir gecikme ile callback'i çağır
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {

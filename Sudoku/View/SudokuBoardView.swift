@@ -180,6 +180,7 @@ struct SudokuBoardView: View {
             column: column,
             value: cellValue,
             isFixed: isOriginal,
+            isUserEntered: viewModel.userEnteredValues[row][column],
             isSelected: isSelected,
             isHighlighted: isHighlighted,
             isMatchingValue: isSameValue,

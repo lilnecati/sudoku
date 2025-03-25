@@ -206,18 +206,26 @@ struct ContentView: View {
                 if let lastGame = result.first {
                     // Yükleme işlemi başladı
                     isLoading = true
+                    print("Son kaydedilmiş oyun yükleniyor... ID: \(lastGame.value(forKey: "id") ?? "ID yok")")
                     
-                    // Kaydedilmiş oyunu yükle
+                    // Kaydedilmiş oyunu SudokuViewModel'e yükle
                     viewModel.loadGame(from: lastGame)
                     
                     // Oyun görünümünü göster
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         isLoading = false
                         withAnimation {
-                            // Kaydedilmiş oyunu göster
-                            gameToLoad = lastGame
-                            showSavedGame = true
+                            // Doğrudan showGame'i aktif et
+                            showGame = true
                         }
+                    }
+                } else {
+                    print("Kaydedilmiş oyun bulunamadı, yeni oyun başlatılıyor")
+                    // Kaydedilmiş oyun yoksa yeni oyun başlat
+                    withAnimation {
+                        selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[selectedDifficulty]
+                        viewModel.newGame(difficulty: selectedCustomDifficulty)
+                        showGame = true
                     }
                 }
             } catch {
@@ -429,7 +437,7 @@ struct ContentView: View {
                 Group {
                     if case .home = currentPage {
                         if showSavedGame {
-                            // Direkt olarak oyun görünümünü göster - viewModel'i kullan çünkü yükleme işlemi önceden yapıldı
+                            // Sadece kaydedilmiş oyunlar için oyun görünümünü doğrudan göster
                             GameView(existingViewModel: viewModel)
                         } else {
                             mainContentView
@@ -496,8 +504,7 @@ struct ContentView: View {
             }
             .edgesIgnoringSafeArea(.bottom)
             .fullScreenCover(isPresented: $showGame) {
-                // Her zaman yeni bir oyun başlat
-                // Kayıtlı oyunlar için showSavedGame kullanılıyor, bu yüzden burada sadece yeni oyun başlatmaya odaklan
+                // Yeni oyun için seçilen zorluk seviyesinde oyun başlat
                 GameView(difficulty: selectedCustomDifficulty)
             }
             .fullScreenCover(isPresented: $showTutorial) {

@@ -5,6 +5,7 @@ struct SudokuCellView: View {
     let column: Int
     let value: Int?
     let isFixed: Bool
+    let isUserEntered: Bool
     let isSelected: Bool
     let isHighlighted: Bool
     let isMatchingValue: Bool
@@ -188,8 +189,10 @@ struct SudokuCellView: View {
     private func getTextColor() -> Color {
         if isFixed {
             return colorScheme == .dark ? Color.white : Color.primary
-        } else {
+        } else if isUserEntered {
             return colorScheme == .dark ? Color.blue : Color.blue
+        } else {
+            return colorScheme == .dark ? Color.gray : Color.primary
         }
     }
 }
@@ -199,14 +202,14 @@ struct SudokuCellView_Previews: PreviewProvider {
     static var previews: some View {
         VStack {
             HStack {
-                SudokuCellView(row: 0, column: 0, value: 5, isFixed: true, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [], onCellTapped: {})
-                SudokuCellView(row: 0, column: 1, value: 3, isFixed: false, isSelected: true, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [], onCellTapped: {})
-                SudokuCellView(row: 0, column: 2, value: 8, isFixed: false, isSelected: false, isHighlighted: true, isMatchingValue: false, isInvalid: false, pencilMarks: [], onCellTapped: {})
+                SudokuCellView(row: 0, column: 0, value: 5, isFixed: true, isUserEntered: false, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [], onCellTapped: {})
+                SudokuCellView(row: 0, column: 1, value: 3, isFixed: false, isUserEntered: true, isSelected: true, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [], onCellTapped: {})
+                SudokuCellView(row: 0, column: 2, value: 8, isFixed: false, isUserEntered: true, isSelected: false, isHighlighted: true, isMatchingValue: false, isInvalid: false, pencilMarks: [], onCellTapped: {})
             }
             HStack {
-                SudokuCellView(row: 1, column: 0, value: 5, isFixed: false, isSelected: false, isHighlighted: false, isMatchingValue: true, isInvalid: false, pencilMarks: [], onCellTapped: {})
-                SudokuCellView(row: 1, column: 1, value: 4, isFixed: false, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: true, pencilMarks: [], onCellTapped: {})
-                SudokuCellView(row: 1, column: 2, value: nil, isFixed: false, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [1, 2, 5], onCellTapped: {})
+                SudokuCellView(row: 1, column: 0, value: 5, isFixed: false, isUserEntered: true, isSelected: false, isHighlighted: false, isMatchingValue: true, isInvalid: false, pencilMarks: [], onCellTapped: {})
+                SudokuCellView(row: 1, column: 1, value: 4, isFixed: false, isUserEntered: true, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: true, pencilMarks: [], onCellTapped: {})
+                SudokuCellView(row: 1, column: 2, value: nil, isFixed: false, isUserEntered: false, isSelected: false, isHighlighted: false, isMatchingValue: false, isInvalid: false, pencilMarks: [1, 2, 5], onCellTapped: {})
             }
         }
         .padding()

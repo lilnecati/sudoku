@@ -86,13 +86,14 @@ struct GameView: View {
                     }
                     .padding(.horizontal)
                 }
+                Spacer()
+                
                 // Üst bilgi alanı
                 headerView
                     .padding(.horizontal)
+                    .padding(.bottom, 5) // Tablo ile üst bilgi arasında ufak boşluk
                     .opacity(isHeaderVisible ? 1 : 0)
                     .offset(y: isHeaderVisible ? 0 : -20)
-                
-                Spacer()
                 
                 // Sudoku tahtası - sabit boyutlu konteyner içinde
                 ZStack {
@@ -129,7 +130,7 @@ struct GameView: View {
                         .padding(.horizontal)
                         .clipped() // Taşmaları engelle
                 }
-                .padding(.bottom, 10)
+                .padding(.bottom, 70) // Tab bar için ekstra boşluk ekledim
                 .opacity(isControlsVisible ? 1 : 0)
                 .offset(y: isControlsVisible ? 0 : 20)
                 // Sabit boyutlar

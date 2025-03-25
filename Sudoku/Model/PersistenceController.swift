@@ -103,9 +103,13 @@ class PersistenceController {
     
     // MARK: - Game Management
     
-    func saveGame(board: [[Int]], difficulty: String, elapsedTime: TimeInterval) {
+    // Benzersiz ID ile yeni bir oyun kaydet
+    func saveGame(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval) {
         let context = container.viewContext
         let game = SavedGame(context: context)
+        
+        // Benzersiz tanımlayıcı ata
+        game.setValue(gameID, forKey: "id")
         
         // Tahtayı serialleştir (boardState artık dizi olarak serialleştirilecek)
         let boardDict: [String: Any] = [
@@ -125,8 +129,43 @@ class PersistenceController {
         
         do {
             try context.save()
+            print("✅ Yeni oyun başarıyla kaydedildi, ID: \(gameID)")
         } catch {
-            print("Oyun kaydedilemedi: \(error)")
+            print("❌ Oyun kaydedilemedi: \(error)")
+        }
+    }
+    
+    // Mevcut bir oyunu güncelle
+    func updateSavedGame(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval) {
+        let context = container.viewContext
+        
+        // ID'ye göre oyunu bul
+        let request: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
+        
+        do {
+            let games = try context.fetch(request)
+            
+            if let existingGame = games.first {
+                // Veri güncellemesi
+                let boardDict: [String: Any] = [
+                    "board": board,
+                    "difficulty": difficulty
+                ]
+                
+                existingGame.boardState = try? JSONSerialization.data(withJSONObject: boardDict)
+                existingGame.elapsedTime = elapsedTime
+                existingGame.dateCreated = Date()  // Son değişiklik zamanı
+                
+                try context.save()
+                print("✅ Oyun başarıyla güncellendi, ID: \(gameID)")
+            } else {
+                print("❓ Güncellenecek oyun bulunamadı, ID: \(gameID). Yeni oyun olarak kaydediliyor.")
+                // Oyun bulunamadıysa yeni oluştur
+                saveGame(gameID: gameID, board: board, difficulty: difficulty, elapsedTime: elapsedTime)
+            }
+        } catch {
+            print("❌ Oyun güncellenemedi: \(error)")
         }
     }
     
@@ -142,9 +181,27 @@ class PersistenceController {
         request.sortDescriptors = [NSSortDescriptor(keyPath: \SavedGame.dateCreated, ascending: false)]
         
         do {
-            return try context.fetch(request)
+            let savedGames = try context.fetch(request)
+            print("📊 Yüklenen oyun sayısı: \(savedGames.count)")
+            
+            // SavedGame nesnelerinin ID'leri için kontrol
+            for (index, game) in savedGames.enumerated() {
+                if game.value(forKey: "id") == nil {
+                    // ID yoksa yeni bir ID ata (geriye dönük uyumluluk için)
+                    let newID = UUID()
+                    game.setValue(newID, forKey: "id")
+                    print("🔄 Oyun #\(index) için eksik ID oluşturuldu: \(newID)")
+                }
+            }
+            
+            // Değişiklikler varsa kaydet
+            if context.hasChanges {
+                try context.save()
+            }
+            
+            return savedGames
         } catch {
-            print("Kayıtlı oyunlar yüklenemedi: \(error)")
+            print("❌ Kayıtlı oyunlar yüklenemedi: \(error)")
         }
         return []
     }
