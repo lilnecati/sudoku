@@ -252,6 +252,12 @@ struct SavedGamesView: View {
                         viewModel.loadGame(from: game)
                         print("📌 SavedGamesView: Oyun yüklendi, callback çağrılıyor")
                         
+                        // Navigation bar'ı gizlemek için bildirim gönder
+                        NotificationCenter.default.post(name: Notification.Name("HideNavigationBar"), object: nil)
+                        
+                        // showSavedGame değişkenini true yapmak için bildirim gönder
+                        NotificationCenter.default.post(name: Notification.Name("ShowSavedGame"), object: nil)
+                        
                         // Kısa bir gecikme ile callback'i çağır
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             // Callback'i çağırarak oyunu ilet

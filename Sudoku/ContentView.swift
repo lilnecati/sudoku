@@ -123,6 +123,37 @@ struct ContentView: View {
             }
         }
         
+        // Navigation bar'ı gizleme bildirimini dinle
+        NotificationCenter.default.addObserver(forName: Notification.Name("HideNavigationBar"),
+                                               object: nil, queue: .main) { _ in
+            // Navigation bar'ı gizlemek için UIKit kodunu çalıştır
+            DispatchQueue.main.async {
+                // UIKit navigation controller'ı gizle
+                let appearance = UINavigationBarAppearance()
+                appearance.configureWithTransparentBackground()
+                appearance.backgroundColor = .clear
+                appearance.shadowColor = .clear
+                
+                UINavigationBar.appearance().standardAppearance = appearance
+                UINavigationBar.appearance().compactAppearance = appearance
+                UINavigationBar.appearance().scrollEdgeAppearance = appearance
+            }
+        }
+        
+        // Kaydedilmiş oyunu gösterme bildirimini dinle
+        NotificationCenter.default.addObserver(forName: Notification.Name("ShowSavedGame"),
+                                               object: nil, queue: .main) { _ in
+            // Kaydedilmiş oyunu göster
+            DispatchQueue.main.async {
+                withAnimation {
+                    // Önce ana sayfaya geç
+                    self.currentPage = .home
+                    // Sonra kaydedilmiş oyunu göster
+                    self.showSavedGame = true
+                }
+            }
+        }
+        
         // Kaydedilmiş oyun yükleme bildirimini dinle
         NotificationCenter.default.addObserver(forName: Notification.Name("LoadSavedGame"),
                                                object: nil, queue: .main) { notification in
@@ -761,8 +792,8 @@ struct ContentView: View {
                 Group {
                     if case .home = currentPage {
                         if showSavedGame {
-                            // Sadece kaydedilmiş oyunlar için oyun görünümünü doğrudan göster
-                            GameView(existingViewModel: viewModel)
+                            // Boş bir görünüm göster, oyun fullScreenCover ile gösterilecek
+                            Color.clear
                         } else {
                             mainContentView
                                 .transition(.opacity)
@@ -866,6 +897,10 @@ struct ContentView: View {
             .fullScreenCover(isPresented: $showGame) {
                 // Yeni oyun için seçilen zorluk seviyesinde oyun başlat
                 GameView(difficulty: selectedCustomDifficulty)
+            }
+            .fullScreenCover(isPresented: $showSavedGame) {
+                // Kaydedilmiş oyun için mevcut viewModel ile oyun başlat
+                GameView(existingViewModel: viewModel)
             }
             .fullScreenCover(isPresented: $showTutorial) {
                 // Tutorial görünümü

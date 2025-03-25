@@ -1,5 +1,28 @@
 import SwiftUI
 import CoreData
+import UIKit
+
+// Navigation bar'ı tamamen gizlemek için özel ViewModifier
+struct HideNavigationBar: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .navigationBarHidden(true)
+            .navigationBarBackButtonHidden(true)
+            .navigationBarTitle("", displayMode: .inline)
+            .toolbar(.hidden, for: .navigationBar)
+            .onAppear {
+                // UIKit navigation controller'ı gizle
+                let appearance = UINavigationBarAppearance()
+                appearance.configureWithTransparentBackground()
+                appearance.backgroundColor = .clear
+                appearance.shadowColor = .clear
+                
+                UINavigationBar.appearance().standardAppearance = appearance
+                UINavigationBar.appearance().compactAppearance = appearance
+                UINavigationBar.appearance().scrollEdgeAppearance = appearance
+            }
+    }
+}
 
 struct GameView: View {
     @StateObject var viewModel: SudokuViewModel
@@ -62,12 +85,21 @@ struct GameView: View {
     // Var olan viewModel ile başlatma
     init(existingViewModel: SudokuViewModel) {
         _viewModel = StateObject(wrappedValue: existingViewModel)
+        
+        // Navigation bar'ı gizlemek için bildirim gönder
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("HideNavigationBar"), object: nil)
+        }
     }
     
     @State private var showCompletionView = false
     
     var body: some View {
         ZStack {
+            // Tab bar'ı ve navigation bar'ı gizle
+            Color.clear
+                .toolbar(.hidden, for: .tabBar)
+                .toolbar(.hidden, for: .navigationBar)
             // Aktif olmadığında gizlenecek boş alan (sayfa geçişleri için)
             // Arka plan
             LinearGradient(gradient: Gradient(colors: gradientColors), startPoint: .top, endPoint: .bottom)
@@ -130,7 +162,7 @@ struct GameView: View {
                         .padding(.horizontal)
                         .clipped() // Taşmaları engelle
                 }
-                .padding(.bottom, 70) // Tab bar için ekstra boşluk ekledim
+                .padding(.bottom, 15) // Tab bar'ı kaldırdık, padding azaltıldı
                 .opacity(isControlsVisible ? 1 : 0)
                 .offset(y: isControlsVisible ? 0 : 20)
                 // Sabit boyutlar
@@ -192,11 +224,14 @@ struct GameView: View {
                 }
             }
         }
+        .modifier(HideNavigationBar())
         .onAppear {
             setupInitialAnimations()
             setupTimerUpdater()
         }
-        .navigationBarHidden(true)
+        // Modern navigasyon çubuğu gizleme
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbarRole(.navigationStack)
         .sheet(isPresented: $showDifficultyPicker) {
             difficultyPickerView
         }
