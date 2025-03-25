@@ -395,6 +395,26 @@ class SudokuViewModel: ObservableObject {
     
     // MARK: - İpucu ve Yardım
     
+    // İpucu açıklama bilgisi
+    @Published var showHintExplanation: Bool = false
+    // Hint açıklama veri modeli - sınıf olarak tanımlayalım
+    class HintData: ObservableObject, Identifiable {
+        let id = UUID()
+        let row: Int
+        let column: Int
+        let value: Int
+        let reason: String
+        
+        init(row: Int, column: Int, value: Int, reason: String) {
+            self.row = row
+            self.column = column
+            self.value = value
+            self.reason = reason
+        }
+    }
+    
+    @Published var hintExplanationData: HintData? = nil
+    
     // İpucu talep et - optimize edildi
     func requestHint() {
         // İpucu hakkı kalmadıysa ipucu verme
@@ -443,7 +463,84 @@ class SudokuViewModel: ObservableObject {
             
             // Kullanılan rakamları güncelle
             updateUsedNumbers()
+            
+            // İpucu açıklama bilgisini hazırla
+            let reason = generateHintExplanation(row: randomPosition.row, col: randomPosition.col, value: solution)
+            
+            // Debug log - ipucu verileri oluşturuluyor mu?
+            print("Hint data hazırlanıyor: Satır \(randomPosition.row+1), Sütun \(randomPosition.col+1), Değer \(solution)")
+            print("Açıklama: \(reason)")
+            
+            // Yeni ipucu veri sınıfı oluşturalım
+            let hintData = HintData(row: randomPosition.row, column: randomPosition.col, value: solution, reason: reason)
+            
+            // Önce verinin kendisini ayarla
+            self.hintExplanationData = hintData
+            
+            // Hemen görüntüle
+            self.showHintExplanation = true
         }
+    }
+    
+    // Hata ayıklama - test için her zaman bir açıklama dönsün
+    private func generateHintExplanation(row: Int, col: Int, value: Int) -> String {
+        var reasons: [String] = ["Sudoku kurallarına göre bu hücreye \(value) değeri en uygun değerdir."]
+        
+        // Satır kontrolü
+        var rowHasValue = false
+        for c in 0..<9 where c != col {
+            if board.getValue(at: row, col: c) == value {
+                rowHasValue = true
+                break
+            }
+        }
+        if !rowHasValue {
+            reasons.append("\(row+1). satırda başka \(value) olmadığı için")
+        }
+        
+        // Sütun kontrolü
+        var colHasValue = false
+        for r in 0..<9 where r != row {
+            if board.getValue(at: r, col: col) == value {
+                colHasValue = true
+                break
+            }
+        }
+        if !colHasValue {
+            reasons.append("\(col+1). sütunda başka \(value) olmadığı için")
+        }
+        
+        // 3x3 blok kontrolü
+        let blockRow = (row / 3) * 3
+        let blockCol = (col / 3) * 3
+        var blockHasValue = false
+        
+        outerLoop: for r in blockRow..<blockRow+3 {
+            for c in blockCol..<blockCol+3 {
+                if r == row && c == col { continue }
+                if board.getValue(at: r, col: c) == value {
+                    blockHasValue = true
+                    break outerLoop
+                }
+            }
+        }
+        if !blockHasValue {
+            reasons.append("Bu 3x3 blokta başka \(value) olmadığı için")
+        }
+        
+        // Eğer özel bir sebep bulunamadıysa
+        if reasons.isEmpty {
+            return "Sudoku kurallarına göre bu hücreye \(value) gelmelidir."
+        }
+        
+        // Sebepleri birleştir
+        return reasons.joined(separator: ", ")
+    }
+    
+    // İpucu açıklama penceresini kapat
+    func closeHintExplanation() {
+        showHintExplanation = false
+        hintExplanationData = nil
     }
     
     // MARK: - Oyun İstatistikleri

@@ -22,8 +22,10 @@ class PowerSavingManager: ObservableObject {
     @Published private(set) var batteryLevel: Float = 1.0
     @Published private(set) var isCharging: Bool = false
     
-    // Düşük pil eşiği
-    private let lowBatteryThreshold: Float = 0.2 // %20
+    // Düşük pil eşikleri - kademeli optimizasyon için
+    private let criticalBatteryThreshold: Float = 0.15 // %15
+    private let lowBatteryThreshold: Float = 0.25 // %25
+    private let mediumBatteryThreshold: Float = 0.40 // %40
     
     // Otomatik güç tasarrufu durumu
     @Published private(set) var isAutoPowerSavingActive: Bool = false
@@ -64,26 +66,86 @@ class PowerSavingManager: ObservableObject {
         checkAutoPowerSaving()
     }
     
-    // Otomatik güç tasarrufu kontrolü
-    private func checkAutoPowerSaving() {
-        if autoPowerSaving && !isCharging && batteryLevel <= lowBatteryThreshold {
-            // Pil seviyesi düşük ve şarj edilmiyor, otomatik güç tasarrufu etkinleştir
-            if !powerSavingMode {
-                powerSavingMode = true
-                isAutoPowerSavingActive = true
+    // Güç tasarrufu modu seviyesi
+    @Published private(set) var powerSavingLevel: PowerSavingLevel = .off
+    
+    // Güç tasarrufu seviyeleri
+    enum PowerSavingLevel: Int, CaseIterable {
+        case off = 0
+        case low = 1
+        case medium = 2
+        case high = 3
+        
+        var displayName: String {
+            switch self {
+            case .off: return "Kapalı"
+            case .low: return "Düşük"
+            case .medium: return "Orta"
+            case .high: return "Yüksek"
             }
-        } else if isAutoPowerSavingActive && (isCharging || batteryLevel > lowBatteryThreshold) {
-            // Şarj ediliyor veya pil seviyesi yeterli, otomatik güç tasarrufunu devre dışı bırak
-            if powerSavingMode {
+        }
+    }
+    
+    // Otomatik güç tasarrufu kontrolü - kademeli
+    private func checkAutoPowerSaving() {
+        if !autoPowerSaving || isCharging {
+            // Otomatik mod kapalı veya şarj oluyorsa
+            if isAutoPowerSavingActive {
                 powerSavingMode = false
+                powerSavingLevel = .off
                 isAutoPowerSavingActive = false
             }
+            return
+        }
+        
+        // Pil seviyesine göre kademeli güç tasarrufu
+        var newLevel: PowerSavingLevel = .off
+        
+        if batteryLevel <= criticalBatteryThreshold {
+            // Kritik seviye - maksimum tasarruf
+            newLevel = .high
+        } else if batteryLevel <= lowBatteryThreshold {
+            // Düşük seviye - yüksek tasarruf
+            newLevel = .medium
+        } else if batteryLevel <= mediumBatteryThreshold {
+            // Orta seviye - hafif tasarruf
+            newLevel = .low
+        }
+        
+        // Güç tasarrufu seviyesini güncelle
+        if newLevel != .off {
+            powerSavingMode = true
+            powerSavingLevel = newLevel
+            isAutoPowerSavingActive = true
+        } else if isAutoPowerSavingActive {
+            // Pil seviyesi yeterli, güç tasarrufunu kapat
+            powerSavingMode = false
+            powerSavingLevel = .off
+            isAutoPowerSavingActive = false
         }
     }
     
     // Güç tasarrufu modunu manuel olarak değiştir
     func togglePowerSavingMode() {
         powerSavingMode.toggle()
+        
+        // Manuel değişiklik yapıldığında otomatik modu sıfırla
+        if powerSavingMode {
+            isAutoPowerSavingActive = false
+            powerSavingLevel = .medium // Varsayılan olarak orta seviye
+        } else {
+            powerSavingLevel = .off
+        }
+        
+        // Dokunsal geribildirim
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+    }
+    
+    // Güç tasarrufu seviyesini manuel olarak ayarla
+    func setPowerSavingLevel(_ level: PowerSavingLevel) {
+        powerSavingLevel = level
+        powerSavingMode = (level != .off)
         
         // Manuel değişiklik yapıldığında otomatik modu sıfırla
         if powerSavingMode {
@@ -103,19 +165,56 @@ class PowerSavingManager: ObservableObject {
         set { autoPowerSaving = newValue }
     }
     
-    // Animasyon hızı faktörü
+    // Animasyon hızı faktörü - seviyeye göre
     var animationSpeedFactor: Double {
-        return isPowerSavingEnabled ? 0.5 : 1.0
+        if !isPowerSavingEnabled {
+            return 1.0
+        }
+        
+        switch powerSavingLevel {
+        case .low: return 0.8
+        case .medium: return 0.6
+        case .high: return 0.4
+        case .off: return 1.0
+        }
     }
     
-    // Animasyon karmaşıklığı faktörü
+    // Animasyon karmaşıklığı faktörü - seviyeye göre
     var animationComplexityFactor: Double {
-        return isPowerSavingEnabled ? 0.3 : 1.0
+        if !isPowerSavingEnabled {
+            return 1.0
+        }
+        
+        switch powerSavingLevel {
+        case .low: return 0.7
+        case .medium: return 0.5
+        case .high: return 0.2
+        case .off: return 1.0
+        }
     }
     
-    // Görsel efekt kalitesi faktörü
+    // Görsel efekt kalitesi faktörü - seviyeye göre
     var visualEffectQualityFactor: Double {
-        return isPowerSavingEnabled ? 0.5 : 1.0
+        if !isPowerSavingEnabled {
+            return 1.0
+        }
+        
+        switch powerSavingLevel {
+        case .low: return 0.8
+        case .medium: return 0.5
+        case .high: return 0.3
+        case .off: return 1.0
+        }
+    }
+    
+    // Arka plan işlemlerini optimize et
+    var shouldOptimizeBackgroundTasks: Bool {
+        return isPowerSavingEnabled && (powerSavingLevel == .medium || powerSavingLevel == .high)
+    }
+    
+    // Yüksek kaliteli görseller kullan
+    var shouldUseHighQualityRendering: Bool {
+        return !isPowerSavingEnabled || powerSavingLevel == .low
     }
 }
 
@@ -125,25 +224,58 @@ extension View {
         _ animation: Animation? = .default,
         value: Value
     ) -> some View {
-        let isPowerSaving = PowerSavingManager.shared.isPowerSavingEnabled
+        let powerManager = PowerSavingManager.shared
+        let isPowerSaving = powerManager.isPowerSavingEnabled
         
+        if !isPowerSaving {
+            return self.animation(animation, value: value)
+        }
+        
+        // Güç tasarrufu seviyesine göre animasyon hızını ayarla
         return self.animation(
-            isPowerSaving ? animation?.speed(PowerSavingManager.shared.animationSpeedFactor) : animation,
+            animation?.speed(powerManager.animationSpeedFactor),
             value: value
         )
     }
     
+    // Güç tasarrufu moduna göre görsel efektleri ayarla
     func powerSavingAwareEffect(
-        isEnabled: Bool = true
+        isEnabled: Bool = true,
+        shadowRadius: CGFloat = 3,
+        shadowOpacity: Double = 0.1
     ) -> some View {
-        let isPowerSaving = PowerSavingManager.shared.isPowerSavingEnabled
+        let powerManager = PowerSavingManager.shared
+        let isPowerSaving = powerManager.isPowerSavingEnabled
         
-        if isPowerSaving || !isEnabled {
+        if !isEnabled || isPowerSaving && powerManager.powerSavingLevel != .low {
+            // Gölge yok - maksimum performans
+            return AnyView(self)
+        } else if isPowerSaving && powerManager.powerSavingLevel == .low {
+            // Düşük kalite gölge
+            return AnyView(
+                self.shadow(color: Color.black.opacity(shadowOpacity/2), radius: shadowRadius/2, x: 0, y: 1)
+            )
+        } else {
+            // Tam kalite gölge
+            return AnyView(
+                self.shadow(color: Color.black.opacity(shadowOpacity), radius: shadowRadius, x: 0, y: 1)
+            )
+        }
+    }
+    
+    // Güç tasarrufu moduna göre render kalitesi ve yöntemi
+    func powerSavingAwareRendering(isEnabled: Bool = true) -> some View {
+        let powerManager = PowerSavingManager.shared
+        
+        if !isEnabled || !powerManager.isPowerSavingEnabled || powerManager.powerSavingLevel == .low {
+            // Yüksek kalite render - drawingGroup ile Metal hızlandırması
+            return AnyView(self.drawingGroup())
+        } else if powerManager.powerSavingLevel == .medium {
+            // Orta kalite render - basit optimizasyon
             return AnyView(self)
         } else {
-            return AnyView(
-                self.shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
-            )
+            // Düşük kalite render - animasyonsuz basit görünüm
+            return AnyView(self)
         }
     }
 }

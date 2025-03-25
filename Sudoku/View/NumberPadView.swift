@@ -85,10 +85,23 @@ struct NumberPadView: View {
         let remaining = 9 - (viewModel.usedNumbers[number] ?? 0)
         let isDisabled = (remaining <= 0 && !viewModel.pencilMode) || !isEnabled
         let buttonColor = buttonColors[number] ?? .blue
+        @State var isPressed = false
         
         return Button(action: {
             // Titreşim geri bildirimi
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            
+            // Basılı efekti için animasyon
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                isPressed = true
+            }
+            
+            // Tuş etkisini tamamla
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isPressed = false
+                }
+            }
             
             // Numara değerini ayarla
             viewModel.setValueAtSelectedCell(number)
@@ -97,11 +110,13 @@ struct NumberPadView: View {
             ZStack {
                 // Boş sabit arka plan - boyut stabilizasyonu için
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(buttonColor.opacity(0.1))
+                    .fill(buttonColor.opacity(isDisabled ? 0.05 : 0.1))
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(buttonColor.opacity(0.3), lineWidth: 1)
+                            .stroke(buttonColor.opacity(isDisabled ? 0.15 : 0.3), lineWidth: 1)
                     )
+                    .scaleEffect(isPressed ? 0.95 : 1.0)
+                    .shadow(color: buttonColor.opacity(isDisabled ? 0 : 0.3), radius: isPressed ? 1 : 3, x: 0, y: isPressed ? 1 : 2)
                 
                 // İçerik alanı - sabit ayarlanmış
                 VStack(spacing: 2) {
@@ -126,6 +141,8 @@ struct NumberPadView: View {
                             Text("\(remaining)")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(buttonColor.opacity(0.6))
+                                .transition(.opacity.combined(with: .scale))
+                                .id("remaining_\(number)_\(remaining)")
                         }
                     }
                 }
@@ -144,8 +161,8 @@ struct NumberPadView: View {
         .opacity(isDisabled ? 0.7 : 1)
         // Sabit ID - pencilMode durumunu ID'den çıkardım, böylece layout kimliği değişmiyor
         .id("numberBtn_\(number)")
-        // Animasyon yok
-        .animation(nil, value: viewModel.pencilMode)
+        // Kalem modu değişikliğinde hafif animasyon
+        .animation(.easeInOut(duration: 0.2), value: viewModel.pencilMode)
     }
     
     // Kalem modu tuşu - sabit boyutla optimize edilmiş

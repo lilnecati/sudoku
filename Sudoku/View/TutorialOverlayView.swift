@@ -7,6 +7,10 @@ struct TutorialOverlayView: View {
     // Animasyon değişkenleri
     @State private var showHighlight = false
     @State private var pulseOpacity = 0.0
+    @State private var cardScale = 0.95
+    @State private var contentOpacity = 0.0
+    @State private var showSpotlight = false
+    @StateObject private var powerManager = PowerSavingManager.shared
     
     var body: some View {
         let currentStep = tutorialManager.currentStep
@@ -16,19 +20,27 @@ struct TutorialOverlayView: View {
             Color.black.opacity(0.7)
                 .ignoresSafeArea()
                 .allowsHitTesting(true)
+                .opacity(showSpotlight ? 0.85 : 0.7)
+                .animation(.easeInOut(duration: 0.3), value: showSpotlight)
             
             // Rehber içeriği
             VStack {
+                Spacer()
+                
+                // Ana içerik kartı
+                VStack {
                 // Başlık
                 Text(currentStep.title)
                     .font(.title2.bold())
                     .foregroundColor(.white)
                     .padding(.top)
+                    .id("title_\(currentStep.rawValue)") // Animasyon için benzersiz ID
                 
                 // İlerleme göstergesi
                 ProgressView(value: tutorialManager.progressPercentage, total: 1.0)
-                    .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                    .progressViewStyle(LinearProgressViewStyle(tint: Color.teal))
                     .padding(.horizontal)
+                    .animation(.easeInOut, value: tutorialManager.progressPercentage)
                 
                 // Açıklama
                 Text(currentStep.description)
@@ -39,8 +51,22 @@ struct TutorialOverlayView: View {
                     .frame(maxWidth: 350)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.gray.opacity(0.3))
+                            .fill(Color.teal.opacity(0.2))
+                            .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
                     )
+                    .id("desc_\(currentStep.rawValue)") // Animasyon için benzersiz ID
+                
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color(.systemGray6).opacity(0.9))
+                        .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
+                )
+                .scaleEffect(cardScale)
+                .opacity(contentOpacity)
+                
+                Spacer()
                 
                 // Butonlar
                 HStack {
@@ -59,7 +85,8 @@ struct TutorialOverlayView: View {
                             .padding(.vertical, 10)
                             .background(
                                 Capsule()
-                                    .fill(Color.gray.opacity(0.3))
+                                    .fill(Color.gray.opacity(0.5))
+                                    .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 1)
                             )
                             .foregroundColor(.white)
                         }
@@ -93,14 +120,17 @@ struct TutorialOverlayView: View {
                     }
                 }
                 .padding(.horizontal, 40)
-                .padding(.bottom, 40)
+                .padding(.vertical, 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.black.opacity(0.5))
+                )
+                .scaleEffect(cardScale)
+                .opacity(contentOpacity)
             }
             .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.black.opacity(0.7))
                     .shadow(radius: 10)
-            )
+            
             .frame(maxWidth: 400)
             .padding()
             
@@ -181,6 +211,8 @@ struct TutorialOverlayView: View {
 // Yardımcı buton görünümü
 struct TutorialButton: View {
     var action: () -> Void
+    @State private var isHovering = false
+    @State private var wasPressed = false
     
     var body: some View {
         Button(action: action) {

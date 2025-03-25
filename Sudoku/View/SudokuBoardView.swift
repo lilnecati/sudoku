@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct SudokuBoardView: View {
     @ObservedObject var viewModel: SudokuViewModel
@@ -78,6 +79,17 @@ struct SudokuBoardView: View {
                 if oldFrame != newFrame {
                     _ = updateSizes(from: newFrame, cellSize: localCellSize)
                 }
+            }
+            
+            // İpucu açıklama ekranı
+            if viewModel.showHintExplanation {
+                HintExplanationView(viewModel: viewModel)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.95)),
+                        removal: .opacity.combined(with: .scale(scale: 0.9))
+                    ))
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showHintExplanation)
+                    .zIndex(100) // En üst katmanda göster
             }
         }
         .aspectRatio(1, contentMode: .fit)
@@ -163,6 +175,7 @@ struct SudokuBoardView: View {
     
     // Hücre görünümü - performans için optimize edildi
     private func cellView(row: Int, column: Int) -> some View {
+        // Animasyon değişkenleri
         let cellValue = viewModel.board.getValue(row: row, column: column)
         let isOriginal = viewModel.board.isOriginalValue(row: row, column: column)
         let isSelected = viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column
@@ -186,16 +199,27 @@ struct SudokuBoardView: View {
             isMatchingValue: isSameValue,
             isInvalid: isInvalid,
             pencilMarks: pencilMarks,
+
             onCellTapped: {
                 // Sadece oyun devam ederken hücre seçimine izin ver
                 if viewModel.gameState == .playing || viewModel.gameState == .ready {
+                    // Hafif dokunsal geri bildirim
+                    let generator = UIImpactFeedbackGenerator(style: .light)
+                    generator.impactOccurred()
                     // Aynı hücreye yeniden basıldığında değişiklik yoksa animasyon yapma
                     if viewModel.selectedCell?.row != row || viewModel.selectedCell?.column != column {
-                        let feedback = UIImpactFeedbackGenerator(style: .medium)
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            let feedback = UIImpactFeedbackGenerator(style: .medium)
+                            feedback.impactOccurred()
+                            viewModel.selectCell(row: row, column: column)
+                        }
+                    } else {
+                        // Zaten seçiliyse sadece dokunsal geri bildirim yap
+                        let feedback = UIImpactFeedbackGenerator(style: .light)
                         feedback.impactOccurred()
                     }
                     
-                    viewModel.selectCell(row: row, column: column)
+                    // viewModel.selectCell(row: row, column: column) - animasyon eklediğimiz için yukarı taşındı
                 }
             }
         )
