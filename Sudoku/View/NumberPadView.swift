@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct NumberPadView: View {
+    @AppStorage("enableHapticFeedback") private var enableHapticFeedback = true
+    @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic = true
     @ObservedObject var viewModel: SudokuViewModel
     var isEnabled: Bool
     @Environment(\.colorScheme) var colorScheme
@@ -88,8 +90,10 @@ struct NumberPadView: View {
         @State var isPressed = false
         
         return Button(action: {
-            // Titreşim geri bildirimi
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            // Titreşim geri bildirimi - ayarlara bağlı
+            if enableHapticFeedback && enableNumberInputHaptic {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            }
             
             // Basılı efekti için animasyon
             withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
@@ -170,8 +174,10 @@ struct NumberPadView: View {
         let buttonColor: Color = viewModel.pencilMode ? .purple : .gray
         
         return Button(action: {
-            // Titreşim geri bildirimi
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            // Titreşim geri bildirimi - ayarlara bağlı
+            if enableHapticFeedback && enableNumberInputHaptic {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            }
             
             // Kalem modunu değiştir - normal animasyon, layout boyutu animasyonsuz
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -233,8 +239,10 @@ struct NumberPadView: View {
         let isDisabled = !isEnabled || viewModel.selectedCell == nil
         
         return Button(action: {
-            // Titreşim geri bildirimi
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            // Titreşim geri bildirimi - ayarlara bağlı
+            if enableHapticFeedback && enableNumberInputHaptic {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            }
             
             // Seçili hücreyi temizle
             viewModel.setValueAtSelectedCell(nil)

@@ -507,9 +507,11 @@ SudokuViewModel, Sudoku oyun mantığını yöneten ve kullanıcı etkileşimler
 | `timer` | 41 | `Timer?` | Oyun süresini takip eden zamanlayıcı |
 | `startTime` | 42 | `Date?` | Oyunun başlangıç zamanı |
 | `pausedElapsedTime` | 44 | `TimeInterval` | Duraklatıldığında saklanan geçen süre |
-| `enableHapticFeedback` | 74 | `Bool` | Dokunsal geri bildirimin etkin olup olmadığı |
-| `enableSounds` | 75 | `Bool` | Ses geri bildiriminin etkin olup olmadığı |
-| `playerName` | 76 | `String` | Oyuncu adı |
+| `enableHapticFeedback` | 74 | `Bool` | Genel dokunsal geri bildirimin etkin olup olmadığı |
+| `enableNumberInputHaptic` | 75 | `Bool` | Sayı girişinde titreşim geri bildiriminin etkin olup olmadığı |
+| `enableCellTapHaptic` | 76 | `Bool` | Hücre seçiminde titreşim geri bildiriminin etkin olup olmadığı |
+| `enableSounds` | 77 | `Bool` | Ses geri bildiriminin etkin olup olmadığı |
+| `playerName` | 78 | `String` | Oyuncu adı |
 | `feedbackGenerator` | 79 | `UIImpactFeedbackGenerator` | Dokunsal geri bildirim motoru |
 | `savedGames` | 87 | `[NSManagedObject]` | Kaydedilmiş oyunların listesi |
 | `usedNumbers` | 90 | `[Int: Int]` | Kullanılan rakamların sayısını takip eden sözlük |
@@ -530,6 +532,7 @@ SudokuViewModel, Sudoku oyun mantığını yöneten ve kullanıcı etkileşimler
 ### Önemli Özellikler
 
 - **Otomatik Kaydetme**: Oyun arka plana alındıktan sonra 2 dakika veya daha uzun süre geçerse, oyun otomatik olarak kayıtlara eklenir ve ana menüye dönülür. Oyunun kayıtlara eklenebilmesi için en az 1 dakika oynanmış ve en az 1 hamle yapılmış olması gerekir. Oyun "(Arka Plan)" eki ile kaydedilir.
+- **Özelleştirilebilir Titreşim Ayarları**: Genel titreşim ayarının yanında, sayı girişi ve hücre seçimi için ayrı ayrı titreşim ayarları bulunur. Ana titreşim ayarı kapalıysa diğer titreşim ayarları da otomatik olarak devre dışı kalır.
 - **Performans Optimizasyonları**: Kalem işaretleri ve geçerli değerler için önbellekleme mekanizmaları kullanılır.
 - **Hata Yönetimi**: Maksimum 3 hata yapılabilir, sonrasında oyun kaybedilir.
 - **İpucu Sistemi**: Her oyunda 3 ipucu hakkı vardır.
@@ -853,7 +856,7 @@ ScoreboardView, skor tablosu ekranının görünümüdür.
 
 ## SettingsView.swift
 
-SettingsView, ayarlar ekranının görünümüdür.
+SettingsView, ayarlar ekranının görünümüdür. Kullanıcının görünüm, ses, titreşim ve oyun tercihleri gibi çeşitli ayarları değiştirmesine olanak sağlar.
 
 ### Değişkenler
 
@@ -1096,7 +1099,7 @@ SudokuViewModel, Sudoku oyununun tüm mantığını yöneten ana sınıftır. Oy
 - **Optimizasyon Mekanizmaları**: Hızlı erişim için kalem işaretlerini ve geçerli değerleri önbelleğe alan optimizasyonlar
 - **Zaman Yönetimi**: Oyun süresini takip eden ve duruma göre sıfırlayan zamanlama fonksiyonları
 - **Bildirim Sistemi**: Oyunun duraklatma, devam etme ve sıfırlama gibi durumlarını yönetmek için bildirim sistemi
-- **Dokunsal Geri Bildirim**: Hareketlere ve hatalara doğrudan dokunsal geri bildirimler sağlayan mekanizmalar
+- **Özelleştirilebilir Dokunsal Geri Bildirim**: Hareketlere ve hatalara doğrudan dokunsal geri bildirimler sağlayan, kullanıcı tarafından özelleştirilebilir mekanizmalar. Genel titreşim ayarının yanında, sayı girişi ve hücre seçimi için ayrı ayrı titreşim ayarları bulunur.
 
 ---
 

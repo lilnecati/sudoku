@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SudokuCellView: View {
+    @AppStorage("enableHapticFeedback") private var enableHapticFeedback = true
+    @AppStorage("enableCellTapHaptic") private var enableCellTapHaptic = true
     let row: Int
     let column: Int
     let value: Int?
@@ -22,10 +24,12 @@ struct SudokuCellView: View {
     var body: some View {
         GeometryReader { geometry in
             Button(action: {
-                // Hücre seçildiğinde titreşim geri bildirimi
-                let generator = UIImpactFeedbackGenerator(style: .medium)
-                generator.prepare()
-                generator.impactOccurred()
+                // Hücre seçildiğinde titreşim geri bildirimi - ayarlara bağlı
+                if enableHapticFeedback && enableCellTapHaptic {
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.prepare()
+                    generator.impactOccurred()
+                }
                 
                 // Güç tasarrufu modunda değilse seçim animasyonunu tetikle
                 if !powerManager.isPowerSavingEnabled {

@@ -10,6 +10,8 @@ struct SettingsView: View {
     @AppStorage("defaultDifficulty") private var defaultDifficulty: String = SudokuBoard.Difficulty.easy.rawValue
     @AppStorage("darkMode") private var darkMode: Bool = false
     @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
+    @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic: Bool = true
+    @AppStorage("enableCellTapHaptic") private var enableCellTapHaptic: Bool = true
     @AppStorage("enableSoundEffects") private var enableSoundEffects: Bool = true
     @AppStorage("useSystemAppearance") private var useSystemAppearance: Bool = false
     @AppStorage("textSizePreference") private var textSizeString: String = TextSizePreference.medium.rawValue
@@ -170,6 +172,8 @@ struct SettingsView: View {
     // Tüm ayarları sıfırla
     private func resetAllSettings() {
         enableHapticFeedback = true
+        enableNumberInputHaptic = true
+        enableCellTapHaptic = true
         enableSoundEffects = true
         darkMode = false
         useSystemAppearance = false
@@ -407,12 +411,17 @@ struct SettingsView: View {
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
             
-            // Titreşim geri bildirimi
+            // Titreşim geri bildirimi ana ayarı
             HStack {
                 Text("Titreşim Geri Bildirimi")
                 Spacer()
                 Button(action: {
                     enableHapticFeedback.toggle()
+                    // Ana ayar kapatılırsa tüm alt ayarları da kapat
+                    if !enableHapticFeedback {
+                        enableNumberInputHaptic = false
+                        enableCellTapHaptic = false
+                    }
                 }) {
                     Image(systemName: enableHapticFeedback ? "checkmark.circle.fill" : "circle")
                         .foregroundColor(enableHapticFeedback ? .blue : .gray)
@@ -425,6 +434,52 @@ struct SettingsView: View {
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
+            
+            // Sayı girişinde titreşim
+            if enableHapticFeedback {
+                HStack {
+                    Text("Sayı Girişinde Titreşim")
+                    Spacer()
+                    Button(action: {
+                        enableNumberInputHaptic.toggle()
+                    }) {
+                        Image(systemName: enableNumberInputHaptic ? "checkmark.circle.fill" : "circle")
+                            .foregroundColor(enableNumberInputHaptic ? .blue : .gray)
+                            .font(.system(size: 24))
+                    }
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.leading, 20) // İç içe görünüm için girintili gösteriyoruz
+                .transition(.opacity)
+            }
+            
+            // Hücre seçiminde titreşim
+            if enableHapticFeedback {
+                HStack {
+                    Text("Hücre Seçiminde Titreşim")
+                    Spacer()
+                    Button(action: {
+                        enableCellTapHaptic.toggle()
+                    }) {
+                        Image(systemName: enableCellTapHaptic ? "checkmark.circle.fill" : "circle")
+                            .foregroundColor(enableCellTapHaptic ? .blue : .gray)
+                            .font(.system(size: 24))
+                    }
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.leading, 20) // İç içe görünüm için girintili gösteriyoruz
+                .transition(.opacity)
+            }
             
             // Ses efektleri
             HStack {

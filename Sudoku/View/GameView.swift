@@ -22,6 +22,10 @@ struct GameView: View {
     // Premium ve ipucu ayarları
     @AppStorage("isPremiumUnlocked") private var isPremiumUnlocked: Bool = false
     
+    // Titreşim ayarları
+    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
+    @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic: Bool = true
+    
     // Hint messages
     @State private var showNoHintsMessage: Bool = false
     
@@ -195,9 +199,11 @@ struct GameView: View {
             }
         }
         .onChange(of: viewModel.pencilMode) { oldValue, newValue in
-            // Hafif titreşim
-            let feedback = UIImpactFeedbackGenerator(style: .light)
-            feedback.impactOccurred()
+            // Hafif titreşim - ayarlara bağlı
+            if enableHapticFeedback && enableNumberInputHaptic {
+                let feedback = UIImpactFeedbackGenerator(style: .light)
+                feedback.impactOccurred()
+            }
         }
         .onChange(of: viewModel.gameState) { oldValue, newValue in
             if newValue == .completed && oldValue != .completed {

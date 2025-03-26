@@ -73,6 +73,8 @@ class SudokuViewModel: ObservableObject {
     
     // Geri bildirim için
     @AppStorage("enableHapticFeedback") private var enableHapticFeedback = true
+    @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic = true
+    @AppStorage("enableCellTapHaptic") private var enableCellTapHaptic = true
     @AppStorage("enableSounds") private var enableSounds = true
     @AppStorage("playerName") private var playerName = "Oyuncu"
     
@@ -144,7 +146,7 @@ class SudokuViewModel: ObservableObject {
         }
         
         // Dokunsal geri bildirim - sadece gerekirse
-        if enableHapticFeedback {
+        if enableHapticFeedback && enableCellTapHaptic {
             feedbackGenerator.prepare() // Geri bildirimi hazırla (daha hızlı yanıt)
             feedbackGenerator.impactOccurred(intensity: 0.5) // Daha hafif titreşim (pil tasarrufu)
         }
@@ -196,7 +198,7 @@ class SudokuViewModel: ObservableObject {
             invalidCells.insert(position)
             
             // Hata geri bildirimi
-            if enableHapticFeedback {
+            if enableHapticFeedback && enableNumberInputHaptic {
                 let errorFeedback = UINotificationFeedbackGenerator()
                 errorFeedback.notificationOccurred(.error)
             }
@@ -1134,7 +1136,7 @@ class SudokuViewModel: ObservableObject {
             board.setValue(at: row, col: col, value: value)
             
             // Sayı girildiğinde titreşim geri bildirimi
-            if enableHapticFeedback && value != nil {
+            if enableHapticFeedback && enableNumberInputHaptic && value != nil {
                 let feedback = UIImpactFeedbackGenerator(style: .medium)
                 feedback.impactOccurred()
             }
