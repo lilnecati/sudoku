@@ -446,6 +446,39 @@ SettingsView, kullanıcının uygulama tercihlerini ve ayarlarını yönetebilec
 - Erişilebilirlik: Metin boyutu ayarları ve görsel tercihler
 - Geribildirim kontrolleri: Dokunsal geri bildirim ve ses efektleri ayarları
 
+## NumberPadView.swift
+
+NumberPadView, Sudoku oyununda kullanıcının hücrelere değer girmesini sağlayan sanal numara tuş takımını oluşturan görünümdür.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `viewModel` | 4 | `SudokuViewModel` | Oyun mantığını yöneten view model |
+| `isEnabled` | 5 | `Bool` | Tuş takımının etkin olup olmadığı durumu |
+| `colorScheme` | 6 | `ColorScheme` | Uygulama renk şeması (açık/karanlık mod) |
+| `columns` | 9-14 | `[GridItem]` | LazyVGrid için sütun yapılandırması |
+| `disabledOpacity` | 18 | `Double` | Devre dışı olduğunda opasite değeri |
+| `buttonColors` | 19-29 | `[Int: Color]` | Her numara için belirlenmiş renkler |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 31-81 | Ana görünüm yapısını oluşturur |
+| `numberButton(for:)` | 84-166 | Belirli bir numara için tuş görünümünü oluşturur |
+| `pencilModeButton` | 169-230 | Kalem modu tuşu görünümünü oluşturur |
+| `eraseButton` | 233-280 | Silme tuşu görünümünü oluşturur |
+
+
+### Önemli Özellikler
+
+- Performans optimizasyonu: `drawingGroup()`, `equatable(by:)` ve `fixedSize` ile yüksek verimlilik
+- Dokunsal geribildirim: Tuşlara basıldığında titretim geribildirimi
+- Kalem modu: Not almak için kalem modu destekler
+- Kalan rakam gösterimi: Her bir rakamın tablodaki kalan sayısını gösterir
+- Duyarlı tasarım: GeometryReader kullanarak ekran boyutlarına uyum sağlar
+
 ---
 
 ## SudokuViewModel.swift
@@ -749,6 +782,51 @@ PencilMarksView, Sudoku hücrelerinde kalem işaretlerini (notları) gösteren g
 
 ---
 
+## SudokuCellView.swift
+
+SudokuCellView, Sudoku tahtasındaki her bir hücreyi temsil eden görünüm bileşenidir.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|---------|
+| `row` | 4 | `Int` | Hücrenin bulunduğu satır |
+| `column` | 5 | `Int` | Hücrenin bulunduğu sütun |
+| `value` | 6 | `Int?` | Hücredeki değer (boşsa null) |
+| `isFixed` | 7 | `Bool` | Hücrenin sabit (silinemeyen) olup olmadığı |
+| `isUserEntered` | 8 | `Bool` | Değerin kullanıcı tarafından girilip girilmediği |
+| `isSelected` | 9 | `Bool` | Hücrenin seçili olup olmadığı |
+| `isHighlighted` | 10 | `Bool` | Hücrenin vurgulanmış olup olmadığı (aynı satır/sütun) |
+| `isMatchingValue` | 11 | `Bool` | Hücrenin seçili hücreyle aynı değere sahip olup olmadığı |
+| `isInvalid` | 12 | `Bool` | Hücrenin geçersiz olup olmadığı (oyun kurallarına aykırı) |
+| `pencilMarks` | 13 | `Set<Int>` | Hücredeki kalem işaretleri (notlar) |
+| `isHintTarget` | 14 | `Bool` | Hücrenin ipucu hedefi olup olmadığı |
+| `onCellTapped` | 15 | `() -> Void` | Hücreye tıklandığında çağrılacak fonksiyon |
+| `colorScheme` | 17 | `ColorScheme` | Sistem renk şeması (açık/karanlık mod) |
+| `powerManager` | 18 | `PowerSavingManager` | Güç tasarrufu yöneticisi |
+| `animateSelection` | 19 | `Bool` | Seçim animasyonunun durumu |
+| `animateValue` | 20 | `Bool` | Değer animasyonunun durumu |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 22-131 | Ana görünüm yapısını oluşturur |
+| `cellBackground` | 134-143 | Hücre arka plan görünümünü oluşturur |
+| `getCellBackgroundColor()` | 146-171 | Hücre arka plan rengini hesaplar |
+| `getCellBorderColor()` | 174-200 | Hücre kenar rengini hesaplar |
+| `getTextColor()` | 203-224 | Hücre içindeki metin rengini belirler |
+
+### Önemli Özellikler
+
+- Dokunsal geribildirim: Hücrelere tıklandığında titretim geribildirimi sağlar
+- Dinamik animasyonlar: Seçim ve değer değişikliklerinde animasyonlar gösterir
+- Güç tasarrufu uyumlu: Güç tasarrufu modunda gereksiz animasyonları kapatır
+- Renk kodlaması: Hücre durumuna göre farklı renk kodları kullanır (seçili, vurgulanmış, eşleşen, ipucu)
+- Kalem işaretleri: Not almak için hücre içinde küçük notlar gösterilmesini destekler
+
+---
+
 ## ScoreboardView.swift
 
 ScoreboardView, skor tablosu ekranının görünümüdür.
@@ -798,3 +876,662 @@ SettingsView, ayarlar ekranının görünümüdür.
 | `dataSection()` | ~100 | Veri ayarları bölümünü oluşturur |
 | `deleteAllSavedGames()` | ~120 | Tüm kaydedilmiş oyunları siler |
 | `resetScoreboard()` | ~140 | Skor tablosunu sıfırlar |
+
+---
+
+## TutorialView.swift
+
+TutorialView, kullanıcılara Sudoku oyununun temel kurallarını ve stratejilerini öğreten eğitim görünümüdür.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `presentationMode` | 4 | `PresentationMode` | Görünüm sunum modunu yönetme |
+| `colorScheme` | 5 | `ColorScheme` | Sistem renk şeması (açık/karanlık mod) |
+| `currentStep` | 6 | `Int` | Mevcut rehber adımı |
+| `animationProgress` | 9 | `Double` | Animasyon ilerleme durumu |
+| `highlightScale` | 10 | `Bool` | Vurgulama ölçeklendirme durumu |
+| `animateInputValue` | 11 | `Bool` | Giriş değeri animasyonu durumu |
+| `inputAnimationValue` | 12 | `Int` | Animasyonda kullanılan giriş değeri |
+| `animateNote` | 13 | `Bool` | Not animasyonu durumu |
+| `lastAddedNote` | 14 | `Int` | Son eklenen not değeri |
+| `notesSet` | 15 | `Set<Int>` | Notlar kümesi |
+| `singlePossibilityValues` | 18-22 | `[[Int]]` | Tek olasılık stratejisi için örnek veriler |
+| `singleLocationNotes` | 24-28 | `[[[Int]]]` | Tek konum stratejisi için örnek notlar |
+| `tutorialSteps` | 31-70 | `[TutorialStep]` | Rehber adımlarının listesi |
+
+
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 72-139 | Ana görünüm yapısını oluşturur |
+| `tutorialStepView(step:stepNumber:)` | 142-161 | Belirli bir rehber adımının görünümünü oluşturur |
+| `tutorialExampleView(forStep:)` | 256-268 | Adıma özel örnek görünümü oluşturur |
+| `getIconForStep(step:)` | 258-275 | Rehber adımına uygun ikonu belirler |
+| `singlePossibilityExample` | 277-336 | Tek olasılık stratejisi örneğini gösteren görünüm |
+| `singleLocationExample` | 338-430 | Tek konum stratejisi örneğini gösteren görünüm |
+| `sudokuInputAnimation` | 431-537 | Sayı girişi animasyonu |
+
+### Önemli Özellikler
+
+- Eğitici rehber: Sudoku'nun temel kuralları ve stratejileri hakkında kapsamlı bilgi
+- Adım adım eğitim: Oyuncuları basit adımlarla yönlendiren sekiz eğitim adımı
+- Etkileşimli örnekler: Stratejileri göstermek için canlı animasyonlu örnekler
+- Sürüklenebilir arayüz: Kullanıcıların sayfa üzerinde serbestçe gezinmesini sağlayan TabView yapısı
+- İlerleme göstergesi: Kullanıcının eğitimde nerede olduğunu gösteren ilerleme çubuğu
+- Kapsamlı strateji anlatımı: Tek olasılık ve tek konum stratejilerinin görselleştirilmesi
+
+---
+
+## TutorialOverlayView.swift
+
+TutorialOverlayView, oyun sırasında kullanıcıya arayüz hakkında adım adım rehberlik etmek için kullanılan transparan üst katman görünümüdür.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `tutorialManager` | 4 | `TutorialManager` | Öğretici rehber adımlarını yöneten nesne |
+| `onComplete` | 5 | `() -> Void` | Öğretici tamamlandığında çağrılacak fonksiyon |
+| `showHighlight` | 8 | `Bool` | Vurgulama gösterilip gösterilmeyeceği |
+| `pulseOpacity` | 9 | `Double` | Nabzım etkisinin opaklığı |
+| `cardScale` | 10 | `Double` | Kart ölçeği |
+| `contentOpacity` | 11 | `Double` | İçerik opaklığı |
+| `showSpotlight` | 12 | `Bool` | Spot ışığı gösterilip gösterilmeyeceği |
+| `powerManager` | 13 | `PowerSavingManager` | Güç tasarrufu yöneticisi |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 15-122 | Ana görünüm yapısını oluşturur |
+| `highlightView` | 125-144 | Vurgulama görünümünü oluşturur |
+| `getTargetFrame(for:in:)` | 147-200 | Belirli bir hedef için ekranda vurgu çerçevesinin konumunu hesaplar |
+
+### Önemli Özellikler
+
+- Etkileşimli üst katman: Arayüz üzerinde transparan bir katman olarak çalışır
+- Canlı vurgulama: Kullanıcının dikkatini belirli öğelere yönlendiren animasyonlu vurgulamalar
+- Adım ilerlemesi: Adımlar arasında ileri-geri hareket etme imkanı
+- Görsel rehberlik: Sudoku arayüzünün önemli bölümlerini göstermek için spot ışığı efekti
+- Kademeli eğitim: Kullanıcıyı adım adım yönlendiren yapı
+- İlerleme göstergesi: Kullanıcının eğitimdeki ilerlemesini gösteren ilerleme çubuğu
+
+---
+
+## PowerSavingManager.swift
+
+PowerSavingManager, uygulamanın pil tasarrufu özelliklerini yöneten sınıftır. Pil seviyesini izleyerek otomatik güç tasarrufu modunu yönetir ve görsel efektleri optimize eder.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `shared` | 5 | `PowerSavingManager` | Sınıfın tek (singleton) örneği |
+| `powerSavingMode` | 8-12 | `Bool` | Güç tasarrufu modunun açık olup olmadığı |
+| `autoPowerSaving` | 14-18 | `Bool` | Otomatik güç tasarrufu modunun açık olup olmadığı |
+| `batteryLevel` | 21 | `Float` | Mevcut pil seviyesi (0.0-1.0) |
+| `isCharging` | 22 | `Bool` | Cihazın şarj durumu |
+| `criticalBatteryThreshold` | 25 | `Float` | Kritik pil seviyesi eşiği (%15) |
+| `lowBatteryThreshold` | 26 | `Float` | Düşük pil seviyesi eşiği (%25) |
+| `mediumBatteryThreshold` | 27 | `Float` | Orta pil seviyesi eşiği (%40) |
+| `isAutoPowerSavingActive` | 30 | `Bool` | Otomatik güç tasarrufunun şu anda aktif olup olmadığı |
+| `cancellables` | 33 | `Set<AnyCancellable>` | Combine publisher aboneliklerini saklayan koleksiyon |
+| `powerSavingLevel` | 63 | `PowerSavingLevel` | Güç tasarrufu seviyesi |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `init()` | 36-55 | Başlatıcı metot, pil durumu izlemeyi başlatır |
+| `updateBatteryStatus()` | 58-63 | Pil durumunu günceller |
+| `checkAutoPowerSaving()` | 82-113 | Pil seviyesine göre otomatik güç tasarrufu uygular |
+| `togglePowerSavingMode()` | 116-128 | Güç tasarrufu modunu açıp kapatmak için |
+| `setPowerSavingLevel(_:)` | 131-139 | Güç tasarrufu seviyesini ayarlar |
+| `animationSpeedFactor` | 151-163 | Güç tasarrufu seviyesine göre animasyon hız faktörünü hesaplar |
+| `animationComplexityFactor` | 166-178 | Güç tasarrufu seviyesine göre animasyon karmaşıklık faktörünü hesaplar |
+| `visualEffectQualityFactor` | 181-193 | Güç tasarrufu seviyesine göre görsel efekt kalitesi faktörünü hesaplar |
+
+### Önemli Özellikler
+
+- **Pil Durumu İzleme**: Cihazın pil seviyesini ve şarj durumunu sürekli izler
+- **Kademeli Güç Tasarrufu**: Pil seviyesine göre farklı güç tasarrufu seviyeleri uygular (düşük, orta, yüksek)
+- **Otomatik Mod**: Pil seviyesi belirli eşiklerin altına düştüğünde otomatik olarak aktifleşen güç tasarrufu
+- **Animasyon Optimizasyonu**: Güç tasarrufu seviyesine göre animasyon hızı ve karmaşıklığını ayarlar
+- **Görsel Kalite Kontrolü**: Güç tasarrufu seviyesine göre görsel efekt kalitesini ayarlar
+- **Kullanıcı Kontrollerine Entegrasyon**: Kullanıcının manuel olarak güç tasarrufu ayarlarını değiştirmesine izin verir
+
+---
+
+## SudokuApp.swift
+
+SudokuApp, uygulamanın temel yapısını ve yaşam döngüsünü yöneten ana sınıftır.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `darkMode` | 77 | `Bool` | Karanlık mod tercihini saklar |
+| `useSystemAppearance` | 78 | `Bool` | Sistem görünümüne uyum sağlama tercihini saklar |
+| `textSizeString` | 79 | `String` | Metin boyutu tercihini saklar |
+| `lastBackgroundTime` | 82 | `Double` | Uygulamanın arka plana alınma zamanını kaydeder |
+| `gameResetTimeInterval` | 84 | `TimeInterval` | Oyunun sıfırlanması için gereken süre (2 dakika = 120 saniye) |
+| `initializationError` | 91 | `Error?` | Başlatılma hatasını saklar |
+| `isInitialized` | 92 | `Bool` | Uygulamanın başlatılıp başlatılmadığını takip eder |
+| `persistenceController` | 100 | `PersistenceController` | CoreData verilerini yöneten denetleyici |
+| `viewContext` | 101 | `NSManagedObjectContext` | CoreData için görünüm bağlamı |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `init()` | 103-119 | Uygulama başlatıcısı, CoreData bağlamını ve güç tasarrufu yöneticisini hazırlar |
+| `body` | 121-186 | Ana uygulama sahnesini oluşturur |
+
+### Önemli Özellikler
+
+- **Arka Plan Yönetimi**: Uygulama arka plana alındığında aktif oyun otomatik olarak duraklatılır
+- **Zaman Aşımı Kontrolü**: Uygulama 2 dakikadan uzun süre arka planda kalırsa, oyun otomatik olarak sıfırlanır ve kaydedilir
+- **Tema Yönetimi**: Karanlık/açık temanın yönetimi ve sistem görünümüne uyum sağlama özelliği
+- **Metin Boyutu Ayarları**: Küçük, orta ve büyük metin boyutu seçenekleri sunar
+- **CoreData Entegrasyonu**: Uygulama verilerinin kalıcı depolanmasını sağlar
+- **Bildirim Sistemi**: Farklı uygulama durumları için NotificationCenter aracılığıyla bildirimler gönderir (aktif olma, duraklama, sıfırlama)
+- **Hata Yönetimi**: Başlatılma hataları için özel görünüm ve yeniden deneme mekanizması içerir
+
+---
+
+## SudokuViewModel.swift
+
+SudokuViewModel, Sudoku oyununun tüm mantığını yöneten ana sınıftır. Oyun tahtalarını yönetir, oyuncu hareketlerini işler, oyun durumunu takip eder ve kullanıcı ipuçlarını yönetir.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `board` | 13 | `SudokuBoard` | Geçerli Sudoku tahtası |
+| `selectedCell` | 15 | `(row: Int, column: Int)?` | Kullanıcının seçtiği hücre |
+| `invalidCells` | 17 | `Set<Position>` | Geçersiz hücrelerin listesi |
+| `elapsedTime` | 19 | `TimeInterval` | Geçen oyun süresi |
+| `gameState` | 21 | `GameState` | Oyunun durumu (ready, playing, paused, completed, failed) |
+| `pencilMode` | 23 | `Bool` | Kalem modunun aktif olup olmadığı |
+| `userEnteredValues` | 29 | `[[Bool]]` | Kullanıcının girdiği değerleri takip eden matris |
+| `moveCount` | 32 | `Int` | Yapılan hamle sayısı |
+| `errorCount` | 33 | `Int` | Yapılan hata sayısı |
+| `hintCount` | 34 | `Int` | Alınan ipucu sayısı |
+| `remainingHints` | 35 | `Int` | Kalan ipucu hakkı sayısı |
+| `savedGames` | 92 | `[NSManagedObject]` | Kaydedilmiş oyunların listesi |
+| `usedNumbers` | 95 | `[Int: Int]` | Tahtada kaç kez kullanıldığını takip eden sayılar sözlüğü |
+
+
+
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `resetGameState()` | 41-65 | Oyun durumunu sıfırlar |
+| `newGame(difficulty:)` | 101-115 | Belirli bir zorlukta yeni bir oyun başlatır |
+| `selectCell(row:column:)` | 118-132 | Belirtilen hücreyi seçer |
+| `setValueAtSelectedCell(_:)` | 135-165 | Seçili hücreye değer atar |
+| `togglePencilMark(at:col:value:)` | ~200 | Belirli bir hücreye kalem işareti ekler/kaldırır |
+| `validateBoard()` | ~250 | Tahtanın geçerliliğini kontrol eder |
+| `requestHint()` | ~550 | Oyuncuya ipucu verir |
+| `togglePause()` | ~700 | Oyunu duraklatır/devam ettirir |
+| `saveGame(forceNewSave:)` | ~1150 | Geçerli oyunu kaydeder |
+| `loadGame(from:)` | ~1250 | Kaydedilmiş bir oyunu yükler |
+| `deleteSavedGame(_:)` | ~1590 | Kaydedilmiş bir oyunu siler |
+| `resetGameAfterTimeout()` | ~1750 | Zaman aşımı sonrası oyunu sıfırlar |
+
+### Önemli Özellikler
+
+- **İpucu Sistemi**: Kullanıcılara Sudoku çözüm stratejileri hakkında açıklamalı ipucuları sunar
+- **Kalem İşaretleri**: Kullanıcıların hücrelerde potansiyel değerleri not alabilmesini sağlar
+- **Arka Plan Yönetimi**: Uygulama arka plana alındığında oyun otomatik olarak duraklatılır, 2+ dakika arka planda kalırsa oyun kaydedilir ve ana menüye dönülür
+- **Oyun İstatistikleri**: Hamle, hata, ipucu sayısı ve geçen süre gibi oyun istatistiklerini tutar
+- **CoreData Entegrasyonu**: Oyunların kaydedilmesi ve yüklenmesi için CoreData ile entegrasyon
+- **Gelecek Hamleleri Tahmin Etme**: Hata doğrulamaları ve ipucu verirken gelecek hamleler için analiz yapar
+- **Optimizasyon Mekanizmaları**: Hızlı erişim için kalem işaretlerini ve geçerli değerleri önbelleğe alan optimizasyonlar
+- **Zaman Yönetimi**: Oyun süresini takip eden ve duruma göre sıfırlayan zamanlama fonksiyonları
+- **Bildirim Sistemi**: Oyunun duraklatma, devam etme ve sıfırlama gibi durumlarını yönetmek için bildirim sistemi
+- **Dokunsal Geri Bildirim**: Hareketlere ve hatalara doğrudan dokunsal geri bildirimler sağlayan mekanizmalar
+
+---
+
+## SudokuBoard.swift
+
+SudokuBoard, Sudoku tahtasını ve oyun kurallarını temsil eden temel veri modelidir. Tahta oluşturma, hücre değerlerini yönetme ve oyun mantığını içerir.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `board` | 49 | `[[Int?]]` | Geçerli oyun tahtasını tutan 9x9 matris |
+| `originalBoard` | 50 | `[[Int?]]` | Oyunun başlangıcındaki orijinal tahtayı tutan matris |
+| `solution` | 51 | `[[Int?]]` | Tahtanın doğru çözümünü tutan matris |
+| `fixedCells` | 52 | `Set<String>` | Değiştirilemeyen (başlangıç) hücrelerin kümesi |
+| `pencilMarks` | 53 | `[String: Set<Int>]` | Kullanıcının kalem işaretlerini tutan sözlük |
+| `difficulty` | 60 | `Difficulty` | Oyunun zorluk seviyesi |
+| `fixed` | 63 | `[[Bool]]` | Sabit (değiştirilemeyen) hücreleri belirten 9x9 matris |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `getValue(row:column:)` | 94-97 | Belirtilen konumdaki hücre değerini döndürür |
+| `setValue(row:column:value:)` | 106-121 | Belirtilen konumdaki hücreye değer atar |
+| `isOriginalValue(row:column:)` | 130-133 | Hücrenin orijinal (değiştirilemeyen) olup olmadığını kontrol eder |
+| `getSolutionValue(row:column:)` | 143-146 | Belirtilen konumdaki çözüm değerini döndürür |
+| `isCorrectValue(row:column:value:)` | 156-159 | Belirtilen değerin doğru olup olmadığını kontrol eder |
+| `togglePencilMark(row:column:value:)` | 163-182 | Belirtilen konumda kalem işareti ekler/kaldırır |
+| `getPencilMarks(row:column:)` | ~160 | Belirtilen konumdaki kalem işaretlerini döndürür |
+| `isBoardComplete()` | ~200 | Tahtanın tamamlanmış olup olmadığını kontrol eder |
+| `canPlaceValue(value:row:column:)` | ~250 | Değerin belirtilen konuma yerleştirilebilir olup olmadığını kontrol eder |
+| `generateBoard()` | ~400 | Yeni bir Sudoku tahtası oluşturur |
+| `generateSolution()` | ~450 | Geçerli bir Sudoku çözümü oluşturur |
+| `createBalancedStartingBoard()` | ~650 | Zorluk seviyesine uygun başlangıç tahtası oluşturur |
+
+### Önemli Özellikler
+
+- **Zorluk Seviyeleri**: Dört farklı zorluk seviyesi sunar (Kolay, Orta, Zor, Uzman)
+- **Tahta Üreteci**: Geçerli Sudoku tahtaları oluşturan algoritma içerir
+- **Çözüm Doğrulaması**: Oyuncu hamlelerinin doğruluğunu kontrol eden fonksiyonlar
+- **Kalem İşareti Yönetimi**: Kullanıcının potansiyel değerleri işaretleyebilmesi için kalem işareti sistemi
+- **Performans Optimizasyonu**: Önbellek mekanizmaları ile çeşitli kontrollerin performansını artırır
+- **Çözüm Algoritması**: Sudoku tahtalarını çözmek için ileri algoritmalar (kısıtlama yayılımı, gizli tekli, işaret çiftleri)
+- **Denge Sistemi**: Zorluk seviyesine göre uygun sayıda ipucu gösterecek şekilde tasarlanmış denge sistemi
+- **Kodlanabilirlik**: Kaydedilmiş oyunların depolanmasını kolaylaştırmak için Codable protokolünü destekler
+
+---
+
+## SavedGamesView.swift
+
+SavedGamesView, kullanıcının kaydettiği oyunları listeleyen, filtreleme ve yönetim işlemlerini sağlayan görünümdür.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `viewContext` | 5 | `NSManagedObjectContext` | CoreData yönetilen nesne bağlamı |
+| `savedGames` | 9 | `FetchedResults<SavedGame>` | CoreData'dan çekilen kayıtlı oyunlar |
+| `viewModel` | 12 | `SudokuViewModel` | Oyun mantığını yöneten model |
+| `gameToDelete` | 13 | `SavedGame?` | Silinecek oyunun referansı |
+| `showingDeleteAlert` | 14 | `Bool` | Silme onayı alert'inin durumu |
+| `selectedDifficulty` | 15 | `String` | Seçili zorluk seviyesi filtresi |
+| `gameSelected` | 19 | `(NSManagedObject) -> Void` | Oyun seçildiğinde çağrılan closure |
+| `cardOffset` | 22 | `[NSManagedObjectID: CGFloat]` | Kart kaydırma animasyonları için offset değerleri |
+| `isAnimating` | 23 | `Bool` | Animasyon durumu |
+| `difficultyLevels` | 27 | `[String]` | Filtreleme için zorluk seviyeleri listesi |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `filteredSavedGames` | 29-35 | Seçili zorluk seviyesine göre oyunları filtreler |
+| `emptyStateView` | 38-63 | Kayıtlı oyun yoksa göstererek boş durum görünümü |
+| `body` | 65-156 | Ana görünümü oluşturur |
+| `savedGameCard(for:)` | 158-290 | Belirli bir kaydedilmiş oyun için kart görünümü oluşturur |
+
+### Önemli Özellikler
+
+- **Filtreleme Sistemi**: Zorluk seviyesine göre kayıtlı oyunları filtreleme imkanı
+- **Sürüklenebilir Kartlar**: Kayıtlı oyunları silmek için sağa sürükleme işlevi
+- **Boş Durum Yönetimi**: Kayıtlı oyun olmadığı durumlar için bilgilendirici görünüm
+- **Zorluk Renk Kodlaması**: Zorluk seviyelerinin kolay tanınması için renk kodları
+- **Oyun Yükleme**: Seçilen oyunu yüklemek için dokunma işlevi
+- **CoreData Entegrasyonu**: Kayıtlı oyunları CoreData ile yönetme
+- **Tarih Formatlama**: Kayıt tarihlerini okunaklı formatta gösterme
+- **Dinamik Liste**: Kayıtlı oyunların dinamik olarak görüntülenmesi
+
+---
+
+## GameCompletionView.swift
+
+GameCompletionView, oyun tamamlandığında kullanıcıya tebrik mesajı, oyun istatistiklerini ve skorları gösteren sonuç ekranı görünümüdür.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `difficulty` | 4 | `SudokuBoard.Difficulty` | Tamamlanan oyunun zorluk seviyesi |
+| `timeElapsed` | 5 | `TimeInterval` | Oyunda geçen süre |
+| `errorCount` | 6 | `Int` | Yapılan hata sayısı |
+| `hintCount` | 7 | `Int` | Kullanılan ipucu sayısı |
+| `score` | 8 | `Int` | Elde edilen toplam puan |
+| `isNewHighScore` | 9 | `Bool` | Yeni bir rekor olup olmadığı |
+| `onNewGame` | 10 | `() -> Void` | Yeni oyun başlatma closure'u |
+| `onDismiss` | 11 | `() -> Void` | Görünümü kapatma closure'u |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 15-95 | Ana görünümü oluşturur |
+| `formatTime(_:)` | 97-101 | Saniye cinsinden verilen süreyi dakika:saniye formatına çevirir |
+
+### Önemli Özellikler
+
+- **Oyun İstatistikleri**: Oyun süresi, hata sayısı, ipucu sayısı ve zorluk seviyesi gibi istatistikleri gösterir
+- **Skor Gösterimi**: Elde edilen toplam puanı gösterir
+- **Rekor Tespiti**: Yeni bir yüksek skor kırıldığında özel olarak vurgular
+- **Yönlendirme Seçenekleri**: Yeni oyun başlatma veya görünümü kapatma seçenekleri sunar
+- **Görsel Zenginlik**: İkonlar, renkler ve animasyonlar ile kullanıcı deneyimini zenginleştirir
+- **İstatistik Satırları**: Amaç odaklı ve tutarlı bir düzenle istatistikleri görüntüler
+- **Karanlık Mod Desteği**: Görünümde karanlık mod için uygun renk düzenlemeleri yapılır
+
+---
+
+## PencilMarksView.swift
+
+PencilMarksView, Sudoku hücrelerinde kullanıcının not aldığı potansiyel değerleri (kalem işaretleri) gösteren görünümdür. Bu görünüm, 3x3 düzende 1-9 arası notları düzenli bir şekilde hücre içinde gösterir.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `pencilMarks` | 4 | `Set<Int>` | Hücre için gösterilecek kalem işaretleri kümesi (1-9 arası sayılar) |
+| `cellSize` | 5 | `CGFloat` | Dış hücrenin boyutu (piksel cinsinden) |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 7-59 | Kalem işaretlerini 3x3 grid içinde düzenli olarak gösteren görünümü oluşturur |
+
+### Önemli Özellikler
+
+- **Dinamik Boyutlandırma**: Hücre boyutuna göre otomatik olarak adapt olan boyutlar ve font ölçeklendirmesi
+- **3x3 Grid Düzeni**: Sudoku oyun mantığına uygun 3x3 grid düzeni kullanarak kalem işaretlerinin kolay anlaşılmasını sağlar
+- **Uzaysal Verimlilik**: Küçük alanda fazla bilgiyi düzgün şekilde göstermek için optimize edilmiş tasarım
+- **Oransal Uygunluk**: Hücre boyutuna göre orantılı font ve ara boşluk ayarları
+- **Seçici Görünürlük**: Yalnızca belirtilen sayıları gösterir, diğer hücreler boş kalır
+- **Görsel Ayrım**: Kalem işaretleri ana sayılardan daha açık renkle gösterilerek ayırt edilir
+
+---
+
+## ScoreManager.swift
+
+ScoreManager, Sudoku oyunundaki puan hesaplama, skorları kaydetme ve skor istatistiklerini yönetme işlemlerini gerçekleştiren singleton sınıftır.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `shared` | 5 | `ScoreManager` | ScoreManager sınıfının tek (singleton) örneği |
+| `context` | 7 | `NSManagedObjectContext` | CoreData veri tabanı etkileşimleri için yönetilen nesne bağlamı |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `calculateScore(difficulty:timeElapsed:errorCount:hintCount:)` | 16-55 | Zorluk seviyesi, geçen süre, hata sayısı ve ipucu sayısına göre puan hesaplar |
+| `saveScore(difficulty:timeElapsed:errorCount:hintCount:)` | 59-83 | Oyun skorunu CoreData'ya kaydeder |
+| `getBestScore(for:)` | 87-104 | Belirli bir zorluk seviyesi için en yüksek puanlı skoru getirir |
+| `getAverageScore(for:)` | 106-122 | Belirli bir zorluk seviyesi için ortalama skoru hesaplar |
+
+### Önemli Özellikler
+
+- **Zorluk Bazlı Puanlama**: Farklı zorluk seviyelerine göre değişen temel puan ve süre bonusları
+- **Puan Kesintileri**: Hata ve ipucu kullanımına bağlı olarak puanlardan kesinti yapma mekanizması
+- **Süre Bazlı Puan Bonusları**: Hızlı tamamlanan oyunlar için fazladan puan bonusları
+- **CoreData Entegrasyonu**: Skorların kalıcı depolanması için CoreData kullanımı
+- **İstatistik Hesaplama**: En iyi skorları ve ortalama performansı hesaplama yeteneği
+- **Singleton Tasarım**: Uygulama genelinde tek bir skor yöneticisi örneği kullanımı
+- **Hata Yönetimi**: Veri kaydetme ve alma işlemleri sırasında oluşabilecek hatalara karşı koruma
+
+---
+
+## TutorialManager.swift
+
+TutorialManager, kullanıcıların oyun özelliklerini ve Sudoku stratejilerini öğrenmeleri için adaylı bir öğretici yöneten singleton sınıftır.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `shared` | 161 | `TutorialManager` | TutorialManager sınıfının tek (singleton) örneği |
+| `isActive` | 164 | `Bool` | Öğreticinin şu anda aktif olup olmadığını belirtir |
+| `currentStep` | 165 | `GameTutorialStep` | Mevcut öğretici adımı |
+| `hasCompletedTutorial` | 166 | `Bool` | Kullanıcının öğreticiyi tamamlayıp tamamlamadığı |
+| `completedInteractions` | 169 | `Set<GameTutorialStep>` | Kullanıcının tamamladığı etkileşimli adımların kümesi |
+| `currentInteractionRequired` | 170 | `Bool` | Mevcut adımın kullanıcı etkileşimi gerektirip gerektirmediği |
+| `showCompletionAnimation` | 173 | `Bool` | Adım tamamlama animasyonu gösterip göstermeme durumu |
+| `hasSeenTutorial` | 176 | `Bool` | Kullanıcının daha önce öğreticiyi görüp görmediği |
+| `showTutorialTips` | 177 | `Bool` | Öğretici ipucu göstermelerini etkinleştirme tercihi |
+| `shouldBlockInteraction` | 180 | `Bool` | Öğretici sırasında kullanıcı etkileşimini engelleme durumu |
+| `lastTutorialStep` | 183 | `Int` | Son kaydedilen öğretici adımı numarası |
+| `cancellables` | 186 | `Set<AnyCancellable>` | Combine aboneliklerini takip etmek için kullanılan küme |
+| `onUserInteractionNeeded` | 189 | `((GameTutorialStep) -> Void)?` | Kullanıcı etkileşimi gerektiğinde çağrılacak closure |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `init()` | 191-210 | Sınıfı başlatır ve kayıtlı öğretici durumunu yükler |
+| `startTutorial()` | 282-293 | Öğreticiyi başlatır veya devam ettirir |
+| `showNextStep()` | 295-311 | Bir sonraki öğretici adımına geçer |
+| `completeInteraction(for:)` | 312-325 | Belirli bir etkileşimli adımı tamamladı olarak işaretler |
+| `resetTutorial()` | 327-340 | Öğreticiyi sıfırlar ve başlangıç durumuna getirir |
+| `endTutorial()` | 342-348 | Öğreticiyi tamamlar ve kullanıcı tercihini kaydeder |
+
+### Önemli Özellikler
+
+- **Adım Bazlı Öğretici**: Oyun özelliklerini adım adım açıklayan yapılandırılmış öğretici sistemi
+- **Etkileşimli Adımlar**: Kullanıcının denemesi gereken pratik adımlar içeren öğrenme deneyimi
+- **İlerleme Kaydetme**: Kullanıcının kaldığı yerden devam edebilmesi için öğretici ilerlemesini otomatik kaydetme
+- **Görsel Yönlendirmeler**: Animasyonlar ve vurgulamalar ile kullanıcının dikkatini önemli öğelere çekme
+- **Özelleştirilebilir Deneyim**: Öğretici ipucu gösterimini kullanıcı tercihine göre ayarlama
+- **Detaylı Açıklamalar**: Her adımda kapsamlı açıklamalar ve stratejiler sunma
+- **Combine Entegrasyonu**: Reactive veri akışı ve durum yönetimi için Combine framework kullanımı
+
+---
+
+## LoginView.swift
+
+LoginView, kullanıcıların hesaplarına giriş yapabilmesini sağlayan kimlik doğrulama ekranıdır. Kullanıcı adı ve şifre alan form içerir.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `presentationMode` | 5 | `Environment<PresentationMode>` | Görünümün sunulma durumunu yönetir |
+| `colorScheme` | 6 | `Environment<ColorScheme>` | Sistem renk şeması (açık/karanlık mod) |
+| `isPresented` | 8 | `Binding<Bool>` | Görünümün gösterilme durumu |
+| `currentUser` | 9 | `Binding<NSManagedObject?>` | Giriş yapan kullanıcının referansı |
+| `username` | 11 | `String` | Kullanıcı adı giriş alanı |
+| `password` | 12 | `String` | Şifre giriş alanı |
+| `errorMessage` | 13 | `String` | Hata mesajı metni |
+| `showError` | 14 | `Bool` | Hata alert'inin gösterilme durumu |
+| `isLoading` | 15 | `Bool` | Yükleme/işlem durumu |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 17-125 | Ana görünümü oluşturur |
+| `loginUser()` | 127-156 | Kullanıcı giriş işlemini gerçekleştirir ve doğrular |
+
+### Önemli Özellikler
+
+- **Gradient Arkaplan**: Kullanıcı deneyimini iyileştirmek için güzel gradient arkaplan tasarımı
+- **Form Doğrulama**: Boş alan kontrolü ve hata mesajları ile giriş formunun doğrulanması
+- **Asenkron Giriş**: Yükleme göstergesi ile geri planda giriş işleminin gerçekleştirilmesi
+- **Güvenli Şifre Alanı**: Şifrenin güvenli bir şekilde girilmesi için SecureField kullanımı
+- **Duyarlı Butonlar**: Formun durumuna göre butonların etkinliğini ve saydamlığını ayarlama
+- **CoreData Entegrasyonu**: Kullanıcı doğrulama için CoreData'nın kullanılması
+- **Hata Yönetimi**: Giriş hataları için bilgilendirici alert mesajları
+
+---
+
+## RegisterView.swift
+
+RegisterView, kullanıcıların yeni hesap oluşturabilmesini sağlayan kayıt ekranıdır. Kişisel bilgiler, kullanıcı adı ve şifre gibi alanları içeren kapsamlı bir kayıt formu içerir.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `presentationMode` | 5 | `Environment<PresentationMode>` | Görünümün sunulma durumunu yönetir |
+| `colorScheme` | 6 | `Environment<ColorScheme>` | Sistem renk şeması (açık/karanlık mod) |
+| `isPresented` | 8 | `Binding<Bool>` | Görünümün gösterilme durumu |
+| `currentUser` | 9 | `Binding<NSManagedObject?>` | Kayıt olan kullanıcının referansı |
+| `username` | 11 | `String` | Kullanıcı adı giriş alanı |
+| `password` | 12 | `String` | Şifre giriş alanı |
+| `confirmPassword` | 13 | `String` | Şifre onay alanı |
+| `email` | 14 | `String` | E-posta giriş alanı |
+| `name` | 15 | `String` | Ad soyad giriş alanı |
+| `errorMessage` | 16 | `String` | Hata mesajı metni |
+| `showError` | 17 | `Bool` | Hata alert'inin gösterilme durumu |
+| `isLoading` | 18 | `Bool` | Yükleme/işlem durumu |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 20-166 | Ana görünümü oluşturur |
+| `isFormInvalid` | 168-170 | Form alanlarının geçerli olup olmadığını kontrol eder |
+| `registerUser()` | 172-205 | Kullanıcı kayıt işlemini gerçekleştirir ve doğrular |
+
+### Önemli Özellikler
+
+- **Kapsamlı Form**: Ad soyad, e-posta, kullanıcı adı, şifre ve şifre onayı alanlarını içerir
+- **Form Doğrulama**: Boş alan kontrolü, şifre eşleşme kontrolü gibi detaylı doğrulama işlemleri
+- **Kullanıcı Geri Bildirimi**: Hata durumlarında açıklayıcı mesajlar gösterme
+- **Güvenlik Önlemleri**: Şifre girişi için güvenli alan kullanımı
+- **Gürsel Tasarım**: Gradient arkaplan ve özel stil butonlar ile kullanıcı dostu arayüz
+- **Input Optimization**: E-posta alanı için özel klavye tipi ve otomatik büyük harf kapatma özelliği
+- **Asenkron İşlem Yönetimi**: Arka planda kayıt işlemi sırasında yükleme göstergesi
+
+---
+
+## ColorExtension.swift
+
+ColorExtension, SwiftUI'nin `Color` sınıfına ek özellikler ve kolay erişim sağlayan uzantı sınıfıdır. Hex kodu dönüştürme ve uygulama genelinde tutarlı renk kullanımı için özel tanımlanmış renkler içerir.
+
+### Fonksiyonlar ve Özellikler
+
+| Özellik/Fonksiyon | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `init(hex:)` | 5-27 | `Initializer` | Hex renk kodu (3, 6 veya 8 karakterli) ile renk oluşturma |
+| `sudokuBackground` | 30 | `Color` | Sudoku arkaplanı için tanımlı renk |
+| `sudokuCell` | 31 | `Color` | Sudoku hücreleri için tanımlı renk |
+| `sudokuText` | 32 | `Color` | Sudoku metinleri için tanımlı renk |
+| `sudokuAccent` | 33 | `Color` | Sudoku vurgu rengi |
+| `sudokuSecondary` | 34 | `Color` | Sudoku ikincil renk |
+| `modernBlue`, `modernLightBlue`, vb. | 37-45 | `Color` | Modern Sudoku renk paleti |
+| `darkBg1`, `darkBg2`, `darkBg3` | 48-50 | `Color` | Koyu tema arka plan renkleri |
+| `lightBg1`, `lightBg2`, `lightBg3` | 53-55 | `Color` | Açık tema arka plan renkleri |
+| `darkModeBackground(for:)` | 58-68 | `Fonksiyon` | Karanlık mod için gradient arka plan rengi |
+| `cardBackground(for:)` | 71-73 | `Fonksiyon` | Kart arka plan rengi |
+| `buttonBackground(for:isSelected:)` | 76-82 | `Fonksiyon` | Buton arka plan rengi |
+| `textColor(for:isHighlighted:)` | 85-91 | `Fonksiyon` | Metin rengi |
+
+### Önemli Özellikler
+
+- **Hex Kod Desteği**: 3, 6 ve 8 karakterli hex renk kodlarını (RGB ve ARGB) destekler
+- **Dinamik Renk Yönetimi**: Renk şemasına (açık/karanlık mod) göre otomatik olarak değişen renkler
+- **Tutarlı Renk Paleti**: Uygulama genelinde tutarlı renk kullanımı için önceden tanımlanmış renkler
+- **Durum Bazlı Renkler**: Seçili, vurgulanmış gibi durumlara göre renk değişimleri
+- **Gradient Desteği**: Arka planlar için gradient renk kombinasyonları
+- **Uygulama Teması**: Modern ve temiz bir görünüm için özel renk teması
+
+---
+
+## ViewTransitionExtension.swift
+
+ViewTransitionExtension, SwiftUI'nin animasyon ve geçiş efektlerini kolaylaştırmak için `AnyTransition` ve `View` sınıflarına ek özellikler sunan uzantı sınıfıdır. Uygulama genelinde tutarlı ve çekici animasyonlar kullanmayı sağlar.
+
+### AnyTransition Uzantıları
+
+| Uzantı | Satır | Açıklama |
+|-----------|-------|----------|
+| `slideFromRight` | 5-10 | Sağdan sola kaydırma geçiş efekti |
+| `slideFromLeft` | 12-17 | Soldan sağa kaydırma geçiş efekti |
+| `slideFromBottom` | 19-24 | Aşağıdan yukarıya kaydırma geçiş efekti |
+| `slideFromTop` | 26-31 | Yukarıdan aşağıya kaydırma geçiş efekti |
+| `scale` | 33-38 | Ölçeklendirme geçiş efekti |
+| `flip` | 40-51 | 3D çevirme geçiş efekti |
+
+### View Uzantıları
+
+| Uzantı | Satır | Açıklama |
+|-----------|-------|----------|
+| `fadeInOut()` | 66-69 | Görünümü belirtilen süre boyunca solarak göster/gizle |
+| `slideInFromTop()` | 72-76 | Görünümü yukarıdan kaydırarak göster/gizle |
+| `slideInFromBottom()` | 79-83 | Görünümü aşağıdan kaydırarak göster/gizle |
+| `slideInFromLeft()` | 86-90 | Görünümü soldan kaydırarak göster/gizle |
+| `slideInFromRight()` | 93-97 | Görünümü sağdan kaydırarak göster/gizle |
+| `scaleInOut()` | 100-104 | Görünümü ölçeklendirerek göster/gizle |
+| `rotateInOut()` | 107-111 | Görünümü döndürerek göster/gizle |
+
+### Özel Yapılar
+
+| Yapı | Satır | Açıklama |
+|-----------|-------|----------|
+| `FlipModifier` | 55-61 | 3D döndürme efekti için özel modifier |
+
+### Önemli Özellikler
+
+- **Zengin Animasyon Kitaplığı**: Çeşitli görünüm geçişleri için hazır animasyon efektleri
+- **Kodlama Kolaylığı**: Karmaşık geçiş efektlerini basit bir API ile kullanma imkanı
+- **Özelleştirilebilir Parametreler**: Animasyon süresi, geçiş mesafesi gibi değerleri özelleştirme
+- **Duruma Dayalı Görünüm Değişimleri**: Boolean değerlere bağlı olarak kolay animasyon kontrolü
+- **3D Animasyon Desteği**: 3D döndürme ve çevirme efektleri için özel modifier
+- **Estetik Kullanıcı Deneyimi**: Akıcı ve göz alıcı geçişlerle kullanıcı deneyimini zenginleştirme
+
+---
+
+## SudokuApp.swift
+
+SudokuApp, uygulamayı başlatan ve genel yapılandırmayı yöneten ana uygulama dosyasıdır. Uygulama yaşam döngüsünü, CoreData entegrasyonunu, görünüm tercihlerini ve güç tasarrufu işlemlerini yönetir.
+
+### Yardımcı Yapılar ve Uzantılar
+
+| Yapı/Uzantı | Satır | Açıklama |
+|-----------|-------|----------|
+| `TextScaleKey` | 12-14 | Metin ölçeği için Environment anahtarı |
+| `EnvironmentValues Extension` | 17-22 | Environment değerlerine `textScale` ekleme |
+| `TextSizePreference enum` | 25-41 | Metin boyutu tercihi için özel tür (Küçük, Orta, Büyük) |
+| `ColorManager struct` | 44-72 | Ana renkleri yöneten yapı |
+| `InitializationErrorView` | 183-223 | Başlatma hatası durumunda gösterilecek görünüm |
+
+### Değişkenler ve Özellikler
+
+| Değişken/Özellik | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `darkMode` | 75 | `Bool` (AppStorage) | Karanlık mod tercihi |
+| `useSystemAppearance` | 76 | `Bool` (AppStorage) | Sistem görünümünü kullan tercihi |
+| `textSizeString` | 77 | `String` (AppStorage) | Metin boyutu tercihi (default: "Orta") |
+| `lastBackgroundTime` | 80 | `Double` (AppStorage) | Uygulamanın arka plana alınma zamanı |
+| `gameResetTimeInterval` | 82 | `TimeInterval` | Oyunun sıfırlanması için gereken süre (120 sn) |
+| `initializationError` | 88 | `Error?` (State) | Başlatma hatasını takip etme |
+| `isInitialized` | 89 | `Bool` (State) | Başlatma durumunu takip etme |
+| `textSizePreference` | 91-93 | `Computed property` | Seçili metin boyutunu veren hesaplanmış özellik |
+| `persistenceController` | 96 | `PersistenceController` | CoreData yönetim sınıfı |
+| `viewContext` | 97 | `NSManagedObjectContext` | CoreData bağlamı |
+
+### Fonksiyonlar ve Yöntemler
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `init()` | 99-113 | Uygulama başlangıç ayarlarını yapılandırır |
+| `body` | 115-181 | Ana uygulama yapısını ve yaşam döngüsü yönetimini sağlar |
+
+### Yaşam Döngüsü Yönetimi
+
+| Sahne Fazı | Satır | Açıklama |
+|-----------|-------|----------|
+| `.background` | 140-156 | Arka plana geçme durumunda aktif oyunu duraklatır ve zamanı kaydeder |
+| `.active` | 157-177 | Aktif duruma geçtiğinde, arka planda geçen süreyi kontrol eder |
+
+### Önemli Özellikler
+
+- **Otomatik Duraklatma**: Uygulama arka plana alındığında aktif oyunu otomatik duraklatır
+- **Zaman Aşımı Yönetimi**: 2 dakikadan fazla arka planda kalındığında oyunu sıfırlar
+- **Özelleştirilebilir Görünüm**: Karanlık mod ve metin boyutu için kullanıcı tercihleri
+- **Güç Tasarrufu**: Güç tasarrufu modunu destekler
+- **CoreData Entegrasyonu**: Kalıcı veri saklamak için CoreData yapısı
+- **Bildirim Sistemi**: Notifikasyon merkezini kullanarak uygulama durumlarını ileten sistem
+- **Hata Yönetimi**: Başlatma hatalarını yönetmek için özel görünüm mekanizması
