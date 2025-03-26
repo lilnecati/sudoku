@@ -103,6 +103,20 @@ class PersistenceController {
     
     // MARK: - Game Management
     
+    // Tüm kayıtlı oyunları getir
+    func getAllSavedGames() -> [SavedGame] {
+        let context = container.viewContext
+        let fetchRequest: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
+        
+        do {
+            let savedGames = try context.fetch(fetchRequest)
+            return savedGames
+        } catch {
+            print("❌ Kayıtlı oyunlar getirilemedi: \(error)")
+            return []
+        }
+    }
+    
     // Benzersiz ID ile yeni bir oyun kaydet
     func saveGame(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval, jsonData: Data? = nil) {
         let context = container.viewContext
@@ -134,7 +148,7 @@ class PersistenceController {
         
         do {
             try context.save()
-            print("✅ Yeni oyun başarıyla kaydedildi, ID: \(gameID)")
+            // Başarı mesajı SudokuViewModel'de gösterildiği için burada kaldırıldı
         } catch {
             print("❌ Oyun kaydedilemedi: \(error)")
         }
@@ -168,7 +182,7 @@ class PersistenceController {
                 existingGame.dateCreated = Date()  // Son değişiklik zamanı
                 
                 try context.save()
-                print("✅ Oyun başarıyla güncellendi, ID: \(gameID)")
+                // Başarı mesajı SudokuViewModel'de gösterildiği için burada kaldırıldı
             } else {
                 print("❓ Güncellenecek oyun bulunamadı, ID: \(gameID). Yeni oyun olarak kaydediliyor.")
                 // Oyun bulunamadıysa yeni oluştur
@@ -239,6 +253,31 @@ class PersistenceController {
             print("Tüm kaydedilmiş oyunlar silindi")
         } catch {
             print("Kaydedilmiş oyunlar silinemedi: \(error)")
+        }
+    }
+    
+    // Not: saveGameWithCustomName metodu kaldırıldı, yerine normal saveGame metodu ve updateGameDifficulty kullanılıyor
+    
+    // MARK: - Game Difficulty Update
+    
+    /// Belirli bir oyunun zorluk seviyesini günceller
+    /// - Parameters:
+    ///   - gameID: Güncellenecek oyunun ID'si
+    ///   - newDifficulty: Yeni zorluk seviyesi
+    func updateGameDifficulty(gameID: UUID, newDifficulty: String) {
+        let context = container.viewContext
+        let fetchRequest: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
+        
+        do {
+            let results = try context.fetch(fetchRequest)
+            if let game = results.first {
+                game.difficulty = newDifficulty
+                try context.save()
+                print("✅ Oyun zorluk seviyesi güncellendi: \(newDifficulty)")
+            }
+        } catch {
+            print("❌ Oyun zorluk seviyesi güncellenirken hata oluştu: \(error)")
         }
     }
     

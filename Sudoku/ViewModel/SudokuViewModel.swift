@@ -103,6 +103,9 @@ class SudokuViewModel: ObservableObject {
         elapsedTime = 0
         pausedElapsedTime = 0
         
+        // Uygulama arka plana alındığında oyunu otomatik olarak duraklatmak için bildirim dinleyicisi ekle
+        setupNotificationObservers()
+        
         startTimer()
         updateUsedNumbers()
     }
@@ -1126,7 +1129,16 @@ class SudokuViewModel: ObservableObject {
     
     // Değer giriş işlemi
     private func enterValue(_ value: Int?, at row: Int, col: Int) {
-        board.setValue(at: row, col: col, value: value)
+        // Animasyon ve titreşim efekti ile değeri ayarla
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            board.setValue(at: row, col: col, value: value)
+            
+            // Sayı girildiğinde titreşim geri bildirimi
+            if enableHapticFeedback && value != nil {
+                let feedback = UIImpactFeedbackGenerator(style: .medium)
+                feedback.impactOccurred()
+            }
+        }
         
         // Kullanıcı girişi olarak işaretle
         if !board.isFixed(at: row, col: col) {
@@ -1680,8 +1692,282 @@ class SudokuViewModel: ObservableObject {
         }
     }
     
+    // Bildirim dinleyicilerini ayarla
+    private func setupNotificationObservers() {
+        // Önce tüm gözlemcileri kaldır (tekrarları önlemek için)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("PauseActiveGame"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("AppBecameActive"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("ResetGameAfterTimeout"), object: nil)
+        
+        // Bildirim isimleri için sabitler
+        let pauseGameName = Notification.Name("PauseActiveGame")
+        let appBecameActiveName = Notification.Name("AppBecameActive")
+        let resetGameName = Notification.Name("ResetGameAfterTimeout")
+        
+        // Uygulama arka plana alındığında oyunu otomatik olarak duraklat
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(pauseGameFromBackground),
+            name: pauseGameName,
+            object: nil
+        )
+        
+        // Uygulama tekrar aktif olduğunda (isteğe bağlı kullanım için)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appBecameActive),
+            name: appBecameActiveName,
+            object: nil
+        )
+        
+        // Uygulama belirli bir süre arka planda kaldıktan sonra oyunu sıfırla
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(resetGameAfterTimeout),
+            name: resetGameName,
+            object: nil
+        )
+        
+        print("💬 Bildirim gözlemcileri başarıyla kuruldu")
+    }
+    
+    // Uygulama arka plana alındığında çağrılır
+    @objc private func pauseGameFromBackground() {
+        // Sadece oyun aktif durumdaysa duraklat
+        if gameState == .playing {
+            print("🔊 Oyun otomatik olarak duraklatıldı (arka plan)")
+            togglePause() // Oyunu duraklat
+            saveGame() // Oyun durumunu kaydet
+        }
+    }
+    
+    // Tüm ViewModel örnekleri için ortak bir zaman takibi
+    private static var lastActiveNotificationTime: TimeInterval = 0
+    private static var isProcessingActiveNotification = false
+    
+    // Uygulama tekrar aktif olduğunda çağrılır (2 dakikadan önce dönüldüğünde)
+    @objc private func appBecameActive() {
+        // Sınıf seviyesinde kilitleme - birden fazla ViewModel örneğinin aynı anda işlem yapmasını önler
+        if SudokuViewModel.isProcessingActiveNotification {
+            return
+        }
+        
+        // Şu anki zamanı al
+        let currentTime = Date().timeIntervalSince1970
+        
+        // Son bildirimden bu yana en az 1 saniye geçmiş olmalı
+        // Bu, aynı bildirimin birden fazla kez işlenmesini önler
+        if currentTime - SudokuViewModel.lastActiveNotificationTime < 1.0 {
+            print("⚠️ Tekrarlanan bildirim engellendi (son bildirimden \(String(format: "%.2f", currentTime - SudokuViewModel.lastActiveNotificationTime)) saniye geçti)")
+            return
+        }
+        
+        // İşlem bayrağını ayarla
+        SudokuViewModel.isProcessingActiveNotification = true
+        
+        // Son bildirim zamanını güncelle
+        SudokuViewModel.lastActiveNotificationTime = currentTime
+        
+        print("🔊 Uygulama tekrar aktif oldu - oyun devam ediyor")
+        
+        // Oyun durumunu kontrol et ve gerekirse devam ettir
+        if gameState == .paused {
+            // Oyun duraklatılmışsa, devam ettir
+            togglePause() // Duraklatma durumunu değiştirerek oyunu devam ettir
+        }
+        
+        // Oyun görünümünü yenile
+        objectWillChange.send()
+        
+        // İşlem tamamlandı, bayrağı sıfırla
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            SudokuViewModel.isProcessingActiveNotification = false
+        }
+    }
+    
+    // Uygulama belirli bir süre (2 dakika) arka planda kaldıktan sonra oyunu kayıtlara ekle ve sıfırla
+    @objc private func resetGameAfterTimeout() {
+        print("⏰ Oyun zaman aşımına uğradı - kayıtlara ekleniyor ve sıfırlanıyor")
+        
+        // Mevcut oyun durumunu kayıtlara ekle (eğer kayıt şartlarını karşılıyorsa)
+        if shouldSaveGameAfterTimeout() {
+            // Oyunu normal kaydet, ancak zorluk seviyesini değiştirerek özel olarak işaretle
+            let currentDifficulty = board.difficulty
+            let timeoutSuffix = " - " + playerName + " (Arka Plan)"
+            let modifiedDifficulty = currentDifficulty.rawValue + timeoutSuffix
+            
+            // Aynı zorluk seviyesinde "(Arka Plan)" ekiyle zaten bir kayıt var mı kontrol et
+            let existingBackgroundGameID = checkForExistingBackgroundGame(difficulty: modifiedDifficulty)
+            
+            if let existingID = existingBackgroundGameID {
+                // Mevcut arka plan oyununu güncelle
+                print("🔄 Mevcut arka plan oyunu güncelleniyor, ID: \(existingID)")
+                
+                // Mevcut oyun verilerini al
+                if let jsonData = createGameStateJSONForTimeout() {
+                    // Mevcut oyunu güncelle
+                    // board.getBoardArray() kullanarak 2D Int dizisi oluştur
+                    let boardArray = board.getBoardArray()
+                    
+                    // Mevcut oyunu güncelle
+                    PersistenceController.shared.updateSavedGame(
+                        gameID: existingID,
+                        board: boardArray,
+                        difficulty: modifiedDifficulty,
+                        elapsedTime: elapsedTime,
+                        jsonData: jsonData
+                    )
+                    
+                    // Mevcut oyun ID'sini güncelle
+                    currentGameID = existingID
+                }
+            } else {
+                // Normal kaydetme fonksiyonunu kullan
+                saveGame(forceNewSave: true) // Yeni bir oyun olarak kaydet
+                
+                // Kaydedilen oyunun zorluk seviyesini güncelle
+                if let gameID = currentGameID {
+                    PersistenceController.shared.updateGameDifficulty(gameID: gameID, newDifficulty: modifiedDifficulty)
+                }
+            }
+            
+            print("✅ Zaman aşımına uğrayan oyun kayıtlara eklendi")
+        } else {
+            print("ℹ️ Oyun kayıt şartlarını karşılamıyor, kaydedilmedi")
+        }
+        
+        // Ana menüyü göstermek için bildirim gönder
+        NotificationCenter.default.post(name: Notification.Name("ShowMainMenuAfterTimeout"), object: nil)
+        
+        // Oyun durumunu sıfırla
+        resetGameState()
+        
+        // Yeni bir tahta oluştur (mevcut zorluk seviyesini kullanarak)
+        let currentDifficulty = board.difficulty
+        board = SudokuBoard(difficulty: currentDifficulty)
+        updateUsedNumbers()
+    }
+    
+    // Oyunun kayıt şartlarını karşılayıp karşılamadığını kontrol et
+    private func shouldSaveGameAfterTimeout() -> Bool {
+        // En az 30 saniye oynanmış olmalı
+        let minimumPlayTime: TimeInterval = 30 // 30 saniye
+        
+        // En az 1 hamle yapılmış olmalı
+        let minimumMoves = 1
+        
+        // Oyun tamamlanmamış olmalı
+        let isNotCompleted = gameState != .completed
+        
+        // Şartları kontrol et
+        let meetsTimeRequirement = elapsedTime >= minimumPlayTime
+        let meetsMoveRequirement = moveCount >= minimumMoves
+        
+        return meetsTimeRequirement && meetsMoveRequirement && isNotCompleted
+    }
+    
+    // Belirli bir zorluk seviyesinde "(Arka Plan)" ekiyle kaydedilmiş mevcut bir oyun olup olmadığını kontrol et
+    private func checkForExistingBackgroundGame(difficulty: String) -> UUID? {
+        // Tüm kayıtlı oyunları al
+        let savedGames = PersistenceController.shared.getAllSavedGames()
+        
+        // "(Arka Plan)" ekiyle kaydedilmiş ve aynı zorluk seviyesinde olan oyunları bul
+        for game in savedGames {
+            if let gameDifficulty = game.difficulty, gameDifficulty == difficulty {
+                // Aynı zorluk seviyesinde "(Arka Plan)" ekiyle kaydedilmiş bir oyun bulundu
+                if let gameID = game.id as? UUID {
+                    return gameID
+                }
+            }
+        }
+        
+        // Eşleşen oyun bulunamadı
+        return nil
+    }
+    
+    // Zaman aşımı için oyun durumunu JSON'a dönüştür
+    private func createGameStateJSONForTimeout() -> Data? {
+        // Oyun tahtası kontrolü
+        let currentBoard = board
+        
+        // JSONSerialization için veri hazırlığı
+        var jsonDict: [String: Any] = [:]
+        
+        // Tahtanın mevcut durumunu board dizisine dönüştür
+        let boardArray = currentBoard.getBoardArray()
+        jsonDict["board"] = boardArray
+        
+        // Çözüm dizisini ekle
+        var solutionArray = Array(repeating: Array(repeating: 0, count: 9), count: 9)
+        for row in 0..<9 {
+            for col in 0..<9 {
+                solutionArray[row][col] = currentBoard.getSolutionValue(row: row, column: col) ?? 0
+            }
+        }
+        jsonDict["solution"] = solutionArray
+        
+        // Sabit hücreler bilgisini ekle
+        var fixedCells = Array(repeating: Array(repeating: false, count: 9), count: 9)
+        for row in 0..<9 {
+            for col in 0..<9 {
+                fixedCells[row][col] = currentBoard.isFixed(at: row, col: col)
+            }
+        }
+        jsonDict["fixedCells"] = fixedCells
+        
+        // Zorluk bilgisini kaydet
+        jsonDict["difficulty"] = currentBoard.difficulty.rawValue
+        
+        // İstatistik bilgilerini de ekle
+        var stats: [String: Any] = [:]
+        stats["errorCount"] = errorCount
+        stats["hintCount"] = hintCount
+        stats["moveCount"] = moveCount
+        stats["remainingHints"] = remainingHints
+        jsonDict["stats"] = stats
+        
+        // Kullanıcının girdiği değerleri kaydet
+        jsonDict["userEnteredValues"] = userEnteredValues
+                
+        // Veriyi json formatına dönüştür
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: jsonDict)
+            return jsonData
+        } catch {
+            print("❌ JSON oluşturulamadı: \(error)")
+            return nil
+        }
+    }
+    
+    // Not: saveGameWithCustomName metodu kaldırıldı, yerine normal saveGame metodu ve PersistenceController.updateGameDifficulty kullanılıyor
+    
+    // Kaydedilmiş oyunu sil (varsa)
+    private func deleteSavedGameIfExists() {
+        // Mevcut oyun için kayıt var mı kontrol et
+        let context = PersistenceController.shared.container.viewContext
+        
+        // Sadece mevcut oyun ID'si varsa silme işlemini yap
+        guard let gameID = currentGameID else { return }
+        
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "SavedGame")
+        fetchRequest.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
+        
+        do {
+            let results = try context.fetch(fetchRequest) as? [NSManagedObject] ?? []
+            for object in results {
+                context.delete(object)
+            }
+            try context.save()
+            print("✅ Zaman aşımına uğrayan oyun silindi")
+        } catch {
+            print("❌ Oyun silme hatası: \(error)")
+        }
+    }
+    
     // Objelerden kurtulmak için
     deinit {
+        // Bildirim dinleyicilerini kaldır
+        NotificationCenter.default.removeObserver(self)
         stopTimer()
     }
     

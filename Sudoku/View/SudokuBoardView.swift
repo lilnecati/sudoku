@@ -198,20 +198,15 @@ struct SudokuBoardView: View {
             onCellTapped: {
                 // Sadece oyun devam ederken hücre seçimine izin ver
                 if viewModel.gameState == .playing || viewModel.gameState == .ready {
-                    // Hafif dokunsal geri bildirim
-                    let generator = UIImpactFeedbackGenerator(style: .light)
-                    generator.impactOccurred()
                     // Aynı hücreye yeniden basıldığında değişiklik yoksa animasyon yapma
                     if viewModel.selectedCell?.row != row || viewModel.selectedCell?.column != column {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            let feedback = UIImpactFeedbackGenerator(style: .medium)
-                            feedback.impactOccurred()
+                        // Hücre seçimi için daha yumuşak bir animasyon kullanıyoruz
+                        withAnimation(.easeInOut(duration: 0.2)) {
                             viewModel.selectCell(row: row, column: column)
                         }
                     } else {
-                        // Zaten seçiliyse sadece dokunsal geri bildirim yap
-                        let feedback = UIImpactFeedbackGenerator(style: .light)
-                        feedback.impactOccurred()
+                        // Zaten seçiliyse sadece hücreyi tekrar seç
+                        viewModel.selectCell(row: row, column: column)
                     }
                     
                     // viewModel.selectCell(row: row, column: column) - animasyon eklediğimiz için yukarı taşındı

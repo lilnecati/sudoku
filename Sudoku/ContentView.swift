@@ -165,6 +165,67 @@ struct ContentView: View {
         }
     }
     
+    // Bildirim işleme için singleton sınıf
+    private class ContentViewTimeoutManager {
+        static let shared = ContentViewTimeoutManager()
+        var isProcessing = false
+        private init() {}
+    }
+    
+    // Zaman aşımı bildirim dinleyicisini ayarla
+    private func setupTimeoutNotification() {
+        // Önce mevcut gözlemciyi kaldır (tekrarları önlemek için)
+        NotificationCenter.default.removeObserver(
+            self,
+            name: Notification.Name("ShowMainMenuAfterTimeout"),
+            object: nil
+        )
+        
+        // Zaman aşımı sonrası ana menüyü gösterme bildirimini dinle
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("ShowMainMenuAfterTimeout"),
+            object: nil,
+            queue: .main
+        ) { notification in
+            // Eğer zaten işleniyorsa, çık
+            if ContentViewTimeoutManager.shared.isProcessing {
+                return
+            }
+            
+            // Bayrağı ayarla
+            ContentViewTimeoutManager.shared.isProcessing = true
+            
+            // Oyun ekranını kapat ve ana sayfaya yönlendir
+            DispatchQueue.main.async {
+                // Bildirim gönder
+                NotificationCenter.default.post(
+                    name: Notification.Name("ContentViewUpdateAfterTimeout"),
+                    object: nil
+                )
+                
+                print("🔊 Ana sayfaya yönlendiriliyor (zaman aşımı sonrası)")
+                
+                // İşlem tamamlandı, bayrağı sıfırla
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    ContentViewTimeoutManager.shared.isProcessing = false
+                }
+            }
+        }
+        
+        // ContentView güncelleme bildirimini dinle
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("ContentViewUpdateAfterTimeout"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            withAnimation {
+                self.showGame = false
+                self.showSavedGame = false
+                self.currentPage = .home // Ana sayfaya yönlendir
+            }
+        }
+    }
+    
     // MARK: - Title View
     var titleView: some View {
         VStack(spacing: 25) {
@@ -833,6 +894,7 @@ struct ContentView: View {
         }
         .onAppear {
             setupSavedGameNotification()
+            setupTimeoutNotification()
         }
     }
 }

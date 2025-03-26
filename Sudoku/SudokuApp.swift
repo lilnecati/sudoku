@@ -76,6 +76,11 @@ struct SudokuApp: App {
     @AppStorage("useSystemAppearance") private var useSystemAppearance: Bool = false
     @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
     
+    // Uygulamanın arka plana alınma zamanını kaydetmek için
+    @AppStorage("lastBackgroundTime") private var lastBackgroundTime: Double = 0
+    // Oyunun sıfırlanması için gereken süre (2 dakika = 120 saniye)
+    private let gameResetTimeInterval: TimeInterval = 120
+    
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.scenePhase) var scenePhase
     
@@ -143,11 +148,39 @@ struct SudokuApp: App {
         }
         .onChange(of: scenePhase) { _, newValue in
             if newValue == .background {
+                // Uygulama arka plana geçtiğinde aktif oyunu otomatik olarak duraklat
+                NotificationCenter.default.post(name: Notification.Name("PauseActiveGame"), object: nil)
+                print("📱 App moved to background - pausing active game")
+                
+                // Arka plana geçme zamanını kaydet
+                lastBackgroundTime = Date().timeIntervalSince1970
+                print("⏰ Background time saved: \(lastBackgroundTime)")
+                
+                // CoreData bağlamını kaydet
                 do {
                     try viewContext.save()
                     print("✅ Context saved successfully")
                 } catch {
                     print("❌ Failed to save context: \(error)")
+                }
+            } else if newValue == .active {
+                // Uygulama tekrar aktif olduğunda, ne kadar süre arka planda kaldığını kontrol et
+                let currentTime = Date().timeIntervalSince1970
+                let timeInBackground = currentTime - lastBackgroundTime
+                
+                if timeInBackground > gameResetTimeInterval {
+                    // 2 dakikadan fazla arka planda kaldıysa, oyunu sıfırla
+                    print("⏰ App was in background for \(Int(timeInBackground)) seconds - resetting game")
+                    NotificationCenter.default.post(name: Notification.Name("ResetGameAfterTimeout"), object: nil)
+                } else {
+                    // Normal aktif olma bildirimi
+                    print("📱 App became active after \(Int(timeInBackground)) seconds")
+                    
+                    // Bildirim göndermeden önce kısa bir gecikme ekle
+                    // Bu, birden fazla bildirim gönderilmesini önleyecek
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        NotificationCenter.default.post(name: Notification.Name("AppBecameActive"), object: nil)
+                    }
                 }
             }
         }
