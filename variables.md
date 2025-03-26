@@ -266,28 +266,185 @@ SudokuBoardView, oyun tahtasının görsel bileşenini oluşturan ve kullanıcı
 - Responsive tasarım: Farklı ekran boyutlarına uyum sağlar
 - Performans optimizasyonu: `drawingGroup()`, önbellek kullanımı ve gereksiz yeniden hesaplamaları önler
 - Katmanlı UI yapısı: Arka plan, hücreler ve çizgilerden oluşan katmanlar
-- Karanlık/açık tema desteği: Renk şemasına göre farklı renklerçili satır/sütun arka plan rengi |
-| `selectedCellBackground` | 20 | `Color` | Seçili hücre arka plan rengi |
-| `matchingValueBackground` | 21 | `Color` | Eşleşen değer arka plan rengi |
-| `invalidValueBackground` | 22 | `Color` | Geçersiz değer arka plan rengi |
+- Karanlık/açık tema desteği: Renk şemasına göre farklı renkler
+
+## GameView.swift
+
+GameView, Sudoku oyununun ana oyun ekranını oluşturan ve oyun mantığını görsel arayüz ile birleştiren görünümdür.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `viewModel` | 7 | `SudokuViewModel` | Oyun mantığını yöneten view model |
+| `showDifficultyPicker` | 8 | `Bool` | Zorluk seviyesi seçiciyi gösterme durumu |
+| `showingGameComplete` | 9 | `Bool` | Oyun tamamlandı ekranını gösterme durumu |
+| `showSettings` | 10 | `Bool` | Ayarlar ekranını gösterme durumu |
+| `presentationMode` | 12 | `PresentationMode` | Görünüm sunum modunu yönetme |
+| `dismiss` | 13 | `DismissAction` | Görünümü kapatma aksiyonu |
+| `colorScheme` | 14 | `ColorScheme` | Uygulama renk şeması (açık/karanlık mod) |
+| `timeDisplay` | 18 | `String` | Gösterilecek zaman metni |
+| `boardKey` | 19 | `String` | Tahtayı yenileme için benzersiz anahtar |
+| `timerUpdateInterval` | 20 | `TimeInterval` | Zamanlayıcı güncelleme aralığı |
+| `isPremiumUnlocked` | 23 | `Bool` | Premium özelliklerin açık olma durumu |
+| `showNoHintsMessage` | 26 | `Bool` | İpucu mesajını gösterme durumu |
+| `isHeaderVisible` | 29 | `Bool` | Başlık bölümünün görünürlüğü |
+| `isBoardVisible` | 30 | `Bool` | Tahta görünürlüğü |
+| `isControlsVisible` | 31 | `Bool` | Kontroller bölümünün görünürlüğü |
+| `tutorialManager` | 34 | `TutorialManager` | Eğitim rehberini yöneten nesne |
+| `showTutorialButton` | 35 | `Bool` | Eğitim butonunu gösterme durumu |
+| `gradientColors` | 38-42 | `[Color]` | Arka plan degrade renkleri |
+| `difficultyColors` | 45-50 | `[SudokuBoard.Difficulty: Color]` | Zorluk seviyelerine göre renkler |
+| `showCompletionView` | 70 | `Bool` | Tamamlama ekranını gösterme durumu |
 
 ### Fonksiyonlar
 
 | Fonksiyon | Satır | Açıklama |
 |-----------|-------|----------|
-| `body` | 24-86 | Ana görünümü oluşturur |
-| `updateSizes(from:cellSize:)` | 89-99 | Boyutları günceller - sabit bir hücre boyutu için optimize edilmiştir |
-| `gridOverlay` | 102-110 | Izgara çizgilerini çizer |
-| `gridCellLines` | 113-135 | İnce hücre çizgilerini çizer |
-| `gridLines` | 138-164 | Kalın ızgara çizgilerini çizer |
-| `cellView(row:column:)` | 167-215 | Hücre görünümünü oluşturur |
-| `pencilMarksView(row:column:)` | 218-237 | Kalem işaretleri görünümünü oluşturur |
-| `getCellBackgroundColor(row:column:isSelected:)` | 240-268 | Hücre arka plan rengini hesaplar |
-| `getTextColor(isOriginal:isSelected:cellValue:)` | 271-283 | Metin rengini hesaplar |
-| `isHintTargetCell(row:column:)` | 286-299 | Bir hücrenin ipucu hedefi olup olmadığını kontrol eder |
-| `isHighlighted(row:column:)` | 302-317 | Bir hücrenin vurgulanmış olup olmadığını kontrol eder |
-| `hasSameValue(row:column:)` | 320-332 | Bir hücrenin seçili hücreyle aynı değere sahip olup olmadığını kontrol eder |
+| `init(difficulty:)` | 52-55 | Belirli bir zorluk seviyesi ile yeni oyun başlatma |
+| `init(savedGame:)` | 57-65 | Kaydedilmiş bir oyundan başlatma |
+| `init(existingViewModel:)` | 67-68 | Var olan bir viewModel ile başlatma |
+| `body` | 72-180 | Ana görünüm yapısını oluşturur |
+| `headerView` | ~230-300 | Üst bilgi bölümünü oluşturur |
+| `controlsView` | ~320-410 | Oyun kontrolleri bölümünü oluşturur |
+| `overlayViews` | ~415-530 | Açılır göstergeleri oluşturur |
+| `difficultyPickerView` | ~535-605 | Zorluk seviyesi seçici görünümünü oluşturur |
+| `congratulationsView` | ~610-720 | Tebrik ekranını oluşturur |
+| `gameOverView` | ~725-780 | Oyun bitti ekranını oluşturur |
 
+### Önemli Özellikler
+
+- Dinamik UI animasyonları: Sayfalar arası geçişler ve bileşen animasyonları
+- Arka plan davranışı yönetimi: Oyun 2 dakika arka planda kalırsa otomatik kayıt
+- Eğitim rehberi: Yeni kullanıcılar için interaktif kullanım kılavuzu
+- Performans optimizasyonları: `drawingGroup()` ve `fixedSize` kullanımı
+
+## MainMenuView.swift
+
+MainMenuView, Sudoku uygulamasının ana menüsünü oluşturan ve kullanıcıya oyun başlatma, devam etme, skor tablosu ve ayarlar gibi seçenekler sunan görünümdür.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `colorScheme` | 5 | `ColorScheme` | Uygulama renk şeması (açık/karanlık mod) |
+| `hasSavedGame` | 6 | `Bool` | Kaydedilmiş oyun olup olmadığı durumu |
+
+
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 8-99 | Ana görünüm yapısını oluşturur |
+| `checkForSavedGame()` | 101-112 | Kaydedilmiş oyun olup olmadığını kontrol eder |
+| `loadLastGame()` | 114-126 | En son kaydedilmiş oyunu yükler |
+
+
+
+### Önemli Özellikler
+
+- Dinamik UI: Kaydedilmiş oyun varsa "Devam Et" butonu görünür
+- Görsel stil: Gradyan arka plan ve sistem ikonları ile modern tasarım
+- Gezinme yapısı: SwiftUI NavigationView ile sayfa geçişleri
+- Renk yönetimi: ColorManager kullanarak tutarlı renk paleti
+
+## ScoreboardView.swift
+
+ScoreboardView, oyuncu performansını, istatistiklerini ve tamamlanan oyunların skor geçmişini görüntüleyen görünümdür.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `colorScheme` | 5 | `ColorScheme` | Uygulama renk şeması (açık/karanlık mod) |
+| `selectedDifficulty` | 6 | `SudokuBoard.Difficulty` | Seçili zorluk seviyesi |
+| `statistics` | 7 | `ScoreboardStatistics` | Skor tablosu istatistikleri |
+| `recentScores` | 8 | `[NSManagedObject]` | Son oyunların listesi |
+| `showingDetail` | 9 | `Bool` | Detay görünümünü gösterme durumu |
+| `selectedTab` | 10 | `Int` | Seçili sekme (Genel/Zorluk) |
+| `selectedScore` | 11 | `NSManagedObject?` | Görüntülenmek üzere seçilen skor |
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `body` | 13-73 | Ana görünüm yapısını oluşturur |
+| `statisticsView` | 75-112 | Performans istatistikleri görünümünü oluşturur |
+| `gameStatsView` | 114-160 | Oyun istatistikleri görünümünü oluşturur |
+| `recentGamesView` | 162-205 | Son oyunlar listesini gösterir |
+| `difficultyComparisonView` | ~220-270 | Zorluk seviyelerine göre istatistikleri karşılaştırır |
+| `tabButton(title:tag:)` | ~280-310 | Sekme butonlarını oluşturur |
+| `formatTime(_:)` | ~360-370 | Zaman aralığını biçimlendirir |
+| `loadData()` | ~265-320 | Skor ve istatistik verilerini yükler |
+
+### Önemli Özellikler
+
+- Sekmeli ara yüz: Genel istatistikler ve zorluk seviyesine göre karşılaştırma
+- Detaylı istatistikler: En yüksek skor, ortalama skor, tamamlanan oyunlar ve daha fazlası
+- Etkileşimli liste: Son oyunların detaylarını görüntülemek için dokunulabilir öğeler
+- Dinamik veri güncelleme: Sekme ve zorluk seviyesi değişikliklerinde otomatik güncelleme
+
+## SettingsView.swift
+
+SettingsView, kullanıcının uygulama tercihlerini ve ayarlarını yönetebileceği görünümdür.
+
+### Değişkenler
+
+| Değişken | Satır | Tür | Açıklama |
+|----------|-------|-----|----------|
+| `presentationMode` | 6 | `PresentationMode` | Görünüm sunum modunu yönetme |
+| `colorScheme` | 7 | `ColorScheme` | Uygulama renk şeması (açık/karanlık mod) |
+| `defaultDifficulty` | 10 | `String` | Varsayılan zorluk seviyesi (AppStorage) |
+| `darkMode` | 11 | `Bool` | Karanlık mod aktivasyonu (AppStorage) |
+| `enableHapticFeedback` | 12 | `Bool` | Dokunsal geri bildirim aktivasyonu (AppStorage) |
+| `enableSoundEffects` | 13 | `Bool` | Ses efektleri aktivasyonu (AppStorage) |
+| `useSystemAppearance` | 14 | `Bool` | Sistem görünümünü kullanma durumu (AppStorage) |
+| `textSizeString` | 15 | `String` | Metin boyutu tercihi (AppStorage) |
+| `prefersDarkMode` | 16 | `Bool` | Karanlık mod tercihi (AppStorage) |
+| `powerSavingMode` | 17 | `Bool` | Güç tasarrufu modu aktivasyonu (AppStorage) |
+| `autoPowerSaving` | 18 | `Bool` | Otomatik güç tasarrufu aktivasyonu (AppStorage) |
+| `powerManager` | 21 | `PowerSavingManager` | Güç tasarrufu yöneticisi |
+| `username` | 23 | `String` | Kullanıcı adı |
+| `password` | 24 | `String` | Şifre |
+| `email` | 25 | `String` | E-posta |
+| `name` | 26 | `String` | İsim |
+| `showLoginView` | 27 | `Bool` | Giriş görünümünü gösterme durumu |
+| `showRegisterView` | 28 | `Bool` | Kayıt görünümünü gösterme durumu |
+| `errorMessage` | 29 | `String` | Hata mesajı |
+| `showError` | 30 | `Bool` | Hata gösterme durumu |
+| `isRefreshing` | 31 | `Bool` | Yenileme durumu |
+| `currentUser` | 34 | `NSManagedObject?` | Mevcut kullanıcı bilgisi |
+
+
+
+### Fonksiyonlar
+
+| Fonksiyon | Satır | Açıklama |
+|-----------|-------|----------|
+| `getBatteryIcon()` | 37-47 | Pil seviyesine göre ikon döndürür |
+| `getBatteryColor()` | 50-58 | Pil seviyesine göre renk döndürür |
+| `profileCircle(initial:)` | 69-82 | Profil dairesi görünümünü oluşturur |
+| `logoutButton(action:)` | 84-102 | Çıkış butonu görünümünü oluşturur |
+| `loginButton(action:)` | 104-121 | Giriş butonu görünümünü oluşturur |
+| `registerButton(action:)` | 123-143 | Kayıt butonu görünümünü oluşturur |
+| `websiteLink(url:displayText:)` | 145-163 | Web sitesi bağlantı görünümünü oluşturur |
+| `resetAllSettings()` | 166-180 | Tüm ayarları varsayılan değerlerine sıfırlar |
+| `userProfileSection()` | 182-214 | Kullanıcı profili bölümünü oluşturur |
+| `body` | 216-331 | Ana görünüm yapısını oluşturur |
+| `settingsSection(title:systemImage:content:)` | 335-379 | Ayarlar bölümü görünümünü oluşturur |
+| `gameSettingsView()` | 382-492 | Oyun ayarları görünümünü oluşturur |
+| `appearanceSettingsView()` | 546-641 | Görünüm ayarları görünümünü oluşturur |
+| `aboutView()` | 644-723 | Hakkında bölümü görünümünü oluşturur |
+
+
+### Önemli Özellikler
+
+- Güç tasarrufu yönetimi: Pil seviyesine göre otomatik güç tasarrufu modu
+- Tema desteği: Karanlık/açık tema ve sistem teması ile uyum
+- Oyun zorluk ayarları: Varsayılan zorluk seviyesi tercihi
+- Erişilebilirlik: Metin boyutu ayarları ve görsel tercihler
+- Geribildirim kontrolleri: Dokunsal geri bildirim ve ses efektleri ayarları
 
 ---
 
