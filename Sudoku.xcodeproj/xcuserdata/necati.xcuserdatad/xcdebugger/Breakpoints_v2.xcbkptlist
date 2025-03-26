@@ -16,7 +16,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "140"
             endingLineNumber = "140"
-            landmarkName = "registerButton(action:)"
+            landmarkName = "loginButton(action:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

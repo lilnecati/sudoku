@@ -37,29 +37,50 @@ struct SettingsView: View {
     
     // Pil simgesini al
     private func getBatteryIcon() -> String {
-        let level = powerManager.batteryLevel
+        let level = PowerSavingManager.shared.batteryLevel
+        let isCharging = PowerSavingManager.shared.isCharging
+        
+        let batteryLevel: String
         if level <= 0.1 {
-            return "battery.0"
+            batteryLevel = "battery.0"
         } else if level <= 0.25 {
-            return "battery.25"
+            batteryLevel = "battery.25"
         } else if level <= 0.5 {
-            return "battery.50"
+            batteryLevel = "battery.50"
         } else if level <= 0.75 {
-            return "battery.75"
+            batteryLevel = "battery.75"
         } else {
-            return "battery.100"
+            batteryLevel = "battery.100"
         }
+        
+        return isCharging ? batteryLevel + ".charge" : batteryLevel
     }
     
     // Pil rengini al
     private func getBatteryColor() -> Color {
-        let level = powerManager.batteryLevel
+        let level = PowerSavingManager.shared.batteryLevel
         if level <= 0.1 {
             return .red
         } else if level <= 0.25 {
             return .orange
         } else {
             return .green
+        }
+    }
+    
+    // Pil arka plan rengini al
+    private func getBatteryBackgroundColor() -> Color {
+        let level = PowerSavingManager.shared.batteryLevel
+        let isCharging = PowerSavingManager.shared.isCharging
+        
+        if isCharging {
+            return Color.blue
+        } else if level <= 0.1 {
+            return Color.red
+        } else if level <= 0.25 {
+            return Color.orange
+        } else {
+            return Color.green
         }
     }
     
@@ -225,57 +246,191 @@ struct SettingsView: View {
             
             ScrollView {
                 VStack(spacing: 25) {
-                    // Başlık
-                    Text("Ayarlar")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .padding(.top, 20)
+                    // Modern başlık
+                    HStack {
+                        Text("Ayarlar")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                        
+                        // Pil durumu göstergesi
+                        HStack(spacing: 8) {
+                            Image(systemName: getBatteryIcon())
+                                .foregroundColor(getBatteryColor())
+                            
+                            Text("\(Int(PowerSavingManager.shared.batteryLevel * 100))%")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(colorScheme == .dark ? Color(hex: "252525") : Color(hex: "F0F0F5"))
+                        )
+                    }
+                    .padding(.top, 20)
+                    .padding(.horizontal)
                     
                     // Kullanıcı profili
                     userProfileSection()
                         .padding(.horizontal)
                     
-                    // Oyun ayarları
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Oyun Ayarları")
-                            .font(.headline)
-                            .padding(.horizontal)
+                    // Oyun ayarları - modern tasarım
+                    settingsSection(title: "Oyun Ayarları", systemImage: "gamecontroller.fill") {
                         
                         gameSettingsView()
                     }
                     
-                    // Görünüm ayarları
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Görünüm Ayarları")
-                            .font(.headline)
-                            .padding(.horizontal)
+                    // Görünüm ayarları - modern tasarım
+                    settingsSection(title: "Görünüm Ayarları", systemImage: "paintpalette.fill") {
                         
                         appearanceSettingsView()
                     }
                     
-                    // Güç tasarrufu ayarları
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Güç Tasarrufu")
-                            .font(.headline)
-                            .padding(.horizontal)
+                    // Güç tasarrufu ayarları - modern tasarım
+                    settingsSection(title: "Güç Tasarrufu", systemImage: "bolt.fill") {
                         
-                        VStack(spacing: 5) {
-                            Toggle("Güç Tasarrufu Modu", isOn: $powerSavingMode)
-                                .onChange(of: powerSavingMode) { _, newValue in
-                                    PowerSavingManager.shared.isPowerSavingEnabled = newValue
-                                }
-                            
-                            Toggle("Otomatik Güç Tasarrufu", isOn: $autoPowerSaving)
-                                .onChange(of: autoPowerSaving) { _, newValue in
-                                    PowerSavingManager.shared.isAutoPowerSavingEnabled = newValue
-                                }
-                            
-                            // Basit pil durumu göstergesi
+                        VStack(spacing: 15) {
+                            // Güç tasarrufu modu - modern tasarım
                             HStack {
-                                Image(systemName: "battery.50")
-                                    .foregroundColor(.green)
-                                Text("Pil optimizasyonu aktif")
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(powerSavingMode ? Color.green.opacity(0.15) : Color.gray.opacity(0.1))
+                                            .frame(width: 36, height: 36)
+                                        
+                                        Image(systemName: "leaf.fill")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(powerSavingMode ? .green : .gray)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Güç Tasarrufu Modu")
+                                            .font(.system(size: 16, weight: .medium))
+                                        
+                                        Text("Animasyonları ve görsel efektleri azaltır")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                
+                                Spacer()
+                                
+                                // Özelleştirilmiş Toggle
+                                Button(action: {
+                                    powerSavingMode.toggle()
+                                    // PowerSavingManager'ı güncelle
+                                    PowerSavingManager.shared.isPowerSavingEnabled = powerSavingMode
+                                }) {
+                                    ZStack {
+                                        Capsule()
+                                            .fill(powerSavingMode ? Color.green : Color.gray.opacity(0.3))
+                                            .frame(width: 50, height: 30)
+                                        
+                                        Circle()
+                                            .fill(Color.white)
+                                            .frame(width: 26, height: 26)
+                                            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                            .offset(x: powerSavingMode ? 10 : -10)
+                                    }
+                                    .animation(.spring(response: 0.2, dampingFraction: 0.6), value: powerSavingMode)
+                                }
+                            }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(colorScheme == .dark ? Color(hex: "252525") : Color(hex: "F8F8F8"))
+                            )
+                            .padding(.horizontal, 16)
+                            
+                            // Otomatik güç tasarrufu - modern tasarım
+                            HStack {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(autoPowerSaving ? Color.blue.opacity(0.15) : Color.gray.opacity(0.1))
+                                            .frame(width: 36, height: 36)
+                                        
+                                        Image(systemName: "bolt.batteryblock.fill")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(autoPowerSaving ? .blue : .gray)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Otomatik Güç Tasarrufu")
+                                            .font(.system(size: 16, weight: .medium))
+                                        
+                                        Text("Pil seviyesi düşükken otomatik olarak etkinleştir")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                
+                                Spacer()
+                                
+                                // Özelleştirilmiş Toggle
+                                Button(action: {
+                                    autoPowerSaving.toggle()
+                                    // PowerSavingManager'ı güncelle
+                                    PowerSavingManager.shared.isAutoPowerSavingEnabled = autoPowerSaving
+                                }) {
+                                    ZStack {
+                                        Capsule()
+                                            .fill(autoPowerSaving ? Color.blue : Color.gray.opacity(0.3))
+                                            .frame(width: 50, height: 30)
+                                        
+                                        Circle()
+                                            .fill(Color.white)
+                                            .frame(width: 26, height: 26)
+                                            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                            .offset(x: autoPowerSaving ? 10 : -10)
+                                    }
+                                    .animation(.spring(response: 0.2, dampingFraction: 0.6), value: autoPowerSaving)
+                                }
+                            }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(colorScheme == .dark ? Color(hex: "252525") : Color(hex: "F8F8F8"))
+                            )
+                            .padding(.horizontal, 16)
+                            
+                            // Modern pil durumu göstergesi
+                            HStack {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(getBatteryBackgroundColor())
+                                            .frame(width: 36, height: 36)
+                                        
+                                        Image(systemName: getBatteryIcon())
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.white)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Pil Durumu")
+                                            .font(.system(size: 16, weight: .medium))
+                                        
+                                        Text("\(Int(PowerSavingManager.shared.batteryLevel * 100))% \(PowerSavingManager.shared.isCharging ? "\u015earj oluyor" : "")")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                
                                 Spacer()
                             }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(colorScheme == .dark ? Color(hex: "252525") : Color(hex: "F8F8F8"))
+                            )
+                            .padding(.horizontal, 16)
                             .padding(.top, 8)
                         }
                         .padding()
@@ -287,11 +442,8 @@ struct SettingsView: View {
                         .padding(.horizontal)
                     }
                     
-                    // Hakkında
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Hakkında")
-                            .font(.headline)
-                            .padding(.horizontal)
+                    // Hakkında - modern tasarım
+                    settingsSection(title: "Hakkında", systemImage: "info.circle.fill") {
                         
                         aboutView()
                     }
@@ -365,17 +517,20 @@ struct SettingsView: View {
     
     private func sectionHeader(title: String, systemImage: String) -> some View {
         HStack {
-            Image(systemName: systemImage)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.blue)
-                .frame(width: 30, height: 30)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.blue.opacity(0.1))
-                )
+            // Modern ikon tasarımı
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: systemImage)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.blue)
+            }
             
             Text(title)
                 .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
             
             Spacer()
         }

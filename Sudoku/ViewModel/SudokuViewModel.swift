@@ -1877,7 +1877,7 @@ class SudokuViewModel: ObservableObject {
         for game in savedGames {
             if let gameDifficulty = game.difficulty, gameDifficulty == difficulty {
                 // Aynı zorluk seviyesinde "(Arka Plan)" ekiyle kaydedilmiş bir oyun bulundu
-                if let gameID = game.id as? UUID {
+                if let gameID = game.id as UUID? {
                     return gameID
                 }
             }

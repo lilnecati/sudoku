@@ -856,29 +856,63 @@ ScoreboardView, skor tablosu ekranının görünümüdür.
 
 ## SettingsView.swift
 
-SettingsView, ayarlar ekranının görünümüdür. Kullanıcının görünüm, ses, titreşim ve oyun tercihleri gibi çeşitli ayarları değiştirmesine olanak sağlar.
+SettingsView, uygulamanın ayarlarını yönetmek için kullanılan görünümdür. Kullanıcı tercihleri, görünüm ayarları, ses ve titreşim seçenekleri gibi çeşitli ayarları içerir. Modern tasarım öğeleri ve gelişmiş kullanıcı deneyimi sunar.
 
 ### Değişkenler
 
 | Değişken | Satır | Tür | Açıklama |
 |----------|-------|-----|----------|
-| `viewModel` | ~10 | `SudokuViewModel` | Sudoku oyun mantığını yöneten view model |
-| `showLoginView` | ~15 | `Bool` | Giriş görünümünün gösterilip gösterilmediğini kontrol eder |
-| `showRegisterView` | ~20 | `Bool` | Kayıt görünümünün gösterilip gösterilmediğini kontrol eder |
-| `showDeleteConfirmation` | ~25 | `Bool` | Silme onayının gösterilip gösterilmediğini kontrol eder |
-| `showTutorial` | ~30 | `Bool` | Öğreticinin gösterilip gösterilmediğini kontrol eder |
-| `powerSavingEnabled` | ~35 | `Bool` | Güç tasarrufu modunun etkin olup olmadığını kontrol eder |
+| `colorScheme` | 15 | `Environment<ColorScheme>` | Sistem renk şeması (açık/karanlık mod) |
+| `enableHapticFeedback` | 17 | `@AppStorage` | Dokunsal geri bildirimin etkin olup olmadığı |
+| `enableNumberInputHaptic` | 18 | `@AppStorage` | Sayı girişi için dokunsal geri bildirimin etkin olup olmadığı |
+| `enableSoundEffects` | 19 | `@AppStorage` | Ses efektlerinin etkin olup olmadığı |
+| `enableBackgroundMusic` | 20 | `@AppStorage` | Arka plan müziğinin etkin olup olmadığı |
+| `powerSavingMode` | 21 | `@AppStorage` | Güç tasarrufu modunun etkin olup olmadığı |
+| `autoPowerSaving` | 22 | `@AppStorage` | Otomatik güç tasarrufu modunun etkin olup olmadığı |
+| `textSizeString` | 23 | `@AppStorage` | Metin boyutu tercihi (small, medium, large) |
+| `useSystemAppearance` | 24 | `@AppStorage` | Sistem görünümüne uyum sağlama tercihi |
+| `darkMode` | 25 | `@AppStorage` | Karanlık mod tercihi |
+| `showTutorialTips` | 26 | `@AppStorage` | Öğretici ipuçlarını gösterme tercihi |
+| `playerName` | 27 | `@AppStorage` | Oyuncu adı |
+| `showLoginView` | 30 | `Bool` | Giriş görünümünün gösterilip gösterilmediğini kontrol eder |
+| `showRegisterView` | 31 | `Bool` | Kayıt görünümünün gösterilip gösterilmediğini kontrol eder |
+| `showDeleteConfirmation` | 32 | `Bool` | Silme onayının gösterilip gösterilmediğini kontrol eder |
+| `showTutorial` | 33 | `Bool` | Öğreticinin gösterilip gösterilmediğini kontrol eder |
 
 ### Fonksiyonlar
 
 | Fonksiyon | Satır | Açıklama |
 |-----------|-------|----------|
-| `body` | ~40 | Ayarlar ekranını oluşturur |
-| `userSection()` | ~60 | Kullanıcı ayarları bölümünü oluşturur |
-| `gameSection()` | ~80 | Oyun ayarları bölümünü oluşturur |
-| `dataSection()` | ~100 | Veri ayarları bölümünü oluşturur |
-| `deleteAllSavedGames()` | ~120 | Tüm kaydedilmiş oyunları siler |
-| `resetScoreboard()` | ~140 | Skor tablosunu sıfırlar |
+| `body` | 30-180 | Ana görünümü oluşturur |
+| `gameSettingsView` | 183-230 | Oyun ayarları bölümünü oluşturur |
+| `appearanceSettingsView` | 233-280 | Görünüm ayarları bölümünü oluşturur |
+| `aboutView` | 283-320 | Hakkında bölümünü oluşturur |
+| `userProfileSection` | 211-230 | Kullanıcı profil bölümünü oluşturur |
+| `websiteLinkModern` | 180-200 | Modern tasarımlı web sitesi bağlantısı oluşturur |
+| `textSizePreview` | 343-360 | Metin boyutu önizlemesini oluşturur |
+| `toggleAppearance` | 363-380 | Görünüm modunu değiştirir (açık/karanlık) |
+| `getBatteryIcon` | 37-55 | Pil seviyesine ve şarj durumuna göre uygun pil simgesini döndürür |
+| `getBatteryColor` | 53-62 | Pil seviyesine göre uygun rengi döndürür |
+| `getBatteryBackgroundColor` | 62-76 | Pil seviyesine ve şarj durumuna göre uygun arka plan rengini döndürür |
+| `settingsSection` | 494-504 | Başlık ve içerikle bir ayarlar bölümü oluşturur |
+| `sectionHeader` | 517-534 | Bir bölüm başlığı ve simgesi oluşturur |
+| `backgroundRectangle` | 506-510 | Ayarlar bölümleri için arka plan dikdörtgeni oluşturur |
+| `settingRowBackground` | 512-515 | Ayar satırları için arka plan oluşturur |
+| `deleteAllSavedGames` | ~400 | Tüm kaydedilmiş oyunları siler |
+| `resetScoreboard` | ~420 | Skor tablosunu sıfırlar |
+
+### Önemli Özellikler
+
+- **Modern Tasarım**: Yuvarlatılmış köşeler, gölge efektleri ve çekici renk paleti ile güncel bir görünüm
+- **Bölüm Organizasyonu**: Ayarların kategorilere ayrılması ve kolay gezinme için simgelerle desteklenmesi
+- **Pil Durumu Göstergesi**: Cihazın pil seviyesini ve şarj durumunu gösteren dinamik gösterge
+- **Özelleştirilmiş Toggle Düğmeleri**: Standart Toggle yerine daha modern ve görsel olarak çekici özel tasarımlı düğmeler
+- **Kullanıcı Profil Bölümü**: Kullanıcı bilgilerini gösteren ve profil yönetimi sağlayan gelişmiş bölüm
+- **Güç Tasarrufu Yönetimi**: Pil durumuna göre otomatik güç tasarrufu modu ve manuel kontrol seçenekleri
+- **Duyarlı Tasarım**: Farklı ekran boyutlarına ve yönelimlerine uyum sağlayan esnek düzen
+- **Tema Desteği**: Açık/karanlık mod ve sistem temasına uyum sağlama özelliği
+- **Erişilebilirlik**: Metin boyutu ayarları ve görsel kontrastlar ile farklı kullanıcı ihtiyaçlarını karşılama
+- **Animasyonlar**: Kullanıcı etkileşimlerinde akıcı ve göz alıcı geçiş animasyonları
 
 ---
 
