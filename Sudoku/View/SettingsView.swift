@@ -601,8 +601,6 @@ struct SettingsView: View {
         .padding(.horizontal)
     }
     
-    pr
-    
     private func appearanceSettingsView() -> some View {
         VStack(spacing: 5) {
             // Sistem görünümünü kullan
