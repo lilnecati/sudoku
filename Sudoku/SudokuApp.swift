@@ -1,8 +1,7 @@
-//
 //  SudokuApp.swift
 //  Sudoku
 //
-//  Created by Necati Yıldırım on 23.03.2025.
+//  Created by Necati Yıldırım on 23.08.2024.
 //
 
 import SwiftUI

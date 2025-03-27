@@ -1,3 +1,9 @@
+//  SudokuBoardView.swift
+//  Sudoku
+//
+//  Created by Necati Yıldırım on 11.11.2024.
+//
+
 import SwiftUI
 import Combine
 

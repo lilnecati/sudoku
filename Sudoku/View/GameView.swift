@@ -1,3 +1,9 @@
+//  GameView.swift
+//  Sudoku
+//
+//  Created by Necati Yıldırım on 23.08.2024.
+//
+
 import SwiftUI
 import CoreData
 import UIKit

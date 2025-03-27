@@ -1,3 +1,9 @@
+//  TutorialView.swift
+//  Sudoku
+//
+//  Created by Necati Yıldırım on 23.08.2024.
+//
+
 import SwiftUI
 
 struct TutorialView: View {

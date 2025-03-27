@@ -1,3 +1,9 @@
+//  ScoreboardView.swift
+//  Sudoku
+//
+//  Created by Necati Yıldırım on 20.01.2025.
+//
+
 import SwiftUI
 import CoreData
 

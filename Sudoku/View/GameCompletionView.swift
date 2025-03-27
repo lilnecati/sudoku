@@ -1,3 +1,9 @@
+//  GameCompletionView.swift
+//  Sudoku
+//
+//  Created by Necati Yıldırım on 13.09.2024.
+//
+
 import SwiftUI
 
 struct GameCompletionView: View {

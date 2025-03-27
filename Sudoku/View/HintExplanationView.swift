@@ -1,3 +1,9 @@
+//  HintExlanationVion.swift
+//  Sudoku
+//
+//  Created by Necati Yıldırım on 15.10.2024.
+//
+
 import SwiftUI
 
 struct HintExplanationView: View {

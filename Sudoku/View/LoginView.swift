@@ -1,3 +1,9 @@
+// LoginView.swift
+//  Sudoku
+//
+//  Created by Necati Yıldırım on 10.10.2024.
+//
+
 import SwiftUI
 import CoreData
 

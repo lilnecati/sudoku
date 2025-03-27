@@ -1,3 +1,10 @@
+//  SudokuViewModel.swift
+//  Sudoku
+//
+//  Created by Necati Yıldırım on 29.12.2024.
+//
+
+
 import Foundation
 import SwiftUI
 import Combine
@@ -739,7 +746,7 @@ class SudokuViewModel: ObservableObject {
         
         // Hücreyi çöz
         enterValue(value, at: row, col: col)
-        hintCount += 1
+            hintCount += 1
         remainingHints -= 1
         
         // Tahtayı güncelle
@@ -917,10 +924,10 @@ class SudokuViewModel: ObservableObject {
         // Hücreyi çöz
         enterValue(value, at: row, col: col)
         hintCount += 1
-        remainingHints -= 1
-        
+            remainingHints -= 1
+            
         // Tahtayı güncelle
-        validateBoard()
+            validateBoard()
         updateUsedNumbers()
         
         return hint
@@ -993,7 +1000,7 @@ class SudokuViewModel: ObservableObject {
         
         // Tahtayı güncelle
         validateBoard()
-        updateUsedNumbers()
+            updateUsedNumbers()
         
         return hint
     }
@@ -1133,7 +1140,7 @@ class SudokuViewModel: ObservableObject {
     private func enterValue(_ value: Int?, at row: Int, col: Int) {
         // Animasyon ve titreşim efekti ile değeri ayarla
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            board.setValue(at: row, col: col, value: value)
+        board.setValue(at: row, col: col, value: value)
             
             // Sayı girildiğinde titreşim geri bildirimi
             if enableHapticFeedback && enableNumberInputHaptic && value != nil {
@@ -1246,7 +1253,7 @@ class SudokuViewModel: ObservableObject {
                     jsonData: jsonData
                 )
                 print("✅ Oyun başarıyla güncellendi, ID: \(gameID)")
-            } else {
+        } else {
                 // Yeni bir oyun kaydet ve ID'sini kaydet
                 print("Yeni oyun kaydediliyor")
                 let newGameID = UUID()
@@ -1600,7 +1607,7 @@ class SudokuViewModel: ObservableObject {
     func deleteSavedGame(_ game: NSManagedObject) {
         if let savedGame = game as? SavedGame {
             PersistenceController.shared.deleteSavedGame(savedGame)
-            loadSavedGames() // Kaydedilmiş oyunları yeniden yükle
+        loadSavedGames() // Kaydedilmiş oyunları yeniden yükle
         }
     }
     
@@ -2010,7 +2017,7 @@ class SudokuViewModel: ObservableObject {
             handleGameStateChange()
         }
     }
-}
+} 
 
 // MARK: - NSManagedObject Extensions for HighScoresView Compatibility
 extension NSManagedObject {
