@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A4CB25B72D951FC0004E56BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = A4CB25B62D951FC0004E56BE /* README.md */; };
+		A4CB25B92D951FCC004E56BE /* variables.md in Resources */ = {isa = PBXBuildFile; fileRef = A4CB25B82D951FCC004E56BE /* variables.md */; };
+		A4CB25BB2D951FFB004E56BE /* fix_all_errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4CB25BA2D951FFB004E56BE /* fix_all_errors.swift */; };
+		A4CB25BD2D9520C6004E56BE /* fix_difficulty.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4CB25BC2D9520C6004E56BE /* fix_difficulty.swift */; };
+		A4CB25BF2D9520E0004E56BE /* fix_duplicate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4CB25BE2D9520E0004E56BE /* fix_duplicate.swift */; };
+		A4CB25C12D9520F4004E56BE /* fix_sudoku.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4CB25C02D9520F4004E56BE /* fix_sudoku.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A4861AF02D8FFB8B0027B8B9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +36,12 @@
 		A4861ADF2D8FFB8A0027B8B9 /* Sudoku.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sudoku.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4861AEF2D8FFB8B0027B8B9 /* SudokuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SudokuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4861AF92D8FFB8B0027B8B9 /* SudokuUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SudokuUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A4CB25B62D951FC0004E56BE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		A4CB25B82D951FCC004E56BE /* variables.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = variables.md; sourceTree = "<group>"; };
+		A4CB25BA2D951FFB004E56BE /* fix_all_errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fix_all_errors.swift; sourceTree = "<group>"; };
+		A4CB25BC2D9520C6004E56BE /* fix_difficulty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fix_difficulty.swift; sourceTree = "<group>"; };
+		A4CB25BE2D9520E0004E56BE /* fix_duplicate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fix_duplicate.swift; sourceTree = "<group>"; };
+		A4CB25C02D9520F4004E56BE /* fix_sudoku.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fix_sudoku.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +90,12 @@
 		A4861AD62D8FFB8A0027B8B9 = {
 			isa = PBXGroup;
 			children = (
+				A4CB25BA2D951FFB004E56BE /* fix_all_errors.swift */,
+				A4CB25BC2D9520C6004E56BE /* fix_difficulty.swift */,
+				A4CB25BE2D9520E0004E56BE /* fix_duplicate.swift */,
+				A4CB25C02D9520F4004E56BE /* fix_sudoku.swift */,
+				A4CB25B62D951FC0004E56BE /* README.md */,
+				A4CB25B82D951FCC004E56BE /* variables.md */,
 				A4861AE12D8FFB8A0027B8B9 /* Sudoku */,
 				A4861AF22D8FFB8B0027B8B9 /* SudokuTests */,
 				A4861AFC2D8FFB8B0027B8B9 /* SudokuUITests */,
@@ -212,6 +233,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A4CB25B72D951FC0004E56BE /* README.md in Resources */,
+				A4CB25B92D951FCC004E56BE /* variables.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,6 +259,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A4CB25C12D9520F4004E56BE /* fix_sudoku.swift in Sources */,
+				A4CB25BD2D9520C6004E56BE /* fix_difficulty.swift in Sources */,
+				A4CB25BB2D951FFB004E56BE /* fix_all_errors.swift in Sources */,
+				A4CB25BF2D9520E0004E56BE /* fix_duplicate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

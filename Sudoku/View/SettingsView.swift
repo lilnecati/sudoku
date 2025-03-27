@@ -40,6 +40,8 @@ struct SettingsView: View {
     
     // Mevcut kullanıcı bilgisi
     @State private var currentUser: NSManagedObject? = nil
+
+    @State private var previousChargingState: Bool?
     
     // Pil simgesini al
     private func getBatteryIcon() -> String {
@@ -249,7 +251,6 @@ struct SettingsView: View {
         let batteryIcon = getBatteryIcon()
         let batteryColor = getBatteryColor()
         let batteryLevel = Int(PowerSavingManager.shared.batteryLevel * 100)
-        let isCharging = PowerSavingManager.shared.isCharging ? "\u{015F}arj oluyor" : ""
 
         return ZStack {
             background
@@ -316,9 +317,16 @@ struct SettingsView: View {
             UIDevice.current.isBatteryMonitoringEnabled = true
             powerSavingMode = powerManager.powerSavingMode
             autoPowerSaving = powerManager.autoPowerSaving
-            
+
             // Mevcut kullanıcıyı al
             currentUser = PersistenceController.shared.getCurrentUser()
+
+            // Şarj durumu değişikliğini kontrol et
+            let isCharging = PowerSavingManager.shared.isCharging
+            if previousChargingState != isCharging {
+                print("Cihaz şarj oluyor mu? \(isCharging)")
+                previousChargingState = isCharging
+            }
         }
         .sheet(isPresented: $showLoginView) {
             LoginView(isPresented: $showLoginView, currentUser: $currentUser)
@@ -593,6 +601,8 @@ struct SettingsView: View {
         .padding(.horizontal)
     }
     
+    pr
+    
     private func appearanceSettingsView() -> some View {
         VStack(spacing: 5) {
             // Sistem görünümünü kullan
@@ -714,10 +724,51 @@ struct SettingsView: View {
     }
     
     private func aboutSettingsView() -> some View {
-        VStack(spacing: 15) {
-            Text("Sudoku v1.0")
-            Text(" 2025 Necati")
+        VStack(spacing: 20) {
+            // Uygulama başlığı ve sürüm bilgisi
+            VStack(spacing: 8) {
+                Text("Sudoku")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                
+                Text("v1.0")
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+            }
+            
+            // Geliştirici bilgisi
+            VStack(spacing: 8) {
+                Text("Geliştirici")
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundColor(.primary)
+                
+                Text("Necati Yıldırım")
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+            }
+            
+            // Görsel ayrım için bir çizgi
+            Divider()
+                .background(Color.gray.opacity(0.5))
+            
+            // Ek bilgiler veya bağlantılar
+            VStack(spacing: 8) {
+                Text("Bu uygulama, benim oynamam için tasarlanmıştır.")
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                Text("© 2025 Necati Yıldırım")
+                    .font(.system(size: 12, weight: .light, design: .rounded))
+                    .foregroundColor(.gray)
+            }
         }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        )
         .padding()
     }
     
