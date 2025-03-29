@@ -83,7 +83,7 @@ struct SudokuCellView: View {
                             ZStack {
                                 Text("\(value)")
                                     .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.6))
-                                    .fontWeight(isFixed ? .bold : .medium)
+                                    .fontWeight(isFixed ? .bold : (isUserEntered ? .bold : .medium))
                                     .foregroundColor(getTextColor())
                                     .scaleEffect(animateValue ? 1.3 : 1.0)
                                     .opacity(animateValue ? 0.7 : 1.0)
@@ -185,12 +185,13 @@ struct SudokuCellView: View {
         else if isSelected {
             // Seçili hücre - en koyu ton
             return colorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.25)
+        } else if isMatchingValue {
+            // Aynı değerli hücreler - DAHA BELİRGİN TON
+            // Tüm aynı değerli hücreler için aynı arka plan rengi kullan
+            return colorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.3)
         } else if isHighlighted {
             // Aynı satır/sütun - orta ton
             return colorScheme == .dark ? themeColor.opacity(0.25) : themeColor.opacity(0.15) 
-        } else if isMatchingValue {
-            // Aynı değerli hücreler - DAHA BELİRGİN TON
-            return colorScheme == .dark ? themeColor.opacity(0.35) : themeColor.opacity(0.2)
         } else {
             // Normal hücreler - çok hafif ton veya beyaz
             return colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white
@@ -212,7 +213,8 @@ struct SudokuCellView: View {
             return themeColor
         } else if isMatchingValue {
             // Aynı değerli hücrelerin kenarları - DAHA BELİRGİN
-            return colorScheme == .dark ? themeColor.opacity(0.8) : themeColor.opacity(0.6)
+            // Tüm aynı değerli hücreler için aynı kenar rengi kullan
+            return colorScheme == .dark ? themeColor.opacity(0.9) : themeColor.opacity(0.7)
         } else if isHighlighted {
             // Aynı satır/sütun kenarı - orta yoğunluk
             return colorScheme == .dark ? themeColor.opacity(0.6) : themeColor.opacity(0.4)
@@ -222,9 +224,9 @@ struct SudokuCellView: View {
         }
     }
     
-    // Metin rengi - Tek renk temalı yazılar
+    // Metin rengi - Görsel tasarıma uygun modern tema 
     private func getTextColor() -> Color {
-        // Ana tema rengi: Teal (turkuaz)
+        // Ana tema rengi: Teal (turkuaz) - ipucu için mavi renk
         let themeColor = Color.teal
         
         if isHintTarget {
@@ -234,8 +236,9 @@ struct SudokuCellView: View {
             // Sabit sayılar - standart siyah/beyaz (maksimum okunabilirlik)
             return colorScheme == .dark ? Color.white : Color.black
         } else if isUserEntered {
-            // Kullanıcı girişleri - tema rengi
-            return colorScheme == .dark ? themeColor : themeColor
+            // Kullanıcı girişleri - daha belirgin tema rengi
+            // Daha koyu ve belirgin renkler kullanarak ayrım sağlama
+            return colorScheme == .dark ? Color.cyan : Color.blue
         } else {
             // Diğer metinler - gri
             return colorScheme == .dark ? Color.gray : Color.gray

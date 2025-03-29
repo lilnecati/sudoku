@@ -21,6 +21,34 @@ extension EnvironmentValues {
     }
 }
 
+// Tema yönetimi için global sınıf - tema değişikliklerinin anında tüm ekranlara yansıması için
+class ThemeManager: ObservableObject {
+    @AppStorage("darkMode") var darkMode: Bool = false {
+        didSet {
+            updateTheme()
+        }
+    }
+    @AppStorage("useSystemAppearance") var useSystemAppearance: Bool = false {
+        didSet {
+            updateTheme()
+        }
+    }
+    
+    @Published var colorScheme: ColorScheme?
+    
+    init() {
+        updateTheme()
+    }
+    
+    func updateTheme() {
+        colorScheme = useSystemAppearance ? nil : (darkMode ? .dark : .light)
+    }
+    
+    func toggleDarkMode() {
+        darkMode.toggle()
+    }
+}
+
 // Metin boyutu tercihi için enum
 enum TextSizePreference: String, CaseIterable {
     case small = "Küçük"
@@ -71,8 +99,7 @@ struct ColorManager {
 
 @main
 struct SudokuApp: App {
-    @AppStorage("darkMode") private var darkMode: Bool = false
-    @AppStorage("useSystemAppearance") private var useSystemAppearance: Bool = false
+    @StateObject private var themeManager = ThemeManager()
     @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
     
     // Uygulamanın arka plana alınma zamanını kaydetmek için
@@ -128,7 +155,8 @@ struct SudokuApp: App {
                     // Özel StartupView ile ContentView'u sarmalayarak, her açılışta ana sayfadan başlamayı garanti ediyoruz
                     StartupView()
                         .environment(\.managedObjectContext, viewContext)
-                        .preferredColorScheme(useSystemAppearance ? nil : (darkMode ? .dark : .light))
+                        .environmentObject(themeManager)
+                        .preferredColorScheme(themeManager.colorScheme)
                         .environment(\.textScale, textSizePreference.scaleFactor)
                         .onAppear {
                             if !isInitialized {

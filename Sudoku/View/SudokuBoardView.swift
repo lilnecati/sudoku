@@ -177,9 +177,9 @@ struct SudokuBoardView: View {
         let isOriginal = viewModel.board.isOriginalValue(row: row, column: column)
         let isSelected = viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column
         
-        // Vurgu ve yanlış değer durumlarını hesapla
-        let isHighlighted = self.isHighlighted(row: row, column: column)
-        let isSameValue = self.hasSameValue(row: row, column: column)
+        // Vurgu ve yanlış değer durumlarını hesapla - viewModel'daki önbelleklenmiş metodları kullan
+        let isHighlighted = viewModel.isHighlighted(row: row, column: column)
+        let isSameValue = viewModel.hasSameValue(row: row, column: column)
         let isInvalid = viewModel.invalidCells.contains(Position(row: row, col: column))
         
         // İpucu hedef hücresi mi kontrol et
@@ -200,25 +200,15 @@ struct SudokuBoardView: View {
             isInvalid: isInvalid,
             pencilMarks: pencilMarks,
             isHintTarget: isHintTarget,
-
             onCellTapped: {
-                // Sadece oyun devam ederken hücre seçimine izin ver
-                if viewModel.gameState == .playing || viewModel.gameState == .ready {
-                    // Aynı hücreye yeniden basıldığında değişiklik yoksa animasyon yapma
-                    if viewModel.selectedCell?.row != row || viewModel.selectedCell?.column != column {
-                        // Hücre seçimi için daha yumuşak bir animasyon kullanıyoruz
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            viewModel.selectCell(row: row, column: column)
-                        }
-                    } else {
-                        // Zaten seçiliyse sadece hücreyi tekrar seç
-                        viewModel.selectCell(row: row, column: column)
-                    }
-                    
-                    // viewModel.selectCell(row: row, column: column) - animasyon eklediğimiz için yukarı taşındı
+                // PowerSavingManager ile etkileşimleri kontrol et
+                if !PowerSavingManager.shared.throttleInteractions() {
+                    viewModel.selectCell(row: row, column: column)
                 }
             }
         )
+        .id("cellView_\(row)_\(column)_\(cellValue ?? 0)_\(pencilMarks.hashValue)")
+        .drawingGroup()
     }
     
     // Kalem notları - performans için optimize edildi
@@ -266,7 +256,7 @@ struct SudokuBoardView: View {
         }
         
         // Hücre aynı satır, sütun veya 3x3 bloktaysa
-        if isHighlighted(row: row, column: column) {
+        if viewModel.isHighlighted(row: row, column: column) {
             return selectedRowColBackground
         }
         
@@ -303,39 +293,6 @@ struct SudokuBoardView: View {
         
         // Vurgulanan diğer hücreler
         return hintData.highlightedCells.contains { $0.row == row && $0.column == column && $0.type == .target }
-    }
-    
-    // Hücre vurgulanmış mı
-    private func isHighlighted(row: Int, column: Int) -> Bool {
-        guard let selectedCell = viewModel.selectedCell else {
-            return false
-        }
-        
-        // Seçili hücrenin kendisi vurgulanmaz
-        if row == selectedCell.row && column == selectedCell.column {
-            return false
-        }
-        
-        let sRow = selectedCell.row
-        let sCol = selectedCell.column
-        
-        // Aynı satır veya sütun
-        return row == sRow || column == sCol
-    }
-    
-    // Hücrenin seçili hücreyle aynı değeri var mı
-    private func hasSameValue(row: Int, column: Int) -> Bool {
-        guard let selectedCell = viewModel.selectedCell,
-              let selectedValue = viewModel.board.getValue(row: selectedCell.row, column: selectedCell.column),
-              let currentValue = viewModel.board.getValue(row: row, column: column),
-              selectedValue == currentValue,
-              selectedValue > 0,
-              // Seçili hücrenin kendisi değilse
-              !(row == selectedCell.row && column == selectedCell.column) else {
-            return false
-        }
-        
-        return true
     }
 }
 

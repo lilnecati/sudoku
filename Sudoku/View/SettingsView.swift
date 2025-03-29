@@ -12,14 +12,15 @@ struct SettingsView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     
+    // ThemeManager
+    @EnvironmentObject var themeManager: ThemeManager
+    
     // App Storage
     @AppStorage("defaultDifficulty") private var defaultDifficulty: String = SudokuBoard.Difficulty.easy.rawValue
-    @AppStorage("darkMode") private var darkMode: Bool = false
     @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
     @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic: Bool = true
     @AppStorage("enableCellTapHaptic") private var enableCellTapHaptic: Bool = true
     @AppStorage("enableSoundEffects") private var enableSoundEffects: Bool = true
-    @AppStorage("useSystemAppearance") private var useSystemAppearance: Bool = false
     @AppStorage("textSizePreference") private var textSizeString: String = TextSizePreference.medium.rawValue
     @AppStorage("prefersDarkMode") private var prefersDarkMode: Bool = false
     @AppStorage("powerSavingMode") private var powerSavingMode: Bool = false
@@ -204,8 +205,6 @@ struct SettingsView: View {
         enableNumberInputHaptic = true
         enableCellTapHaptic = true
         enableSoundEffects = true
-        darkMode = false
-        useSystemAppearance = false
         textSizeString = TextSizePreference.medium.rawValue
         defaultDifficulty = SudokuBoard.Difficulty.easy.rawValue
         powerSavingMode = false
@@ -607,7 +606,7 @@ struct SettingsView: View {
             HStack {
                 Text("Sistem Görünümünü Kullan")
                 Spacer()
-                Toggle("", isOn: $useSystemAppearance)
+                Toggle("", isOn: $themeManager.useSystemAppearance)
                     .labelsHidden()
                     .toggleStyle(SwitchToggleStyle(tint: .blue))
             }
@@ -619,11 +618,11 @@ struct SettingsView: View {
             )
             
             // Karanlık mod
-            if !useSystemAppearance {
+            if !themeManager.useSystemAppearance {
                 HStack {
                     Text("Karanlık Mod")
                     Spacer()
-                    Toggle("", isOn: $darkMode)
+                    Toggle("", isOn: $themeManager.darkMode)
                         .labelsHidden()
                         .toggleStyle(SwitchToggleStyle(tint: .blue))
                 }

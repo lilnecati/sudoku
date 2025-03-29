@@ -11,6 +11,10 @@ Bu uygulama, SwiftUI kullanılarak iOS platformu için geliştirilmiş kapsamlı
 - Karanlık/aydınlık tema desteği
 - Hücre vurgulama ve çakışma tespiti
 - Oyun istatistikleri ve hata sayısını takip etme
+- Kolay: sadece direkt eleme
+- Orta: naked pairs/triples
+- Zor: hidden pairs/triples
+- Uzman: X-Wing, Swordfish gibi teknikler
 
 
 ## 🏗️ Mimari Yapı

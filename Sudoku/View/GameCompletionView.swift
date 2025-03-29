@@ -85,7 +85,7 @@ struct GameCompletionView: View {
                 }
                 
                 Button(action: onDismiss) {
-                    Text("Kapat")
+                    Text("Anasayfaya Dön")
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(

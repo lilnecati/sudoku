@@ -45,6 +45,7 @@ ContentView, uygulamanın ana görünümüdür ve diğer tüm görünümleri yö
 | `viewModel` | 56 | `SudokuViewModel` | Sudoku oyun mantığını yöneten view model |
 | `currentPage` | 57 | `AppPage` | Şu anda görüntülenen sayfa (ana sayfa, skor tablosu, vb.) |
 | `selectedDifficulty` | 59 | `Int` | Kullanıcının seçtiği zorluk seviyesi indeksi |
+| `homePage` | ~60 | `Computed property` | Ana sayfanın içeriğini döndüren hesaplanmış özellik |
 | `hasSeenTutorial` | 60 | `Bool` | Kullanıcının öğreticiyi görüp görmediğini belirtir |
 | `powerSavingMode` | 61 | `Bool` | Güç tasarrufu modunun etkin olup olmadığını belirtir |
 | `showGame` | 63 | `Bool` | Oyun ekranının gösterilip gösterilmediğini kontrol eder |
@@ -650,7 +651,7 @@ SudokuCellView, Sudoku tahtasındaki her bir hücrenin görünümünü ve davran
 | `cellBackground` | 154-162 | Hücre arka planını oluşturan görünüm |
 | `getCellBackgroundColor()` | 165-187 | Hücre arka plan rengini hesaplayan fonksiyon |
 | `getCellBorderColor()` | 190-212 | Hücre kenar rengini hesaplayan fonksiyon |
-| `getTextColor()` | 215-232 | Hücre metin rengini hesaplayan fonksiyon |
+| `getTextColor()` | 215-232 | Hücre metin rengini hesaplayan fonksiyon. `themeColor` değişkeni eklendi (kullanılmayan değişken uyarısını gidermek için) |
 
 ### Önemli Özellikler
 
@@ -927,6 +928,7 @@ TutorialView, kullanıcılara Sudoku oyununun temel kurallarını ve stratejiler
 | `presentationMode` | 4 | `PresentationMode` | Görünüm sunum modunu yönetme |
 | `colorScheme` | 5 | `ColorScheme` | Sistem renk şeması (açık/karanlık mod) |
 | `currentStep` | 6 | `Int` | Mevcut rehber adımı |
+| `themeManager` | ~7 | `ThemeManager` | Tema yönetimini sağlayan sınıf |
 | `animationProgress` | 9 | `Double` | Animasyon ilerleme durumu |
 | `highlightScale` | 10 | `Bool` | Vurgulama ölçeklendirme durumu |
 | `animateInputValue` | 11 | `Bool` | Giriş değeri animasyonu durumu |
@@ -938,7 +940,8 @@ TutorialView, kullanıcılara Sudoku oyununun temel kurallarını ve stratejiler
 | `singleLocationNotes` | 24-28 | `[[[Int]]]` | Tek konum stratejisi için örnek notlar |
 | `tutorialSteps` | 31-70 | `[TutorialStep]` | Rehber adımlarının listesi |
 
-
+### Önemli Değişiklikler
+- ThemeManager entegrasyonu sağlandı - tutarlı renk ve stil yönetimi için
 
 ### Fonksiyonlar
 
@@ -1045,38 +1048,56 @@ PowerSavingManager, uygulamanın pil tasarrufu özelliklerini yöneten sınıft�
 
 ## SudokuApp.swift
 
-SudokuApp, uygulamanın temel yapısını ve yaşam döngüsünü yöneten ana sınıftır.
+SudokuApp, uygulamayı başlatan ve genel yapılandırmayı yöneten ana sınıftır. Uygulama yaşam döngüsünü, CoreData entegrasyonunu, görünüm tercihlerini ve güç tasarrufu işlemlerini yönetir.
 
-### Değişkenler
+### Yardımcı Yapılar ve Uzantılar
 
-| Değişken | Satır | Tür | Açıklama |
+| Yapı/Uzantı | Satır | Açıklama |
+|-----------|-------|----------|
+| `TextScaleKey` | 12-14 | Metin ölçeği için Environment anahtarı |
+| `EnvironmentValues Extension` | 17-22 | Environment değerlerine `textScale` ekleme |
+| `TextSizePreference enum` | 25-41 | Metin boyutu tercihi için özel tür (Küçük, Orta, Büyük) |
+| `ColorManager struct` | 44-72 | Ana renkleri yöneten yapı |
+| `InitializationErrorView` | 183-223 | Başlatma hatası durumunda gösterilecek görünüm |
+
+### Değişkenler ve Özellikler
+
+| Değişken/Özellik | Satır | Tür | Açıklama |
 |----------|-------|-----|----------|
-| `darkMode` | 77 | `Bool` | Karanlık mod tercihini saklar |
-| `useSystemAppearance` | 78 | `Bool` | Sistem görünümüne uyum sağlama tercihini saklar |
-| `textSizeString` | 79 | `String` | Metin boyutu tercihini saklar |
-| `lastBackgroundTime` | 82 | `Double` | Uygulamanın arka plana alınma zamanını kaydeder |
-| `gameResetTimeInterval` | 84 | `TimeInterval` | Oyunun sıfırlanması için gereken süre (2 dakika = 120 saniye) |
-| `initializationError` | 91 | `Error?` | Başlatılma hatasını saklar |
-| `isInitialized` | 92 | `Bool` | Uygulamanın başlatılıp başlatılmadığını takip eder |
-| `persistenceController` | 100 | `PersistenceController` | CoreData verilerini yöneten denetleyici |
-| `viewContext` | 101 | `NSManagedObjectContext` | CoreData için görünüm bağlamı |
+| `darkMode` | 75 | `Bool` (AppStorage) | Karanlık mod tercihi |
+| `useSystemAppearance` | 76 | `Bool` (AppStorage) | Sistem görünümünü kullan tercihi |
+| `textSizeString` | 77 | `String` (AppStorage) | Metin boyutu tercihi (default: "Orta") |
+| `lastBackgroundTime` | 80 | `Double` (AppStorage) | Uygulamanın arka plana alınma zamanı |
+| `gameResetTimeInterval` | 82 | `TimeInterval` | Oyunun sıfırlanması için gereken süre (120 sn) |
+| `initializationError` | 88 | `Error?` (State) | Başlatma hatasını takip etme |
+| `isInitialized` | 89 | `Bool` (State) | Başlatma durumunu takip etme |
+| `textSizePreference` | 91-93 | `Computed property` | Seçili metin boyutunu veren hesaplanmış özellik |
+| `persistenceController` | 96 | `PersistenceController` | CoreData yönetim sınıfı |
+| `viewContext` | 97 | `NSManagedObjectContext` | CoreData bağlamı |
 
-### Fonksiyonlar
+### Fonksiyonlar ve Yöntemler
 
 | Fonksiyon | Satır | Açıklama |
 |-----------|-------|----------|
-| `init()` | 103-119 | Uygulama başlatıcısı, CoreData bağlamını ve güç tasarrufu yöneticisini hazırlar |
-| `body` | 121-186 | Ana uygulama sahnesini oluşturur |
+| `init()` | 99-113 | Uygulama başlangıç ayarlarını yapılandırır |
+| `body` | 115-181 | Ana uygulama yapısını ve yaşam döngüsü yönetimini sağlar |
+
+### Yaşam Döngüsü Yönetimi
+
+| Sahne Fazı | Satır | Açıklama |
+|-----------|-------|----------|
+| `.background` | 140-156 | Arka plana geçme durumunda aktif oyunu duraklatır ve zamanı kaydeder |
+| `.active` | 157-177 | Aktif duruma geçtiğinde, arka planda geçen süreyi kontrol eder |
 
 ### Önemli Özellikler
 
-- **Arka Plan Yönetimi**: Uygulama arka plana alındığında aktif oyun otomatik olarak duraklatılır
-- **Zaman Aşımı Kontrolü**: Uygulama 2 dakikadan uzun süre arka planda kalırsa, oyun otomatik olarak sıfırlanır ve kaydedilir
-- **Tema Yönetimi**: Karanlık/açık temanın yönetimi ve sistem görünümüne uyum sağlama özelliği
-- **Metin Boyutu Ayarları**: Küçük, orta ve büyük metin boyutu seçenekleri sunar
-- **CoreData Entegrasyonu**: Uygulama verilerinin kalıcı depolanmasını sağlar
-- **Bildirim Sistemi**: Farklı uygulama durumları için NotificationCenter aracılığıyla bildirimler gönderir (aktif olma, duraklama, sıfırlama)
-- **Hata Yönetimi**: Başlatılma hataları için özel görünüm ve yeniden deneme mekanizması içerir
+- **Otomatik Duraklatma**: Uygulama arka plana alındığında aktif oyunu otomatik duraklatır
+- **Zaman Aşımı Yönetimi**: 2 dakikadan fazla arka planda kalındığında oyunu sıfırlar
+- **Özelleştirilebilir Görünüm**: Karanlık mod ve metin boyutu için kullanıcı tercihleri
+- **Güç Tasarrufu**: Güç tasarrufu modunu destekler
+- **CoreData Entegrasyonu**: Kalıcı veri saklamak için CoreData yapısı
+- **Bildirim Sistemi**: Notifikasyon merkezini kullanarak uygulama durumlarını ileten sistem
+- **Hata Yönetimi**: Başlatma hatalarını yönetmek için özel görünüm mekanizması
 
 ---
 

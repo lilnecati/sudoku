@@ -147,15 +147,46 @@ class SudokuViewModel: ObservableObject {
         // Daha önceki bir seçim varsa ve aynı hücre seçilirse, seçimi kaldır
         if selectedCell?.row == row && selectedCell?.column == column {
             selectedCell = nil
+            // Önbellekleri temizle
+            highlightedCellsCache.removeAll(keepingCapacity: true)
+            sameValueCellsCache.removeAll(keepingCapacity: true)
         } else {
+            // Performans için: PowerSavingManager'ı kullan ve etkileşimleri sınırla
+            if PowerSavingManager.shared.throttleInteractions() {
+                return // Etkileşim sınırlanıyorsa işlemi iptal et
+            }
+            
+            // Eski önbellekleri temizle
+            highlightedCellsCache.removeAll(keepingCapacity: true)
+            sameValueCellsCache.removeAll(keepingCapacity: true)
+            
+            // Animasyon optimizasyonu: Yeni değer ayarla
             selectedCell = (row, column)
             lastSelectedCell = (row, column)
+            
+            // Yeni seçim için önbellekleri oluştur
+            precalculateHighlightedCells(row: row, column: column)
         }
         
         // Dokunsal geri bildirim - sadece gerekirse
         if enableHapticFeedback && enableCellTapHaptic {
             feedbackGenerator.prepare() // Geri bildirimi hazırla (daha hızlı yanıt)
             feedbackGenerator.impactOccurred(intensity: 0.5) // Daha hafif titreşim (pil tasarrufu)
+        }
+    }
+    
+    // Yeni seçilen hücreyle ilgili önbellekleri oluştur
+    private func precalculateHighlightedCells(row: Int, column: Int) {
+        guard let value = board.getValue(row: row, column: column), value > 0 else { return }
+        
+        // Tüm tahta üzerindeki aynı değerleri hesapla
+        for r in 0..<9 {
+            for c in 0..<9 {
+                if (r != row || c != column) && board.getValue(row: r, column: c) == value {
+                    let cacheKey = "v_\(r)_\(c)_\(value)"
+                    sameValueCellsCache[cacheKey] = true
+                }
+            }
         }
     }
     
@@ -319,12 +350,27 @@ class SudokuViewModel: ObservableObject {
                 validValuesCache.removeValue(forKey: blockKey)
             }
         }
+        
+        // Aynı değere sahip hücrelerin önbelleğini de temizle
+        invalidateSameValueCache()
+    }
+    
+    // Aynı değere sahip hücrelerin önbelleğini temizle
+    private func invalidateSameValueCache() {
+        sameValueCellsCache.removeAll(keepingCapacity: true)
+        
+        // Yeni seçim için önbellekleri yeniden oluştur
+        if let selected = selectedCell {
+            precalculateHighlightedCells(row: selected.row, column: selected.column)
+        }
     }
     
     // Tüm önbelleği geçersiz kıl
     private func invalidatePencilMarksCache() {
         pencilMarkCache.removeAll(keepingCapacity: true)
         validValuesCache.removeAll(keepingCapacity: true)
+        sameValueCellsCache.removeAll(keepingCapacity: true)
+        highlightedCellsCache.removeAll(keepingCapacity: true)
     }
     
     // Kalem işaretlerini önbellekten al veya hesapla
@@ -2016,6 +2062,69 @@ class SudokuViewModel: ObservableObject {
             gameState = newState
             handleGameStateChange()
         }
+    }
+    
+    // Performans iyileştirmesi: Önbellekleme ile hücre vurgusu kontrolü
+    private var highlightedCellsCache: [String: Bool] = [:]
+    private var sameValueCellsCache: [String: Bool] = [:]
+    
+    // Geçici bir süre için önbellekleri geçersiz kıl
+    func invalidateCellCache() {
+        highlightedCellsCache.removeAll(keepingCapacity: true)
+        sameValueCellsCache.removeAll(keepingCapacity: true)
+    }
+    
+    // Hücre vurgu hesaplaması için önbellekli versiyon
+    func isHighlighted(row: Int, column: Int) -> Bool {
+        guard let selected = selectedCell else { return false }
+        
+        // Önbellekten kontrol et
+        let cacheKey = "h_\(row)_\(column)_\(selected.row)_\(selected.column)"
+        if let cached = highlightedCellsCache[cacheKey] {
+            return cached
+        }
+        
+        // Aynı satır veya sütunda mı kontrol et
+        let result = selected.row == row || selected.column == column
+        
+        // Sonucu önbelleğe al
+        highlightedCellsCache[cacheKey] = result
+        
+        return result
+    }
+    
+    // Aynı değere sahip hücreleri vurgulama için optimizasyon
+    func hasSameValue(row: Int, column: Int) -> Bool {
+        guard let selected = selectedCell else { return false }
+        
+        // Aynı hücre ise, aynı değere sahip değildir
+        if selected.row == row && selected.column == column {
+            return false
+        }
+        
+        // Seçili hücrenin değeri
+        guard let selectedValue = board.getValue(row: selected.row, column: selected.column), 
+              selectedValue > 0 else {
+            return false
+        }
+        
+        // Önbellekten kontrol et
+        let cacheKey = "v_\(row)_\(column)_\(selectedValue)"
+        if let cached = sameValueCellsCache[cacheKey] {
+            return cached
+        }
+        
+        // Hücre değerini kontrol et
+        let cellValue = board.getValue(row: row, column: column)
+        
+        // Değerlerin birbirine eşit olup olmadığını kontrol et
+        // 0 değeri özel durum - boş hücre
+        let result = cellValue == selectedValue && cellValue != 0
+        
+        // Sonucu önbelleğe al
+        sameValueCellsCache[cacheKey] = result
+        
+        return result
     }
 } 
 

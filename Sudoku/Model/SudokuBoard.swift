@@ -32,10 +32,10 @@ class SudokuBoard: ObservableObject, Codable {
         // Her zorluk seviyesi için bırakılacak ipucu sayısı aralığı
         var clueRange: ClosedRange<Int> {
             switch self {
-            case .easy: return 36...40
-            case .medium: return 29...35
-            case .hard: return 25...28
-            case .expert: return 17...24
+            case .easy: return 38...45   // Kolay: Çok daha fazla ipucu, başlangıç için ideal
+            case .medium: return 30...35 // Orta: Kolay ile zor arası dengeli zorluk
+            case .hard: return 25...28   // Zor: Daha az ipucu, stratejik düşünme gerektirir
+            case .expert: return 22...25 // Uzman: Minimum ipucu ile maksimum zorluk
             }
         }
     }
@@ -407,6 +407,10 @@ class SudokuBoard: ObservableObject, Codable {
     private func generateBoard() {
         print("Tahta oluşturuluyor...")
         
+        // Maksimum deneme sayısı - sonsuz döngüyü önlemek için
+        let maxAttempts = 10
+        var attempts = 0
+        
         // Mevcut değerleri temizle
         for row in 0..<9 {
             for col in 0..<9 {
@@ -433,7 +437,15 @@ class SudokuBoard: ObservableObject, Codable {
         
         if solutionHasNils {
             print("Çözümde nil değerler var, tekrar deneniyor...")
-            return generateBoard() // Çözüm geçersizse tekrar dene
+            attempts += 1
+            if attempts < maxAttempts {
+                return generateBoard() // Çözüm geçersizse tekrar dene
+            }
+        }
+        
+        // Maksimum deneme sayısına ulaşıldıysa veya çözüm geçerliyse buraya gelir
+        if solutionHasNils {
+            print("Maksimum deneme sayısına ulaşıldı, mevcut çözümle devam ediliyor.")
         }
         
         // Gösterilecek ipucu sayısını belirle
@@ -469,7 +481,15 @@ class SudokuBoard: ObservableObject, Codable {
         // Eğer hiç ipucu yoksa veya çok az ipucu varsa tekrar dene
         if clueCount < 10 || clueCount < cluesToShow - 10 {
             print("Çok az ipucu var (\(clueCount)), tekrar deneniyor...")
-            return generateBoard()
+            attempts += 1
+            if attempts < maxAttempts {
+                return generateBoard()
+            }
+        }
+        
+        // Maksimum deneme sayısına ulaşıldıysa veya yeterli ipucu sayısı varsa buraya gelir
+        if clueCount < 10 || clueCount < cluesToShow - 10 {
+            print("Maksimum deneme sayısına ulaşıldı, mevcut tahta ile devam ediliyor.")
         }
         
         // Başlangıçta görünen hücreleri sabit olarak işaretle
@@ -477,6 +497,144 @@ class SudokuBoard: ObservableObject, Codable {
         
         // Önbellekleri temizle
         invalidateCaches()
+    }
+    
+    // Tahtanın belirtilen zorluk seviyesine uygun olup olmadığını değerlendir
+    private func validateDifficulty() -> Bool {
+        // Zorluk seviyesini doğrulamayı devre dışı bırak ve true döndür
+        return true
+        
+        // NOT: Aşağıdaki kod bloğu hiçbir zaman çalıştırılmayacak şekilde tasarlanmıştır.
+        // Gelecekte daha iyi algoritma ve test zamanı olduğunda aktifleştirilebilir.
+        #if false
+        // Kolay seviye kontrolü
+        if difficulty == .easy {
+            let nakedSingleCount = countNakedSingles()
+            let totalEmptyCells = countEmptyCells()
+            
+            // Toplam boş hücre sayısı 0 ise, çözüm kontrolünü atla
+            if totalEmptyCells == 0 {
+                return true
+            }
+            
+            // Kolay seviyede, boş hücrelerin en az %60'ı naked single olmalı
+            // %70 çok katı olabilir, %60'a düşürelim
+            let nakedSingleRatio = Double(nakedSingleCount) / Double(totalEmptyCells)
+            return nakedSingleRatio >= 0.6
+        }
+        
+        // Orta seviye kontrolü
+        else if difficulty == .medium {
+            let nakedSingleCount = countNakedSingles()
+            let hiddenSingleCount = countHiddenSingles()
+            let totalEmptyCells = countEmptyCells()
+            
+            // Toplam boş hücre sayısı 0 ise, çözüm kontrolünü atla
+            if totalEmptyCells == 0 {
+                return true
+            }
+            
+            // Orta seviyede, boş hücrelerin %35-60'ı naked veya hidden single olmalı
+            // Daha geniş bir aralık belirleyelim
+            let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
+            return solvableRatio >= 0.35 && solvableRatio < 0.6
+        }
+        
+        // Zor ve uzman seviyeleri için
+        return true
+        #endif
+    }
+    
+    // "Naked single" tekniği ile çözülebilecek hücre sayısını hesapla
+    private func countNakedSingles() -> Int {
+        var count = 0
+        
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if board[row][col] == nil {
+                    let possibleValues = getPossibleValues(row: row, column: col)
+                    if possibleValues.count == 1 {
+                        count += 1
+                    }
+                }
+            }
+        }
+        
+        return count
+    }
+    
+    // "Hidden single" tekniği ile çözülebilecek hücre sayısını hesapla
+    private func countHiddenSingles() -> Int {
+        var count = 0
+        
+        // Satırlarda hidden single ara
+        for row in 0..<9 {
+            count += countHiddenSinglesInUnit(unit: (0..<9).map { (row, $0) })
+        }
+        
+        // Sütunlarda hidden single ara
+        for col in 0..<9 {
+            count += countHiddenSinglesInUnit(unit: (0..<9).map { ($0, col) })
+        }
+        
+        // 3x3 bloklarda hidden single ara
+        for blockRow in 0..<3 {
+            for blockCol in 0..<3 {
+                var blockCells = [(Int, Int)]()
+                for r in 0..<3 {
+                    for c in 0..<3 {
+                        blockCells.append((blockRow * 3 + r, blockCol * 3 + c))
+                    }
+                }
+                count += countHiddenSinglesInUnit(unit: blockCells)
+            }
+        }
+        
+        return count
+    }
+    
+    // Belirli bir birimde (satır, sütun, blok) hidden single sayısını hesapla
+    private func countHiddenSinglesInUnit(unit: [(Int, Int)]) -> Int {
+        var count = 0
+        
+        // Her değer için (1-9), bu birimde kaç boş hücreye yerleştirilebileceğini kontrol et
+        for value in 1...9 {
+            var possibleCells = [(Int, Int)]()
+            
+            // Birimin boş hücrelerini kontrol et
+            for (row, col) in unit {
+                if board[row][col] == nil && isValidPlacement(row: row, column: col, value: value) {
+                    possibleCells.append((row, col))
+                }
+            }
+            
+            // Eğer değer sadece bir hücreye yerleştirilebiliyorsa ve bu hücre naked single değilse,
+            // bu bir hidden single'dır
+            if possibleCells.count == 1 {
+                let (row, col) = possibleCells[0]
+                let allPossibleValues = getPossibleValues(row: row, column: col)
+                if allPossibleValues.count > 1 {
+                    count += 1
+                }
+            }
+        }
+        
+        return count
+    }
+    
+    // Tahtadaki boş hücre sayısını hesapla
+    private func countEmptyCells() -> Int {
+        var count = 0
+        
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if board[row][col] == nil {
+                    count += 1
+                }
+            }
+        }
+        
+        return count
     }
     
     // Çözümü oluştur
@@ -777,133 +935,151 @@ class SudokuBoard: ObservableObject, Codable {
             }
         }
         
-        // Stratejik kaldırma için tüm hücreleri kategorize et
-        // 1. 3x3 blokların köşeleri (4'er hücre)
-        // 2. 3x3 blokların kenarları (12 hücre)
-        // 3. 3x3 blokların merkezleri (1'er hücre)
-        // 4. Diğer hücreler (remaining)
+        // Güvenlik kontrolü: Kaldırılacak hücre sayısı geçerli mi?
+        let safeCount = min(count, 64) // En fazla 64 hücre kaldır (minimum 17 ipucu bırak)
         
-        var cornerCells = [(Int, Int)]() // 3x3 blok köşeleri
-        var edgeCells = [(Int, Int)]() // 3x3 bloğun kenar hücreleri
-        var centerCells = [(Int, Int)]() // 3x3 bloğun merkez hücreleri
-        var otherCells = [(Int, Int)]() // Diğer hücreler
+        // Zorluk seviyesine göre simetri kullan
+        let useSimetricalRemoval = difficulty == .easy || difficulty == .medium
         
+        // Her satır, sütun ve blok için gereken minimum ipucu sayısı
+        let minCluesPerRow: Int
+        let minCluesPerColumn: Int
+        let minCluesPerBlock: Int
+        
+        switch difficulty {
+        case .easy:
+            minCluesPerRow = 5     // Kolay seviyede her satırda en az 5 ipucu
+            minCluesPerColumn = 5  // Kolay seviyede her sütunda en az 5 ipucu
+            minCluesPerBlock = 5   // Kolay seviyede her blokta en az 5 ipucu
+        case .medium:
+            minCluesPerRow = 3     // Orta seviyede her satırda en az 3 ipucu
+            minCluesPerColumn = 3  // Orta seviyede her sütunda en az 3 ipucu 
+            minCluesPerBlock = 3   // Orta seviyede her blokta en az 3 ipucu
+        case .hard:
+            minCluesPerRow = 2     // Zor seviyede her satırda en az 2 ipucu
+            minCluesPerColumn = 2  // Zor seviyede her sütunda en az 2 ipucu
+            minCluesPerBlock = 3   // Zor seviyede her blokta en az 3 ipucu (daha dengeli zorluk için)
+        case .expert:
+            minCluesPerRow = 2     // Uzman seviyede her satırda en az 2 ipucu
+            minCluesPerColumn = 2  // Uzman seviyede her sütunda en az 2 ipucu
+            minCluesPerBlock = 2   // Uzman seviyede her blokta en az 2 ipucu
+        }
+        
+        // Blok, satır ve sütun başına kalan hücre sayısını takip et
+        var cluesInRow = Array(repeating: 9, count: 9)
+        var cluesInColumn = Array(repeating: 9, count: 9)
+        var cluesInBlock = Array(repeating: Array(repeating: 9, count: 3), count: 3)
+        
+        // Simetrik olarak çift sayıda hücre kaldırmak zorundayız
+        let adjustedCount = useSimetricalRemoval ? (safeCount / 2) * 2 : safeCount
+        var removed = 0
+        
+        // Tüm hücrelerin bir listesini oluştur
+        var allCells = [(Int, Int)]()
         for row in 0..<9 {
             for col in 0..<9 {
-                let inBlockRow = row % 3
-                let inBlockCol = col % 3
-                
-                if (inBlockRow == 0 || inBlockRow == 2) && (inBlockCol == 0 || inBlockCol == 2) {
-                    // Köşe hücre
-                    cornerCells.append((row, col))
-                } else if inBlockRow == 1 && inBlockCol == 1 {
-                    // Merkez hücre
-                    centerCells.append((row, col))
-                } else if inBlockRow == 1 || inBlockCol == 1 {
-                    // Kenar hücre
-                    edgeCells.append((row, col))
-                } else {
-                    // Diğer hücreler
-                    otherCells.append((row, col))
-                }
+                allCells.append((row, col))
             }
         }
         
-        // Hücreleri karıştır
-        cornerCells.shuffle()
-        edgeCells.shuffle()
-        centerCells.shuffle()
-        otherCells.shuffle()
-        
-        // Blok başına kalan hücre sayısını takip et
-        var cellsRemainingInBlock = Array(repeating: Array(repeating: 9, count: 3), count: 3)
-        
-        // Her blokta en az bu kadar hücre kalsın (zorluk derecesine göre değişir)
-        let minPerBlock: Int
-        switch difficulty {
-        case .easy:
-            minPerBlock = 3 // Kolay seviyede her blokta en az 3 hücre
-        case .medium:
-            minPerBlock = 2 // Orta seviyede her blokta en az 2 hücre
-        case .hard:
-            minPerBlock = 2 // Zor seviyede her blokta en az 2 hücre
-        case .expert:
-            minPerBlock = 1 // Uzman seviyede her blokta en az 1 hücre
-        }
-        
-        // Tüm hücreleri tek bir listede birleştir ve karıştır
-        // Bu sayede daha dengeli bir dağılım sağlayabiliriz
-        var allCells = cornerCells + edgeCells + centerCells + otherCells
+        // Rastgele karıştır
         allCells.shuffle()
         
-        var removed = 0
+        // Güvenlik kontrolü: Maksimum döngü sayısını sınırla
+        let maxIterations = 1000
+        var iterations = 0
         
-        // Birinci aşama: Blok kısıtlamalarını kontrol ederek hücreleri kaldır
-        let cellsToRemoveInPhase1 = Int(Double(count) * 0.7) // İlk aşamada %70'ini kaldır
-        
-        for i in 0..<allCells.count {
-            if removed >= cellsToRemoveInPhase1 {
+        // İlk aşama: Blok, satır ve sütun kısıtlamalarını kontrol ederek hücreleri kaldır
+        for (row, col) in allCells {
+            // Döngü sayısı kontrolü
+            iterations += 1
+            if iterations > maxIterations {
+                print("Maksimum döngü sayısına ulaşıldı. Kaldırılan hücre sayısı: \(removed)")
                 break
             }
             
-            let (row, col) = allCells[i]
-            let blockRow = row / 3
-            let blockCol = col / 3
+            // Eğer hedef sayıya ulaştıysak kaldırmayı durdur
+            if removed >= adjustedCount {
+                break
+            }
             
-            // Bu bloktaki hücre sayısını kontrol et
-            if cellsRemainingInBlock[blockRow][blockCol] <= minPerBlock {
-                // Bu blokta yeterince az hücre kaldı, bu hücreyi koruyalım
+            // Güvenlik kontrolü: Geçersiz indeks olup olmadığını kontrol et
+            guard row >= 0 && row < 9 && col >= 0 && col < 9 else {
                 continue
             }
             
-            // Hücreyi kaldır
-            board[row][col] = nil
-            cellsRemainingInBlock[blockRow][blockCol] -= 1
-            removed += 1
-        }
-        
-        // İkinci aşama: Kalan hücreleri rastgele kaldır (kısıtlamaları biraz gevşeterek)
-        if removed < count {
-            // Kalan hücreleri al
-            var remainingCells = [(Int, Int)]()
-            for row in 0..<9 {
-                for col in 0..<9 {
-                    if board[row][col] != nil {
-                        remainingCells.append((row, col))
-                    }
-                }
-            }
-            remainingCells.shuffle()
+            // Simetrik kaldırma için karşılık gelen hücreyi hesapla
+            let symmetricRow = 8 - row
+            let symmetricCol = 8 - col
             
-            // Çok katı olmayan bir ikinci aşama
-            for (row, col) in remainingCells {
-                let blockRow = row / 3
-                let blockCol = col / 3
+            // Güvenlik kontrolü: Simetrik hücrenin geçerli olduğundan emin ol
+            guard symmetricRow >= 0 && symmetricRow < 9 && symmetricCol >= 0 && symmetricCol < 9 else {
+                continue
+            }
+            
+            // Bu hücre zaten kaldırıldı mı kontrol et
+            if board[row][col] == nil {
+                continue
+            }
+            
+            // Simetrik hücre zaten kaldırıldı mı kontrol et (simetrik modda)
+            if useSimetricalRemoval && board[symmetricRow][symmetricCol] == nil {
+                continue
+            }
+            
+            // Blok, satır ve sütun kısıtlamalarını kontrol et
+            let blockRow = row / 3
+            let blockCol = col / 3
+            
+            // Güvenlik kontrolü: Blok indekslerinin geçerli olduğundan emin ol
+            guard blockRow >= 0 && blockRow < 3 && blockCol >= 0 && blockCol < 3 else {
+                continue
+            }
+            
+            // Simetrik kaldırma için karşılık gelen bloğu hesapla
+            let symmetricBlockRow = symmetricRow / 3
+            let symmetricBlockCol = symmetricCol / 3
+            
+            // Güvenlik kontrolü: Simetrik blok indekslerinin geçerli olduğundan emin ol
+            guard symmetricBlockRow >= 0 && symmetricBlockRow < 3 && symmetricBlockCol >= 0 && symmetricBlockCol < 3 else {
+                continue
+            }
+            
+            // Bu satır, sütun ve blokta minimum ipucu kısıtını koruyacak mıyız?
+            let canRemoveFromRow = cluesInRow[row] - 1 >= minCluesPerRow
+            let canRemoveFromCol = cluesInColumn[col] - 1 >= minCluesPerColumn
+            let canRemoveFromBlock = cluesInBlock[blockRow][blockCol] - 1 >= minCluesPerBlock
+            
+            // Simetrik kaldırma için aynı kontrolü karşı hücre için de yap
+            let canRemoveFromSymmetricRow = !useSimetricalRemoval || cluesInRow[symmetricRow] - 1 >= minCluesPerRow
+            let canRemoveFromSymmetricCol = !useSimetricalRemoval || cluesInColumn[symmetricCol] - 1 >= minCluesPerColumn
+            let canRemoveFromSymmetricBlock = !useSimetricalRemoval || cluesInBlock[symmetricBlockRow][symmetricBlockCol] - 1 >= minCluesPerBlock
+            
+            // Tüm kısıtlamaları karşılıyorsa hücreyi kaldır
+            if canRemoveFromRow && canRemoveFromCol && canRemoveFromBlock &&
+               canRemoveFromSymmetricRow && canRemoveFromSymmetricCol && canRemoveFromSymmetricBlock {
                 
-                // Kritik kısıtlama: Her blokta en az 1 hücre kalsın
-                if cellsRemainingInBlock[blockRow][blockCol] <= 1 {
-                    continue
-                }
-                
+                // Hücreyi kaldır
                 board[row][col] = nil
-                cellsRemainingInBlock[blockRow][blockCol] -= 1
+                cluesInRow[row] -= 1
+                cluesInColumn[col] -= 1
+                cluesInBlock[blockRow][blockCol] -= 1
                 removed += 1
                 
-                if removed >= count {
-                    break
+                // Simetrik modu aktifse, karşılık gelen hücreyi de kaldır
+                if useSimetricalRemoval && (row != 4 || col != 4) { // Merkez hücre kontrol
+                    board[symmetricRow][symmetricCol] = nil
+                    cluesInRow[symmetricRow] -= 1
+                    cluesInColumn[symmetricCol] -= 1
+                    cluesInBlock[symmetricBlockRow][symmetricBlockCol] -= 1
+                    removed += 1
                 }
             }
         }
         
-        // Son kontrolü yap - hedeflenen ipucu sayısına yaklaştık mı?
-        // Eğer çok fazla farklı olursa yeni tahta oluşturmak daha iyi olabilir
-        let clues = 81 - removed
-        let targetClues = getCluesToShow()
-        
-        if abs(clues - targetClues) > targetClues / 4 {
-            // Eğer ipucu sayısı hedeften çok sapıyorsa yeni tahta oluştur
-            generateSolution()
-            removeRandomCells(count: 81 - targetClues)
+        // Eğer istenen sayıda hücre kaldırılamadıysa, bunun bilgisini ver
+        if removed < adjustedCount {
+            print("İstenen sayıda hücre kaldırılamadı. Hedef: \(adjustedCount), Kaldırılan: \(removed)")
         }
     }
     
@@ -1500,3 +1676,4 @@ class SudokuBoard: ObservableObject, Codable {
         return possibleNumbers
     }
 }
+

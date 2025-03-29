@@ -20,6 +20,9 @@ struct GameView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     
+    // ThemeManager'a erişim
+    @EnvironmentObject var themeManager: ThemeManager
+    
     // Önbellekleme ve performans için
     @State private var timeDisplay: String = "00:00"
     @State private var boardKey = UUID().uuidString // Zorla tahtayı yenilemek için
@@ -198,6 +201,7 @@ struct GameView: View {
                     },
                     onDismiss: {
                         showCompletionView = false
+                        presentationMode.wrappedValue.dismiss()
                     }
                 )
                 .padding()

@@ -50,6 +50,9 @@ struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.colorScheme) var colorScheme
     
+    // ThemeManager'ı ekle
+    @EnvironmentObject var themeManager: ThemeManager
+    
     // Kaydedilmiş oyun açma
     @State private var gameToLoad: NSManagedObject? = nil
     @State private var showSavedGame = false
@@ -223,6 +226,53 @@ struct ContentView: View {
                 self.showSavedGame = false
                 self.currentPage = .home // Ana sayfaya yönlendir
             }
+        }
+    }
+    
+    // MARK: - Timeout Check and Tutorial Setup
+    private func checkTutorial() {
+        if !hasSeenTutorial {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation {
+                    showTutorial = true
+                }
+            }
+        }
+    }
+    
+    // Karşılama animasyonlarını başlat
+    private func startWelcomeAnimations() {
+        // Güç tasarrufu modunda animasyonları atlayalım
+        if powerSavingMode { return }
+        
+        // Ana sayfa animasyonları
+        withAnimation(.easeOut(duration: 0.8)) {
+            titleScale = 1.0
+            titleOpacity = 1.0
+        }
+        
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3)) {
+            buttonsOffset = 0
+            buttonsOpacity = 1.0
+        }
+    }
+    
+    // MARK: - Ana Sayfa
+    private var homePage: some View {
+        VStack {
+            // Ana sayfa içeriği
+            if showSavedGame {
+                // Boş bir görünüm göster, oyun fullScreenCover ile gösterilecek
+                Color.clear
+            } else {
+                mainContentView
+                    .transition(.opacity)
+            }
+        }
+        .fullScreenCover(isPresented: $showTutorial) {
+            // Tutorial görünümü
+            TutorialView()
+                .environmentObject(themeManager)
         }
     }
     
@@ -762,139 +812,77 @@ struct ContentView: View {
     
     // MARK: - Body
     var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                Group {
-                    if case .home = currentPage {
-                        if showSavedGame {
-                            // Boş bir görünüm göster, oyun fullScreenCover ile gösterilecek
-                            Color.clear
-                        } else {
-                            mainContentView
-                                .transition(.opacity)
-                        }
-                    } else if case .scoreboard = currentPage {
-                        ScoreboardView()
-                            .environment(\.managedObjectContext, viewContext)
-                            .transition(.opacity)
-                    } else if case .savedGames = currentPage {
-                        // SavedGamesView'u güvenli bir şekilde yükle
-                        ZStack {
-                            Color(UIColor.systemBackground)
-                                .edgesIgnoringSafeArea(.all)
-                            
-                            SavedGamesView(viewModel: viewModel, gameSelected: { game in
-                                // Seçilen oyunu ayarla
-                                gameToLoad = game
-                                // Oyun görünümünü aktifleştir
-                                withAnimation {
-                                    currentPage = .home
-                                    showSavedGame = true
-                                }
-                            })
-                        }
-                        .transition(.opacity)
-                        .environment(\.managedObjectContext, viewContext)
-                    } else if case .settings = currentPage {
-                        SettingsView()
-                            .transition(.opacity)
+        TabView(selection: $currentPage) {
+            // Tab 1: Ana Sayfa
+            homePage
+                .tabItem {
+                    Label(AppPage.home.title, systemImage: AppPage.home.icon)
+                }
+                .tag(AppPage.home)
+            
+            // Tab 2: Skor Tablosu
+            ScoreboardView()
+                .tabItem {
+                    Label(AppPage.scoreboard.title, systemImage: AppPage.scoreboard.icon)
+                }
+                .tag(AppPage.scoreboard)
+            
+            // Tab 3: Kayıtlı Oyunlar
+            SavedGamesView(viewModel: viewModel, gameSelected: { game in
+                // Kaydedilmiş oyunu yükle
+                viewModel.loadGame(from: game)
+                // Ana sayfaya dön
+                currentPage = .home
+                // Oyunu göster
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    withAnimation(.spring()) {
+                        showGame = true
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
-                // Neumorfik Tab Bar
-                VStack {
-                    Spacer()
-                    
-                    // Tab Bar Arka Planı
-                    ZStack {
-                        // Bar arka planı
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color(UIColor.systemBackground))
-                            .shadow(color: colorScheme == .dark ? Color.black.opacity(0.3) : Color.black.opacity(0.15), 
-                                    radius: 8, x: 5, y: 5)
-                            .shadow(color: colorScheme == .dark ? Color.gray.opacity(0.1) : Color.white.opacity(0.7), 
-                                    radius: 8, x: -5, y: -5)
-                            .padding(.horizontal, 10)
-                            .padding(.bottom, 5)
-                        
-                        // Tab butonları
-                        HStack(spacing: 0) {
-                            ForEach(AppPage.allCases) { page in
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        currentPage = page
-                                    }
-                                }) {
-                                    VStack(spacing: 4) {
-                                        // Seçili sekme için kare gösterge
-                                        ZStack {
-                                            if currentPage == page {
-                                                RoundedRectangle(cornerRadius: 10)
-                                                    .fill(
-                                                        LinearGradient(
-                                                            gradient: Gradient(colors: [
-                                                                Color.purple.opacity(0.6),
-                                                                Color.blue.opacity(0.6)
-                                                            ]),
-                                                            startPoint: .topLeading,
-                                                            endPoint: .bottomTrailing
-                                                        )
-                                                    )
-                                                    .frame(width: 38, height: 38)
-                                                    .shadow(color: Color.purple.opacity(0.2), radius: 3, x: 2, y: 2)
-                                            }
-                                            
-                                            Image(systemName: page.icon)
-                                                .font(.system(size: 18, weight: currentPage == page ? .bold : .regular))
-                                                .foregroundColor(currentPage == page ? .white : .gray)
-                                                .frame(width: 40, height: 40)
-                                                .contentShape(Rectangle())
-                                        }
-                                        
-                                        Text(page.title.count > 10 ? "\(page.title.prefix(10))..." : page.title)
-                                            .font(.system(size: 11, weight: currentPage == page ? .medium : .regular))
-                                            .foregroundColor(currentPage == page ? .primary : .gray)
-                                    }
-                                    .padding(.vertical, 8)
-                                    .frame(maxWidth: .infinity)
-                                }
-                                .buttonStyle(ScaleButtonStyle())
-                            }
-                        }
-                        .padding(.horizontal, 15)
-                    }
-                    .frame(height: 90)
-                    .padding(.bottom, getSafeAreaBottom())
+            })
+                .tabItem {
+                    Label(AppPage.savedGames.title, systemImage: AppPage.savedGames.icon)
                 }
-            }
-            .edgesIgnoringSafeArea(.bottom)
-            .fullScreenCover(isPresented: $showGame) {
-                // Yeni oyun için seçilen zorluk seviyesinde oyun başlat
-                GameView(difficulty: selectedCustomDifficulty)
-            }
-            .fullScreenCover(isPresented: $showSavedGame) {
-                // Kaydedilmiş oyun için mevcut viewModel ile oyun başlat
-                GameView(existingViewModel: viewModel)
-            }
-            .fullScreenCover(isPresented: $showTutorial) {
-                // Tutorial görünümü
-                TutorialView()
-            }
-            .alert(isPresented: $showTutorialPrompt) {
-                Alert(
-                    title: Text("Rehberi Göster"),
-                    message: Text("Rehberi tekrar görmek istiyor musunuz?"),
-                    primaryButton: .default(Text("Evet")) {
-                        showTutorial = true
-                    },
-                    secondaryButton: .cancel(Text("Hayır"))
-                )
-            }
+                .tag(AppPage.savedGames)
+            
+            // Tab 4: Ayarlar
+            SettingsView()
+                .environmentObject(themeManager)
+                .tabItem {
+                    Label(AppPage.settings.title, systemImage: AppPage.settings.icon)
+                }
+                .tag(AppPage.settings)
         }
         .onAppear {
             setupSavedGameNotification()
             setupTimeoutNotification()
+            checkTutorial()
+            startWelcomeAnimations()
+        }
+        .fullScreenCover(isPresented: $showGame) {
+            // Oyun görünümü
+            GameView(existingViewModel: viewModel)
+                .environmentObject(themeManager)
+        }
+        .fullScreenCover(isPresented: $showSavedGame) {
+            // Kaydedilmiş oyun için mevcut viewModel ile oyun başlat
+            GameView(existingViewModel: viewModel)
+                .environmentObject(themeManager)
+        }
+        .fullScreenCover(isPresented: $showTutorial) {
+            // Tutorial görünümü
+            TutorialView()
+                .environmentObject(themeManager)
+        }
+        .alert(isPresented: $showTutorialPrompt) {
+            Alert(
+                title: Text("Rehberi Göster"),
+                message: Text("Rehberi tekrar görmek istiyor musunuz?"),
+                primaryButton: .default(Text("Evet")) {
+                    showTutorial = true
+                },
+                secondaryButton: .cancel(Text("Hayır"))
+            )
         }
     }
 }
