@@ -260,17 +260,8 @@ struct SavedGamesView: View {
                         
                         // Not: Navigation bar'ı gizleme bildirimine artık ihtiyaç yok
                         
-                        // showSavedGame değişkenini true yapmak için bildirim gönder
-                        NotificationCenter.default.post(name: Notification.Name("ShowSavedGame"), object: nil)
-                        
-                        // Kısa bir gecikme ile callback'i çağır
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            // Callback'i çağırarak oyunu ilet
-                            gameSelected(game)
-                            
-                            // Sayfayı kapat
-                            presentationMode.wrappedValue.dismiss()
-                        }
+                        // Callback'i doğrudan çağır, bildirime gerek yok
+                        gameSelected(game)
                     }) {
                         Text("Devam Et")
                             .font(.system(size: 16, weight: .medium))

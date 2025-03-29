@@ -227,7 +227,7 @@ struct SudokuCellView: View {
     // Metin rengi - Görsel tasarıma uygun modern tema 
     private func getTextColor() -> Color {
         // Ana tema rengi: Teal (turkuaz) - ipucu için mavi renk
-        let themeColor = Color.teal
+        _ = Color.teal
         
         if isHintTarget {
             // İpucu hedefi - mavi (görseldeki gibi)

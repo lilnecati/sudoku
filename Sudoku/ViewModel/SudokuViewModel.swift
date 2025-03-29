@@ -1375,8 +1375,34 @@ class SudokuViewModel: ObservableObject {
         
         // SudokuBoard'u ve kullanıcı değerlerini kaydedilmiş oyundan yükledik
         self.board = loadedBoard
+        
+        // userEnteredValues'i loadBoardFromData'dan gelen değere ayarla
         self.userEnteredValues = userValues
-        print("✅ Kullanıcı tarafından girilen değerler doğrudan yüklendi: \(userValues.flatMap { $0.filter { $0 } }.count) değer")
+        
+        // Eğer userEnteredValues JSON'dan düzgün bir şekilde yüklenmediyse, 
+        // tahta üzerinden hesapla (yedek çözüm)
+        if self.userEnteredValues.flatMap({ $0.filter { $0 } }).isEmpty {
+            print("⚠️ userEnteredValues boş, tahta üzerinden hesaplanıyor")
+            
+            // Yeni bir userEnteredValues matrisi oluştur
+            var computedValues = Array(repeating: Array(repeating: false, count: 9), count: 9)
+            
+            // Tahtadaki her hücre için, sabit olmayan ve değeri olan hücreleri işaretle
+            for row in 0..<9 {
+                for col in 0..<9 {
+                    if let value = self.board.getValue(at: row, col: col), value > 0 {
+                        if !self.board.isFixed(at: row, col: col) {
+                            computedValues[row][col] = true
+                        }
+                    }
+                }
+            }
+            
+            self.userEnteredValues = computedValues
+        }
+        
+        print("✅ Kullanıcı tarafından girilen değerler yüklendi: \(self.userEnteredValues.flatMap { $0.filter { $0 } }.count) değer")
+        
         self.elapsedTime = savedGame.getDouble(key: "elapsedTime")
         self.pausedElapsedTime = self.elapsedTime
         self.gameState = .playing

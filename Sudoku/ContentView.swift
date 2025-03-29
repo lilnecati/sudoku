@@ -53,10 +53,6 @@ struct ContentView: View {
     // ThemeManager'ı ekle
     @EnvironmentObject var themeManager: ThemeManager
     
-    // Kaydedilmiş oyun açma
-    @State private var gameToLoad: NSManagedObject? = nil
-    @State private var showSavedGame = false
-    
     @StateObject private var viewModel = SudokuViewModel()
     @State private var currentPage: AppPage = .home
     
@@ -71,6 +67,7 @@ struct ContentView: View {
     
     @State private var isLoading = false
     @State private var loadError: Error?
+    @State private var isLoadingSelectedGame = false // Seçilen oyun yüklenirken gösterilecek yükleme durumu
     
     // Animasyon değişkenleri
     @State private var titleScale = 0.9
@@ -117,55 +114,10 @@ struct ContentView: View {
         UITabBar.appearance().standardAppearance = appearance
     }
     
-    // Bildirim dinleyicilerini ayarla
+    // MARK: - Setup ve bildirim ayarları
     private func setupSavedGameNotification() {
-        // "Ana sayfaya geç" bildirimini dinle
-        NotificationCenter.default.addObserver(forName: Notification.Name("NavigateToHome"),
-                                               object: nil, queue: .main) { _ in
-            withAnimation {
-                self.currentPage = .home
-            }
-        }
-        
-        // Not: Navigation bar'ı gizleme bildirimine artık ihtiyaç yok, fullScreenCover kullanıyoruz
-        
-        // Kaydedilmiş oyunu gösterme bildirimini dinle
-        NotificationCenter.default.addObserver(forName: Notification.Name("ShowSavedGame"),
-                                               object: nil, queue: .main) { _ in
-            // Kaydedilmiş oyunu göster
-            DispatchQueue.main.async {
-                withAnimation {
-                    // Önce ana sayfaya geç
-                    self.currentPage = .home
-                    // Sonra kaydedilmiş oyunu göster
-                    self.showSavedGame = true
-                }
-            }
-        }
-        
-        // Kaydedilmiş oyun yükleme bildirimini dinle
-        NotificationCenter.default.addObserver(forName: Notification.Name("LoadSavedGame"),
-                                               object: nil, queue: .main) { notification in
-            // Kaydedilmiş oyunu bildirimden al
-            if let savedGame = notification.userInfo?["savedGame"] as? SavedGame {
-                // Önce ana sayfaya geç
-                withAnimation {
-                    self.currentPage = .home
-                }
-                
-                // Kaydedilmiş oyunu yükle
-                // Önemli: Seçili zorluk ayarını değiştirmeden mevcut viewModel'e yüklüyoruz
-                self.viewModel.loadGame(from: savedGame)
-                
-                // Oyun durumunu oynamaya ayarla
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    // Oyunu göster
-                    withAnimation(.spring()) {
-                        self.showGame = true
-                    }
-                }
-            }
-        }
+        // Artık oyun bildirimleri sadece showGame ile yapılacağı için 
+        // eski bildirim dinleyicisine gerek yok
     }
     
     // Bildirim işleme için singleton sınıf
@@ -223,8 +175,9 @@ struct ContentView: View {
         ) { _ in
             withAnimation {
                 self.showGame = false
-                self.showSavedGame = false
-                self.currentPage = .home // Ana sayfaya yönlendir
+                self.showTutorial = false
+                // Ana sayfaya dönmeyelim (bu soruna neden olabilir)
+                // self.currentPage = .home // Ana sayfaya yönlendir
             }
         }
     }
@@ -233,9 +186,8 @@ struct ContentView: View {
     private func checkTutorial() {
         if !hasSeenTutorial {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation {
-                    showTutorial = true
-                }
+                // NavigationLink için değişken ayarla
+                showTutorial = true
             }
         }
     }
@@ -261,13 +213,8 @@ struct ContentView: View {
     private var homePage: some View {
         VStack {
             // Ana sayfa içeriği
-            if showSavedGame {
-                // Boş bir görünüm göster, oyun fullScreenCover ile gösterilecek
-                Color.clear
-            } else {
-                mainContentView
-                    .transition(.opacity)
-            }
+            mainContentView
+                .transition(.opacity)
         }
         .fullScreenCover(isPresented: $showTutorial) {
             // Tutorial görünümü
@@ -348,6 +295,8 @@ struct ContentView: View {
                     print("Kaydedilmiş oyun bulunamadı, yeni oyun başlatılıyor")
                     // Kaydedilmiş oyun yoksa yeni oyun başlat
                     withAnimation(.spring()) {
+                        // GameState'i temizle ve yeni oyun oluştur
+                        viewModel.resetGameState()
                         selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[selectedDifficulty]
                         viewModel.newGame(difficulty: selectedCustomDifficulty)
                         showGame = true
@@ -445,7 +394,11 @@ struct ContentView: View {
                     HStack(spacing: 15) {
                         // Kolay (index 0)
                         Button(action: {
+                            // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
+                            viewModel.resetGameState()
                             selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[0]
+                            viewModel.newGame(difficulty: selectedCustomDifficulty)
+                            
                             withAnimation(.spring()) {
                                 showGame = true
                             }
@@ -500,7 +453,11 @@ struct ContentView: View {
                         
                         // Orta (index 1)
                         Button(action: {
+                            // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
+                            viewModel.resetGameState()
                             selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[1]
+                            viewModel.newGame(difficulty: selectedCustomDifficulty)
+                            
                             withAnimation(.spring()) {
                                 showGame = true
                             }
@@ -558,7 +515,11 @@ struct ContentView: View {
                     HStack(spacing: 15) {
                         // Zor (index 2)
                         Button(action: {
+                            // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
+                            viewModel.resetGameState()
                             selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[2]
+                            viewModel.newGame(difficulty: selectedCustomDifficulty)
+                            
                             withAnimation(.spring()) {
                                 showGame = true
                             }
@@ -613,7 +574,11 @@ struct ContentView: View {
                         
                         // Uzman (index 3)
                         Button(action: {
+                            // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
+                            viewModel.resetGameState()
                             selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[3]
+                            viewModel.newGame(difficulty: selectedCustomDifficulty)
+                            
                             withAnimation(.spring()) {
                                 showGame = true
                             }
@@ -686,6 +651,7 @@ struct ContentView: View {
             // Rehber butonu
             Button(action: {
                 if !hasSeenTutorial {
+                    // NavigationLink kullanımı için değişken ayarlaması
                     showTutorial = true
                 } else {
                     showTutorialPrompt = true
@@ -829,15 +795,15 @@ struct ContentView: View {
             
             // Tab 3: Kayıtlı Oyunlar
             SavedGamesView(viewModel: viewModel, gameSelected: { game in
+                // Oyun yüklenirken yükleme ekranını göster
+                // isLoadingSelectedGame = true
+                
                 // Kaydedilmiş oyunu yükle
                 viewModel.loadGame(from: game)
-                // Ana sayfaya dön
-                currentPage = .home
-                // Oyunu göster
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    withAnimation(.spring()) {
-                        showGame = true
-                    }
+                
+                // Direkt olarak oyunu göster, yükleme ekranı kullanma
+                withAnimation(.spring()) {
+                    showGame = true
                 }
             })
                 .tabItem {
@@ -859,19 +825,34 @@ struct ContentView: View {
             checkTutorial()
             startWelcomeAnimations()
         }
-        .fullScreenCover(isPresented: $showGame) {
+        .fullScreenCover(isPresented: $isLoadingSelectedGame) {
+            // Oyun yüklenirken gösterilecek yükleme ekranı
+            ZStack {
+                // Arka plan
+                Color(UIColor.systemBackground).edgesIgnoringSafeArea(.all)
+                
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                    
+                    Text("Oyun yükleniyor...")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showGame, onDismiss: {
+            // Oyun ekranı kapatıldığında, kaldığımız sekmede kalmaya devam edelim
+            // Burada bir şey yapmıyoruz, böylece mevcut sekme korunur
+            
+            // Oyun kapatıldığında, yükleme ekranını da kapatalım
+            isLoadingSelectedGame = false
+            
+            print("Oyun ekranı kapatıldı, mevcut sekme: \(currentPage)")
+        }) {
             // Oyun görünümü
             GameView(existingViewModel: viewModel)
-                .environmentObject(themeManager)
-        }
-        .fullScreenCover(isPresented: $showSavedGame) {
-            // Kaydedilmiş oyun için mevcut viewModel ile oyun başlat
-            GameView(existingViewModel: viewModel)
-                .environmentObject(themeManager)
-        }
-        .fullScreenCover(isPresented: $showTutorial) {
-            // Tutorial görünümü
-            TutorialView()
                 .environmentObject(themeManager)
         }
         .alert(isPresented: $showTutorialPrompt) {
@@ -879,6 +860,8 @@ struct ContentView: View {
                 title: Text("Rehberi Göster"),
                 message: Text("Rehberi tekrar görmek istiyor musunuz?"),
                 primaryButton: .default(Text("Evet")) {
+                    // Doğrudan showTutorial'ı true yaparak NavigationLink üzerinden
+                    // TutorialView'a git
                     showTutorial = true
                 },
                 secondaryButton: .cancel(Text("Hayır"))
