@@ -1676,4 +1676,3 @@ class SudokuBoard: ObservableObject, Codable {
         return possibleNumbers
     }
 }
-

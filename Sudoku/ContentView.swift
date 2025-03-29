@@ -54,7 +54,8 @@ struct ContentView: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     @StateObject private var viewModel = SudokuViewModel()
-    @State private var currentPage: AppPage = .home
+    @State private var currentPage: AppPage = .home // Tab değişikliklerini takip etmek için
+    @State private var previousPage: AppPage = .home
     
     @AppStorage("selectedDifficulty") private var selectedDifficulty = 0
     @AppStorage("hasSeenTutorial") private var hasSeenTutorial = false
@@ -116,7 +117,7 @@ struct ContentView: View {
     
     // MARK: - Setup ve bildirim ayarları
     private func setupSavedGameNotification() {
-        // Artık oyun bildirimleri sadece showGame ile yapılacağı için 
+        // Artık oyun bildirimleri sadece showGame ile yapılacağı için
         // eski bildirim dinleyicisine gerek yok
     }
     
@@ -232,20 +233,20 @@ struct ContentView: View {
             AnimatedSudokuLogo()
                 .frame(width: 140, height: 140)
                 .padding(10)
-            .scaleEffect(titleScale)
-            .opacity(titleOpacity)
-            .onAppear {
-                // Logonun görünürlük ayarlarını anında etkinleştir, animasyon olmadan
-                titleScale = 1.0
-                titleOpacity = 1.0
-                
-                // Rotasyon ve animasyon yok
-                rotationDegree = 0
-                cellAnimationProgress = 0.0
-                
-                // Sabit sayılar, değişmeyecek
-                // Timer ve animasyon yok
-            }
+                .scaleEffect(titleScale)
+                .opacity(titleOpacity)
+                .onAppear {
+                    // Logonun görünürlük ayarlarını anında etkinleştir, animasyon olmadan
+                    titleScale = 1.0
+                    titleOpacity = 1.0
+                    
+                    // Rotasyon ve animasyon yok
+                    rotationDegree = 0
+                    cellAnimationProgress = 0.0
+                    
+                    // Sabit sayılar, değişmeyecek
+                    // Timer ve animasyon yok
+                }
             
             // İyileştirilmiş başlık
             Text("SUDOKU")
@@ -259,7 +260,7 @@ struct ContentView: View {
                         .offset(x: 2, y: 2)
                         .blur(radius: 2)
                         .mask(Text("SUDOKU")
-                                .font(.system(size: 38, weight: .bold, design: .rounded)))
+                            .font(.system(size: 38, weight: .bold, design: .rounded)))
                 )
                 .padding(.top, 5)
         }
@@ -268,6 +269,8 @@ struct ContentView: View {
     // MARK: - Continue Game Button
     var continueGameButton: some View {
         Button(action: {
+            SoundManager.shared.executeSound(.tap)
+            
             // Son kaydedilen oyunu yükle
             let fetchRequest: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
             fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \SavedGame.dateCreated, ascending: false)]
@@ -357,7 +360,7 @@ struct ContentView: View {
                     RoundedRectangle(cornerRadius: 18)
                         .stroke(Color.green.opacity(0.2), lineWidth: 1.5)
                 }
-                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+                    .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
             )
         }
         .buttonStyle(ScaleButtonStyle())
@@ -394,6 +397,8 @@ struct ContentView: View {
                     HStack(spacing: 15) {
                         // Kolay (index 0)
                         Button(action: {
+                            SoundManager.shared.executeSound(.tap)
+                            
                             // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
                             viewModel.resetGameState()
                             selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[0]
@@ -446,13 +451,15 @@ struct ContentView: View {
                                     RoundedRectangle(cornerRadius: 16)
                                         .stroke(difficultyColor(for: 0).opacity(0.2), lineWidth: 1.5)
                                 }
-                                .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
+                                    .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
                             )
                         }
                         .buttonStyle(ScaleButtonStyle())
                         
                         // Orta (index 1)
                         Button(action: {
+                            SoundManager.shared.executeSound(.tap)
+                            
                             // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
                             viewModel.resetGameState()
                             selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[1]
@@ -505,7 +512,7 @@ struct ContentView: View {
                                     RoundedRectangle(cornerRadius: 16)
                                         .stroke(difficultyColor(for: 1).opacity(0.2), lineWidth: 1.5)
                                 }
-                                .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
+                                    .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
                             )
                         }
                         .buttonStyle(ScaleButtonStyle())
@@ -515,6 +522,8 @@ struct ContentView: View {
                     HStack(spacing: 15) {
                         // Zor (index 2)
                         Button(action: {
+                            SoundManager.shared.executeSound(.tap)
+                            
                             // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
                             viewModel.resetGameState()
                             selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[2]
@@ -567,13 +576,15 @@ struct ContentView: View {
                                     RoundedRectangle(cornerRadius: 16)
                                         .stroke(difficultyColor(for: 2).opacity(0.2), lineWidth: 1.5)
                                 }
-                                .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
+                                    .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
                             )
                         }
                         .buttonStyle(ScaleButtonStyle())
                         
                         // Uzman (index 3)
                         Button(action: {
+                            SoundManager.shared.executeSound(.tap)
+                            
                             // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
                             viewModel.resetGameState()
                             selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[3]
@@ -626,7 +637,7 @@ struct ContentView: View {
                                     RoundedRectangle(cornerRadius: 16)
                                         .stroke(difficultyColor(for: 3).opacity(0.2), lineWidth: 1.5)
                                 }
-                                .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
+                                    .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
                             )
                         }
                         .buttonStyle(ScaleButtonStyle())
@@ -650,6 +661,8 @@ struct ContentView: View {
             
             // Rehber butonu
             Button(action: {
+                SoundManager.shared.executeSound(.tap)
+                
                 if !hasSeenTutorial {
                     // NavigationLink kullanımı için değişken ayarlaması
                     showTutorial = true
@@ -785,6 +798,7 @@ struct ContentView: View {
                     Label(AppPage.home.title, systemImage: AppPage.home.icon)
                 }
                 .tag(AppPage.home)
+
             
             // Tab 2: Skor Tablosu
             ScoreboardView()
@@ -806,10 +820,10 @@ struct ContentView: View {
                     showGame = true
                 }
             })
-                .tabItem {
-                    Label(AppPage.savedGames.title, systemImage: AppPage.savedGames.icon)
-                }
-                .tag(AppPage.savedGames)
+            .tabItem {
+                Label(AppPage.savedGames.title, systemImage: AppPage.savedGames.icon)
+            }
+            .tag(AppPage.savedGames)
             
             // Tab 4: Ayarlar
             SettingsView()
@@ -868,37 +882,38 @@ struct ContentView: View {
             )
         }
     }
-}
-
-// MARK: - GroupBox stil tanımı
-struct CardGroupBoxStyle: GroupBoxStyle {
-    @Environment(\.colorScheme) var colorScheme
     
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.content
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-            )
+    
+    // MARK: - GroupBox stil tanımı
+    struct CardGroupBoxStyle: GroupBoxStyle {
+        @Environment(\.colorScheme) var colorScheme
+        
+        func makeBody(configuration: Configuration) -> some View {
+            configuration.content
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                )
+        }
     }
-}
-
-// UIKit'ten guncel API kullanarak safe area bottom degerini alma
-func getSafeAreaBottom() -> CGFloat {
-    // iOS 15+ icin guncel API
-    if #available(iOS 15.0, *) {
-        let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
-        return scene?.keyWindow?.safeAreaInsets.bottom ?? 0
-    } else {
-        // iOS 15 oncesi icin eski yontem (artik deprecated)
-        return UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
+    
+    // UIKit'ten guncel API kullanarak safe area bottom degerini alma
+    func getSafeAreaBottom() -> CGFloat {
+        // iOS 15+ icin guncel API
+        if #available(iOS 15.0, *) {
+            let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+            return scene?.keyWindow?.safeAreaInsets.bottom ?? 0
+        } else {
+            // iOS 15 oncesi icin eski yontem (artik deprecated)
+            return UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
+        }
     }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
+    
+    struct ContentView_Previews: PreviewProvider {
+        static var previews: some View {
+            ContentView()
+        }
     }
 }

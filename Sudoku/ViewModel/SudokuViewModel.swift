@@ -235,6 +235,9 @@ class SudokuViewModel: ObservableObject {
             let position = Position(row: row, col: col)
             invalidCells.insert(position)
             
+            // Hata sesi çal
+            SoundManager.shared.playErrorSound()
+            
             // Hata geri bildirimi
             if enableHapticFeedback && enableNumberInputHaptic {
                 let errorFeedback = UINotificationFeedbackGenerator()
@@ -259,6 +262,9 @@ class SudokuViewModel: ObservableObject {
             
             // Performans: Sadece değişiklik varsa işlem yap
             if currentValue != value {
+                // Doğru ses çal
+                SoundManager.shared.playCorrectSound()
+                
                 enterValue(value, at: row, col: col)
                 // Önbelleği geçersiz kıl
                 invalidatePencilMarksCache(forRow: row, column: col)
@@ -293,6 +299,9 @@ class SudokuViewModel: ObservableObject {
         
         // Tam kontrol (daha maliyetli)
         if board.isComplete() {
+            // Tamamlama sesi çal
+            SoundManager.shared.playCompletionSound()
+            
             gameState = .completed
             stopTimer()
         }

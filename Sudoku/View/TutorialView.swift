@@ -119,6 +119,7 @@ struct TutorialView: View {
                 HStack {
                     // Geri butonu
                     Button(action: {
+                        SoundManager.shared.executeSound(.tap)
                         if currentStep > 0 {
                             withAnimation {
                                 currentStep -= 1
@@ -141,6 +142,7 @@ struct TutorialView: View {
                     
                     // İleri/Bitir butonu
                     Button(action: {
+                        SoundManager.shared.executeSound(.tap)
                         if currentStep < tutorialSteps.count - 1 {
                             withAnimation {
                                 currentStep += 1

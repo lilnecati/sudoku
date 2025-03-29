@@ -21,6 +21,7 @@ struct SettingsView: View {
     @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic: Bool = true
     @AppStorage("enableCellTapHaptic") private var enableCellTapHaptic: Bool = true
     @AppStorage("enableSoundEffects") private var enableSoundEffects: Bool = true
+    @AppStorage("soundVolume") private var soundVolume: Double = 0.7
     @AppStorage("textSizePreference") private var textSizeString: String = TextSizePreference.medium.rawValue
     @AppStorage("prefersDarkMode") private var prefersDarkMode: Bool = false
     @AppStorage("powerSavingMode") private var powerSavingMode: Bool = false
@@ -418,6 +419,7 @@ struct SettingsView: View {
                 Text("Titreşim Geri Bildirimi")
                 Spacer()
                 Button(action: {
+                    SoundManager.shared.playNavigationSound()
                     enableHapticFeedback.toggle()
                     // Ana ayar kapatılırsa tüm alt ayarları da kapat
                     if !enableHapticFeedback {
@@ -443,6 +445,7 @@ struct SettingsView: View {
                     Text("Sayı Girişinde Titreşim")
                     Spacer()
                     Button(action: {
+                        SoundManager.shared.playNavigationSound()
                         enableNumberInputHaptic.toggle()
                     }) {
                         Image(systemName: enableNumberInputHaptic ? "checkmark.circle.fill" : "circle")
@@ -466,6 +469,7 @@ struct SettingsView: View {
                     Text("Hücre Seçiminde Titreşim")
                     Spacer()
                     Button(action: {
+                        SoundManager.shared.playNavigationSound()
                         enableCellTapHaptic.toggle()
                     }) {
                         Image(systemName: enableCellTapHaptic ? "checkmark.circle.fill" : "circle")
@@ -488,6 +492,7 @@ struct SettingsView: View {
                 Text("Ses Efektleri")
                 Spacer()
                 Button(action: {
+                    SoundManager.shared.playNavigationSound()
                     enableSoundEffects.toggle()
                 }) {
                     Image(systemName: enableSoundEffects ? "checkmark.circle.fill" : "circle")
@@ -502,6 +507,76 @@ struct SettingsView: View {
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
             
+            // Ses seviyesi kaydırıcısı
+            if enableSoundEffects {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("Ses Seviyesi")
+                        Spacer()
+                        Text("\(Int(soundVolume * 100))%")
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack {
+                        Image(systemName: "speaker.fill")
+                            .foregroundColor(.gray)
+                        
+                        Slider(value: $soundVolume, in: 0...1, step: 0.05)
+                            .accentColor(.blue)
+                            .onAppear {
+                                // İlk yüklemede mevcut değeri SoundManager'a ayarla
+                                SoundManager.shared.updateVolumeLevel(soundVolume)
+                            }
+                            #if os(iOS)
+                            .onChange(of: soundVolume) { oldValue, newValue in
+                                // AudioServicesPlaySystemSound çağrısı yapmayarak fazladan ses çalmasını engelle
+                                SoundManager.shared.updateVolumeLevelQuietly(newValue)
+                            }
+                            #else
+                            .onReceive(Just(soundVolume)) { newValue in
+                                // AudioServicesPlaySystemSound çağrısı yapmayarak fazladan ses çalmasını engelle
+                                SoundManager.shared.updateVolumeLevelQuietly(newValue)
+                            }
+                            #endif
+                        
+                        Image(systemName: "speaker.wave.3.fill")
+                            .foregroundColor(.blue)
+                    }
+                    
+                    // Ses testi butonu
+                    Button(action: {
+                        SoundManager.shared.executeSound(.test)
+                    }) {
+                        HStack {
+                            Image(systemName: "play.circle.fill")
+                                .font(.system(size: 16))
+                            Text("Sesi Test Et")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.blue, lineWidth: 1)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.blue.opacity(0.1))
+                                )
+                        )
+                    }
+                    .padding(.top, 8)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.leading, 20)
+                .transition(.opacity)
+            }
+            
             // Güç tasarrufu modu
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -512,6 +587,7 @@ struct SettingsView: View {
                 }
                 Spacer()
                 Button(action: {
+                    SoundManager.shared.playNavigationSound()
                     powerSavingMode.toggle()
                     // PowerSavingManager'ı güncelle
                     PowerSavingManager.shared.isPowerSavingEnabled = powerSavingMode
@@ -538,6 +614,7 @@ struct SettingsView: View {
                 }
                 Spacer()
                 Button(action: {
+                    SoundManager.shared.playNavigationSound()
                     autoPowerSaving.toggle()
                     // PowerSavingManager'ı güncelle
                     PowerSavingManager.shared.isAutoPowerSavingEnabled = autoPowerSaving
@@ -577,6 +654,7 @@ struct SettingsView: View {
                 
                 if powerManager.batteryLevel <= 0.2 && !powerSavingMode {
                     Button(action: {
+                        SoundManager.shared.playNavigationSound()
                         powerSavingMode = true
                         powerManager.powerSavingMode = true
                     }) {
@@ -640,6 +718,7 @@ struct SettingsView: View {
                 
                 HStack(spacing: 15) {
                     Button(action: {
+                        SoundManager.shared.playNavigationSound()
                         textSizeString = TextSizePreference.small.rawValue
                     }) {
                         Text("Küçük")
@@ -657,6 +736,7 @@ struct SettingsView: View {
                     }
                     
                     Button(action: {
+                        SoundManager.shared.playNavigationSound()
                         textSizeString = TextSizePreference.medium.rawValue
                     }) {
                         Text("Orta")
@@ -674,6 +754,7 @@ struct SettingsView: View {
                     }
                     
                     Button(action: {
+                        SoundManager.shared.playNavigationSound()
                         textSizeString = TextSizePreference.large.rawValue
                     }) {
                         Text("Büyük")

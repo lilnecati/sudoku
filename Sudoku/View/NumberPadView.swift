@@ -102,6 +102,9 @@ struct NumberPadView: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             }
             
+            // Ses efekti çal
+            SoundManager.shared.playNumberInputSound()
+            
             // Basılı efekti için animasyon
             withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                 isPressed = true
@@ -136,7 +139,7 @@ struct NumberPadView: View {
                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                         .foregroundColor(isDisabled ? buttonColor.opacity(0.3) : buttonColor)
                     
-                    // İkinci satır için SABIT BOYUTLU placeholder - her zaman aynı boyutta
+                    // İkinci satır için SABIT BOYUTLU placeholder - her zaman aynı boyutta
                     ZStack {
                         // Sayı/kalem ikonu için görünmez yer tutucu - her zaman yer kaplar
                         Text("0")
@@ -185,6 +188,9 @@ struct NumberPadView: View {
             if enableHapticFeedback && enableNumberInputHaptic {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }
+
+            // Ses efekti çal
+            SoundManager.shared.playNumberInputSound()
             
             // Kalem modunu değiştir - normal animasyon, layout boyutu animasyonsuz
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -250,6 +256,9 @@ struct NumberPadView: View {
             if enableHapticFeedback && enableNumberInputHaptic {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }
+            
+            // Ses efekti çal
+            SoundManager.shared.executeSound(.erase)
             
             // Seçili hücreyi temizle
             viewModel.setValueAtSelectedCell(nil)

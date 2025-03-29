@@ -37,6 +37,9 @@ struct SudokuCellView: View {
                     generator.impactOccurred()
                 }
                 
+                // Ses efekti çal
+                SoundManager.shared.playNavigationSound()
+                
                 // Güç tasarrufu modunda değilse seçim animasyonunu tetikle
                 if !powerManager.isPowerSavingEnabled {
                     // Daha etkileyici baskı hissi için pulsamayı kullan
