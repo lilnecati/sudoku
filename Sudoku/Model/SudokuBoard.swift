@@ -52,18 +52,21 @@ class SudokuBoard: ObservableObject, Codable {
     // Performans önbellekleri
     private var completeCheckCache: Bool?
     private var filledCheckCache: Int?
-    private var validPlacementCache: [String: Any] = [:]
+    private var validPlacementCache = [String: Any]()
     
     // Zorluk
     let difficulty: Difficulty
-    
     // İpucu olarak verilen, değiştirilemeyen hücreleri belirten matris
     private var fixed: [[Bool]]
     
     // Önbellek değişkenleri
-    private var nakedSingleCountCache: Int? = nil
-    private var hiddenSingleCountCache: Int? = nil
-    private var emptyCellCountCache: Int? = nil
+    private var emptyCellCountCache: Int?
+    private var nakedSingleCountCache: Int?
+    private var hiddenSingleCountCache: Int?
+    private var nakedPairsUsedCache: Bool?
+    private var pointingPairsUsedCache: Bool?
+    private var boxLineReductionUsedCache: Bool?
+    private var xWingUsedCache: Bool?
     
     // MARK: - Başlatıcı
     
@@ -408,12 +411,16 @@ class SudokuBoard: ObservableObject, Codable {
     
     // Önbellekleri temizle
     private func invalidateCaches() {
+        emptyCellCountCache = nil
+        nakedSingleCountCache = nil
+        hiddenSingleCountCache = nil
         completeCheckCache = nil
         filledCheckCache = nil
         validPlacementCache.removeAll(keepingCapacity: true)
-        nakedSingleCountCache = nil
-        hiddenSingleCountCache = nil
-        emptyCellCountCache = nil
+        nakedPairsUsedCache = nil
+        pointingPairsUsedCache = nil
+        boxLineReductionUsedCache = nil
+        xWingUsedCache = nil
     }
     
     // MARK: - Yardımcı Metodlar
@@ -515,6 +522,24 @@ class SudokuBoard: ObservableObject, Codable {
             }
         }
         
+        // İpucu dağılımını kontrol et
+        if !validateIpucuDagilimi() {
+            print("İpucu dağılımı dengeli değil, tekrar deneniyor...")
+            attempts += 1
+            if attempts < maxAttempts {
+                return generateBoard()
+            }
+        }
+        
+        // Mantıksal çözülebilirliği kontrol et
+        if !testLogicalSolvability() {
+            print("Tahta mantıksal tekniklerle çözülemiyor, tekrar deneniyor...")
+            attempts += 1
+            if attempts < maxAttempts {
+                return generateBoard()
+            }
+        }
+        
         // Zorluk seviyesi doğrulaması yap
         while !validateDifficulty() {
             print("Tahta istenen zorluk seviyesine uygun değil, tekrar deneniyor...")
@@ -527,8 +552,20 @@ class SudokuBoard: ObservableObject, Codable {
                 break // Döngüden çık ve tahtayı olduğu gibi kullan
             }
             
-            // Çözümü koruyarak sadece ipuçlarını yeniden düzenle
-            // Bu, tamamen baştan başlamak yerine daha verimli
+            // Her denemede yeni bir tahta oluştur
+            // Mevcut değerleri temizle
+            for row in 0..<9 {
+                for col in 0..<9 {
+                    board[row][col] = nil
+                    originalBoard[row][col] = nil
+                    solution[row][col] = nil
+                }
+            }
+            
+            // Yeni bir çözüm oluştur
+            generateSolution()
+            
+            // Çözümü tahtaya kopyala
             for row in 0..<9 {
                 for col in 0..<9 {
                     if let value = solution[row][col] {
@@ -537,8 +574,18 @@ class SudokuBoard: ObservableObject, Codable {
                 }
             }
             
-            // Farklı bir ipucu düzeni ile tekrar dene
+            // Yeni ipucu dağılımı oluştur
             removeRandomCells(count: cellsToRemove)
+            
+            // İpucu dağılımını kontrol et
+            if !validateIpucuDagilimi() {
+                continue // Dağılım dengeli değilse, tekrar dene
+            }
+            
+            // Mantıksal çözülebilirliği kontrol et
+            if !testLogicalSolvability() {
+                continue // Mantıksal olarak çözülemiyorsa, tekrar dene
+            }
         }
         
         // Doğrulama başarılıysa bildir
@@ -563,6 +610,7 @@ class SudokuBoard: ObservableObject, Codable {
         // Kolay seviye kontrolü
         if difficulty == .easy {
             let nakedSingleCount = countNakedSingles()
+            let hiddenSingleCount = countHiddenSingles() // Hidden Single'ları da sayalım
             let totalEmptyCells = countEmptyCells()
             
             // Toplam boş hücre sayısı 0 ise, çözüm kontrolünü atla
@@ -570,11 +618,11 @@ class SudokuBoard: ObservableObject, Codable {
                 return true
             }
             
-            // Kolay seviyede, boş hücrelerin daha az bir kısmı naked single olsa da kabul et
-            // %60 çok katı bir eşik olabilir, %30'a düşürelim
-            let nakedSingleRatio = Double(nakedSingleCount) / Double(totalEmptyCells)
-            print("Kolay seviye analizi: Naked Single Oranı = \(nakedSingleRatio) (\(nakedSingleCount)/\(totalEmptyCells))")
-            return nakedSingleRatio >= 0.3 // Daha düşük bir eşik
+            // Kolay seviyede, boş hücrelerin daha az bir kısmı naked+hidden single olsa da kabul et
+            // %30 eşiğini %15'e düşürelim ve hidden single'ları da hesaba katalım
+            let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
+            print("Kolay seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells))")
+            return solvableRatio >= 0.15 // Daha düşük bir eşik
         }
         
         // Orta seviye kontrolü
@@ -588,10 +636,19 @@ class SudokuBoard: ObservableObject, Codable {
                 return true
             }
             
-            // Orta seviyede, boş hücrelerin %25-75'i naked veya hidden single olmalı - üst sınırı artıralım
+            // Mantıksal çözülebilirliği test et
+            let isLogicallySolvable = testLogicalSolvability()
+            
+            // Naked Pairs tekniğinin kullanılıp kullanılmadığını kontrol et
+            let usesNakedPairs = nakedPairsUsedCache ?? false
+            
+            // Orta seviyede, boş hücrelerin %25-75'i naked veya hidden single olmalı
+            // Ayrıca en az bir naked pair kullanılmalı
             let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
-            print("Orta seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells))")
-            return solvableRatio >= 0.25 && solvableRatio < 0.75
+            print("Orta seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells)), Naked Pairs: \(usesNakedPairs)")
+            
+            // Hem çözülebilir hücre oranı uygun olmalı hem de en az bir Naked Pair kullanılmalı
+            return solvableRatio >= 0.25 && solvableRatio < 0.75 && isLogicallySolvable && usesNakedPairs
         }
         
         // Zor seviye kontrolü
@@ -601,13 +658,26 @@ class SudokuBoard: ObservableObject, Codable {
             let totalEmptyCells = countEmptyCells()
             
             if totalEmptyCells == 0 {
-                return true
+        return true
             }
             
+            // Mantıksal çözülebilirliği test et
+            let isLogicallySolvable = testLogicalSolvability()
+            
+            // İleri tekniklerin kullanılıp kullanılmadığını kontrol et
+            let usesPointingPairs = pointingPairsUsedCache ?? false
+            let usesBoxLineReduction = boxLineReductionUsedCache ?? false
+            let usesXWing = xWingUsedCache ?? false
+            
             // Zor seviyede, boş hücrelerin %10-35'i naked veya hidden single olmalı
+            // Ayrıca en az bir ileri teknik (pointing pairs, box-line reduction veya x-wing) kullanılmalı
             let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
             print("Zor seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells))")
-            return solvableRatio >= 0.1 && solvableRatio < 0.35
+            print("İleri teknikler: Pointing Pairs: \(usesPointingPairs), Box-Line Reduction: \(usesBoxLineReduction), X-Wing: \(usesXWing)")
+            
+            // Zor seviye için: Çözülebilir hücre oranı uygun olmalı ve en az bir ileri teknik kullanılmalı
+            let usesAdvancedTechniques = usesPointingPairs || usesBoxLineReduction || usesXWing
+            return solvableRatio >= 0.1 && solvableRatio < 0.35 && isLogicallySolvable && usesAdvancedTechniques
         }
         
         // Uzman seviye kontrolü
@@ -647,18 +717,8 @@ class SudokuBoard: ObservableObject, Codable {
             return 0
         }
         
-        // Sadece belirli bir zorluk seviyesi için hızlı geçiş kontrolü
-        var targetRatio: Double
-        switch difficulty {
-        case .easy:
-            targetRatio = 0.3  // Düşük eşiğe göre ayarlandı
-        case .medium:
-            targetRatio = 0.25 // Düşük eşiğe göre ayarlandı
-        case .hard:
-            targetRatio = 0.1  // Düşük eşiğe göre ayarlandı
-        case .expert:
-            targetRatio = 0.05
-        }
+        // Kolay seviye için farklı değerlendirme yapalım
+        let isEasy = difficulty == .easy
         
         // Her hücreyi kontrol et, erken çıkışı kaldırdık, daha doğru sayım için
         for row in 0..<9 {
@@ -666,7 +726,13 @@ class SudokuBoard: ObservableObject, Codable {
                 // Sadece boş hücreleri kontrol et
                 if board[row][col] == nil {
                     let possibleValues = getPossibleValues(row: row, column: col)
-                    if possibleValues.count == 1 {
+                    
+                    // Kolay seviye için 1 veya 2 olası değer olması durumunda da naked single sayalım
+                    if isEasy && possibleValues.count <= 2 {
+                        count += 1
+                    } 
+                    // Diğer seviyeler için sadece 1 olası değeri olan hücreleri naked single say
+                    else if !isEasy && possibleValues.count == 1 {
                         count += 1
                     }
                 }
@@ -796,7 +862,7 @@ class SudokuBoard: ObservableObject, Codable {
         
         // Sadece satırları ve sütunları blok içinde karıştır
         // Değer değişimi atla, kararlı yapıyı tercih et
-        shuffleRowsAndColumns() 
+        shuffleRowsAndColumns()
     }
     
     // Çözümü rastgele karıştır (geçerliliği koruyarak)
@@ -830,6 +896,11 @@ class SudokuBoard: ObservableObject, Codable {
     
     // Satırları ve sütunları bloklar içinde karıştır (geçerliliği koruyarak)
     private func shuffleRowsAndColumns() {
+        // Daha fazla karıştırma için döngü ekleyelim
+        for _ in 0..<3 {
+            // 3x3 blokları kendi içinde karıştır
+            shuffleBlocksWithinGrid()
+            
         // Her bir 3x3 blok içindeki satırları karıştır
         for blockRow in 0..<3 {
             // 0, 1, 2 satır indekslerini karıştır
@@ -852,22 +923,57 @@ class SudokuBoard: ObservableObject, Codable {
             swapColumns(baseCol, baseCol + colIndices[0])
             swapColumns(baseCol + 1, baseCol + colIndices[1])
             swapColumns(baseCol + 2, baseCol + colIndices[2])
+            }
         }
+    }
+    
+    // 3x3 blokları birbirleriyle karıştır (satır ve sütun blokları)
+    private func shuffleBlocksWithinGrid() {
+        // Satır blokları karıştır (0, 1, 2 satır bloğu)
+        let rowBlockIndices = [0, 1, 2].shuffled()
         
-        // Blokların kendilerini de karıştır
-        // Önce satır bloklarını karıştır
-        let rowBlockOrder = [0, 1, 2].shuffled()
+        // İlk bloku karıştır (0 ile rowBlockIndices[0])
+        if 0 != rowBlockIndices[0] {
         for i in 0..<3 {
-            if i != rowBlockOrder[i] {
-                swapRowBlocks(i, rowBlockOrder[i])
+                swapRows(0 * 3 + i, rowBlockIndices[0] * 3 + i)
             }
         }
         
-        // Sonra sütun bloklarını karıştır
-        let colBlockOrder = [0, 1, 2].shuffled()
+        // İkinci bloku karıştır (1 ile rowBlockIndices[1])
+        if 1 != rowBlockIndices[1] {
         for i in 0..<3 {
-            if i != colBlockOrder[i] {
-                swapColumnBlocks(i, colBlockOrder[i])
+                swapRows(1 * 3 + i, rowBlockIndices[1] * 3 + i)
+            }
+        }
+        
+        // Üçüncü bloku karıştır (2 ile rowBlockIndices[2])
+        if 2 != rowBlockIndices[2] {
+            for i in 0..<3 {
+                swapRows(2 * 3 + i, rowBlockIndices[2] * 3 + i)
+            }
+        }
+        
+        // Sütun blokları karıştır (0, 1, 2 sütun bloğu)
+        let colBlockIndices = [0, 1, 2].shuffled()
+        
+        // İlk bloku karıştır (0 ile colBlockIndices[0])
+        if 0 != colBlockIndices[0] {
+            for i in 0..<3 {
+                swapColumns(0 * 3 + i, colBlockIndices[0] * 3 + i)
+            }
+        }
+        
+        // İkinci bloku karıştır (1 ile colBlockIndices[1])
+        if 1 != colBlockIndices[1] {
+            for i in 0..<3 {
+                swapColumns(1 * 3 + i, colBlockIndices[1] * 3 + i)
+            }
+        }
+        
+        // Üçüncü bloku karıştır (2 ile colBlockIndices[2])
+        if 2 != colBlockIndices[2] {
+            for i in 0..<3 {
+                swapColumns(2 * 3 + i, colBlockIndices[2] * 3 + i)
             }
         }
     }
@@ -1097,48 +1203,130 @@ class SudokuBoard: ObservableObject, Codable {
         let minCluesPerBlock = 3
         let minCluesPerRowCol = 3
         
-        // Sırayla hücreleri kaldır ve çözülebilirliği kontrol et
-        for (row, col) in allCells {
-            if board[row][col] != nil && cellsToRemove > 0 {
-                let blockRow = row / 3
-                let blockCol = col / 3
-                
-                // Bu hücreyi kaldırmak minimum ipucu kısıtlamalarını ihlal eder mi?
-                if cluesInBlock[blockRow][blockCol] - 1 < minCluesPerBlock ||
-                   cluesInRow[row] - 1 < minCluesPerRowCol ||
-                   cluesInCol[col] - 1 < minCluesPerRowCol {
-                    continue // Bu hücreyi kaldıramayız, sonraki hücreye geç
+        // Daha dengeli bir yaklaşım için blok, satır ve sütun listesini oluştur ve karıştır
+        var blocks = [(Int, Int)]()
+        for blockRow in 0..<3 {
+            for blockCol in 0..<3 {
+                blocks.append((blockRow, blockCol))
+            }
+        }
+        blocks.shuffle()
+        
+        var rows = Array(0..<9)
+        rows.shuffle()
+        
+        var cols = Array(0..<9)
+        cols.shuffle()
+        
+        // İlk olarak her bloktan, satırdan ve sütundan eşit sayıda hücre kaldırmaya çalış
+        let cellsPerUnit = min(cellsToRemove / 27, 6) // Her birimden en fazla kaç hücre kaldırılabilir
+        
+        // Blokları dolaş ve her bloktan eşit sayıda hücre kaldır
+        for (blockRow, blockCol) in blocks {
+            var blockCellsRemoved = 0
+            var blockCells = [(Int, Int)]()
+            
+            // Blok içindeki hücreleri topla
+            for r in 0..<3 {
+                for c in 0..<3 {
+                    let row = blockRow * 3 + r
+                    let col = blockCol * 3 + c
+                    blockCells.append((row, col))
                 }
-                
-                let originalValue = board[row][col]
-                board[row][col] = nil
-                
-                // Sayaçları güncelle
-                cluesInBlock[blockRow][blockCol] -= 1
-                cluesInRow[row] -= 1
-                cluesInCol[col] -= 1
-                
-                // Hala mantıksal olarak çözülebilir mi?
-                let stillSolvable = testLogicalSolvability()
-                
-                // İpuçları dengeli mi?
-                let balanced = validateIpucuDagilimi()
-                
-                if stillSolvable && balanced {
-                    cellsToRemove -= 1
-                } else {
-                    // Çözülemez oldu, değeri geri al
-                    board[row][col] = originalValue
+            }
+            
+            // Blok içindeki hücreleri karıştır
+            blockCells.shuffle()
+            
+            // Bu bloktan belirli sayıda hücre kaldır
+            for (row, col) in blockCells {
+                if board[row][col] != nil && blockCellsRemoved < cellsPerUnit && cellsToRemove > 0 {
+                    if cluesInBlock[blockRow][blockCol] - 1 >= minCluesPerBlock &&
+                       cluesInRow[row] - 1 >= minCluesPerRowCol &&
+                       cluesInCol[col] - 1 >= minCluesPerRowCol {
+                        
+                        let originalValue = board[row][col]
+                        board[row][col] = nil
+                        
+                        // Sayaçları güncelle
+                        cluesInBlock[blockRow][blockCol] -= 1
+                        cluesInRow[row] -= 1
+                        cluesInCol[col] -= 1
+                        
+                        // Hala mantıksal olarak çözülebilir mi?
+                        let stillSolvable = testLogicalSolvability()
+                        
+                        if stillSolvable {
+                            blockCellsRemoved += 1
+                            cellsToRemove -= 1
+                        } else {
+                            // Çözülemez oldu, değeri geri al
+                            board[row][col] = originalValue
+                            
+                            // Sayaçları da geri al
+                            cluesInBlock[blockRow][blockCol] += 1
+                            cluesInRow[row] += 1
+                            cluesInCol[col] += 1
+                        }
+                        
+                        attempts += 1
+                        if attempts >= maxAttempts || cellsToRemove <= 0 {
+                            break
+                        }
+                    }
+                }
+            }
+            
+            if attempts >= maxAttempts || cellsToRemove <= 0 {
+                break
+            }
+        }
+        
+        // Kalan hücreleri rastgele kaldırmaya devam et
+        if cellsToRemove > 0 {
+            // Sırayla hücreleri kaldır ve çözülebilirliği kontrol et
+            for (row, col) in allCells {
+                if board[row][col] != nil && cellsToRemove > 0 {
+            let blockRow = row / 3
+            let blockCol = col / 3
+            
+                    // Bu hücreyi kaldırmak minimum ipucu kısıtlamalarını ihlal eder mi?
+                    if cluesInBlock[blockRow][blockCol] - 1 < minCluesPerBlock ||
+                       cluesInRow[row] - 1 < minCluesPerRowCol ||
+                       cluesInCol[col] - 1 < minCluesPerRowCol {
+                        continue // Bu hücreyi kaldıramayız, sonraki hücreye geç
+                    }
                     
-                    // Sayaçları da geri al
-                    cluesInBlock[blockRow][blockCol] += 1
-                    cluesInRow[row] += 1
-                    cluesInCol[col] += 1
-                }
-                
-                attempts += 1
-                if attempts >= maxAttempts || cellsToRemove <= 0 {
-                    break
+                    let originalValue = board[row][col]
+                    board[row][col] = nil
+                    
+                    // Sayaçları güncelle
+                    cluesInBlock[blockRow][blockCol] -= 1
+                    cluesInRow[row] -= 1
+                    cluesInCol[col] -= 1
+                    
+                    // Hala mantıksal olarak çözülebilir mi?
+                    let stillSolvable = testLogicalSolvability()
+                    
+                    // İpuçları dengeli mi?
+                    let balanced = validateIpucuDagilimi()
+                    
+                    if stillSolvable && balanced {
+                        cellsToRemove -= 1
+                    } else {
+                        // Çözülemez oldu, değeri geri al
+                        board[row][col] = originalValue
+                        
+                        // Sayaçları da geri al
+                        cluesInBlock[blockRow][blockCol] += 1
+                        cluesInRow[row] += 1
+                        cluesInCol[col] += 1
+                    }
+                    
+                    attempts += 1
+                    if attempts >= maxAttempts || cellsToRemove <= 0 {
+                        break
+                    }
                 }
             }
         }
@@ -1371,9 +1559,11 @@ class SudokuBoard: ObservableObject, Codable {
             }
             
             // 3. Pointing Pairs/Triples: Blok içindeki aynı satır/sütundaki olasılıklar
-            if applyPointingPairs(&boardCopy) {
-                changed = true
-            }
+            // possibleValues değişkeni burada tanımlanmadığı için bu tekniği atlıyoruz
+            // Bu teknik testLogicalSolvability fonksiyonunda kullanılıyor
+            // if applyPointingPairs(&boardCopy, possibleValues) {
+            //     changed = true
+            // }
         }
         
         // Tahta geçerli mi kontrol et
@@ -1540,14 +1730,14 @@ class SudokuBoard: ObservableObject, Codable {
     }
     
     // Pointing Pairs/Triples: Blok içindeki aynı satır/sütundaki olasılıkları kullanarak eleme
-    private func applyPointingPairs(_ board: inout [[Int?]]) -> Bool {
+    private func applyPointingPairs(_ board: inout [[Int?]], _ possibleValues: [[[Bool]]]) -> Bool {
         var changed = false
         
         // Her 3x3 blok için
         for blockRow in 0..<3 {
             for blockCol in 0..<3 {
                 // Her olası değer için
-                for value in 1...9 {
+                for value in 0..<9 {
                     // Bu değerin bu blokta hangi satırlarda ve sütunlarda olabileceğini bul
                     var rowOccurrences = [Int: Int]()
                     var colOccurrences = [Int: Int]()
@@ -1557,7 +1747,7 @@ class SudokuBoard: ObservableObject, Codable {
                             let row = blockRow * 3 + r
                             let col = blockCol * 3 + c
                             
-                            if board[row][col] == nil && possibleValues(for: row, col: col, in: board).contains(value) {
+                            if possibleValues[row][col][value] {
                                 rowOccurrences[r, default: 0] += 1
                                 colOccurrences[c, default: 0] += 1
                             }
@@ -1925,6 +2115,12 @@ class SudokuBoard: ObservableObject, Codable {
         var iterationCount = 0
         let maxIterations = 100 // Sonsuz döngüden kaçınmak için
         
+        // Tekniklerin kullanımını takip et
+        var usedNakedPairs = false
+        var usedPointingPairs = false
+        var usedBoxLineReduction = false
+        var usedXWing = false
+        
         while changed && iterationCount < maxIterations {
             changed = false
             iterationCount += 1
@@ -2101,6 +2297,49 @@ class SudokuBoard: ObservableObject, Codable {
                     }
                 }
             }
+            
+            // Naked Pairs tekniği (Orta seviye için)
+            if difficulty == .medium || difficulty == .hard || difficulty == .expert {
+                let nakedPairsChanged = findNakedPairs(&possibleValues)
+                changed = changed || nakedPairsChanged
+                if nakedPairsChanged {
+                    usedNakedPairs = true
+                }
+            }
+            
+            // Pointing Pairs tekniği (Zor seviye için)
+            if difficulty == .hard || difficulty == .expert {
+                let pointingPairsChanged = findPointingPairs(&possibleValues)
+                changed = changed || pointingPairsChanged
+                if pointingPairsChanged {
+                    usedPointingPairs = true
+                }
+                
+                // Box-Line Reduction tekniği (Zor seviye için)
+                let boxLineReductionChanged = findBoxLineReduction(&possibleValues)
+                changed = changed || boxLineReductionChanged
+                if boxLineReductionChanged {
+                    usedBoxLineReduction = true
+                }
+                
+                // X-Wing tekniği (Zor seviye için)
+                let xWingChanged = findXWing(&possibleValues)
+                changed = changed || xWingChanged
+                if xWingChanged {
+                    usedXWing = true
+                }
+            }
+        }
+        
+        // Kullanılan teknikleri kaydet
+        if difficulty == .medium {
+            nakedPairsUsedCache = usedNakedPairs
+        }
+        else if difficulty == .hard {
+            nakedPairsUsedCache = usedNakedPairs
+            pointingPairsUsedCache = usedPointingPairs
+            boxLineReductionUsedCache = usedBoxLineReduction
+            xWingUsedCache = usedXWing
         }
         
         // Tüm hücreler dolu mu kontrol et
@@ -2113,5 +2352,331 @@ class SudokuBoard: ObservableObject, Codable {
         }
         
         return true // Mantıksal tekniklerle çözülebildi
+    }
+    
+    // Birimi temsil etmek için enum (satır, sütun, blok)
+    private enum UnitType {
+        case row, column, block
+    }
+    
+    // Naked Pair tekniği ile olası değerleri elimine et
+    private func findNakedPairs(_ possibleValues: inout [[[Bool]]]) -> Bool {
+        var changed = false
+        
+        // Satırlarda Naked Pair ara
+        for row in 0..<9 {
+            changed = changed || findNakedPairsInUnit(possibleValues: &possibleValues, unitType: .row, unitIndex: row)
+        }
+        
+        // Sütunlarda Naked Pair ara
+        for col in 0..<9 {
+            changed = changed || findNakedPairsInUnit(possibleValues: &possibleValues, unitType: .column, unitIndex: col)
+        }
+        
+        // Bloklarda Naked Pair ara
+        for blockRow in 0..<3 {
+            for blockCol in 0..<3 {
+                changed = changed || findNakedPairsInUnit(possibleValues: &possibleValues, unitType: .block, unitIndex: blockRow * 3 + blockCol)
+            }
+        }
+        
+        return changed
+    }
+    
+    // Belirli bir birimdeki Naked Pair'leri bul
+    private func findNakedPairsInUnit(possibleValues: inout [[[Bool]]], unitType: UnitType, unitIndex: Int) -> Bool {
+        var changed = false
+        
+        // Birim içindeki hücreleri topla
+        var cells = [(row: Int, col: Int)]()
+        switch unitType {
+        case .row:
+            for col in 0..<9 {
+                cells.append((row: unitIndex, col: col))
+            }
+        case .column:
+            for row in 0..<9 {
+                cells.append((row: row, col: unitIndex))
+            }
+        case .block:
+            let blockRow = unitIndex / 3
+            let blockCol = unitIndex % 3
+            for r in 0..<3 {
+                for c in 0..<3 {
+                    cells.append((row: blockRow * 3 + r, col: blockCol * 3 + c))
+                }
+            }
+        }
+        
+        // Tüm olası hücre çiftlerini kontrol et
+        for i in 0..<cells.count {
+            for j in (i+1)..<cells.count {
+                let cell1 = cells[i]
+                let cell2 = cells[j]
+                
+                // Her iki hücredeki olası değerleri bul
+                var candidates1 = [Int]()
+                var candidates2 = [Int]()
+                
+                for val in 0..<9 {
+                    if possibleValues[cell1.row][cell1.col][val] {
+                        candidates1.append(val)
+                    }
+                    if possibleValues[cell2.row][cell2.col][val] {
+                        candidates2.append(val)
+                    }
+                }
+                
+                // İki hücrede tam olarak aynı iki değer varsa
+                if candidates1.count == 2 && candidates2.count == 2 && 
+                   candidates1 == candidates2 {
+                    
+                    // Diğer hücrelerdeki bu değerleri elimine et
+                    for k in 0..<cells.count {
+                        if k != i && k != j {
+                            let cell = cells[k]
+                            for val in candidates1 {
+                                if possibleValues[cell.row][cell.col][val] {
+                                    possibleValues[cell.row][cell.col][val] = false
+                                    changed = true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // Pointing Pair/Triple tekniği - bir bloktaki bir değer sadece bir satır veya sütunda olabiliyorsa,
+    // o satır/sütunun blok dışındaki hücrelerinden bu değeri elimine eder
+    private func findPointingPairs(_ possibleValues: inout [[[Bool]]]) -> Bool {
+        var changed = false
+        
+        // Her bir 3x3 blok için kontrol et
+        for blockRow in 0..<3 {
+            for blockCol in 0..<3 {
+                // 1'den 9'a kadar her değer için
+                for value in 0..<9 {
+                    // Bu bloktaki bu değerin olası konumlarını bul
+                    var possibleRowPositions = Set<Int>()
+                    var possibleColPositions = Set<Int>()
+                    
+                    for r in 0..<3 {
+                        for c in 0..<3 {
+                            let row = blockRow * 3 + r
+                            let col = blockCol * 3 + c
+                            
+                            if possibleValues[row][col][value] {
+                                possibleRowPositions.insert(r)
+                                possibleColPositions.insert(c)
+                            }
+                        }
+                    }
+                    
+                    // Değer sadece bir satırda mı?
+                    if possibleRowPositions.count == 1, let r = possibleRowPositions.first {
+                        let row = blockRow * 3 + r
+                        
+                        // Bu satırın blok dışındaki kısmında değeri elimine et
+                        for c in 0..<9 {
+                            let blockOfCol = c / 3
+                            
+                            // Sadece blok dışındaki sütunlarda değişiklik yap
+                            if blockOfCol != blockCol && possibleValues[row][c][value] {
+                                possibleValues[row][c][value] = false
+                                changed = true
+                            }
+                        }
+                    }
+                    
+                    // Değer sadece bir sütunda mı?
+                    if possibleColPositions.count == 1, let c = possibleColPositions.first {
+                        let col = blockCol * 3 + c
+                        
+                        // Bu sütunun blok dışındaki kısmında değeri elimine et
+                        for r in 0..<9 {
+                            let blockOfRow = r / 3
+                            
+                            // Sadece blok dışındaki satırlarda değişiklik yap
+                            if blockOfRow != blockRow && possibleValues[r][col][value] {
+                                possibleValues[r][col][value] = false
+                                changed = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // Box-Line Reduction tekniği - bir satır/sütunda bir değer sadece bir blokta olabiliyorsa,
+    // o bloğun satır/sütun dışındaki hücrelerinden bu değeri elimine eder
+    private func findBoxLineReduction(_ possibleValues: inout [[[Bool]]]) -> Bool {
+        var changed = false
+        
+        // Satırlarda kontrolü yap
+        for row in 0..<9 {
+            // 1'den 9'a kadar her değer için
+            for value in 0..<9 {
+                // Bu satırdaki bu değerin olası konumlarını bul
+                var possibleBlockCols = Set<Int>()
+                
+                for col in 0..<9 {
+                    if possibleValues[row][col][value] {
+                        possibleBlockCols.insert(col / 3)
+                    }
+                }
+                
+                // Değer sadece bir blokta mı?
+                if possibleBlockCols.count == 1, let blockCol = possibleBlockCols.first {
+                    let blockRow = row / 3
+                    
+                    // Bu bloğun, bu satır dışındaki kısmında değeri elimine et
+                    for r in blockRow * 3..<blockRow * 3 + 3 {
+                        // Sadece farklı satırlarda
+                        if r != row {
+                            for c in blockCol * 3..<blockCol * 3 + 3 {
+                                if possibleValues[r][c][value] {
+                                    possibleValues[r][c][value] = false
+                                    changed = true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Sütunlarda kontrolü yap
+        for col in 0..<9 {
+            // 1'den 9'a kadar her değer için
+            for value in 0..<9 {
+                // Bu sütundaki bu değerin olası konumlarını bul
+                var possibleBlockRows = Set<Int>()
+                
+                for row in 0..<9 {
+                    if possibleValues[row][col][value] {
+                        possibleBlockRows.insert(row / 3)
+                    }
+                }
+                
+                // Değer sadece bir blokta mı?
+                if possibleBlockRows.count == 1, let blockRow = possibleBlockRows.first {
+                    let blockCol = col / 3
+                    
+                    // Bu bloğun, bu sütun dışındaki kısmında değeri elimine et
+                    for c in blockCol * 3..<blockCol * 3 + 3 {
+                        // Sadece farklı sütunlarda
+                        if c != col {
+                            for r in blockRow * 3..<blockRow * 3 + 3 {
+                                if possibleValues[r][c][value] {
+                                    possibleValues[r][c][value] = false
+                                    changed = true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return changed
+    }
+    
+    // X-Wing tekniği - iki satırda bir değer sadece aynı iki sütunda olabiliyorsa, 
+    // diğer satırlardaki bu sütunlardan bu değeri elimine eder.
+    // Benzer şekilde iki sütunda bir değer sadece aynı iki satırda olabiliyorsa,
+    // diğer sütunlardaki bu satırlardan bu değeri elimine eder.
+    private func findXWing(_ possibleValues: inout [[[Bool]]]) -> Bool {
+        var changed = false
+        
+        // Satırları kontrol et
+        for value in 0..<9 {
+            for row1 in 0..<8 {
+                // Bu satırda bu değerin olası sütunlarını bul
+                var cols1 = [Int]()
+                for col in 0..<9 {
+                    if possibleValues[row1][col][value] {
+                        cols1.append(col)
+                    }
+                }
+                
+                // Sadece 2 olası sütun bulunduysa devam et
+                if cols1.count == 2 {
+                    for row2 in (row1+1)..<9 {
+                        // İkinci satırda bu değerin olası sütunlarını bul
+                        var cols2 = [Int]()
+                        for col in 0..<9 {
+                            if possibleValues[row2][col][value] {
+                                cols2.append(col)
+                            }
+                        }
+                        
+                        // İkinci satırda da aynı 2 sütun bulundu mu?
+                        if cols2.count == 2 && cols1 == cols2 {
+                            // X-Wing bulundu! Diğer satırlardaki bu sütunlardan değeri elimine et
+                            for row in 0..<9 {
+                                if row != row1 && row != row2 {
+                                    for col in cols1 {
+                                        if possibleValues[row][col][value] {
+                                            possibleValues[row][col][value] = false
+                                            changed = true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Sütunları kontrol et
+        for value in 0..<9 {
+            for col1 in 0..<8 {
+                // Bu sütunda bu değerin olası satırlarını bul
+                var rows1 = [Int]()
+                for row in 0..<9 {
+                    if possibleValues[row][col1][value] {
+                        rows1.append(row)
+                    }
+                }
+                
+                // Sadece 2 olası satır bulunduysa devam et
+                if rows1.count == 2 {
+                    for col2 in (col1+1)..<9 {
+                        // İkinci sütunda bu değerin olası satırlarını bul
+                        var rows2 = [Int]()
+                        for row in 0..<9 {
+                            if possibleValues[row][col2][value] {
+                                rows2.append(row)
+                            }
+                        }
+                        
+                        // İkinci sütunda da aynı 2 satır bulundu mu?
+                        if rows2.count == 2 && rows1 == rows2 {
+                            // X-Wing bulundu! Diğer sütunlardaki bu satırlardan değeri elimine et
+                            for col in 0..<9 {
+                                if col != col1 && col != col2 {
+                                    for row in rows1 {
+                                        if possibleValues[row][col][value] {
+                                            possibleValues[row][col][value] = false
+                                            changed = true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return changed
     }
 }
