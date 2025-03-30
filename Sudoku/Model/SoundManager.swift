@@ -195,10 +195,10 @@ class SoundManager: ObservableObject {
         print("🔊 loadSound çağrıldı: \(name).\(type)")
         do {
             let result = try createAudioPlayer(named: name, extension: type)
-            print("✅ Ses yüklendi: \(name).\(type)")
+            print("✅ Ses yüklendi: \(name).\(type) - URL: \(result.url?.lastPathComponent ?? "bilinmeyen")")
             return result
         } catch {
-            print("❌ Ses dosyası yüklenirken hata: \(error.localizedDescription)")
+            print("❌ Ses dosyası yüklenirken hata: \(name).\(type) - \(error.localizedDescription)")
             return nil
         }
     }
@@ -379,8 +379,8 @@ class SoundManager: ObservableObject {
         completionPlayer?.volume = Float(defaultVolume)
         navigationPlayer?.volume = Float(defaultVolume)
         
-        // Varolan oynatıcıları temizle ve yeniden yükle
-        resetAudioPlayers()
+        // NOT: Artık ses seviyesi değiştiğinde oynatıcıları sıfırlamıyoruz
+        // Bu şekilde kafa karışıklığı ve yanlış sesler çalınması önlenmiş olacak
         
         // Ses değiştiğinde bildir
         NotificationCenter.default.post(name: NSNotification.Name("SoundVolumeChangedNotification"), object: nil)
@@ -426,8 +426,15 @@ class SoundManager: ObservableObject {
         
         // Kendi ses dosyalarımızı kullan
         if defaultVolume > 0.0 {
-            // Ses için kendi navigasyon sesimizi kullan
-            playNumberInputSound()
+            // Ses için tap.wav sesini kullan (number_tap değil)
+            print("🔊 Ses seviyesi değişikliği için tap sesi çalınıyor")
+            
+            if let player = loadSound(named: "tap", ofType: "wav") {
+                player.volume = Float(defaultVolume)
+                player.play()
+            } else {
+                print("❌ tap.wav yüklenemedi, ses çalınamadı")
+            }
         }
     }
     
@@ -458,11 +465,8 @@ class SoundManager: ObservableObject {
         
         // Test için birkaç farklı ses çalarak kullanıcıya deneyim sağla
         DispatchQueue.global().async {
-            // Sistem sesi kullanımı devre dışı bırakıldı
-            // AudioServicesPlaySystemSound(1104)
-            
-            // Ardından doğru ses efekti
-            if let player = self.loadSound(named: "number_tap", ofType: "wav") {
+            // Önce tap sesi çal (number_tap yerine)
+            if let player = self.loadSound(named: "tap", ofType: "wav") {
                 player.volume = Float(self.defaultVolume)
                 player.play()
                 Thread.sleep(forTimeInterval: 0.3)
@@ -479,9 +483,6 @@ class SoundManager: ObservableObject {
                     player.play()
                     Thread.sleep(forTimeInterval: 0.5)
                 }
-                // System sound devre dışı
-                // AudioServicesPlaySystemSound(1519)
-                Thread.sleep(forTimeInterval: 0.5)
             }
             
             // Son olarak hata sesi
@@ -497,8 +498,6 @@ class SoundManager: ObservableObject {
                     player.play()
                     Thread.sleep(forTimeInterval: 0.5)
                 }
-                // System sound devre dışı
-                // AudioServicesPlaySystemSound(1521)
             }
         }
         
@@ -512,6 +511,7 @@ class SoundManager: ObservableObject {
     
     /// Sayı girildiğinde çalan ses
     func playNumberInputSound() {
+        print("🎵 playNumberInputSound çağrıldı")
         guard canPlaySound() else { return }
         
         // Sistem sesi DEVRE DIŞI - çift ses sorununu çözmek için
@@ -519,10 +519,21 @@ class SoundManager: ObservableObject {
         
         // Klasik yöntem - kendi ses dosyamızı kullanalım
         if numberInputPlayer == nil {
-            numberInputPlayer = loadSound(named: "number_tap", ofType: "wav") ?? loadSound(named: "number_tap", ofType: "mp3")
+            numberInputPlayer = loadSound(named: "number_tap", ofType: "wav")
+            
+            // Yükleme başarısız olursa log tut
+            if numberInputPlayer == nil {
+                print("❌ number_tap.wav yüklenemedi, alternatif ses çalınamayacak")
+            }
         }
         
-        guard let player = numberInputPlayer else { return }
+        guard let player = numberInputPlayer else { 
+            print("❌ Number input player nil olduğu için ses çalınamıyor")
+            return 
+        }
+        
+        // İsmi ve formatı log'la
+        print("✅ playNumberInputSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
         
         if player.isPlaying { player.stop() }
         player.currentTime = 0
@@ -594,6 +605,7 @@ class SoundManager: ObservableObject {
     
     /// Menü ve gezinme sesi
     func playNavigationSound() {
+        print("🎵 playNavigationSound çağrıldı")
         guard canPlaySound() else { return }
         
         // Tüm sistem sesleri devre dışı bırakıldı
@@ -601,10 +613,23 @@ class SoundManager: ObservableObject {
         
         // Klasik yöntem - kendi ses dosyamızı kullanalım
         if navigationPlayer == nil {
-            navigationPlayer = loadSound(named: "tap", ofType: "wav") ?? loadSound(named: "tap", ofType: "mp3")
+            print("⚠️ Navigation player oluşturuluyor - doğrudan tap.wav kullanılacak")
+            // Burada doğrudan "tap" dosyasını kullan, alternatif araması yapma
+            navigationPlayer = loadSound(named: "tap", ofType: "wav")
+            
+            // Yükleme başarısız olursa log tut
+            if navigationPlayer == nil {
+                print("❌ tap.wav yüklenemedi, ses çalınamayacak")
+            }
         }
         
-        guard let player = navigationPlayer else { return }
+        guard let player = navigationPlayer else { 
+            print("❌ Navigation player nil olduğu için ses çalınamıyor")
+            return 
+        }
+        
+        // İsmi ve formatı log'la
+        print("✅ playNavigationSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
         
         if player.isPlaying { player.stop() }
         player.currentTime = 0
@@ -616,9 +641,12 @@ class SoundManager: ObservableObject {
     func executeSound(_ action: SoundAction) {
         switch action {
         case .tap:
-            // Doğrudan navigasyon sesini çağır
+            // TAP için özel bir print ekleyerek tam olarak ne çağrıldığını görelim
+            print("🔍 executeSound(.tap) çağrıldı -> doğrudan playNavigationSound çağrılıyor")
             playNavigationSound()
         case .numberInput:
+            // NUMBER_INPUT için özel bir print ekleyerek ne çağrıldığını görelim
+            print("🔍 executeSound(.numberInput) çağrıldı -> playNumberInputSound çağrılıyor")
             playNumberInputSound()
         case .correct:
             playCorrectSound()

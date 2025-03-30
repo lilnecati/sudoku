@@ -269,7 +269,7 @@ struct ContentView: View {
     // MARK: - Continue Game Button
     var continueGameButton: some View {
         Button(action: {
-            SoundManager.shared.executeSound(.tap)
+            SoundManager.shared.playNavigationSound()
             
             // Son kaydedilen oyunu yükle
             let fetchRequest: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
@@ -397,7 +397,7 @@ struct ContentView: View {
                     HStack(spacing: 15) {
                         // Kolay (index 0)
                         Button(action: {
-                            SoundManager.shared.executeSound(.tap)
+                            SoundManager.shared.playNavigationSound()
                             
                             // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
                             viewModel.resetGameState()
@@ -458,7 +458,7 @@ struct ContentView: View {
                         
                         // Orta (index 1)
                         Button(action: {
-                            SoundManager.shared.executeSound(.tap)
+                            SoundManager.shared.playNavigationSound()
                             
                             // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
                             viewModel.resetGameState()
@@ -522,7 +522,7 @@ struct ContentView: View {
                     HStack(spacing: 15) {
                         // Zor (index 2)
                         Button(action: {
-                            SoundManager.shared.executeSound(.tap)
+                            SoundManager.shared.playNavigationSound()
                             
                             // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
                             viewModel.resetGameState()
@@ -583,7 +583,7 @@ struct ContentView: View {
                         
                         // Uzman (index 3)
                         Button(action: {
-                            SoundManager.shared.executeSound(.tap)
+                            SoundManager.shared.playNavigationSound()
                             
                             // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
                             viewModel.resetGameState()
@@ -661,12 +661,13 @@ struct ContentView: View {
             
             // Rehber butonu
             Button(action: {
-                SoundManager.shared.executeSound(.tap)
+                SoundManager.shared.playNavigationSound()
                 
                 if !hasSeenTutorial {
-                    // NavigationLink kullanımı için değişken ayarlaması
+                    // Doğrudan eğitimi göster
                     showTutorial = true
                 } else {
+                    // Eğitimi daha önce görmüşse, sor
                     showTutorialPrompt = true
                 }
             }) {
@@ -798,7 +799,6 @@ struct ContentView: View {
                     Label(AppPage.home.title, systemImage: AppPage.home.icon)
                 }
                 .tag(AppPage.home)
-
             
             // Tab 2: Skor Tablosu
             ScoreboardView()
@@ -832,6 +832,15 @@ struct ContentView: View {
                     Label(AppPage.settings.title, systemImage: AppPage.settings.icon)
                 }
                 .tag(AppPage.settings)
+        }
+        .onChange(of: currentPage) { oldPage, newPage in
+            // Her tab değişiminde çalışacak
+            if previousPage != newPage {
+                print("📱 Tab değişti: \(previousPage) -> \(newPage)")
+                // Tüm tab değişimlerinde ses çal
+                SoundManager.shared.playNavigationSound()
+                previousPage = newPage
+            }
         }
         .onAppear {
             setupSavedGameNotification()
