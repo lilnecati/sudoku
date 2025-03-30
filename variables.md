@@ -30,6 +30,27 @@ Bu dokümantasyon, Sudoku uygulamasındaki tüm dosyaları, değişkenleri ve fo
 
 ---
 
+
+Ana Dosyalar ve Rolleri:
+Model Klasörü (Veri yapıları ve işlemler):
+SudokuBoard.swift (60KB) - Sudoku tahtasını, çözüm oluşturmayı ve zorluk ayarlarını yöneten temel dosya
+SoundManager.swift (31KB) - Ses efektleri ve ses ayarlarını yöneten yardımcı sınıf
+ScoreManager.swift (7KB) - Puanları kaydetme ve listeleme işlemlerini yöneten sınıf
+PersistenceController.swift (11KB) - Core Data ve oyun kaydetme yönetimi
+ViewModel Klasörü (İş mantığı):
+SudokuViewModel.swift (86KB) - Tahta ile kullanıcı arayüzü arasındaki iletişimi sağlayan önemli kontrol sınıfı
+View Klasörü (Kullanıcı arayüzü):
+SudokuBoardView.swift (12KB) - Sudoku tahtasını gösteren ana görünüm
+SudokuCellView.swift (14KB) - Tek bir Sudoku hücresini gösteren görünüm
+NumberPadView.swift (13KB) - Rakam giriş tuş takımı
+PencilMarksView.swift (3KB) - Not alma işaretlerini gösteren görünüm
+GameView.swift (34KB) - Oyun ekranını düzenleyen ana görünüm
+ScoreboardView.swift (28KB) - Puan tablosunu gösteren görünüm
+SettingsView.swift (39KB) - Ayarlar ekranı
+Diğer Dosyalar:
+PowerSavingManager.swift - Güç tasarrufu modunu yöneten sınıf
+TutorialManager.swift - Öğretici ekranları yöneten sınıf
+
 ## ContentView.swift
 
 ContentView, uygulamanın ana görünümüdür ve diğer tüm görünümleri yönetir.
