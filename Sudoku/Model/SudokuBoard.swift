@@ -604,10 +604,10 @@ class SudokuBoard: ObservableObject, Codable {
     
     // Tahtanın belirtilen zorluk seviyesine uygun olup olmadığını değerlendir
     private func validateDifficulty() -> Bool {
-        // Zorluk seviyesini aktif hale getir
+        // Zorluk seviyesi doğrulanıyor
         print("Zorluk seviyesi doğrulanıyor: \(difficulty.rawValue)")
         
-        // Kolay seviye kontrolü
+        // Kolay seviye kontrolü (95-99% çözülebilir)
         if difficulty == .easy {
             let nakedSingleCount = countNakedSingles()
             let hiddenSingleCount = countHiddenSingles() // Hidden Single'ları da sayalım
@@ -619,19 +619,17 @@ class SudokuBoard: ObservableObject, Codable {
             }
             
             // Kolay seviyede, boş hücrelerin daha az bir kısmı naked+hidden single olsa da kabul et
-            // %30 eşiğini %15'e düşürelim ve hidden single'ları da hesaba katalım
             let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
             print("Kolay seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells))")
-            return solvableRatio >= 0.15 // Daha düşük bir eşik
+            return solvableRatio >= 0.95 // %95+ çözülebilir olmalı
         }
         
-        // Orta seviye kontrolü
-        else if difficulty == .medium {
+        // Orta seviye kontrolü (70-90% çözülebilir)
+        if difficulty == .medium {
             let nakedSingleCount = countNakedSingles()
             let hiddenSingleCount = countHiddenSingles()
             let totalEmptyCells = countEmptyCells()
             
-            // Toplam boş hücre sayısı 0 ise, çözüm kontrolünü atla
             if totalEmptyCells == 0 {
                 return true
             }
@@ -642,23 +640,22 @@ class SudokuBoard: ObservableObject, Codable {
             // Naked Pairs tekniğinin kullanılıp kullanılmadığını kontrol et
             let usesNakedPairs = nakedPairsUsedCache ?? false
             
-            // Orta seviyede, boş hücrelerin %25-75'i naked veya hidden single olmalı
-            // Ayrıca en az bir naked pair kullanılmalı
+            // Orta seviyede, boş hücrelerin %70-90'i naked veya hidden single olmalı
             let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
             print("Orta seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells)), Naked Pairs: \(usesNakedPairs)")
             
-            // Hem çözülebilir hücre oranı uygun olmalı hem de en az bir Naked Pair kullanılmalı
-            return solvableRatio >= 0.25 && solvableRatio < 0.75 && isLogicallySolvable && usesNakedPairs
+            // Yeni çözülebilirlik aralığı: 0.7 - 0.9 (%70-%90)
+            return solvableRatio >= 0.7 && solvableRatio < 0.9 && isLogicallySolvable && usesNakedPairs
         }
         
-        // Zor seviye kontrolü
+        // Zor seviye kontrolü (30-60% çözülebilir)
         else if difficulty == .hard {
             let nakedSingleCount = countNakedSingles()
             let hiddenSingleCount = countHiddenSingles()
             let totalEmptyCells = countEmptyCells()
             
             if totalEmptyCells == 0 {
-        return true
+                return true
             }
             
             // Mantıksal çözülebilirliği test et
@@ -669,7 +666,7 @@ class SudokuBoard: ObservableObject, Codable {
             let usesBoxLineReduction = boxLineReductionUsedCache ?? false
             let usesXWing = xWingUsedCache ?? false
             
-            // Zor seviyede, boş hücrelerin %10-35'i naked veya hidden single olmalı
+            // Zor seviyede, boş hücrelerin %30-60'i naked veya hidden single olmalı
             // Ayrıca en az bir ileri teknik (pointing pairs, box-line reduction veya x-wing) kullanılmalı
             let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
             print("Zor seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells))")
@@ -677,10 +674,10 @@ class SudokuBoard: ObservableObject, Codable {
             
             // Zor seviye için: Çözülebilir hücre oranı uygun olmalı ve en az bir ileri teknik kullanılmalı
             let usesAdvancedTechniques = usesPointingPairs || usesBoxLineReduction || usesXWing
-            return solvableRatio >= 0.1 && solvableRatio < 0.35 && isLogicallySolvable && usesAdvancedTechniques
+            return solvableRatio >= 0.3 && solvableRatio < 0.6 && isLogicallySolvable && usesAdvancedTechniques
         }
         
-        // Uzman seviye kontrolü
+        // Uzman seviye kontrolü (5-20% çözülebilir)
         else if difficulty == .expert {
             let nakedSingleCount = countNakedSingles()
             let hiddenSingleCount = countHiddenSingles()
@@ -690,10 +687,10 @@ class SudokuBoard: ObservableObject, Codable {
                 return true
             }
             
-            // Uzman seviyede, boş hücrelerin en fazla %15'i naked veya hidden single olmalı - daha esnek hale getirelim
+            // Uzman seviyede, boş hücrelerin %5-20'i naked veya hidden single olmalı
             let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
             print("Uzman seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells))")
-            return solvableRatio < 0.15
+            return solvableRatio >= 0.05 && solvableRatio < 0.2 // %5-%20 arası çözülebilir
         }
         
         // Tanımlanmamış bir zorluk seviyesi
@@ -1732,32 +1729,50 @@ class SudokuBoard: ObservableObject, Codable {
     // Pointing Pairs/Triples: Blok içindeki aynı satır/sütundaki olasılıkları kullanarak eleme
     private func applyPointingPairs(_ board: inout [[Int?]], _ possibleValues: [[[Bool]]]) -> Bool {
         var changed = false
+        let blockSize = 3
         
         // Her 3x3 blok için
-        for blockRow in 0..<3 {
-            for blockCol in 0..<3 {
-                // Her olası değer için
-                for value in 0..<9 {
-                    // Bu değerin bu blokta hangi satırlarda ve sütunlarda olabileceğini bul
-                    var rowOccurrences = [Int: Int]()
-                    var colOccurrences = [Int: Int]()
+        for blockRow in 0..<blockSize {
+            for blockCol in 0..<blockSize {
+                // Her olası değer için (1-9)
+                for value in 1...9 {
+                    // Değeri 0-bazlı indekse çevir
+                    let valueIndex = value - 1
                     
-                    for r in 0..<3 {
-                        for c in 0..<3 {
-                            let row = blockRow * 3 + r
-                            let col = blockCol * 3 + c
+                    // Bu değerin bu blokta hangi satırlarda ve sütunlarda olabileceğini bul
+                    var rowOccurrences = [Int: Int](minimumCapacity: blockSize)
+                    var colOccurrences = [Int: Int](minimumCapacity: blockSize)
+                    
+                    // Blok içindeki hücreleri tara
+                    for r in 0..<blockSize {
+                        for c in 0..<blockSize {
+                            let row = blockRow * blockSize + r
+                            let col = blockCol * blockSize + c
                             
-                            if possibleValues[row][col][value] {
+                            if possibleValues[row][col][valueIndex] {
                                 rowOccurrences[r, default: 0] += 1
                                 colOccurrences[c, default: 0] += 1
                             }
                         }
                     }
                     
-                    // Pointing Pair/Triple for Rows
-                    let rowsWithValue = rowOccurrences.filter { $0.value > 0 }
-                    if rowsWithValue.count == 1, let (blockRowIndex, _) = rowsWithValue.first {
-                        let actualRow = blockRow * 3 + blockRowIndex
+                    // Pointing Pair/Triple for Rows - Optimize edilmiş versiyon
+                    if rowOccurrences.count == 1, let (blockRowIndex, count) = rowOccurrences.first, count >= 2 {
+                        let actualRow = blockRow * blockSize + blockRowIndex
+                        // Bu değer sadece bir satırda ve bu blokta olabiliyorsa, satırın diğer bloklardaki hücrelerinden bu değeri çıkar
+                        changed = changed || removeValueFromOtherBlocksInRow(value, row: actualRow, exceptBlockCol: blockCol, board: &board)
+                    }
+                    
+                    // Pointing Pair/Triple for Columns - Optimize edilmiş versiyon
+                    if colOccurrences.count == 1, let (blockColIndex, count) = colOccurrences.first, count >= 2 {
+                        let actualCol = blockCol * blockSize + blockColIndex
+                        // Bu değer sadece bir sütunda ve bu blokta olabiliyorsa, sütunun diğer bloklardaki hücrelerinden bu değeri çıkar
+                        changed = changed || removeValueFromOtherBlocksInColumn(value, col: actualCol, exceptBlockRow: blockRow, board: &board)
+                    }
+                    
+                    // Pointing Pair/Triple for Rows - Optimize edilmiş versiyon
+                    if rowOccurrences.count == 1, let (blockRowIndex, count) = rowOccurrences.first, count > 0 {
+                        let actualRow = blockRow * blockSize + blockRowIndex
                         // Bu değer sadece bir satırda ve bu blokta olabiliyorsa, satırın diğer bloklardaki hücrelerinden bu değeri çıkar
                         changed = changed || removeValueFromOtherBlocksInRow(value, row: actualRow, exceptBlockCol: blockCol, board: &board)
                     }

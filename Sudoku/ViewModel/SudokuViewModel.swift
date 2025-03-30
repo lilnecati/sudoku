@@ -4,7 +4,6 @@
 //  Created by Necati Yıldırım on 29.12.2024.
 //
 
-
 import Foundation
 import SwiftUI
 import Combine
@@ -227,7 +226,7 @@ class SudokuViewModel: ObservableObject {
                 
                 // Gecikmesiz silme işlemi uygula
                 enterValue(value, at: row, col: col)
-                // Önbelleği geçersiz kıl
+                // Önbellekleri geçersiz kıl
                 invalidatePencilMarksCache(forRow: row, column: col)
                 validateBoard()
                 updateUsedNumbers()
@@ -288,12 +287,26 @@ class SudokuViewModel: ObservableObject {
                 
                 // Oyun tamamlanma kontrolü
                 checkGameCompletion()
+                
+                // Oyun tamamlandıysa veya başarısız olduysa kayıtlı oyunu sil
+                if gameState == .completed || gameState == .failed {
+                    deleteSavedGameIfExists()
+                }
             }
         }
     }
     
     // MARK: - Performans Optimizasyonları
     
+    // Oyun tamamlandığında kayıtlı oyunu sil
+    private func deleteSavedGameIfExists() {
+        if let gameID = currentGameID {
+            PersistenceController.shared.deleteSavedGameWithID(gameID)
+            print("✅ Tamamlanan oyun kayıtlardan silindi")
+            currentGameID = nil
+        }
+    }
+
     // Oyun tamamlanma kontrolü - optimize edildi
     private func checkGameCompletion() {
         // Hızlı kontrol: Eğer tahta yeterli derecede dolmamışsa, tamamlanmamıştır
@@ -1411,7 +1424,7 @@ class SudokuViewModel: ObservableObject {
         print("Kayıtlı oyun yükleniyor: \(savedGame)")
         
         // Güvenli bir şekilde boardState'i al
-        guard let boardData = savedGame.getData(key: "boardState") else {
+        guard let boardData = savedGame.value(forKey: "boardState") as? Data else {
             print("❌ Oyun verisi bulunamadı")
             return
         }
@@ -1504,7 +1517,7 @@ class SudokuViewModel: ObservableObject {
         // Seçili hücreyi sıfırla
         selectedCell = nil
         
-        // Kalem notları için önbelleği temizle
+        // Kalem notları için önbellekleri temizle
         pencilMarkCache.removeAll(keepingCapacity: true)
         
         // İstatistikler JSON verisi içinden okunuyor, burada sıfırlama yapmıyoruz
@@ -1512,7 +1525,7 @@ class SudokuViewModel: ObservableObject {
         // Eğer kaydedilmiş istatistikler varsa güvenli bir şekilde okuma yap
         // Core Data modelinde bu alanların tanımlı olup olmadığını kontrol etmeye gerek yok
         // Güvenli bir şekilde JSON verisi olarak depolanıyorsa okuma yapabiliriz
-        if let boardData = savedGame.getData(key: "boardState") {
+        if let boardData = savedGame.value(forKey: "boardState") as? Data {
             do {
                 // İstatistikleri JSON içinden okumayı dene
                 if let json = try JSONSerialization.jsonObject(with: boardData) as? [String: Any] {
@@ -1620,17 +1633,15 @@ class SudokuViewModel: ObservableObject {
             }
             
             // Zorluk seviyesini Difficulty enum değerine çevir
-            let difficultyValue3: SudokuBoard.Difficulty
+            let difficultyValue5: SudokuBoard.Difficulty
             switch difficulty {
-            case "Kolay": difficultyValue3 = .easy
-            case "Orta": difficultyValue3 = .medium
-            case "Zor": difficultyValue3 = .hard
-            case "Uzman": difficultyValue3 = .expert
-            default: difficultyValue3 = .easy
+
+            case "Kolay": difficultyValue5 = .easy
+            case "Orta": difficultyValue5 = .medium
+            case "Zor": difficultyValue5 = .hard
+            case "Uzman": difficultyValue5 = .expert
+            default: difficultyValue5 = .easy
             }
-            
-            // Bu değişkeni board oluştururken kullanacağız
-            _ = difficultyValue3
             
             print("✅ Zorluk seviyesi: \(difficulty)")
             
@@ -1664,18 +1675,8 @@ class SudokuViewModel: ObservableObject {
                 }
             }
             
-            // Zorluk seviyesini Difficulty enum değerine çevir
-            let difficultyValue4: SudokuBoard.Difficulty
-            switch difficulty {
-            case "Kolay": difficultyValue4 = .easy
-            case "Orta": difficultyValue4 = .medium
-            case "Zor": difficultyValue4 = .hard
-            case "Uzman": difficultyValue4 = .expert
-            default: difficultyValue4 = .easy
-            }
-            
             // Bu değişkeni board oluştururken kullanacağız
-            let boardDifficultyEnum2 = difficultyValue4
+            let boardDifficultyEnum2 = difficultyValue5
             
             // Boşlukları doldurulabilir, başlangıç değerleri sabit diye işaretle
             var fixed = Array(repeating: Array(repeating: false, count: 9), count: 9)
@@ -1943,7 +1944,7 @@ class SudokuViewModel: ObservableObject {
             let timeoutSuffix = " - " + playerName + " (Arka Plan)"
             let modifiedDifficulty = currentDifficulty.rawValue + timeoutSuffix
             
-            // Aynı zorluk seviyesinde "(Arka Plan)" ekiyle zaten bir kayıt var mı kontrol et
+            // Aynı zorluk seviyesinde "(Arka Plan)" ekiyle kaydedilmiş ve aynı zorluk seviyesinde olan oyunları bul
             let existingBackgroundGameID = checkForExistingBackgroundGame(difficulty: modifiedDifficulty)
             
             if let existingID = existingBackgroundGameID {
@@ -2020,11 +2021,11 @@ class SudokuViewModel: ObservableObject {
         
         // "(Arka Plan)" ekiyle kaydedilmiş ve aynı zorluk seviyesinde olan oyunları bul
         for game in savedGames {
-            if let gameDifficulty = game.difficulty, gameDifficulty == difficulty {
+            if let gameDifficulty = game.value(forKey: "difficulty") as? String,
+               let gameID = game.value(forKey: "id") as? UUID,
+               gameDifficulty == difficulty {
                 // Aynı zorluk seviyesinde "(Arka Plan)" ekiyle kaydedilmiş bir oyun bulundu
-                if let gameID = game.id as UUID? {
-                    return gameID
-                }
+                return gameID
             }
         }
         
@@ -2089,27 +2090,7 @@ class SudokuViewModel: ObservableObject {
     // Not: saveGameWithCustomName metodu kaldırıldı, yerine normal saveGame metodu ve PersistenceController.updateGameDifficulty kullanılıyor
     
     // Kaydedilmiş oyunu sil (varsa)
-    private func deleteSavedGameIfExists() {
-        // Mevcut oyun için kayıt var mı kontrol et
-        let context = PersistenceController.shared.container.viewContext
-        
-        // Sadece mevcut oyun ID'si varsa silme işlemini yap
-        guard let gameID = currentGameID else { return }
-        
-        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "SavedGame")
-        fetchRequest.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
-        
-        do {
-            let results = try context.fetch(fetchRequest) as? [NSManagedObject] ?? []
-            for object in results {
-                context.delete(object)
-            }
-            try context.save()
-            print("✅ Zaman aşımına uğrayan oyun silindi")
-        } catch {
-            print("❌ Oyun silme hatası: \(error)")
-        }
-    }
+    
     
     // Objelerden kurtulmak için
     deinit {
@@ -2231,4 +2212,3 @@ extension NSManagedObject {
         return value(forKey: key) as? Int ?? defaultValue
     }
 }
- 
