@@ -207,6 +207,11 @@ class SudokuViewModel: ObservableObject {
             // Kalem modu işlemi - notlar için
             if let value = value {
                 togglePencilMark(at: row, col: col, value: value)
+            } else {
+                // Silme işlemi - tüm pencil markları temizle
+                // Önce ses dosyasını çal, sonra işlemi yap
+                SoundManager.shared.playEraseSound()
+                clearPencilMarks(at: row, col: col)
             }
             return
         }
@@ -217,6 +222,10 @@ class SudokuViewModel: ObservableObject {
         // Değer silme işlemi - her zaman izin verilir
         if value == nil {
             if currentValue != nil {
+                // Önce ses dosyasını çal, sonra işlemi yap
+                SoundManager.shared.playEraseSound()
+                
+                // Gecikmesiz silme işlemi uygula
                 enterValue(value, at: row, col: col)
                 // Önbelleği geçersiz kıl
                 invalidatePencilMarksCache(forRow: row, column: col)
@@ -302,8 +311,14 @@ class SudokuViewModel: ObservableObject {
             // Tamamlama sesi çal
             SoundManager.shared.playCompletionSound()
             
-            gameState = .completed
-            stopTimer()
+            // Oyun durumunu güncellemeden önce halihazırda oynanıyorsa diye kontrol et
+            if gameState == .playing {
+                print("✅ Sudoku tamamlandı! Skor kaydedilecek.")
+                handleGameCompletion()
+            } else {
+                gameState = .completed
+                stopTimer()
+            }
         }
     }
     
@@ -1162,7 +1177,8 @@ class SudokuViewModel: ObservableObject {
             difficulty: board.difficulty,
             timeElapsed: elapsedTime,
             errorCount: errorCount,
-            hintCount: 3 - remainingHints
+            hintCount: 3 - remainingHints,
+            moveCount: moveCount
         )
     }
     
@@ -1218,7 +1234,48 @@ class SudokuViewModel: ObservableObject {
     
     // Kalem işareti değiştirme
     func togglePencilMark(at row: Int, col: Int, value: Int) {
+        // Eğer rakam doğru çözüm değeri ise ve pencilMode'dayız, rakamı direkt yerleştir
+        let correctValue = board.getOriginalValue(at: row, col: col)
+        
+        if value == correctValue && pencilMode {
+            // Doğru değeri bulduğumuzda hücreye direkt yerleştir
+            // Kalem modundan çık
+            pencilMode = false
+            
+            // Hücreye değeri yerleştir - gecikmesiz
+            enterValue(value, at: row, col: col)
+            
+            // Ses çal
+            SoundManager.shared.playCorrectSound()
+            
+            // Önbelleği geçersiz kıl
+            invalidatePencilMarksCache(forRow: row, column: col)
+            validateBoard()
+            updateUsedNumbers()
+            
+            // Oyun tamamlanma kontrolü
+            checkGameCompletion()
+            
+            // Hamle sayısını artır
+            moveCount += 1
+            
+            // Otomatik kaydet
+            autoSaveGame()
+            
+            return
+        }
+        
+        // Normal pencil mark işlemleri
         board.togglePencilMark(at: row, col: col, value: value)
+        
+        // Önbelleği güncelle
+        let key = "\(row)_\(col)"
+        pencilMarkCache.removeValue(forKey: key)
+    }
+    
+    // Bir hücredeki tüm kalem işaretlerini temizle
+    func clearPencilMarks(at row: Int, col: Int) {
+        board.clearPencilMarks(at: row, col: col)
         
         // Önbelleği güncelle
         let key = "\(row)_\(col)"
@@ -2065,14 +2122,6 @@ class SudokuViewModel: ObservableObject {
     private func handleGameStateChange() {
         switch gameState {
         case .completed:
-            // Oyun tamamlandığında skoru kaydet
-            ScoreManager.shared.saveScore(
-                difficulty: board.difficulty,
-                timeElapsed: elapsedTime,
-                errorCount: errorCount,
-                hintCount: 3 - remainingHints
-            )
-            
             // Timer'ı durdur
             timer?.invalidate()
             timer = nil

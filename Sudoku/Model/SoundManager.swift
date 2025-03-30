@@ -15,12 +15,14 @@ class SoundManager: ObservableObject {
     // Singleton pattern
     static let shared = SoundManager()
     
-    // Ses oynatıcıları - her ses türü için ayrı
+    // Player nesnelerini önden yükleme için
+    private var tapPlayer: AVAudioPlayer?
     private var numberInputPlayer: AVAudioPlayer?
     private var errorPlayer: AVAudioPlayer?
     private var correctPlayer: AVAudioPlayer?
     private var completionPlayer: AVAudioPlayer?
     private var navigationPlayer: AVAudioPlayer?
+    private var erasePlayer: AVAudioPlayer?
     
     // AppStorage ile entegre ses ayarı
     @AppStorage("enableSoundEffects") private var enableSoundEffects: Bool = true
@@ -31,17 +33,23 @@ class SoundManager: ObservableObject {
     private var powerManager = PowerSavingManager.shared
     
     private init() {
-        // Sound ayarları için ilk yapılandırma
         print("🎵 SoundManager başlatılıyor...")
         
-        // Audio session'ı konfigüre et
-        configureAudioSession()
+        // Audio session ayarları
+        setupAudioSession()
         
-        // Observer'ları kaydet
-        registerForSystemNotifications()
+        // Sesleri önceden yükle
+        preloadSounds()
         
-        // Ses dosyalarını yükle
-        loadSounds()
+        print("✅ SoundManager başlatıldı")
+        
+        // Ses seviyesi değişim bildirimini dinle
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleVolumeChange),
+            name: NSNotification.Name("SoundVolumeChangedNotification"),
+            object: nil
+        )
     }
     
     deinit {
@@ -152,19 +160,14 @@ class SoundManager: ObservableObject {
     
     /// Audio session'ı dışarıdan yapılandırmak için public metot (ses çalmadan)
     func setupAudioSession() {
+        let audioSession = AVAudioSession.sharedInstance()
+        
         do {
-            // Mevcut durumu kontrol et
-            let audioSession = AVAudioSession.sharedInstance()
-            
-            // Ses kategorisini ve modu ayarla - .playback kategorisi .ambient'ten daha güvenilir
-            try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            
-            // Session'ı aktif et ama sistem sesi çalmadan
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-            
-            print("✅ Ses sistemi sessizce yapılandırıldı")
+            try audioSession.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            try audioSession.setActive(true)
+            print("✅ Audio session başarıyla yapılandırıldı")
         } catch {
-            print("❌ Audio session yapılandırılamadı: \(error.localizedDescription)")
+            print("❌ Audio session yapılandırma hatası: \(error.localizedDescription)")
         }
     }
     
@@ -173,21 +176,55 @@ class SoundManager: ObservableObject {
         // Ses dosyalarını yükle
         print("🔊 Ses dosyaları yükleniyor...")
         
-        // Her oynatıcı için yeni bir örnek oluştur
+        // Tüm ses oynatıcılarını sıfırla - memorydeki sesleri temizler
         resetAudioPlayers()
     }
     
-    /// Tüm ses oynatıcılarını sıfırla
+    /// Tüm ses oynatıcılarını sıfırla - memorydeki sesleri temizler
     func resetAudioPlayers() {
+        print("🔄 Tüm ses oynatıcıları sıfırlanıyor...")
+        tapPlayer = nil
         numberInputPlayer = nil
         errorPlayer = nil
         correctPlayer = nil
         completionPlayer = nil
         navigationPlayer = nil
+        erasePlayer = nil
         
-        // Ses oynatıcıları için sistem sesleri atamak için ikinci bir kontrol ekle
-        // Bu, ses oynatıcıları oluşturulamadığında bile ses çalabilmemizi sağlar
-        print("🔄 Tüm ses oynatıcıları sıfırlandı")
+        // Tüm sesleri tekrar yükle - önbelleğe al
+        preloadSounds()
+    }
+    
+    // Sık kullanılan sesleri önden yükle
+    private func preloadSounds() {
+        // Ses açıksa yükle
+        if canPlaySound() {
+            print("🔊 Ses dosyaları önceden yükleniyor...")
+            
+            // Rakam sesi
+            numberInputPlayer = loadSound(named: "number_tap", ofType: "wav")
+            
+            // Silme sesi önbelleğe al
+            erasePlayer = loadSound(named: "erase", ofType: "wav")
+            if erasePlayer == nil {
+                print("⚠️ erase.wav yüklenemedi, silme işleminde tap sesi kullanılacak")
+                erasePlayer = loadSound(named: "tap", ofType: "wav")
+            }
+            
+            // Doğru/yanlış sesleri
+            errorPlayer = loadSound(named: "error", ofType: "wav")
+            correctPlayer = loadSound(named: "correct", ofType: "mp3") ?? loadSound(named: "correct", ofType: "wav")
+            
+            // Bitiş sesi
+            completionPlayer = loadSound(named: "completion", ofType: "wav")
+            
+            // Navigasyon sesi olarak tap kullan
+            navigationPlayer = loadSound(named: "tap", ofType: "wav")
+            
+            print("✅ Ses dosyaları yüklendi")
+        } else {
+            print("⚠️ Ses kapalı olduğu için önden yükleme yapılmadı")
+        }
     }
     
     /// Belirtilen isimli ses dosyasını yükler
@@ -680,22 +717,44 @@ class SoundManager: ObservableObject {
     
     /// Silme tuşu için ses
     func playEraseSound() {
+        print("🎵 playEraseSound çağrıldı")
         guard canPlaySound() else { return }
         
-        // Erase ses dosyasını çal
-        if let erasePlayer = loadSound(named: "erase", ofType: "wav") {
-            if erasePlayer.isPlaying { erasePlayer.stop() }
-            erasePlayer.currentTime = 0
-            erasePlayer.volume = Float(defaultVolume)
-            erasePlayer.play()
-        } else {
-            // Erase ses dosyası yoksa tap ses dosyasını kullan
-            if let player = loadSound(named: "tap", ofType: "wav") {
-                player.volume = Float(defaultVolume)
-                player.play()
+        // Erase ses dosyasını çal - önceden yüklenmiş oynatıcıyı kullan
+        if erasePlayer == nil {
+            erasePlayer = loadSound(named: "erase", ofType: "wav")
+            if erasePlayer == nil {
+                erasePlayer = loadSound(named: "tap", ofType: "wav")
             }
-            // System sound devre dışı
-            // AudioServicesPlaySystemSound(1155) // Alternatif silme sesi
         }
+        
+        guard let player = erasePlayer else { 
+            print("❌ Erase player nil olduğu için ses çalınamıyor")
+            return 
+        }
+        
+        // Mevcut oynatma durumunu kontrol et ve reset
+        if player.isPlaying { player.stop() }
+        player.currentTime = 0
+        player.volume = Float(defaultVolume)
+        
+        // Asenkron olarak değil, direkt burada çal
+        player.play()
+        
+        // Log çıktısı
+        print("✅ playEraseSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+    }
+    
+    // Ses seviyesi değiştiğinde çağrılan fonksiyon
+    @objc private func handleVolumeChange(notification: Notification) {
+        print("🔊 Ses seviyesi değişikliği bildirimi alındı")
+        // Ses seviyesi değiştiğinde gerekli ayarlamaları yap
+        // Tüm aktif ses oynatıcılarının ses seviyesini güncelle
+        numberInputPlayer?.volume = Float(defaultVolume)
+        errorPlayer?.volume = Float(defaultVolume)
+        correctPlayer?.volume = Float(defaultVolume)
+        completionPlayer?.volume = Float(defaultVolume)
+        navigationPlayer?.volume = Float(defaultVolume)
+        erasePlayer?.volume = Float(defaultVolume)
     }
 } 

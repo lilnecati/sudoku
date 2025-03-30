@@ -32,10 +32,10 @@ class SudokuBoard: ObservableObject, Codable {
         // Her zorluk seviyesi için bırakılacak ipucu sayısı aralığı
         var clueRange: ClosedRange<Int> {
             switch self {
-            case .easy: return 38...45   // Kolay: Çok daha fazla ipucu, başlangıç için ideal
-            case .medium: return 30...35 // Orta: Kolay ile zor arası dengeli zorluk
-            case .hard: return 25...28   // Zor: Daha az ipucu, stratejik düşünme gerektirir
-            case .expert: return 22...25 // Uzman: Minimum ipucu ile maksimum zorluk
+            case .easy: return 40...47   // Kolay: Çok daha fazla ipucu, başlangıç için ideal
+            case .medium: return 32...37 // Orta: Kolay ile zor arası dengeli zorluk
+            case .hard: return 27...30   // Zor: Daha az ipucu, stratejik düşünme gerektirir
+            case .expert: return 24...27 // Uzman: Minimum ipucu ile maksimum zorluk
             }
         }
     }
@@ -220,6 +220,14 @@ class SudokuBoard: ObservableObject, Codable {
     // Alternatif isim aynı işlem için
     func getPencilMarks(at row: Int, col: Int) -> Set<Int> {
         return getPencilMarks(row: row, column: col)
+    }
+    
+    // Bir hücredeki tüm kalem notlarını sil
+    func clearPencilMarks(at row: Int, col: Int) {
+        guard isValidIndex(row: row, column: col) else { return }
+        
+        let key = "\(row)_\(col)"
+        pencilMarks[key] = []
     }
     
     // MARK: - Tahta Kontrolü

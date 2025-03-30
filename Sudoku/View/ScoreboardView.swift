@@ -186,23 +186,37 @@ struct ScoreboardView: View {
     private var recentGamesView: some View {
         VStack(spacing: 12) {
             HStack {
-                Text("Son Oyunlar")
+                Text("Biten Oyunlar")
                     .font(.headline)
                     .foregroundColor(.primary)
                 
                 Spacer()
                 
-                Image(systemName: "clock.arrow.circlepath")
+                Image(systemName: "trophy.fill")
                     .foregroundColor(.blue)
             }
             .padding(.horizontal)
             
             if recentScores.isEmpty {
-                Text("Henüz oyun kaydı yok")
-                    .foregroundColor(.secondary)
-                    .padding()
+                VStack(spacing: 10) {
+                    Image(systemName: "gamecontroller")
+                        .font(.system(size: 36))
+                        .foregroundColor(.secondary.opacity(0.7))
+                        .padding(.bottom, 5)
+                    
+                    Text("Henüz tamamlanmış oyun yok")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 16, weight: .medium))
+                    
+                    Text("Oyunları tamamladıkça burada listelenecek")
+                        .foregroundColor(.secondary.opacity(0.8))
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
             } else {
-                ForEach(0..<min(3, recentScores.count), id: \.self) { index in
+                ForEach(0..<min(5, recentScores.count), id: \.self) { index in
                     let score = recentScores[index]
                     Button(action: {
                         // Detay görünümünü aç
@@ -212,6 +226,7 @@ struct ScoreboardView: View {
                         RecentGameRow(score: score, rank: index + 1)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .padding(.bottom, 4)
                 }
                 .padding(.horizontal)
             }
@@ -268,6 +283,8 @@ struct ScoreboardView: View {
     }
     
     private func loadData() {
+        print("📊 Skor tablosu yükleniyor - Zorluk seviyesi: \(selectedDifficulty.rawValue)")
+        
         let bestScore = ScoreManager.shared.getBestScore(for: selectedDifficulty)
         let averageScore = ScoreManager.shared.getAverageScore(for: selectedDifficulty)
         
@@ -281,33 +298,64 @@ struct ScoreboardView: View {
             let scores = try context.fetch(request)
             let totalGames = scores.count
             
+            print("📝 \(selectedDifficulty.rawValue) zorluk seviyesi için \(totalGames) skor bulundu")
+            
             // Son oyunları kaydet
             recentScores = scores
             
+            if !scores.isEmpty {
+                // İlk skorun detaylarını göster
+                if let firstScore = scores.first {
+                    let id = firstScore.value(forKey: "id") as? UUID
+                    let date = firstScore.value(forKey: "date") as? Date
+                    let totalScore = firstScore.value(forKey: "totalScore") as? Int ?? 0
+                    let elapsedTime = firstScore.value(forKey: "elapsedTime") as? Double ?? 0
+                    print("📋 İlk skor - ID: \(id?.uuidString ?? "ID yok"), Tarih: \(date?.description ?? "Tarih yok"), Puan: \(totalScore), Süre: \(elapsedTime)")
+                }
+            } else {
+                print("⚠️ Bu zorluk seviyesi için kayıtlı skor bulunamadı")
+            }
+            
             var totalTime: TimeInterval = 0
             var bestTime = Double.infinity
+            var totalScore = 0
+            var bestTotalScore = 0
             
             for score in scores {
                 if let time = score.value(forKey: "elapsedTime") as? Double {
                     totalTime += time
                     bestTime = min(bestTime, time)
                 }
+                
+                // Yeni skor alanını kullan (yoksa eski hesaplama yöntemi)
+                if let scoreValue = score.value(forKey: "totalScore") as? Int, scoreValue > 0 {
+                    totalScore += scoreValue
+                    bestTotalScore = max(bestTotalScore, scoreValue)
+                } else {
+                    // Eski hesaplama yöntemi
+                    if let time = score.value(forKey: "elapsedTime") as? Double {
+                        let calculatedScore = Int(10000 / (time + 1))
+                        totalScore += calculatedScore
+                        bestTotalScore = max(bestTotalScore, calculatedScore)
+                    }
+                }
             }
             
             let averageTime = totalGames > 0 ? totalTime / Double(totalGames) : 0
+            let calculatedAverageScore = totalGames > 0 ? Double(totalScore) / Double(totalGames) : 0
             let successRate: Double = totalGames > 0 ? 1.0 : 0.0 // Tüm oyunlar tamamlanmış kabul edilir
             
             statistics = ScoreboardStatistics(
                 totalGames: totalGames,
-                totalScore: 0,
-                averageScore: averageScore,
-                bestScore: bestScore,
+                totalScore: totalScore,
+                averageScore: calculatedAverageScore,
+                bestScore: bestTotalScore > 0 ? bestTotalScore : bestScore, // Yeni en yüksek skoru kullan
                 averageTime: averageTime,
                 bestTime: bestTime < Double.infinity ? bestTime : 0,
                 successRate: successRate
             )
         } catch {
-            print("Oyun istatistikleri alınamadı: \(error.localizedDescription)")
+            print("❌ Oyun istatistikleri alınamadı: \(error.localizedDescription)")
             statistics = ScoreboardStatistics(
                 totalGames: 0,
                 totalScore: 0,
@@ -409,46 +457,138 @@ struct RecentGameRow: View {
     var body: some View {
         HStack {
             // Sıralama
-            Text("#\(rank)")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.secondary)
-                .frame(width: 40)
+            ZStack {
+                Circle()
+                    .fill(getDifficultyColor().opacity(0.2))
+                    .frame(width: 36, height: 36)
+                
+                Text("#\(rank)")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(getDifficultyColor())
+            }
+            .frame(width: 40)
             
             // Skor detayları
             VStack(alignment: .leading, spacing: 4) {
-                // HighScore entity'sinde elapsedTime kullanılıyor, bunu puana çeviriyoruz
-                let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
-                let calculatedScore = Int(10000 / (elapsedTime + 1))
-                
-                Text("\(calculatedScore) puan")
-                    .font(.system(size: 17, weight: .medium))
-                
-                HStack(spacing: 15) {
-                    // HighScore entity'sinde hata ve ipucu sayısı yok, süreyi gösterelim
-                    Label(formatTime(elapsedTime), systemImage: "clock")
-                        .font(.caption)
+                HStack(alignment: .center, spacing: 4) {
+                    // Skor
+                    Text("\(calculateScore())")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Text("puan")
+                        .font(.system(size: 14))
                         .foregroundColor(.secondary)
+                    
+                    // Zorluk seviyesi rozeti
+                    if let difficultyString = score.value(forKey: "difficulty") as? String {
+                        Spacer()
+                        Text(difficultyString.capitalized)
+                            .font(.system(size: 12, weight: .medium))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill(getDifficultyColor().opacity(0.2))
+                            )
+                            .foregroundColor(getDifficultyColor())
+                    }
                 }
+                
+                // İstatistik ikonları
+                statsView
             }
             
             Spacer()
             
-            // Tarih
-            if let date = score.value(forKey: "date") as? Date {
-                Text(formatDate(date))
+            VStack(alignment: .trailing, spacing: 4) {
+                // Tarih
+                if let date = score.value(forKey: "date") as? Date {
+                    Text(formatDate(date))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                // Detaya git ikonu
+                Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                    .padding(.top, 2)
             }
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        )
+    }
+    
+    // İstatistik görünümü
+    private var statsView: some View {
+        HStack(spacing: 15) {
+            // Süre her zaman gösterilir
+            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
+            Label(formatTime(elapsedTime), systemImage: "clock")
+                .font(.caption)
+                .foregroundColor(.secondary)
             
-            Image(systemName: "chevron.right")
+            // Hata sayısı (varsa)
+            errorCountView
+            
+            // İpucu kullanımı (varsa)
+            hintCountView
+        }
+    }
+    
+    // Hata sayısı görünümü
+    @ViewBuilder
+    private var errorCountView: some View {
+        if let errorCount = score.value(forKey: "errorCount") as? Int {
+            Label("\(errorCount)", systemImage: "xmark.circle")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.secondarySystemBackground))
-        )
+    }
+    
+    // İpucu kullanımı görünümü
+    @ViewBuilder
+    private var hintCountView: some View {
+        if let hintCount = score.value(forKey: "hintCount") as? Int {
+            Label("\(hintCount)", systemImage: "lightbulb")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // Skor hesaplama
+    private func calculateScore() -> Int {
+        if let totalScore = score.value(forKey: "totalScore") as? Int, totalScore > 0 {
+            return totalScore
+        } else {
+            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
+            return Int(10000 / (elapsedTime + 1))
+        }
+    }
+    
+    // Zorluk seviyesine göre renk
+    private func getDifficultyColor() -> Color {
+        guard let difficultyString = score.value(forKey: "difficulty") as? String,
+              let difficulty = SudokuBoard.Difficulty(rawValue: difficultyString) else {
+            return .blue
+        }
+        
+        switch difficulty {
+        case .easy:
+            return .green
+        case .medium:
+            return .blue
+        case .hard:
+            return .orange
+        case .expert:
+            return .red
+        }
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -465,10 +605,25 @@ struct ScoreDetailView: View {
     
     var body: some View {
         let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
-        let calculatedScore = Int(10000 / (elapsedTime + 1))
+        
+        // Kayıtlı skoru kullan, yoksa hesapla
+        let calculatedScore: Int
+        if let totalScore = score.value(forKey: "totalScore") as? Int, totalScore > 0 {
+            calculatedScore = totalScore
+        } else {
+            calculatedScore = Int(10000 / (elapsedTime + 1))
+        }
+        
         let difficulty = score.value(forKey: "difficulty") as? String ?? ""
         let date = score.value(forKey: "date") as? Date
         let playerName = score.value(forKey: "playerName") as? String
+        
+        // Ek istatistikler
+        let errorCount = score.value(forKey: "errorCount") as? Int
+        let hintCount = score.value(forKey: "hintCount") as? Int
+        let moveCount = score.value(forKey: "moveCount") as? Int
+        let baseScore = score.value(forKey: "baseScore") as? Int
+        let timeBonus = score.value(forKey: "timeBonus") as? Int
         
         // DateFormatter'ı View'da hazırla
         let dateString: String
@@ -510,6 +665,73 @@ struct ScoreDetailView: View {
                         }
                     }
                     
+                    if let moveCount = moveCount {
+                        HStack {
+                            Text("Toplam Hamle")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(moveCount)")
+                                .fontWeight(.medium)
+                        }
+                    }
+                    
+                    if let errorCount = errorCount {
+                        HStack {
+                            Text("Hata Sayısı")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(errorCount)")
+                                .fontWeight(.medium)
+                        }
+                    }
+                    
+                    if let hintCount = hintCount {
+                        HStack {
+                            Text("İpucu Kullanımı")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(hintCount)")
+                                .fontWeight(.medium)
+                        }
+                    }
+                }
+                
+                if baseScore != nil || timeBonus != nil {
+                    Section(header: Text("Skor Detayları")) {
+                        if let baseScore = baseScore {
+                            HStack {
+                                Text("Baz Puan")
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("\(baseScore)")
+                                    .fontWeight(.medium)
+                            }
+                        }
+                        
+                        if let timeBonus = timeBonus {
+                            HStack {
+                                Text("Süre Bonusu")
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("\(timeBonus)")
+                                    .fontWeight(.medium)
+                            }
+                        }
+                        
+                        if let errorCount = errorCount, let hintCount = hintCount {
+                            HStack {
+                                Text("Cezalar")
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("-\(errorCount * 200 + hintCount * 300)")
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.red)
+                            }
+                        }
+                    }
+                }
+                
+                Section(header: Text("Oyuncu Bilgileri")) {
                     if !dateString.isEmpty {
                         HStack {
                             Text("Oyun Tarihi")

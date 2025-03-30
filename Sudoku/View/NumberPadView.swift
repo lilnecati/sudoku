@@ -258,7 +258,7 @@ struct NumberPadView: View {
             }
             
             // Ses efekti çal
-            SoundManager.shared.executeSound(.erase)
+            SoundManager.shared.playEraseSound()
             
             // Seçili hücreyi temizle
             viewModel.setValueAtSelectedCell(nil)

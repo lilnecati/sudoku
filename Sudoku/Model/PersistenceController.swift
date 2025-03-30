@@ -241,6 +241,30 @@ class PersistenceController {
         }
     }
     
+    // ID'ye göre kaydedilmiş oyunu sil
+    func deleteSavedGameWithID(_ gameID: UUID) {
+        let context = container.viewContext
+        
+        // ID'ye göre oyunu bul
+        let request: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
+        
+        do {
+            let games = try context.fetch(request)
+            
+            if let existingGame = games.first {
+                // Oyunu sil
+                context.delete(existingGame)
+                try context.save()
+                print("✅ ID'si \(gameID) olan oyun başarıyla silindi")
+            } else {
+                print("❓ Silinecek oyun bulunamadı, ID: \(gameID)")
+            }
+        } catch {
+            print("❌ Oyun silinemedi: \(error)")
+        }
+    }
+    
     // Kaydedilmiş tüm oyunları sil
     func deleteAllSavedGames() {
         let context = container.viewContext

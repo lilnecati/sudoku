@@ -211,34 +211,12 @@ struct SudokuBoardView: View {
         .drawingGroup()
     }
     
-    // Kalem notları - performans için optimize edildi
-    private func pencilMarksView(row: Int, column: Int) -> some View {
-        VStack(spacing: 1) {
-            ForEach(0..<3) { r in
-                HStack(spacing: 1) {
-                    ForEach(0..<3) { c in
-                        let number = r * 3 + c + 1
-                        if viewModel.isPencilMarkSet(row: row, column: column, value: number) {
-                            Text("\(number)")
-                                .font(.system(size: cellSize * 0.2))
-                                .foregroundColor(.gray)
-                                .frame(width: cellSize / 3, height: cellSize / 3)
-                        } else {
-                            Color.clear
-                                .frame(width: cellSize / 3, height: cellSize / 3)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
     // Hücre arka plan rengini hesapla - önbelleğe alma için ayrı fonksiyon
-    private func getCellBackgroundColor(row: Int, column: Int, isSelected: Bool) -> Color {
+    private func calculateCellBackgroundColor(row: Int, column: Int) -> Color {
         let cellValue = viewModel.board.getValue(row: row, column: column)
         
         // İlk olarak seçilen hücre kontrolü
-        if isSelected {
+        if viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column {
             return selectedCellBackground
         }
         

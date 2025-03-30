@@ -40,7 +40,7 @@ struct PencilMarksView: View {
                                     if pencilMarks.contains(number) {
                                         Text("\(number)")
                                             .font(.system(size: fontSize, weight: .light, design: .rounded))
-                                            .foregroundColor(.secondary)
+                                            .foregroundColor(.primary)
                                             // Kesin konumlandırma için merkeze sabitle
                                             .frame(width: cellSize / 3, height: cellSize / 3, alignment: .center)
                                             // Boyut bozulmasını önlemek için clipping

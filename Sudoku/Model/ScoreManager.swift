@@ -59,10 +59,13 @@ class ScoreManager {
     func saveScore(difficulty: SudokuBoard.Difficulty,
                   timeElapsed: TimeInterval,
                   errorCount: Int,
-                  hintCount: Int) {
+                  hintCount: Int,
+                  moveCount: Int = 0) {
         
-        // Skor hesaplamasını kullanmıyoruz çünkü HighScore entity'si farklı alanlar içeriyor
-        _ = calculateScore(
+        print("📊 Skor kaydediliyor - Zorluk: \(difficulty.rawValue), Süre: \(timeElapsed), Hatalar: \(errorCount), İpuçları: \(hintCount)")
+        
+        // Skor hesaplaması yap ve sonuçları kullan
+        let scoreResults = calculateScore(
             difficulty: difficulty,
             timeElapsed: timeElapsed,
             errorCount: errorCount,
@@ -74,15 +77,52 @@ class ScoreManager {
         let score = NSManagedObject(entity: entity, insertInto: context)
         
         // Değerleri ayarla
+        let scoreId = UUID()
+        score.setValue(scoreId, forKey: "id")
         score.setValue(difficulty.rawValue, forKey: "difficulty")
         score.setValue(timeElapsed, forKey: "elapsedTime")
         score.setValue(Date(), forKey: "date")
         score.setValue("Oyuncu", forKey: "playerName")
         
+        // Yeni alanları da kaydet
+        score.setValue(scoreResults.baseScore, forKey: "baseScore")
+        score.setValue(scoreResults.timeBonus, forKey: "timeBonus")
+        score.setValue(errorCount, forKey: "errorCount")
+        score.setValue(hintCount, forKey: "hintCount")
+        score.setValue(scoreResults.totalScore, forKey: "totalScore")
+        score.setValue(moveCount, forKey: "moveCount")
+        
         do {
             try context.save()
+            print("✅ Skor başarıyla kaydedildi: ID: \(scoreId), Toplam Puan: \(scoreResults.totalScore)")
+            
+            // Kaydedilen skoru kontrol et
+            validateScoreSaved(scoreId: scoreId)
         } catch {
-            print("Skor kaydedilemedi: \(error.localizedDescription)")
+            print("❌ Skor kaydedilemedi: \(error.localizedDescription)")
+        }
+    }
+    
+    // Skorun gerçekten kaydedilip kaydedilmediğini kontrol et
+    private func validateScoreSaved(scoreId: UUID) {
+        let request = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
+        request.predicate = NSPredicate(format: "id == %@", scoreId as CVarArg)
+        
+        do {
+            let scores = try context.fetch(request)
+            if let score = scores.first {
+                if let id = score.value(forKey: "id") as? UUID {
+                    print("✓ Skor doğrulandı: \(id.uuidString)")
+                } else {
+                    print("✓ Skor doğrulandı: ID yok")
+                }
+                print("✓ Toplam Skor: \(score.value(forKey: "totalScore") as? Int ?? 0)")
+                print("✓ Zorluk: \(score.value(forKey: "difficulty") as? String ?? "Zorluk yok")")
+            } else {
+                print("❌ HATA: Skor kaydedildi ama veritabanında bulunamadı!")
+            }
+        } catch {
+            print("❌ Skor kontrolü sırasında hata: \(error.localizedDescription)")
         }
     }
     
@@ -91,19 +131,28 @@ class ScoreManager {
     func getBestScore(for difficulty: SudokuBoard.Difficulty) -> Int {
         let request = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
         request.predicate = NSPredicate(format: "difficulty == %@", difficulty.rawValue)
-        request.sortDescriptors = [NSSortDescriptor(key: "elapsedTime", ascending: true)]
+        
+        // İlk önce totalScore'a göre sırala, sonra elapsedTime'a göre
+        request.sortDescriptors = [
+            NSSortDescriptor(key: "totalScore", ascending: false),
+            NSSortDescriptor(key: "elapsedTime", ascending: true)
+        ]
         request.fetchLimit = 1
         
         do {
             let scores = try context.fetch(request)
-            // HighScore entity'sinde elapsedTime kullanılıyor, bunu puana çeviriyoruz
-            if let bestScore = scores.first, let time = bestScore.value(forKey: "elapsedTime") as? Double {
-                // Basit bir puan hesaplama - daha düşük süre daha yüksek puan
-                return Int(10000 / (time + 1))
+            if let bestScore = scores.first {
+                // totalScore varsa kullan, yoksa elapsedTime ile hesapla
+                if let totalScore = bestScore.value(forKey: "totalScore") as? Int, totalScore > 0 {
+                    return totalScore
+                } else if let time = bestScore.value(forKey: "elapsedTime") as? Double {
+                    // Eski hesaplama yöntemi
+                    return Int(10000 / (time + 1))
+                }
             }
             return 0
         } catch {
-            print("En yüksek skor alınamadı: \(error.localizedDescription)")
+            print("⚠️ En yüksek skor alınamadı: \(error.localizedDescription)")
             return 0
         }
     }
@@ -116,12 +165,24 @@ class ScoreManager {
             let scores = try context.fetch(request)
             if scores.isEmpty { return 0 }
             
-            // HighScore entity'sinde elapsedTime kullanılıyor, bunu puana çeviriyoruz
-            let totalTime = scores.reduce(0.0) { $0 + ((($1.value(forKey: "elapsedTime") as? Double) ?? 0)) }
-            // Daha düşük süreyi daha iyi olduğu için, ortalama süreyi tersine çeviriyoruz
-            return scores.isEmpty ? 0 : 10000 / (totalTime / Double(scores.count) + 1)
+            var totalScore = 0
+            var scoreCount = 0
+            
+            for score in scores {
+                // totalScore varsa kullan, yoksa elapsedTime ile hesapla
+                if let totalScoreValue = score.value(forKey: "totalScore") as? Int, totalScoreValue > 0 {
+                    totalScore += totalScoreValue
+                    scoreCount += 1
+                } else if let time = score.value(forKey: "elapsedTime") as? Double {
+                    // Eski hesaplama yöntemi
+                    totalScore += Int(10000 / (time + 1))
+                    scoreCount += 1
+                }
+            }
+            
+            return scoreCount > 0 ? Double(totalScore) / Double(scoreCount) : 0
         } catch {
-            print("Ortalama skor hesaplanamadı: \(error.localizedDescription)")
+            print("⚠️ Ortalama skor hesaplanamadı: \(error.localizedDescription)")
             return 0
         }
     }
