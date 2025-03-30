@@ -52,13 +52,18 @@ class SudokuBoard: ObservableObject, Codable {
     // Performans önbellekleri
     private var completeCheckCache: Bool?
     private var filledCheckCache: Int?
-    private var validPlacementCache: [String: Bool] = [:]
+    private var validPlacementCache: [String: Any] = [:]
     
     // Zorluk
     let difficulty: Difficulty
     
     // İpucu olarak verilen, değiştirilemeyen hücreleri belirten matris
     private var fixed: [[Bool]]
+    
+    // Önbellek değişkenleri
+    private var nakedSingleCountCache: Int? = nil
+    private var hiddenSingleCountCache: Int? = nil
+    private var emptyCellCountCache: Int? = nil
     
     // MARK: - Başlatıcı
     
@@ -339,21 +344,27 @@ class SudokuBoard: ObservableObject, Codable {
         
         // Önbellekten kontrol et
         let cacheKey = "\(row)_\(column)_\(value)"
-        if let cached = validPlacementCache[cacheKey] {
+        if let cached = validPlacementCache[cacheKey] as? Bool {
             return cached
         }
         
-        // Satır kontrolü
+        // Hızlı yol: Eğer hücrede zaten bir değer varsa ve o değer gelen değerden farklıysa
+        if let currentValue = board[row][column], currentValue != value {
+            validPlacementCache[cacheKey] = false
+            return false
+        }
+        
+        // Satırdaki tüm değerleri kontrol et
         for col in 0..<9 {
-            if col != column, board[row][col] == value {
+            if let cellValue = board[row][col], cellValue == value && col != column {
                 validPlacementCache[cacheKey] = false
                 return false
             }
         }
         
-        // Sütun kontrolü
+        // Sütundaki tüm değerleri kontrol et
         for r in 0..<9 {
-            if r != row, board[r][column] == value {
+            if let cellValue = board[r][column], cellValue == value && r != row {
                 validPlacementCache[cacheKey] = false
                 return false
             }
@@ -364,8 +375,8 @@ class SudokuBoard: ObservableObject, Codable {
         let blockCol = (column / 3) * 3
         
         for r in blockRow..<(blockRow + 3) {
-            for col in blockCol..<(blockCol + 3) {
-                if r != row || col != column, board[r][col] == value {
+            for c in blockCol..<(blockCol + 3) {
+                if let cellValue = board[r][c], cellValue == value && (r != row || c != column) {
                     validPlacementCache[cacheKey] = false
                     return false
                 }
@@ -400,6 +411,9 @@ class SudokuBoard: ObservableObject, Codable {
         completeCheckCache = nil
         filledCheckCache = nil
         validPlacementCache.removeAll(keepingCapacity: true)
+        nakedSingleCountCache = nil
+        hiddenSingleCountCache = nil
+        emptyCellCountCache = nil
     }
     
     // MARK: - Yardımcı Metodlar
@@ -416,8 +430,14 @@ class SudokuBoard: ObservableObject, Codable {
         print("Tahta oluşturuluyor...")
         
         // Maksimum deneme sayısı - sonsuz döngüyü önlemek için
-        let maxAttempts = 10
+        let maxAttempts = 15  // 10'dan 15'e çıkarıldı
         var attempts = 0
+        var difficultyAttempts = 0
+        let maxDifficultyAttempts = 10  // 5'ten 10'a çıkarıldı
+        
+        // Toplam zorluk doğrulama denemesi sayısını takip et
+        var totalValidationAttempts = 0
+        let maxTotalValidationAttempts = 30  // 20'den 30'a çıkarıldı
         
         // Mevcut değerleri temizle
         for row in 0..<9 {
@@ -495,9 +515,37 @@ class SudokuBoard: ObservableObject, Codable {
             }
         }
         
-        // Maksimum deneme sayısına ulaşıldıysa veya yeterli ipucu sayısı varsa buraya gelir
-        if clueCount < 10 || clueCount < cluesToShow - 10 {
-            print("Maksimum deneme sayısına ulaşıldı, mevcut tahta ile devam ediliyor.")
+        // Zorluk seviyesi doğrulaması yap
+        while !validateDifficulty() {
+            print("Tahta istenen zorluk seviyesine uygun değil, tekrar deneniyor...")
+            difficultyAttempts += 1
+            totalValidationAttempts += 1
+            
+            // Eğer iki üst limit kontrol mekanizmasından birisi aşılırsa, döngüden çık
+            if difficultyAttempts >= maxDifficultyAttempts || totalValidationAttempts >= maxTotalValidationAttempts {
+                print("Maksimum zorluk doğrulama denemesi sayısına ulaşıldı (\(difficultyAttempts)/\(maxDifficultyAttempts), Toplam: \(totalValidationAttempts)/\(maxTotalValidationAttempts)), mevcut tahta ile devam ediliyor.")
+                break // Döngüden çık ve tahtayı olduğu gibi kullan
+            }
+            
+            // Çözümü koruyarak sadece ipuçlarını yeniden düzenle
+            // Bu, tamamen baştan başlamak yerine daha verimli
+            for row in 0..<9 {
+                for col in 0..<9 {
+                    if let value = solution[row][col] {
+                        board[row][col] = value
+                    }
+                }
+            }
+            
+            // Farklı bir ipucu düzeni ile tekrar dene
+            removeRandomCells(count: cellsToRemove)
+        }
+        
+        // Doğrulama başarılıysa bildir
+        if difficultyAttempts == 0 || totalValidationAttempts == 0 {
+            print("Tahta istenen zorluk seviyesine ilk denemede uygun ✓")
+        } else if totalValidationAttempts < maxTotalValidationAttempts && difficultyAttempts < maxDifficultyAttempts {
+            print("Tahta istenen zorluk seviyesine \(totalValidationAttempts) deneme sonunda uygun ✓")
         }
         
         // Başlangıçta görünen hücreleri sabit olarak işaretle
@@ -509,12 +557,9 @@ class SudokuBoard: ObservableObject, Codable {
     
     // Tahtanın belirtilen zorluk seviyesine uygun olup olmadığını değerlendir
     private func validateDifficulty() -> Bool {
-        // Zorluk seviyesini doğrulamayı devre dışı bırak ve true döndür
-        return true
+        // Zorluk seviyesini aktif hale getir
+        print("Zorluk seviyesi doğrulanıyor: \(difficulty.rawValue)")
         
-        // NOT: Aşağıdaki kod bloğu hiçbir zaman çalıştırılmayacak şekilde tasarlanmıştır.
-        // Gelecekte daha iyi algoritma ve test zamanı olduğunda aktifleştirilebilir.
-        #if false
         // Kolay seviye kontrolü
         if difficulty == .easy {
             let nakedSingleCount = countNakedSingles()
@@ -525,10 +570,11 @@ class SudokuBoard: ObservableObject, Codable {
                 return true
             }
             
-            // Kolay seviyede, boş hücrelerin en az %60'ı naked single olmalı
-            // %70 çok katı olabilir, %60'a düşürelim
+            // Kolay seviyede, boş hücrelerin daha az bir kısmı naked single olsa da kabul et
+            // %60 çok katı bir eşik olabilir, %30'a düşürelim
             let nakedSingleRatio = Double(nakedSingleCount) / Double(totalEmptyCells)
-            return nakedSingleRatio >= 0.6
+            print("Kolay seviye analizi: Naked Single Oranı = \(nakedSingleRatio) (\(nakedSingleCount)/\(totalEmptyCells))")
+            return nakedSingleRatio >= 0.3 // Daha düşük bir eşik
         }
         
         // Orta seviye kontrolü
@@ -542,23 +588,82 @@ class SudokuBoard: ObservableObject, Codable {
                 return true
             }
             
-            // Orta seviyede, boş hücrelerin %35-60'ı naked veya hidden single olmalı
-            // Daha geniş bir aralık belirleyelim
+            // Orta seviyede, boş hücrelerin %25-75'i naked veya hidden single olmalı - üst sınırı artıralım
             let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
-            return solvableRatio >= 0.35 && solvableRatio < 0.6
+            print("Orta seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells))")
+            return solvableRatio >= 0.25 && solvableRatio < 0.75
         }
         
-        // Zor ve uzman seviyeleri için
+        // Zor seviye kontrolü
+        else if difficulty == .hard {
+            let nakedSingleCount = countNakedSingles()
+            let hiddenSingleCount = countHiddenSingles()
+            let totalEmptyCells = countEmptyCells()
+            
+            if totalEmptyCells == 0 {
+                return true
+            }
+            
+            // Zor seviyede, boş hücrelerin %10-35'i naked veya hidden single olmalı
+            let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
+            print("Zor seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells))")
+            return solvableRatio >= 0.1 && solvableRatio < 0.35
+        }
+        
+        // Uzman seviye kontrolü
+        else if difficulty == .expert {
+            let nakedSingleCount = countNakedSingles()
+            let hiddenSingleCount = countHiddenSingles()
+            let totalEmptyCells = countEmptyCells()
+            
+            if totalEmptyCells == 0 {
+                return true
+            }
+            
+            // Uzman seviyede, boş hücrelerin en fazla %15'i naked veya hidden single olmalı - daha esnek hale getirelim
+            let solvableRatio = Double(nakedSingleCount + hiddenSingleCount) / Double(totalEmptyCells)
+            print("Uzman seviye analizi: Çözülebilir Hücre Oranı = \(solvableRatio) (Naked: \(nakedSingleCount), Hidden: \(hiddenSingleCount), Toplam: \(totalEmptyCells))")
+            return solvableRatio < 0.15
+        }
+        
+        // Tanımlanmamış bir zorluk seviyesi
+        print("⚠️ Bilinmeyen zorluk seviyesi: \(difficulty.rawValue)")
         return true
-        #endif
     }
     
     // "Naked single" tekniği ile çözülebilecek hücre sayısını hesapla
     private func countNakedSingles() -> Int {
-        var count = 0
+        // Önbellekte varsa kullan
+        if let cached = nakedSingleCountCache {
+            return cached
+        }
         
+        var count = 0
+        let totalEmpty = countEmptyCells()
+        
+        // Boş hücre yoksa, naked single da yoktur
+        if totalEmpty == 0 {
+            nakedSingleCountCache = 0
+            return 0
+        }
+        
+        // Sadece belirli bir zorluk seviyesi için hızlı geçiş kontrolü
+        var targetRatio: Double
+        switch difficulty {
+        case .easy:
+            targetRatio = 0.3  // Düşük eşiğe göre ayarlandı
+        case .medium:
+            targetRatio = 0.25 // Düşük eşiğe göre ayarlandı
+        case .hard:
+            targetRatio = 0.1  // Düşük eşiğe göre ayarlandı
+        case .expert:
+            targetRatio = 0.05
+        }
+        
+        // Her hücreyi kontrol et, erken çıkışı kaldırdık, daha doğru sayım için
         for row in 0..<9 {
             for col in 0..<9 {
+                // Sadece boş hücreleri kontrol et
                 if board[row][col] == nil {
                     let possibleValues = getPossibleValues(row: row, column: col)
                     if possibleValues.count == 1 {
@@ -568,13 +673,28 @@ class SudokuBoard: ObservableObject, Codable {
             }
         }
         
+        // Sonucu önbelleğe al
+        nakedSingleCountCache = count
         return count
     }
     
     // "Hidden single" tekniği ile çözülebilecek hücre sayısını hesapla
     private func countHiddenSingles() -> Int {
-        var count = 0
+        // Önbellekte varsa kullan
+        if let cached = hiddenSingleCountCache {
+            return cached
+        }
         
+        var count = 0
+        let totalEmpty = countEmptyCells()
+        
+        // Boş hücre yoksa, hidden single da yoktur
+        if totalEmpty == 0 {
+            hiddenSingleCountCache = 0
+            return 0
+        }
+        
+        // Tüm satırları, sütunları ve blokları kontrol et - erken çıkış stratejisini çıkardık
         // Satırlarda hidden single ara
         for row in 0..<9 {
             count += countHiddenSinglesInUnit(unit: (0..<9).map { (row, $0) })
@@ -598,50 +718,41 @@ class SudokuBoard: ObservableObject, Codable {
             }
         }
         
-        return count
-    }
-    
-    // Belirli bir birimde (satır, sütun, blok) hidden single sayısını hesapla
-    private func countHiddenSinglesInUnit(unit: [(Int, Int)]) -> Int {
-        var count = 0
-        
-        // Her değer için (1-9), bu birimde kaç boş hücreye yerleştirilebileceğini kontrol et
-        for value in 1...9 {
-            var possibleCells = [(Int, Int)]()
-            
-            // Birimin boş hücrelerini kontrol et
-            for (row, col) in unit {
-                if board[row][col] == nil && isValidPlacement(row: row, column: col, value: value) {
-                    possibleCells.append((row, col))
-                }
-            }
-            
-            // Eğer değer sadece bir hücreye yerleştirilebiliyorsa ve bu hücre naked single değilse,
-            // bu bir hidden single'dır
-            if possibleCells.count == 1 {
-                let (row, col) = possibleCells[0]
-                let allPossibleValues = getPossibleValues(row: row, column: col)
-                if allPossibleValues.count > 1 {
-                    count += 1
-                }
-            }
-        }
-        
+        // Sonucu önbelleğe al
+        hiddenSingleCountCache = count
         return count
     }
     
     // Tahtadaki boş hücre sayısını hesapla
     private func countEmptyCells() -> Int {
-        var count = 0
+        // Önbellekte varsa kullan
+        if let cached = emptyCellCountCache {
+            return cached
+        }
         
-        for row in 0..<9 {
+        var count = 0
+        var filledCount = 0
+        let totalCells = 81
+        
+        outerLoop: for row in 0..<9 {
             for col in 0..<9 {
                 if board[row][col] == nil {
                     count += 1
+                } else {
+                    filledCount += 1
+                    
+                    // Erken çıkış optimizasyonu: 
+                    // Eğer doldurulan hücre sayısı toplam - güncel boş hücre sayısına eşitse
+                    // taramayı durdur ve hesaplamayı tamamla
+                    if filledCount + count == totalCells {
+                        break outerLoop
+                    }
                 }
             }
         }
         
+        // Sonucu önbelleğe al
+        emptyCellCountCache = count
         return count
     }
     
@@ -683,26 +794,35 @@ class SudokuBoard: ObservableObject, Codable {
             }
         }
         
-        // Değerleri karıştır - sayı eşleştirmelerini değiştir, yapıyı korur
-        shuffleSolution()
-        
-        // Ek olarak satırları ve sütunları blok içinde karıştır
-        shuffleRowsAndColumns()
+        // Sadece satırları ve sütunları blok içinde karıştır
+        // Değer değişimi atla, kararlı yapıyı tercih et
+        shuffleRowsAndColumns() 
     }
     
     // Çözümü rastgele karıştır (geçerliliği koruyarak)
     private func shuffleSolution() {
-        // Değer değişimleri (1-9 arası değerleri birbirleriyle değiştir)w
-        var valueMap = Array(1...9)
-        valueMap.shuffle()
-        valueMap.insert(0, at: 0) // 0 indeksini kullanmak için
+        // 1-9 arasındaki değerleri rastgele permütasyonla değiştir
+        // Daha basit ve daha güvenli bir yaklaşım kullanalım
         
-        // Tüm hücrelerdeki değerleri eşlenik değerleriyle değiştir
+        // Hangi değerin yerine hangi değerin geçeceğini belirle (karıştırılmış 1-9 dizisi)
+        var numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        numbers.shuffle() 
+        
+        // Tüm hücreleri dolaş ve değerleri değiştir
+        // Değer eşleştirmelerini tek bir adımda yaparak dizi indeksleme hatalarından kaçınalım
         for row in 0..<9 {
             for col in 0..<9 {
-                if let value = solution[row][col] {
-                    solution[row][col] = valueMap[value]
-                    board[row][col] = valueMap[value]
+                // Önce geçici bir değişkene atayarak sonradan ilgili değeri kullanalım
+                if let currentValue = solution[row][col] {
+                    // currentValue 1-9 arasında olacaktır, buna göre yeni değeri belirleyelim
+                    if currentValue >= 1 && currentValue <= 9 {
+                        let newIndex = currentValue - 1  // 0-tabanlı indekse dönüştür
+                        if newIndex < numbers.count {
+                            let newValue = numbers[newIndex]
+                            solution[row][col] = newValue
+                            board[row][col] = newValue
+                        }
+                    }
                 }
             }
         }
@@ -894,14 +1014,24 @@ class SudokuBoard: ObservableObject, Codable {
     
     // Bir hücreye yerleştirilebilecek olası değerleri getir
     private func getPossibleValues(row: Int, column: Int) -> [Int] {
+        // Önbellek anahtarını oluştur
+        let cacheKey = "pv_\(row)_\(column)"
+        
+        // Önbellekte varsa hemen döndür
+        if let cachedValues = validPlacementCache[cacheKey] as? [Int] {
+            return cachedValues
+        }
+        
         var possibleValues = [Int]()
         
         for value in 1...9 {
             if isValidPlacement(row: row, column: column, value: value) {
-        
                 possibleValues.append(value)
             }
         }
+        
+        // Sonucu önbelleğe al
+        validPlacementCache[cacheKey] = possibleValues
         
         return possibleValues
     }
@@ -936,53 +1066,11 @@ class SudokuBoard: ObservableObject, Codable {
     
     // Rastgele hücreleri kaldır
     private func removeRandomCells(count: Int) {
-        // Önce tahtayı orijinal tahtaya kopyala
-        for row in 0..<9 {
-            for col in 0..<9 {
-                originalBoard[row][col] = board[row][col]
-            }
-        }
+        var cellsToRemove = count
+        var attempts = 0
+        let maxAttempts = 500 // Sonsuz döngüden kaçınmak için
         
-        // Güvenlik kontrolü: Kaldırılacak hücre sayısı geçerli mi?
-        let safeCount = min(count, 64) // En fazla 64 hücre kaldır (minimum 17 ipucu bırak)
-        
-        // Zorluk seviyesine göre simetri kullan
-        let useSimetricalRemoval = difficulty == .easy || difficulty == .medium
-        
-        // Her satır, sütun ve blok için gereken minimum ipucu sayısı
-        let minCluesPerRow: Int
-        let minCluesPerColumn: Int
-        let minCluesPerBlock: Int
-        
-        switch difficulty {
-        case .easy:
-            minCluesPerRow = 5     // Kolay seviyede her satırda en az 5 ipucu
-            minCluesPerColumn = 5  // Kolay seviyede her sütunda en az 5 ipucu
-            minCluesPerBlock = 5   // Kolay seviyede her blokta en az 5 ipucu
-        case .medium:
-            minCluesPerRow = 3     // Orta seviyede her satırda en az 3 ipucu
-            minCluesPerColumn = 3  // Orta seviyede her sütunda en az 3 ipucu 
-            minCluesPerBlock = 3   // Orta seviyede her blokta en az 3 ipucu
-        case .hard:
-            minCluesPerRow = 2     // Zor seviyede her satırda en az 2 ipucu
-            minCluesPerColumn = 2  // Zor seviyede her sütunda en az 2 ipucu
-            minCluesPerBlock = 3   // Zor seviyede her blokta en az 3 ipucu (daha dengeli zorluk için)
-        case .expert:
-            minCluesPerRow = 2     // Uzman seviyede her satırda en az 2 ipucu
-            minCluesPerColumn = 2  // Uzman seviyede her sütunda en az 2 ipucu
-            minCluesPerBlock = 2   // Uzman seviyede her blokta en az 2 ipucu
-        }
-        
-        // Blok, satır ve sütun başına kalan hücre sayısını takip et
-        var cluesInRow = Array(repeating: 9, count: 9)
-        var cluesInColumn = Array(repeating: 9, count: 9)
-        var cluesInBlock = Array(repeating: Array(repeating: 9, count: 3), count: 3)
-        
-        // Simetrik olarak çift sayıda hücre kaldırmak zorundayız
-        let adjustedCount = useSimetricalRemoval ? (safeCount / 2) * 2 : safeCount
-        var removed = 0
-        
-        // Tüm hücrelerin bir listesini oluştur
+        // Tüm hücrelerin indekslerini oluştur
         var allCells = [(Int, Int)]()
         for row in 0..<9 {
             for col in 0..<9 {
@@ -990,104 +1078,74 @@ class SudokuBoard: ObservableObject, Codable {
             }
         }
         
-        // Rastgele karıştır
+        // İndeksleri karıştır
         allCells.shuffle()
         
-        // Güvenlik kontrolü: Maksimum döngü sayısını sınırla
-        let maxIterations = 1000
-        var iterations = 0
+        // Önce orjinal tahtayı kopyala
+        for row in 0..<9 {
+            for col in 0..<9 {
+                originalBoard[row][col] = board[row][col]
+            }
+        }
         
-        // İlk aşama: Blok, satır ve sütun kısıtlamalarını kontrol ederek hücreleri kaldır
+        // Her blok, satır ve sütun için kalan ipucu sayısını takip et
+        var cluesInBlock = Array(repeating: Array(repeating: 9, count: 3), count: 3)
+        var cluesInRow = Array(repeating: 9, count: 9)
+        var cluesInCol = Array(repeating: 9, count: 9)
+        
+        // Dengeli dağılım için minimum ipucu sayıları
+        let minCluesPerBlock = 3
+        let minCluesPerRowCol = 3
+        
+        // Sırayla hücreleri kaldır ve çözülebilirliği kontrol et
         for (row, col) in allCells {
-            // Döngü sayısı kontrolü
-            iterations += 1
-            if iterations > maxIterations {
-                print("Maksimum döngü sayısına ulaşıldı. Kaldırılan hücre sayısı: \(removed)")
-                break
-            }
-            
-            // Eğer hedef sayıya ulaştıysak kaldırmayı durdur
-            if removed >= adjustedCount {
-                break
-            }
-            
-            // Güvenlik kontrolü: Geçersiz indeks olup olmadığını kontrol et
-            guard row >= 0 && row < 9 && col >= 0 && col < 9 else {
-                continue
-            }
-            
-            // Simetrik kaldırma için karşılık gelen hücreyi hesapla
-            let symmetricRow = 8 - row
-            let symmetricCol = 8 - col
-            
-            // Güvenlik kontrolü: Simetrik hücrenin geçerli olduğundan emin ol
-            guard symmetricRow >= 0 && symmetricRow < 9 && symmetricCol >= 0 && symmetricCol < 9 else {
-                continue
-            }
-            
-            // Bu hücre zaten kaldırıldı mı kontrol et
-            if board[row][col] == nil {
-                continue
-            }
-            
-            // Simetrik hücre zaten kaldırıldı mı kontrol et (simetrik modda)
-            if useSimetricalRemoval && board[symmetricRow][symmetricCol] == nil {
-                continue
-            }
-            
-            // Blok, satır ve sütun kısıtlamalarını kontrol et
-            let blockRow = row / 3
-            let blockCol = col / 3
-            
-            // Güvenlik kontrolü: Blok indekslerinin geçerli olduğundan emin ol
-            guard blockRow >= 0 && blockRow < 3 && blockCol >= 0 && blockCol < 3 else {
-                continue
-            }
-            
-            // Simetrik kaldırma için karşılık gelen bloğu hesapla
-            let symmetricBlockRow = symmetricRow / 3
-            let symmetricBlockCol = symmetricCol / 3
-            
-            // Güvenlik kontrolü: Simetrik blok indekslerinin geçerli olduğundan emin ol
-            guard symmetricBlockRow >= 0 && symmetricBlockRow < 3 && symmetricBlockCol >= 0 && symmetricBlockCol < 3 else {
-                continue
-            }
-            
-            // Bu satır, sütun ve blokta minimum ipucu kısıtını koruyacak mıyız?
-            let canRemoveFromRow = cluesInRow[row] - 1 >= minCluesPerRow
-            let canRemoveFromCol = cluesInColumn[col] - 1 >= minCluesPerColumn
-            let canRemoveFromBlock = cluesInBlock[blockRow][blockCol] - 1 >= minCluesPerBlock
-            
-            // Simetrik kaldırma için aynı kontrolü karşı hücre için de yap
-            let canRemoveFromSymmetricRow = !useSimetricalRemoval || cluesInRow[symmetricRow] - 1 >= minCluesPerRow
-            let canRemoveFromSymmetricCol = !useSimetricalRemoval || cluesInColumn[symmetricCol] - 1 >= minCluesPerColumn
-            let canRemoveFromSymmetricBlock = !useSimetricalRemoval || cluesInBlock[symmetricBlockRow][symmetricBlockCol] - 1 >= minCluesPerBlock
-            
-            // Tüm kısıtlamaları karşılıyorsa hücreyi kaldır
-            if canRemoveFromRow && canRemoveFromCol && canRemoveFromBlock &&
-               canRemoveFromSymmetricRow && canRemoveFromSymmetricCol && canRemoveFromSymmetricBlock {
+            if board[row][col] != nil && cellsToRemove > 0 {
+                let blockRow = row / 3
+                let blockCol = col / 3
                 
-                // Hücreyi kaldır
+                // Bu hücreyi kaldırmak minimum ipucu kısıtlamalarını ihlal eder mi?
+                if cluesInBlock[blockRow][blockCol] - 1 < minCluesPerBlock ||
+                   cluesInRow[row] - 1 < minCluesPerRowCol ||
+                   cluesInCol[col] - 1 < minCluesPerRowCol {
+                    continue // Bu hücreyi kaldıramayız, sonraki hücreye geç
+                }
+                
+                let originalValue = board[row][col]
                 board[row][col] = nil
-                cluesInRow[row] -= 1
-                cluesInColumn[col] -= 1
-                cluesInBlock[blockRow][blockCol] -= 1
-                removed += 1
                 
-                // Simetrik modu aktifse, karşılık gelen hücreyi de kaldır
-                if useSimetricalRemoval && (row != 4 || col != 4) { // Merkez hücre kontrol
-                    board[symmetricRow][symmetricCol] = nil
-                    cluesInRow[symmetricRow] -= 1
-                    cluesInColumn[symmetricCol] -= 1
-                    cluesInBlock[symmetricBlockRow][symmetricBlockCol] -= 1
-                    removed += 1
+                // Sayaçları güncelle
+                cluesInBlock[blockRow][blockCol] -= 1
+                cluesInRow[row] -= 1
+                cluesInCol[col] -= 1
+                
+                // Hala mantıksal olarak çözülebilir mi?
+                let stillSolvable = testLogicalSolvability()
+                
+                // İpuçları dengeli mi?
+                let balanced = validateIpucuDagilimi()
+                
+                if stillSolvable && balanced {
+                    cellsToRemove -= 1
+                } else {
+                    // Çözülemez oldu, değeri geri al
+                    board[row][col] = originalValue
+                    
+                    // Sayaçları da geri al
+                    cluesInBlock[blockRow][blockCol] += 1
+                    cluesInRow[row] += 1
+                    cluesInCol[col] += 1
+                }
+                
+                attempts += 1
+                if attempts >= maxAttempts || cellsToRemove <= 0 {
+                    break
                 }
             }
         }
         
-        // Eğer istenen sayıda hücre kaldırılamadıysa, bunun bilgisini ver
-        if removed < adjustedCount {
-            print("İstenen sayıda hücre kaldırılamadı. Hedef: \(adjustedCount), Kaldırılan: \(removed)")
+        // İstenilen sayıda hücre kaldırılamadıysa bilgi ver
+        if cellsToRemove > 0 {
+            print("İstenen sayıda hücre kaldırılamadı. Hedef: \(count), Kaldırılan: \(count - cellsToRemove)")
         }
     }
     
@@ -1682,5 +1740,378 @@ class SudokuBoard: ObservableObject, Codable {
         }
         
         return possibleNumbers
+    }
+    
+    // Belirli bir birimde (satır, sütun, blok) hidden single sayısını hesapla
+    private func countHiddenSinglesInUnit(unit: [(Int, Int)]) -> Int {
+        var count = 0
+        var unitEmptyCells = [(Int, Int)]()
+        
+        // Önce birimin boş hücrelerini belirle - daha az işlem yapma
+        for (row, col) in unit {
+            if board[row][col] == nil {
+                unitEmptyCells.append((row, col))
+            }
+        }
+        
+        // Boş hücre yoksa zaman kaybetme
+        if unitEmptyCells.isEmpty {
+            return 0
+        }
+        
+        // Daha verimli olarak her değer için hidden single kontrolü yap
+        for value in 1...9 {
+            // Bu birim için bu değerin yerleştirilebileceği hücreler
+            var possibleCells = [(Int, Int)]()
+            
+            // Maksimum 2 hücre kontrolü gerektir, 3 veya daha fazla olursa hidden single değildir
+            for (row, col) in unitEmptyCells {
+                if isValidPlacement(row: row, column: col, value: value) {
+                    possibleCells.append((row, col))
+                    
+                    // 2'den fazla olursa gereksiz işlemi durdur
+                    if possibleCells.count > 2 {
+                        break
+                    }
+                }
+            }
+            
+            // Eğer değer sadece bir hücreye yerleştirilebiliyorsa ve bu hücre naked single değilse,
+            // bu bir hidden single'dır
+            if possibleCells.count == 1 {
+                let (row, col) = possibleCells[0]
+                let allPossibleValues = getPossibleValues(row: row, column: col)
+                if allPossibleValues.count > 1 {
+                    count += 1
+                }
+            }
+        }
+        
+        return count
+    }
+    
+    // Kullanıcı için tahtanın açıklamasını dışa aktar
+    func boardDescription() -> String {
+        var description = "Sudoku Tahtası (Zorluk: \(difficulty.rawValue))\n"
+        
+        for row in 0..<9 {
+            if row % 3 == 0 && row != 0 {
+                description += "------+-------+------\n"
+            }
+            
+            for col in 0..<9 {
+                if col % 3 == 0 && col != 0 {
+                    description += "| "
+                }
+                
+                if let value = board[row][col] {
+                    description += "\(value) "
+                } else {
+                    description += "· "
+                }
+            }
+            
+            description += "\n"
+        }
+        
+        return description
+    }
+    
+    // MARK: - Hücre işlemleri (dışarıdan erişim için)
+    
+    // Bir hücredeki değeri ayarla
+    func setValue(_ value: Int?, atRow row: Int, column: Int) {
+        guard isValidIndex(row: row, column: column) && !isOriginalValue(row: row, column: column) else { return }
+        
+        // Önbellekleri temizle, çünkü tahta değişecek
+        invalidateCaches()
+        
+        board[row][column] = value
+    }
+    
+    // MARK: - Zorluk testi yardımcı metodları
+    
+    // Bir hücredeki değerleri kontrol ederek olası değerleri hesapla
+    private func getPossibleNumbersForCell(row: Int, col: Int) -> [Int] {
+        var possibleNumbers = [Int]()
+        
+        for num in 1...9 {
+            if isValidPlacement(row: row, column: col, value: num) {
+                possibleNumbers.append(num)
+            }
+        }
+        
+        return possibleNumbers
+    }
+    
+    // İpucu dağılımını kontrol eden fonksiyon
+    private func validateIpucuDagilimi() -> Bool {
+        // Her 3x3 bloğunda en az 3 ipucu olmasını kontrol et (2'den 3'e artırıldı)
+        for blockRow in 0..<3 {
+            for blockCol in 0..<3 {
+                var ipucuSayisi = 0
+                for r in 0..<3 {
+                    for c in 0..<3 {
+                        let row = blockRow * 3 + r
+                        let col = blockCol * 3 + c
+                        if board[row][col] != nil {
+                            ipucuSayisi += 1
+                        }
+                    }
+                }
+                // Blokta en az 3 ipucu yoksa false dön (2'den 3'e artırıldı)
+                if ipucuSayisi < 3 {
+                    return false
+                }
+            }
+        }
+        
+        // Satır ve sütunlarda da minimum ipucu sayısını kontrol et
+        for i in 0..<9 {
+            var satirIpucu = 0
+            var sutunIpucu = 0
+            for j in 0..<9 {
+                if board[i][j] != nil {
+                    satirIpucu += 1
+                }
+                if board[j][i] != nil {
+                    sutunIpucu += 1
+                }
+            }
+            // Her satır ve sütunda en az 3 ipucu olmalı (2'den 3'e artırıldı)
+            if satirIpucu < 3 || sutunIpucu < 3 {
+                return false
+            }
+        }
+        
+        return true
+    }
+    
+    // Mantıksal çözülebilirlik test fonksiyonu
+    private func testLogicalSolvability() -> Bool {
+        // Tahtanın kopyasını oluştur
+        var boardCopy = [[Int?]](repeating: [Int?](repeating: nil, count: 9), count: 9)
+        for row in 0..<9 {
+            for col in 0..<9 {
+                boardCopy[row][col] = board[row][col]
+            }
+        }
+        
+        // Olası değerleri içeren bir yapı tanımla
+        var possibleValues = [[[Bool]]](repeating: [[Bool]](repeating: [Bool](repeating: true, count: 9), count: 9), count: 9)
+        
+        // Mevcut değerleri temel alarak olası değerleri başlat
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if let value = boardCopy[row][col] {
+                    for i in 0..<9 {
+                        possibleValues[row][i][value-1] = false
+                        possibleValues[i][col][value-1] = false
+                    }
+                    let blockRow = (row / 3) * 3
+                    let blockCol = (col / 3) * 3
+                    for r in 0..<3 {
+                        for c in 0..<3 {
+                            possibleValues[blockRow + r][blockCol + c][value-1] = false
+                        }
+                    }
+                    possibleValues[row][col] = [Bool](repeating: false, count: 9)
+                    possibleValues[row][col][value-1] = true
+                }
+            }
+        }
+        
+        var changed = true
+        var iterationCount = 0
+        let maxIterations = 100 // Sonsuz döngüden kaçınmak için
+        
+        while changed && iterationCount < maxIterations {
+            changed = false
+            iterationCount += 1
+            
+            // Naked Singles tekniği
+            for row in 0..<9 {
+                for col in 0..<9 {
+                    if boardCopy[row][col] == nil {
+                        var candidates = [Int]()
+                        for val in 0..<9 {
+                            if possibleValues[row][col][val] {
+                                candidates.append(val + 1)
+                            }
+                        }
+                        
+                        if candidates.count == 1 {
+                            boardCopy[row][col] = candidates[0]
+                            changed = true
+                            
+                            // Değerleri güncelle
+                            let value = candidates[0]
+                            for i in 0..<9 {
+                                if i != col {
+                                    possibleValues[row][i][value-1] = false
+                                }
+                                if i != row {
+                                    possibleValues[i][col][value-1] = false
+                                }
+                            }
+                            
+                            let blockRow = (row / 3) * 3
+                            let blockCol = (col / 3) * 3
+                            for r in 0..<3 {
+                                for c in 0..<3 {
+                                    if blockRow + r != row || blockCol + c != col {
+                                        possibleValues[blockRow + r][blockCol + c][value-1] = false
+                                    }
+                                }
+                            }
+                            
+                            possibleValues[row][col] = [Bool](repeating: false, count: 9)
+                            possibleValues[row][col][value-1] = true
+                        }
+                    }
+                }
+            }
+            
+            // Hidden Singles tekniği (satırlar için)
+            for row in 0..<9 {
+                for val in 0..<9 {
+                    var count = 0
+                    var lastCol = -1
+                    
+                    for col in 0..<9 {
+                        if boardCopy[row][col] == nil && possibleValues[row][col][val] {
+                            count += 1
+                            lastCol = col
+                        }
+                    }
+                    
+                    if count == 1 && lastCol != -1 {
+                        boardCopy[row][lastCol] = val + 1
+                        changed = true
+                        
+                        // Değerleri güncelle
+                        for i in 0..<9 {
+                            if i != val {
+                                possibleValues[row][lastCol][i] = false
+                            }
+                        }
+                        
+                        for i in 0..<9 {
+                            if i != row {
+                                possibleValues[i][lastCol][val] = false
+                            }
+                        }
+                        
+                        let blockRow = (row / 3) * 3
+                        let blockCol = (lastCol / 3) * 3
+                        for r in 0..<3 {
+                            for c in 0..<3 {
+                                if blockRow + r != row || blockCol + c != lastCol {
+                                    possibleValues[blockRow + r][blockCol + c][val] = false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Hidden Singles tekniği (sütunlar için)
+            for col in 0..<9 {
+                for val in 0..<9 {
+                    var count = 0
+                    var lastRow = -1
+                    
+                    for row in 0..<9 {
+                        if boardCopy[row][col] == nil && possibleValues[row][col][val] {
+                            count += 1
+                            lastRow = row
+                        }
+                    }
+                    
+                    if count == 1 && lastRow != -1 {
+                        boardCopy[lastRow][col] = val + 1
+                        changed = true
+                        
+                        // Değerleri güncelle
+                        for i in 0..<9 {
+                            if i != val {
+                                possibleValues[lastRow][col][i] = false
+                            }
+                        }
+                        
+                        for i in 0..<9 {
+                            if i != col {
+                                possibleValues[lastRow][i][val] = false
+                            }
+                        }
+                        
+                        let blockRow = (lastRow / 3) * 3
+                        let blockCol = (col / 3) * 3
+                        for r in 0..<3 {
+                            for c in 0..<3 {
+                                if blockRow + r != lastRow || blockCol + c != col {
+                                    possibleValues[blockRow + r][blockCol + c][val] = false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Hidden Singles tekniği (bloklar için)
+            for blockRow in 0..<3 {
+                for blockCol in 0..<3 {
+                    for val in 0..<9 {
+                        var count = 0
+                        var lastRow = -1
+                        var lastCol = -1
+                        
+                        for r in 0..<3 {
+                            for c in 0..<3 {
+                                let row = blockRow * 3 + r
+                                let col = blockCol * 3 + c
+                                if boardCopy[row][col] == nil && possibleValues[row][col][val] {
+                                    count += 1
+                                    lastRow = row
+                                    lastCol = col
+                                }
+                            }
+                        }
+                        
+                        if count == 1 && lastRow != -1 && lastCol != -1 {
+                            boardCopy[lastRow][lastCol] = val + 1
+                            changed = true
+                            
+                            // Değerleri güncelle
+                            for i in 0..<9 {
+                                if i != val {
+                                    possibleValues[lastRow][lastCol][i] = false
+                                }
+                            }
+                            
+                            for i in 0..<9 {
+                                if i != lastCol {
+                                    possibleValues[lastRow][i][val] = false
+                                }
+                                if i != lastRow {
+                                    possibleValues[i][lastCol][val] = false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Tüm hücreler dolu mu kontrol et
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if boardCopy[row][col] == nil {
+                    return false // Mantıksal tekniklerle tam çözülemedi
+                }
+            }
+        }
+        
+        return true // Mantıksal tekniklerle çözülebildi
     }
 }
