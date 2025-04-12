@@ -65,11 +65,27 @@ struct SudokuCellView: View {
                     
                     // Hatalı hücre göstergesi
                     if isInvalid {
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.red, lineWidth: 2)
-                            .background(Color.red.opacity(0.15))
-                            .cornerRadius(4)
-                            .drawingGroup() // Metal hızlandırması
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.red, lineWidth: 2.5)
+                                .background(Color.red.opacity(0.2))
+                                .cornerRadius(4)
+                                .drawingGroup() // Metal hızlandırması
+                            
+                            // Hata animasyonu - bayan bir titreşim/parlama
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.red, lineWidth: 2.5)
+                                .opacity(animateValue ? 0.2 : 0.7)
+                                .animation(
+                                    Animation.easeInOut(duration: 0.6)
+                                    .repeatForever(autoreverses: true),
+                                    value: animateValue
+                                )
+                                .onAppear {
+                                    animateValue = true
+                                }
+                                .drawingGroup() // Metal hızlandırması
+                        }
                     }
                     
                     // Hücre içeriği (sayı veya kalem işaretleri)
@@ -170,9 +186,9 @@ struct SudokuCellView: View {
             .fill(getCellBackgroundColor())
             .overlay(
                 RoundedRectangle(cornerRadius: 4)
-                    .stroke(getCellBorderColor(), lineWidth: isSelected ? 2 : (isMatchingValue ? 1.5 : 0.5))
+                    .stroke(isInvalid ? Color.red : getCellBorderColor(), lineWidth: isInvalid ? 2 : (isSelected ? 2 : (isMatchingValue ? 1.5 : 0.5)))
             )
-            .powerSavingAwareEffect(isEnabled: isSelected || isMatchingValue)
+            .powerSavingAwareEffect(isEnabled: isSelected || isMatchingValue || isInvalid)
     }
     
     // Hücre arka plan rengi - Tek renk temali modern tasarım
@@ -180,9 +196,14 @@ struct SudokuCellView: View {
         // Ana tema rengi: Teal (turkuaz) - ipucu için mavi renk
         let themeColor = Color.teal
         let hintColor = Color.blue
+        let errorColor = Color.red
         
+        // Hatalı giriş için kırmızı arka plan
+        if isInvalid {
+            return colorScheme == .dark ? errorColor.opacity(0.25) : errorColor.opacity(0.15)
+        }
         // İpucu hedefiyse mavi renkle vurgula (görsellerdeki gibi)
-        if isHintTarget {
+        else if isHintTarget {
             return colorScheme == .dark ? hintColor.opacity(0.45) : hintColor.opacity(0.25) 
         }
         else if isSelected {
@@ -206,9 +227,14 @@ struct SudokuCellView: View {
         // Ana tema rengi: Teal (turkuaz), ipucu için mavi
         let themeColor = Color.teal
         let hintColor = Color.blue
+        let errorColor = Color.red
         
+        // Hatalı giriş için kırmızı kenarlık
+        if isInvalid {
+            return colorScheme == .dark ? errorColor : errorColor
+        }
         // İpucu hedefiyse daha koyu mavi kenarlık (görsellerdeki gibi)
-        if isHintTarget {
+        else if isHintTarget {
             return colorScheme == .dark ? hintColor.opacity(1.0) : hintColor.opacity(0.8)
         }
         else if isSelected {
@@ -232,7 +258,11 @@ struct SudokuCellView: View {
         // Ana tema rengi: Teal (turkuaz) - ipucu için mavi renk
         _ = Color.teal
         
-        if isHintTarget {
+        // Hatalı giriş için kırmızı metin
+        if isInvalid {
+            return colorScheme == .dark ? Color.red : Color.red
+        }
+        else if isHintTarget {
             // İpucu hedefi - mavi (görseldeki gibi)
             return Color.blue
         } else if isFixed {

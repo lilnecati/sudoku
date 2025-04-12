@@ -386,186 +386,85 @@ struct SettingsView: View {
     }
     
     private func gameSettingsView() -> some View {
-        VStack(spacing: 5) {
-            // Varsayılan zorluk
-            HStack {
-                Text("Varsayılan Zorluk")
-                Spacer()
-                Menu {
-                    Button("Kolay") { defaultDifficulty = SudokuBoard.Difficulty.easy.rawValue }
-                    Button("Orta") { defaultDifficulty = SudokuBoard.Difficulty.medium.rawValue }
-                    Button("Zor") { defaultDifficulty = SudokuBoard.Difficulty.hard.rawValue }
-                    Button("Çok Zor") { defaultDifficulty = SudokuBoard.Difficulty.expert.rawValue }
-                } label: {
-                    Text(defaultDifficulty)
-                        .padding(.vertical, 5)
-                        .padding(.horizontal, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.blue.opacity(0.1))
-                        )
-                        .foregroundColor(.primary)
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        VStack(spacing: 20) {
+            // Ses Efektleri - modern toggle ile
+            ToggleSettingRow(
+                title: "Ses Efektleri",
+                description: "Oyun içi ses efektlerini aç/kapa",
+                isOn: $enableSoundEffects,
+                iconName: "speaker.wave.2.fill",
+                color: .blue
             )
             
-            // Titreşim geri bildirimi ana ayarı
-            HStack {
-                Text("Titreşim Geri Bildirimi")
-                Spacer()
-                Button(action: {
-                    SoundManager.shared.playNavigationSound()
-                    enableHapticFeedback.toggle()
-                    // Ana ayar kapatılırsa tüm alt ayarları da kapat
-                    if !enableHapticFeedback {
-                        enableNumberInputHaptic = false
-                        enableCellTapHaptic = false
-                    }
-                }) {
-                    Image(systemName: enableHapticFeedback ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(enableHapticFeedback ? .blue : .gray)
-                        .font(.system(size: 24))
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
-            
-            // Sayı girişinde titreşim
-            if enableHapticFeedback {
-                HStack {
-                    Text("Sayı Girişinde Titreşim")
-                    Spacer()
-                    Button(action: {
-                        SoundManager.shared.playNavigationSound()
-                        enableNumberInputHaptic.toggle()
-                    }) {
-                        Image(systemName: enableNumberInputHaptic ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor(enableNumberInputHaptic ? .blue : .gray)
-                            .font(.system(size: 24))
-                    }
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                )
-                .padding(.leading, 20) // İç içe görünüm için girintili gösteriyoruz
-                .transition(.opacity)
-            }
-            
-            // Hücre seçiminde titreşim
-            if enableHapticFeedback {
-                HStack {
-                    Text("Hücre Seçiminde Titreşim")
-                    Spacer()
-                    Button(action: {
-                        SoundManager.shared.playNavigationSound()
-                        enableCellTapHaptic.toggle()
-                    }) {
-                        Image(systemName: enableCellTapHaptic ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor(enableCellTapHaptic ? .blue : .gray)
-                            .font(.system(size: 24))
-                    }
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                )
-                .padding(.leading, 20) // İç içe görünüm için girintili gösteriyoruz
-                .transition(.opacity)
-            }
-            
-            // Ses efektleri
-            HStack {
-                Text("Ses Efektleri")
-                Spacer()
-                Button(action: {
-                    SoundManager.shared.playNavigationSound()
-                    enableSoundEffects.toggle()
-                }) {
-                    Image(systemName: enableSoundEffects ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(enableSoundEffects ? .blue : .gray)
-                        .font(.system(size: 24))
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
-            
-            // Ses seviyesi kaydırıcısı
+            // Ses seviyesi kaydırıcısı - eğer ses açıksa
             if enableSoundEffects {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        Text("Ses Seviyesi")
-                        Spacer()
-                        Text("\(Int(soundVolume * 100))%")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Image(systemName: "speaker.fill")
-                            .foregroundColor(.gray)
-                        
-                        Slider(value: $soundVolume, in: 0...1, step: 0.05)
-                            .accentColor(.blue)
-                            .onAppear {
-                                // İlk yüklemede mevcut değeri SoundManager'a ayarla
-                                SoundManager.shared.updateVolumeLevel(soundVolume)
-                            }
-                            #if os(iOS)
-                            .onChange(of: soundVolume) { oldValue, newValue in
-                                // AudioServicesPlaySystemSound çağrısı yapmayarak fazladan ses çalmasını engelle
-                                SoundManager.shared.updateVolumeLevelQuietly(newValue)
-                            }
-                            #else
-                            .onReceive(Just(soundVolume)) { newValue in
-                                // AudioServicesPlaySystemSound çağrısı yapmayarak fazladan ses çalmasını engelle
-                                SoundManager.shared.updateVolumeLevelQuietly(newValue)
-                            }
-                            #endif
+                HStack(spacing: 15) {
+                    // İkon
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.15))
+                            .frame(width: 36, height: 36)
                         
                         Image(systemName: "speaker.wave.3.fill")
+                            .font(.system(size: 16))
                             .foregroundColor(.blue)
                     }
                     
-                    // Ses testi butonu
-                    Button(action: {
-                        SoundManager.shared.executeSound(.test)
-                    }) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        // Başlık ve değer
                         HStack {
-                            Image(systemName: "play.circle.fill")
-                                .font(.system(size: 16))
-                            Text("Sesi Test Et")
+                            Text("Ses Seviyesi")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Text("%\(Int(soundVolume * 100))")
                                 .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.blue)
                         }
-                        .foregroundColor(.blue)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.blue, lineWidth: 1)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.blue.opacity(0.1))
-                                )
-                        )
+                        
+                        // Slider
+                        HStack {
+                            Image(systemName: "speaker.fill")
+                                .foregroundColor(.gray)
+                                .font(.system(size: 12))
+                            
+                            Slider(value: $soundVolume, in: 0...1, step: 0.05)
+                                .accentColor(.blue)
+                                .onAppear {
+                                    SoundManager.shared.updateVolumeLevel(soundVolume)
+                                }
+                                .onChange(of: soundVolume) { oldValue, newValue in
+                                    SoundManager.shared.updateVolumeLevelQuietly(newValue)
+                                }
+                            
+                            Image(systemName: "speaker.wave.3.fill")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 12))
+                        }
+                        
+                        // Test butonu
+                        Button(action: {
+                            SoundManager.shared.executeSound(.test)
+                        }) {
+                            HStack {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.system(size: 14))
+                                
+                                Text("Sesi Test Et")
+                                    .font(.system(size: 14, weight: .medium))
+                            }
+                            .foregroundColor(.blue)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.blue.opacity(0.15))
+                            )
+                        }
+                        .padding(.top, 8)
                     }
-                    .padding(.top, 8)
                 }
                 .padding()
                 .background(
@@ -573,98 +472,279 @@ struct SettingsView: View {
                         .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                 )
-                .padding(.leading, 20)
+                .padding(.horizontal)
                 .transition(.opacity)
             }
             
-            // Güç tasarrufu modu
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Güç Tasarrufu Modu")
-                    Text("Animasyonları ve görsel efektleri azaltır")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                Spacer()
-                Button(action: {
-                    SoundManager.shared.playNavigationSound()
-                    powerSavingMode.toggle()
-                    // PowerSavingManager'ı güncelle
-                    PowerSavingManager.shared.isPowerSavingEnabled = powerSavingMode
-                }) {
-                    Image(systemName: powerSavingMode ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(powerSavingMode ? .green : .gray)
-                        .font(.system(size: 24))
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            // Titreşim geri bildirimi - modern toggle ile
+            ToggleSettingRow(
+                title: "Titreşim Geri Bildirimi",
+                description: "Oyun içi titreşim efektlerini aç/kapa",
+                isOn: $enableHapticFeedback,
+                iconName: "iphone.radiowaves.left.and.right",
+                color: .orange
             )
-            
-            // Otomatik güç tasarrufu
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Otomatik Güç Tasarrufu")
-                    Text("Pil seviyesi düşükken otomatik olarak etkinleşir")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+        }
+    }
+    
+    private func appearanceSettingsView() -> some View {
+        VStack(spacing: 20) {
+            // Sistem görünümünü kullan
+            HStack(spacing: 15) {
+                // İkon
+                ZStack {
+                    Circle()
+                        .fill(Color.indigo.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.indigo)
                 }
-                Spacer()
-                Button(action: {
-                    SoundManager.shared.playNavigationSound()
-                    autoPowerSaving.toggle()
-                    // PowerSavingManager'ı güncelle
-                    PowerSavingManager.shared.isAutoPowerSavingEnabled = autoPowerSaving
-                }) {
-                    Image(systemName: autoPowerSaving ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(autoPowerSaving ? .green : .gray)
-                        .font(.system(size: 24))
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
-            
-            // Pil durumu göstergesi
-            HStack {
-                Image(systemName: powerManager.isCharging ? "battery.100.bolt" : getBatteryIcon())
-                    .foregroundColor(getBatteryColor())
-                    .font(.system(size: 20))
                 
+                // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Pil Durumu: %\(Int(powerManager.batteryLevel * 100))")
-                    if powerManager.isCharging {
-                        Text("Şarj Oluyor")
-                            .font(.caption)
-                            .foregroundColor(.green)
-                    } else if powerManager.batteryLevel <= 0.2 {
+                    Text("Sistem Görünümünü Kullan")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    Text("Cihazın görünüm ayarını kullan (açık/koyu)")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                // Toggle butonu
+                ZStack {
+                    Capsule()
+                        .fill(themeManager.useSystemAppearance ? Color.indigo : Color.gray.opacity(0.3))
+                        .frame(width: 51, height: 31)
+                    
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 27, height: 27)
+                        .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                        .offset(x: themeManager.useSystemAppearance ? 10 : -10)
+                }
+                .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.useSystemAppearance)
+                .onTapGesture {
+                    SoundManager.shared.playNavigationSound()
+                    themeManager.useSystemAppearance.toggle()
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
+            .padding(.horizontal)
+            
+            // Karanlık mod
+            if !themeManager.useSystemAppearance {
+                HStack(spacing: 15) {
+                    // İkon
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        
+                        Image(systemName: "moon.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.blue)
+                    }
+                    
+                    // Başlık ve açıklama
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Karanlık Mod")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.primary)
+                        
+                        Text("Karanlık tema aktif eder")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                    
+                    // Toggle butonu
+                    ZStack {
+                        Capsule()
+                            .fill(themeManager.darkMode ? Color.blue : Color.gray.opacity(0.3))
+                            .frame(width: 51, height: 31)
+                        
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 27, height: 27)
+                            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                            .offset(x: themeManager.darkMode ? 10 : -10)
+                    }
+                    .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.darkMode)
+                    .onTapGesture {
+                        SoundManager.shared.playNavigationSound()
+                        themeManager.darkMode.toggle()
+                    }
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal)
+            }
+            
+            // Metin boyutu
+            HStack(spacing: 15) {
+                // İkon
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "textformat.size")
+                        .font(.system(size: 16))
+                        .foregroundColor(.orange)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    // Başlık
+                    Text("Metin Boyutu")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    // Seçim butonları
+                    HStack(spacing: 12) {
+                        TextSizeButton(
+                            title: "Küçük",
+                            isSelected: textSizeString == TextSizePreference.small.rawValue,
+                            action: {
+                                SoundManager.shared.playNavigationSound()
+                                textSizeString = TextSizePreference.small.rawValue
+                            }
+                        )
+                        
+                        TextSizeButton(
+                            title: "Orta", 
+                            isSelected: textSizeString == TextSizePreference.medium.rawValue,
+                            action: {
+                                SoundManager.shared.playNavigationSound()
+                                textSizeString = TextSizePreference.medium.rawValue
+                            }
+                        )
+                        
+                        TextSizeButton(
+                            title: "Büyük", 
+                            isSelected: textSizeString == TextSizePreference.large.rawValue,
+                            action: {
+                                SoundManager.shared.playNavigationSound()
+                                textSizeString = TextSizePreference.large.rawValue
+                            }
+                        )
+                    }
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
+            .padding(.horizontal)
+        }
+    }
+    
+    struct TextSizeButton: View {
+        var title: String
+        var isSelected: Bool
+        var action: () -> Void
+        
+        var body: some View {
+            Button(action: action) {
+                Text(title)
+                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(isSelected ? Color.orange.opacity(0.2) : Color.clear)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(isSelected ? Color.orange : Color.gray.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                    .foregroundColor(isSelected ? .orange : .primary)
+            }
+        }
+    }
+    
+    private func powerSavingSettingsView() -> some View {
+        VStack(spacing: 20) {
+            // Pil durumu göstergesi - resme uygun dikdörtgen tasarım
+            HStack(spacing: 15) {
+                // İkon
+                ZStack {
+                    Circle()
+                        .fill(Color.red.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "battery.0")
+                        .font(.system(size: 16))
+                        .foregroundColor(.red)
+                }
+                
+                // Başlık ve durum
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Pil Durumu")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.primary)
+                        
+                        Text("(%\(Int(powerManager.batteryLevel * 100)))")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(getBatteryColor())
+                    }
+                    
+                    // Pil durum mesajı
+                    if powerManager.batteryLevel <= 0.2 {
                         Text("Düşük Pil")
-                            .font(.caption)
-                            .foregroundColor(.red)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.orange)
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.orange.opacity(0.2))
+                            )
                     }
                 }
                 
                 Spacer()
                 
+                // Düşük pilde güç tasarrufu önerisi
                 if powerManager.batteryLevel <= 0.2 && !powerSavingMode {
                     Button(action: {
                         SoundManager.shared.playNavigationSound()
                         powerSavingMode = true
                         powerManager.powerSavingMode = true
                     }) {
-                        Text("Güç Tasarrufunu Etkinleştir")
-                            .font(.caption)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Color.green.opacity(0.2))
-                            .cornerRadius(8)
-                            .foregroundColor(.green)
+                        HStack {
+                            Image(systemName: "bolt.shield")
+                                .font(.system(size: 12))
+                            
+                            Text("Güç Tasarrufu")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundColor(.green)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.green.opacity(0.15))
+                        )
                     }
                 }
             }
@@ -674,102 +754,49 @@ struct SettingsView: View {
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
-        }
-        .padding(.horizontal)
-    }
-    
-    private func appearanceSettingsView() -> some View {
-        VStack(spacing: 5) {
-            // Sistem görünümünü kullan
-            HStack {
-                Text("Sistem Görünümünü Kullan")
-                Spacer()
-                Toggle("", isOn: $themeManager.useSystemAppearance)
-                    .labelsHidden()
-                    .toggleStyle(SwitchToggleStyle(tint: .blue))
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .padding(.horizontal)
+            
+            // Güç tasarrufu modu - modern toggle ile
+            ToggleSettingRow(
+                title: "Güç Tasarrufu Modu",
+                description: "Animasyonları ve görsel efektleri azaltır",
+                isOn: $powerSavingMode,
+                iconName: "bolt.shield.fill",
+                color: .green
             )
             
-            // Karanlık mod
-            if !themeManager.useSystemAppearance {
-                HStack {
-                    Text("Karanlık Mod")
-                    Spacer()
-                    Toggle("", isOn: $themeManager.darkMode)
-                        .labelsHidden()
-                        .toggleStyle(SwitchToggleStyle(tint: .blue))
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                )
-            }
+            // Otomatik güç tasarrufu - modern toggle ile
+            ToggleSettingRow(
+                title: "Otomatik Güç Tasarrufu",
+                description: "Pil seviyesi düşükken otomatik olarak etkinleşir",
+                isOn: $autoPowerSaving,
+                iconName: "bolt.circle.fill",
+                color: .orange
+            )
             
-            // Metin boyutu
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Metin Boyutu")
+            // Açıklama kartı
+            HStack(alignment: .top, spacing: 15) {
+                // İkon
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.blue)
+                }
                 
-                HStack(spacing: 15) {
-                    Button(action: {
-                        SoundManager.shared.playNavigationSound()
-                        textSizeString = TextSizePreference.small.rawValue
-                    }) {
-                        Text("Küçük")
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(textSizeString == TextSizePreference.small.rawValue ? Color.blue.opacity(0.2) : Color.clear)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(textSizeString == TextSizePreference.small.rawValue ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                            .foregroundColor(textSizeString == TextSizePreference.small.rawValue ? .blue : .primary)
-                    }
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Güç Tasarrufu Hakkında")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
                     
-                    Button(action: {
-                        SoundManager.shared.playNavigationSound()
-                        textSizeString = TextSizePreference.medium.rawValue
-                    }) {
-                        Text("Orta")
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(textSizeString == TextSizePreference.medium.rawValue ? Color.blue.opacity(0.2) : Color.clear)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(textSizeString == TextSizePreference.medium.rawValue ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                            .foregroundColor(textSizeString == TextSizePreference.medium.rawValue ? .blue : .primary)
-                    }
-                    
-                    Button(action: {
-                        SoundManager.shared.playNavigationSound()
-                        textSizeString = TextSizePreference.large.rawValue
-                    }) {
-                        Text("Büyük")
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(textSizeString == TextSizePreference.large.rawValue ? Color.blue.opacity(0.2) : Color.clear)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(textSizeString == TextSizePreference.large.rawValue ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                            .foregroundColor(textSizeString == TextSizePreference.large.rawValue ? .blue : .primary)
-                    }
+                    Text("Güç tasarrufu modu, pil ömrünü uzatmak için animasyonları azaltır ve bazı görsel efektleri kapatır. Otomatik mod, pil %20'nin altına düştüğünde kendiliğinden devreye girer.")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineSpacing(3)
                 }
             }
             .padding()
@@ -778,155 +805,168 @@ struct SettingsView: View {
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
-    }
-    
-    private func powerSavingSettingsView() -> some View {
-        VStack(spacing: 15) {
-            // Güç tasarrufu modu
-            HStack {
-                Text("Güç Tasarrufu Modu")
-                Spacer()
-                Toggle("", isOn: $powerSavingMode)
-            }
-            
-            // Otomatik güç tasarrufu
-            HStack {
-                Text("Otomatik Güç Tasarrufu")
-                Spacer()
-                Toggle("", isOn: $autoPowerSaving)
-            }
-        }
-        .padding()
     }
     
     private func aboutSettingsView() -> some View {
         VStack(spacing: 20) {
-            // Uygulama başlığı ve sürüm bilgisi
-            VStack(spacing: 8) {
+            // Uygulama logosu ve sürüm bilgisi
+            VStack(spacing: 15) {
+                // Logo
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 80, height: 80)
+                    
+                    Text("S")
+                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                
+                // İsim ve Sürüm
                 Text("Sudoku")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
                 
-                Text("v1.0")
+                Text("Sürüm 1.0")
                     .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundColor(.secondary)
-            }
-            
-            // Geliştirici bilgisi
-            VStack(spacing: 8) {
-                Text("Geliştirici")
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-                    .foregroundColor(.primary)
                 
-                Text("Necati Yıldırım")
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .foregroundColor(.secondary)
-            }
-            
-            // Görsel ayrım için bir çizgi
-            Divider()
-                .background(Color.gray.opacity(0.5))
-            
-            // Ek bilgiler veya bağlantılar
-            VStack(spacing: 8) {
-                Text("Bu uygulama, benim oynamam için tasarlanmıştır.")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+                // Yatay çizgi
+                Rectangle()
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(height: 1)
+                    .padding(.vertical, 10)
                 
-                Text("© 2025 Necati Yıldırım")
-                    .font(.system(size: 12, weight: .light, design: .rounded))
-                    .foregroundColor(.gray)
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-        )
-        .padding()
-    }
-    
-    private func aboutView() -> some View {
-        VStack(spacing: 15) {
-            // Uygulama bilgisi
-            VStack(alignment: .leading, spacing: 12) {
-                Label("Sudoku App v1.0", systemImage: "app.badge")
-                    .font(.headline)
-                
-                Text("Bu uygulama, Sudoku oynamayı seven herkes için tasarlanmıştır. Kolay, orta, zor ve çok zor seviyelerde oyunlar sunarak her seviyedeki oyuncuya hitap eder.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                
-                Divider()
-                    .padding(.vertical, 8)
-                
-                HStack(spacing: 12) {
-                    Image(systemName: "person.fill.badge.plus")
-                        .foregroundColor(.blue)
+                // Geliştirici bilgisi
+                HStack(spacing: 15) {
+                    // İkon
+                    ZStack {
+                        Circle()
+                            .fill(Color.teal.opacity(0.15))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(.teal)
+                    }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Geliştirici")
-                            .font(.subheadline)
+                        Text("Geliştrici")
+                            .font(.system(size: 14))
                             .foregroundColor(.secondary)
                         
-                        Text("Necati YILDIRIM")
-                            .font(.headline)
+                        Text("Necati Yıldırım")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.primary)
                     }
+                    
+                    Spacer()
                 }
             }
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
+            )
+            .padding(.horizontal)
+            
+            // Bilgi kartları
+            InfoCard(
+                title: "Uygulama Hakkında",
+                description: "Bu Sudoku uygulaması, klasik Sudoku oyununu modern bir arayüzle sunmak için tasarlanmıştır. Dört farklı zorluk seviyesi, not alma özellikleri, ve daha fazlasıyla dolu bir oyun deneyimi sunar.",
+                iconName: "info.circle.fill",
+                color: .blue
             )
             
-            // Bağlantılar
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Bağlantılar")
-                    .font(.headline)
-                
-                websiteLink(url: "https://www.example.com/help", displayText: "Yardım ve Destek")
-                
-                websiteLink(url: "https://www.example.com/privacy", displayText: "Gizlilik Politikası")
-                
-                websiteLink(url: "https://www.example.com/contact", displayText: "İletişim")
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
-            
-            // Tüm ayarları sıfırlama butonu
+            // Tüm ayarları sıfırla
             Button(action: {
                 resetAllSettings()
             }) {
                 HStack {
-                    Spacer()
+                    Image(systemName: "arrow.counterclockwise.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.red)
+                    
                     Text("Tüm Ayarları Sıfırla")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.red)
+                    
                     Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray.opacity(0.5))
                 }
-                .padding(.vertical, 14)
+                .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.red, lineWidth: 1)
-                        .background(
+                        .fill(Color.red.opacity(0.1))
+                        .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(colorScheme == .dark ? Color(UIColor.systemBackground) : Color.white)
+                                .strokeBorder(Color.red.opacity(0.3), lineWidth: 1)
                         )
                 )
+                .padding(.horizontal)
             }
+            
+            // Telif hakkı ve yapım yılı
+            Text("© 2025 Necati Yıldırım")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(.secondary)
+                .padding(.top)
         }
-        .padding(.horizontal)
+    }
+    
+    struct InfoCard: View {
+        var title: String
+        var description: String
+        var iconName: String
+        var color: Color
+        
+        @Environment(\.colorScheme) var colorScheme
+        
+        var body: some View {
+            HStack(alignment: .top, spacing: 15) {
+                // İkon
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: iconName)
+                        .font(.system(size: 16))
+                        .foregroundColor(color)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    Text(description)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineSpacing(3)
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
+            .padding(.horizontal)
+        }
     }
 }
 
@@ -951,5 +991,71 @@ struct SettingRow<Content: View>: View {
                 .fill(colorScheme == .dark ? Color(UIColor.tertiarySystemBackground) : Color.white)
                 .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
         )
+    }
+}
+
+struct ToggleSettingRow: View {
+    var title: String
+    var description: String
+    @Binding var isOn: Bool
+    var iconName: String
+    var color: Color
+    
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        Button(action: {
+            SoundManager.shared.playNavigationSound()
+            isOn.toggle()
+        }) {
+            HStack(spacing: 15) {
+                // Sol taraftaki simge
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: iconName)
+                        .font(.system(size: 16))
+                        .foregroundColor(color)
+                }
+                
+                // Başlık ve açıklama
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    Text(description)
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                // Toggle butonu
+                ZStack {
+                    Capsule()
+                        .fill(isOn ? color : Color.gray.opacity(0.3))
+                        .frame(width: 51, height: 31)
+                    
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 27, height: 27)
+                        .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                        .offset(x: isOn ? 10 : -10)
+                }
+                .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isOn)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal)
     }
 }

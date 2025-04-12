@@ -277,6 +277,28 @@ class SudokuViewModel: ObservableObject {
             } else {
                 SoundManager.shared.playErrorSound()
                 
+                // Hatalı değeri hücreye yerleştir
+                enterValue(value, at: row, col: col)
+                
+                // 3 saniye sonra hatalı değeri otomatik olarak sil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+                    guard let self = self else { return }
+                    
+                    // Eğer hala aynı değer varsa sil
+                    if self.board.getValue(at: row, col: col) == value {
+                        // Silme işlemi (sessiz yap - ses çalmadan)
+                        self.enterValue(nil, at: row, col: col)
+                        
+                        // Hatalı hücre işaretini kaldır
+                        let position = Position(row: row, col: col)
+                        self.invalidCells.remove(position)
+                        
+                        // Tahta durumunu güncelle
+                        self.validateBoard()
+                        self.updateUsedNumbers()
+                    }
+                }
+                
                 // Hata sayısını artır
                 errorCount += 1
                 
@@ -294,10 +316,11 @@ class SudokuViewModel: ObservableObject {
                 if errorCount >= maxErrorCount {
                     gameState = .failed
                     stopTimer()
+                    
+                    // Oyun kaybedildiğinde kayıtlı oyunu sil
+                    deleteSavedGameIfExists()
+                    print("❌ Oyun kaybedildi! Kayıtlı oyun silindi.")
                 }
-                
-                // ÖNEMLİ DEĞİŞİKLİK: Hatalı değeri hücreye girme
-                // enterValue(value, at: row, col: col) - bu satırı kaldırıyoruz
                 
                 // Önbelleği güncelle ve doğrula
                 invalidatePencilMarksCache(forRow: row, column: col)

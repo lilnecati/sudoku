@@ -121,39 +121,29 @@ struct GameView: View {
                 //     }
                 //     .padding(.horizontal)
                 // }
-                Spacer()
-                
+                // Spacer'ı kaldırdık
+
                 // Üst bilgi alanı
                 headerView
                     .padding(.horizontal)
+                    .padding(.top, 5) // Dynamic Island ile arasındaki mesafeyi azalttık
                     .padding(.bottom, 5) // Tablo ile üst bilgi arasında ufak boşluk
                     .opacity(isHeaderVisible ? 1 : 0)
                     .offset(y: isHeaderVisible ? 0 : -20)
                 
-                // Sudoku tahtası - sabit boyutlu konteyner içinde
-                ZStack {
-                    // Sabit görünmez arka plan - boyutları korumak için
-                    Rectangle()
-                        .foregroundColor(.clear)
-                        .aspectRatio(1, contentMode: .fit)
-                    
-                    // Sudoku tahtası
-                    SudokuBoardView(viewModel: viewModel)
-                        .id(boardKey)
-                        .aspectRatio(1, contentMode: .fit)
-                }
-                .padding(.horizontal, 5)
-                .opacity(isBoardVisible ? 1 : 0)
-                .scaleEffect(isBoardVisible ? 1 : 0.95)
-                // Boyut sabitleme
-                .fixedSize(horizontal: false, vertical: true)
-                // Tahta boyutunun değişmemesi için
-                .drawingGroup()
+                // Sudoku tahtası - ekranın çoğunu kaplar
+                SudokuBoardView(viewModel: viewModel)
+                    .id(boardKey) // Tahtayı zorla yenilemek için id gerek
+                    .aspectRatio(1, contentMode: .fit)
+                    .padding(.horizontal, 5)
+                    .opacity(isBoardVisible ? 1 : 0)
+                    .offset(y: isBoardVisible ? 0 : 20)
+                    .disabled(viewModel.gameState == .failed || viewModel.gameState == .completed || showDifficultyPicker)
+                    // Metal ile hızlandırılmış render
+                    .drawingGroup()
+                    .frame(maxHeight: .infinity) // Maksimum yüksekliği kullan
                 
-                Spacer()
-                
-                // Oyun kontrolleri - sabit boyutlu konteyner
-                // Boyut değişimi olmayacak şekilde sabitlenmiş
+                // Rakam tuşları ve kontrol düğmeleri
                 ZStack {
                     // Sabit boyut garantisi için boş konteyner
                     Rectangle()
@@ -172,8 +162,9 @@ struct GameView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 // Görünüm stabilitesi için
                 .drawingGroup()
+                .disabled(viewModel.gameState == .failed || viewModel.gameState == .completed || showDifficultyPicker)
             }
-            .padding(.top, 10)
+            .padding(.top, 0) // Üst padding'i tamamen kaldırdık
             
             // Uyarı ve bilgi ekranları
             overlayViews
@@ -214,6 +205,13 @@ struct GameView: View {
                 )
                 .padding()
                 .transition(.scale.combined(with: .opacity))
+            }
+            
+            // Tam ekran arkaplan engelleme - oyun bittiğinde
+            if viewModel.gameState == .failed || viewModel.gameState == .completed || showDifficultyPicker {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .zIndex(90)
             }
         }
         .onChange(of: viewModel.pencilMode) { oldValue, newValue in
@@ -784,6 +782,27 @@ struct GameView: View {
                 .foregroundColor(.white)
             }
             .padding(.top, 20)
+            .padding(.horizontal, 40)
+            
+            // Anasayfaya Dön Butonu
+            Button(action: {
+                dismiss()
+            }) {
+                HStack {
+                    Image(systemName: "house.fill")
+                    Text("Anasayfaya Dön")
+                        .fontWeight(.medium)
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray, lineWidth: 1)
+                )
+                .foregroundColor(.primary)
+            }
+            .padding(.top, 5)
             .padding(.horizontal, 40)
         }
         .padding(30)

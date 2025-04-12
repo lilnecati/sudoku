@@ -24,6 +24,9 @@ class SoundManager: ObservableObject {
     private var navigationPlayer: AVAudioPlayer?
     private var erasePlayer: AVAudioPlayer?
     
+    // Log ayarı - varsayılan olarak kapalı
+    @AppStorage("isLoggingEnabled") private var isLoggingEnabled: Bool = false
+    
     // AppStorage ile entegre ses ayarı
     @AppStorage("enableSoundEffects") private var enableSoundEffects: Bool = true
     
@@ -33,7 +36,7 @@ class SoundManager: ObservableObject {
     private var powerManager = PowerSavingManager.shared
     
     private init() {
-        print("🎵 SoundManager başlatılıyor...")
+        log("SoundManager başlatılıyor...")
         
         // Audio session ayarları
         setupAudioSession()
@@ -41,7 +44,7 @@ class SoundManager: ObservableObject {
         // Sesleri önceden yükle
         preloadSounds()
         
-        print("✅ SoundManager başlatıldı")
+        log("SoundManager başlatıldı")
         
         // Ses seviyesi değişim bildirimini dinle
         NotificationCenter.default.addObserver(
@@ -66,12 +69,12 @@ class SoundManager: ObservableObject {
     }
     
     @objc private func handleAppDidEnterBackground() {
-        print("📱 Uygulama arka plana geçti - ses sistemi devre dışı bırakılıyor")
+        log("📱 Uygulama arka plana geçti - ses sistemi devre dışı bırakılıyor")
         deactivateAudioSession()
     }
     
     @objc private func handleAppWillEnterForeground() {
-        print("📱 Uygulama ön plana geçti - ses sistemi yeniden başlatılıyor")
+        log("📱 Uygulama ön plana geçti - ses sistemi yeniden başlatılıyor")
         configureAudioSession()
         resetAudioPlayers()
     }
@@ -86,14 +89,14 @@ class SoundManager: ObservableObject {
         
         switch type {
         case .began:
-            print("🔇 Ses kesintisi başladı - ses sistemi duraklatıldı")
+            log("🔇 Ses kesintisi başladı - ses sistemi duraklatıldı")
             // Ses oynatma işlemini durdur
             
         case .ended:
             guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
             
-            print("🔈 Ses kesintisi sona erdi - ses sistemi yeniden başlatılıyor")
+            log("🔈 Ses kesintisi sona erdi - ses sistemi yeniden başlatılıyor")
             
             if options.contains(.shouldResume) {
                 // Ses sistemini yeniden aktif et
@@ -101,7 +104,7 @@ class SoundManager: ObservableObject {
             }
             
         @unknown default:
-            print("⚠️ Bilinmeyen ses kesintisi durumu")
+            log("⚠️ Bilinmeyen ses kesintisi durumu")
         }
     }
     
@@ -115,15 +118,15 @@ class SoundManager: ObservableObject {
         
         switch reason {
         case .newDeviceAvailable:
-            print("🎧 Yeni ses cihazı bağlandı")
+            log("🎧 Yeni ses cihazı bağlandı")
             // Örn. kulaklık takıldı
             
         case .oldDeviceUnavailable:
-            print("🔈 Ses cihazı çıkarıldı - hoparlöre geçildi")
+            log("🔈 Ses cihazı çıkarıldı - hoparlöre geçildi")
             // Örn. kulaklık çıkarıldı
             
         default:
-            print("🔄 Ses yönlendirme değişti: \(reason.rawValue)")
+            log("🔄 Ses yönlendirme değişti: \(reason.rawValue)")
         }
         
         // Ses sistemini güvenli şekilde yeniden yapılandır
@@ -142,9 +145,9 @@ class SoundManager: ObservableObject {
             // Session'ı aktif et
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
             
-            print("✅ Audio session başarıyla yapılandırıldı (Kategori: playback)")
+            log("✅ Audio session başarıyla yapılandırıldı (Kategori: playback)")
         } catch {
-            print("❌ Audio session yapılandırılamadı: \(error.localizedDescription)")
+            logError("Audio session yapılandırılamadı: \(error.localizedDescription)")
         }
     }
     
@@ -152,9 +155,9 @@ class SoundManager: ObservableObject {
     private func deactivateAudioSession() {
         do {
             try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-            print("🔇 Audio session devre dışı bırakıldı")
+            log("🔇 Audio session devre dışı bırakıldı")
         } catch {
-            print("❌ Audio session devre dışı bırakılamadı: \(error.localizedDescription)")
+            logError("Audio session devre dışı bırakılamadı: \(error.localizedDescription)")
         }
     }
     
@@ -165,16 +168,16 @@ class SoundManager: ObservableObject {
         do {
             try audioSession.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
             try audioSession.setActive(true)
-            print("✅ Audio session başarıyla yapılandırıldı")
+            log("✅ Audio session başarıyla yapılandırıldı")
         } catch {
-            print("❌ Audio session yapılandırma hatası: \(error.localizedDescription)")
+            logError("Audio session yapılandırma hatası: \(error.localizedDescription)")
         }
     }
     
     /// Tüm ses dosyalarını yükler
     private func loadSounds() {
         // Ses dosyalarını yükle
-        print("🔊 Ses dosyaları yükleniyor...")
+        log("🔊 Ses dosyaları yükleniyor...")
         
         // Tüm ses oynatıcılarını sıfırla - memorydeki sesleri temizler
         resetAudioPlayers()
@@ -182,7 +185,7 @@ class SoundManager: ObservableObject {
     
     /// Tüm ses oynatıcılarını sıfırla - memorydeki sesleri temizler
     func resetAudioPlayers() {
-        print("🔄 Tüm ses oynatıcıları sıfırlanıyor...")
+        log("🔄 Tüm ses oynatıcıları sıfırlanıyor...")
         tapPlayer = nil
         numberInputPlayer = nil
         errorPlayer = nil
@@ -199,7 +202,7 @@ class SoundManager: ObservableObject {
     private func preloadSounds() {
         // Ses açıksa yükle
         if canPlaySound() {
-            print("🔊 Ses dosyaları önceden yükleniyor...")
+            log("🔊 Ses dosyaları önceden yükleniyor...")
             
             // Rakam sesi
             numberInputPlayer = loadSound(named: "number_tap", ofType: "wav")
@@ -207,7 +210,7 @@ class SoundManager: ObservableObject {
             // Silme sesi önbelleğe al
             erasePlayer = loadSound(named: "erase", ofType: "wav")
             if erasePlayer == nil {
-                print("⚠️ erase.wav yüklenemedi, silme işleminde tap sesi kullanılacak")
+                log("⚠️ erase.wav yüklenemedi, silme işleminde tap sesi kullanılacak")
                 erasePlayer = loadSound(named: "tap", ofType: "wav")
             }
             
@@ -221,21 +224,21 @@ class SoundManager: ObservableObject {
             // Navigasyon sesi olarak tap kullan
             navigationPlayer = loadSound(named: "tap", ofType: "wav")
             
-            print("✅ Ses dosyaları yüklendi")
+            log("✅ Ses dosyaları yüklendi")
         } else {
-            print("⚠️ Ses kapalı olduğu için önden yükleme yapılmadı")
+            log("⚠️ Ses kapalı olduğu için önden yükleme yapılmadı")
         }
     }
     
     /// Belirtilen isimli ses dosyasını yükler
     func loadSound(named name: String, ofType type: String) -> AVAudioPlayer? {
-        print("🔊 loadSound çağrıldı: \(name).\(type)")
+        log("🔊 loadSound çağrıldı: \(name).\(type)")
         do {
             let result = try createAudioPlayer(named: name, extension: type)
-            print("✅ Ses yüklendi: \(name).\(type) - URL: \(result.url?.lastPathComponent ?? "bilinmeyen")")
+            log("✅ Ses yüklendi: \(name).\(type) - URL: \(result.url?.lastPathComponent ?? "bilinmeyen")")
             return result
         } catch {
-            print("❌ Ses dosyası yüklenirken hata: \(name).\(type) - \(error.localizedDescription)")
+            logError("Ses dosyası yüklenirken hata: \(name).\(type) - \(error.localizedDescription)")
             return nil
         }
     }
@@ -265,7 +268,7 @@ class SoundManager: ObservableObject {
                     do {
                         let fileExists = FileManager.default.fileExists(atPath: url.path)
                         if fileExists {
-                            print("✅ Ses dosyası bulundu: \(path).\(ext)")
+                            log("✅ Ses dosyası bulundu: \(path).\(ext)")
                             
                             // Format tespiti
                             let data = try Data(contentsOf: url)
@@ -275,10 +278,10 @@ class SoundManager: ObservableObject {
                             var fileTypeHint: String? = nil
                             if hexSignature.hasPrefix("5249") {  // "RIFF" (WAV)
                                 fileTypeHint = AVFileType.wav.rawValue
-                                print("🔄 Format: WAV (RIFF) algılandı")
+                                log("�� Format: WAV (RIFF) algılandı")
                             } else if hexSignature.hasPrefix("4944") || hexSignature.hasPrefix("FFFA") || hexSignature.hasPrefix("FFFB") {
                                 fileTypeHint = AVFileType.mp3.rawValue
-                                print("🔄 Format: MP3 algılandı")
+                                log("🔄 Format: MP3 algılandı")
                             }
                             
                             // Veriyi ve doğru format bilgisini kullanarak oynatıcı oluştur
@@ -286,22 +289,22 @@ class SoundManager: ObservableObject {
                                 let player = try AVAudioPlayer(data: data, fileTypeHint: fileTypeHint)
                                 player.prepareToPlay()
                                 player.volume = Float(defaultVolume)
-                                print("✅ Ses oynatıcı başarıyla oluşturuldu: \(path).\(ext)")
+                                log("✅ Ses oynatıcı başarıyla oluşturuldu: \(path).\(ext)")
                                 return player
                             } catch {
-                                print("❌ AVAudioPlayer oluşturulamadı: \(error.localizedDescription)")
+                                logError("AVAudioPlayer oluşturulamadı: \(error.localizedDescription)")
                                 // Diğer uzantı veya yol ile devam et
                             }
                         }
                     } catch {
-                        print("❌ \(path).\(ext) yüklenirken hata: \(error.localizedDescription)")
+                        logError("\(path).\(ext) yüklenirken hata: \(error.localizedDescription)")
                     }
                 }
             }
         }
         
         // Hiçbir şekilde yüklenemedi, hata fırlat
-        print("❌ Hiçbir şekilde yüklenemedi: \(name).\(fileExt)")
+        logError("Hiçbir şekilde yüklenemedi: \(name).\(fileExt)")
         throw NSError(domain: "SoundManager", 
                      code: 1001, 
                      userInfo: [NSLocalizedDescriptionKey: "Ses dosyası bulunamadı veya yüklenemedi: \(name).\(fileExt)"])
@@ -309,12 +312,12 @@ class SoundManager: ObservableObject {
     
     /// Ses kaynakları kontrol etme - debug amaçlı
     func checkSoundResources() {
-        print("🔍 TÜM SES KAYNAKLARI KONTROL EDİLİYOR")
+        log("🔍 TÜM SES KAYNAKLARI KONTROL EDİLİYOR")
         
         // Uygulama içinde bulunan tüm ses dosyalarını bul
         let fileManager = FileManager.default
         guard let bundleURL = Bundle.main.resourceURL else {
-            print("❌ Bundle URL bulunamadı")
+            log("❌ Bundle URL bulunamadı")
             return
         }
         
@@ -327,12 +330,12 @@ class SoundManager: ObservableObject {
             bundleURL.appendingPathComponent("Resources/Sounds").path
         ]
         
-        print("🔍 Arama yapılacak yollar: \(searchPaths)")
+        log("🔍 Arama yapılacak yollar: \(searchPaths)")
         
         // Tüm dizinleri dolaş
         for path in searchPaths {
             if fileManager.fileExists(atPath: path) {
-                print("✅ Var olan dizin: \(path)")
+                log("✅ Var olan dizin: \(path)")
                 do {
                     // Bu dizindeki tüm dosyaları al
                     let fileURLs = try fileManager.contentsOfDirectory(atPath: path)
@@ -345,9 +348,9 @@ class SoundManager: ObservableObject {
                     }
                     
                     if soundFiles.isEmpty {
-                        print("⚠️ \(path) içinde ses dosyası bulunamadı")
+                        log("⚠️ \(path) içinde ses dosyası bulunamadı")
                     } else {
-                        print("✅ \(path) içinde bulunan ses dosyaları: \(soundFiles)")
+                        log("✅ \(path) içinde bulunan ses dosyaları: \(soundFiles)")
                         
                         // Dosya detaylarını göster
                         for soundFile in soundFiles {
@@ -355,22 +358,22 @@ class SoundManager: ObservableObject {
                             do {
                                 let attrs = try fileManager.attributesOfItem(atPath: fullPath)
                                 let fileSize = attrs[.size] as? UInt64 ?? 0
-                                print("📊 '\(soundFile)' - Boyut: \(fileSize) bytes")
+                                log("📊 '\(soundFile)' - Boyut: \(fileSize) bytes")
                             } catch {
-                                print("⚠️ '\(soundFile)' özellikleri okunamadı: \(error)")
+                                logError("'\(soundFile)' özellikleri okunamadı: \(error)")
                             }
                         }
                     }
                 } catch {
-                    print("⚠️ \(path) içeriği okunamadı: \(error)")
+                    logError("\(path) içeriği okunamadı: \(error)")
                 }
             } else {
-                print("⚠️ Dizin mevcut değil: \(path)")
+                log("⚠️ Dizin mevcut değil: \(path)")
             }
         }
         
         // Ana bundle içindeki ses kaynaklarını listele
-        print("\n🔍 Bundle kaynaklarını doğrudan kontrol ediyorum:")
+        log("\n�� Bundle kaynaklarını doğrudan kontrol ediyorum:")
         
         // Test edilecek ses dosyaları
         let testSounds = ["tap", "error", "correct", "completion", "number_tap"]
@@ -378,27 +381,27 @@ class SoundManager: ObservableObject {
         for soundName in testSounds {
             for ext in extensions {
                 if let resourcePath = Bundle.main.path(forResource: soundName, ofType: ext) {
-                    print("✅ '\(soundName).\(ext)' bulundu: \(resourcePath)")
+                    log("✅ '\(soundName).\(ext)' bulundu: \(resourcePath)")
                     
                     // Dosya boyutunu kontrol et
                     do {
                         let attrs = try fileManager.attributesOfItem(atPath: resourcePath)
                         let fileSize = attrs[.size] as? UInt64 ?? 0
-                        print("📊 '\(soundName).\(ext)' - Boyut: \(fileSize) bytes")
+                        log("📊 '\(soundName).\(ext)' - Boyut: \(fileSize) bytes")
                         
                         // Dosyayı AVAudioPlayer ile açmaya çalış
                         do {
                             let url = URL(fileURLWithPath: resourcePath)
                             let testPlayer = try AVAudioPlayer(contentsOf: url)
-                            print("✅ '\(soundName).\(ext)' AVAudioPlayer ile açılabildi - Süre: \(testPlayer.duration) sn")
+                            log("✅ '\(soundName).\(ext)' AVAudioPlayer ile açılabildi - Süre: \(testPlayer.duration) sn")
                         } catch {
-                            print("❌ '\(soundName).\(ext)' AVAudioPlayer ile açılamadı: \(error)")
+                            logError("'\(soundName).\(ext)' AVAudioPlayer ile açılamadı: \(error)")
                         }
                     } catch {
-                        print("⚠️ '\(soundName).\(ext)' dosya özellikleri okunamadı: \(error)")
+                        logError("'\(soundName).\(ext)' dosya özellikleri okunamadı: \(error)")
                     }
                 } else {
-                    print("❌ '\(soundName).\(ext)' bulunamadı")
+                    log("❌ '\(soundName).\(ext)' bulunamadı")
                 }
             }
         }
@@ -406,7 +409,7 @@ class SoundManager: ObservableObject {
     
     /// Ses seviyesini günceller ve tüm oynatıcılara uygular
     func updateVolumeLevel(_ volume: Double) {
-        print("🔊 Ses seviyesi güncelleniyor: \(volume)")
+        log("🔊 Ses seviyesi güncelleniyor: \(volume)")
         defaultVolume = volume
         
         // Tüm oynatıcılara yeni ses seviyesini uygula
@@ -428,7 +431,7 @@ class SoundManager: ObservableObject {
     
     /// Ses seviyesini sessizce günceller - test sesi çalmadan (kaydırıcı hareketi için)
     func updateVolumeLevelQuietly(_ volume: Double) {
-        print("🔊 Ses seviyesi sessizce güncelleniyor: \(volume)")
+        log("🔊 Ses seviyesi sessizce güncelleniyor: \(volume)")
         defaultVolume = volume
         
         // Tüm oynatıcılara yeni ses seviyesini uygula
@@ -464,20 +467,20 @@ class SoundManager: ObservableObject {
         // Kendi ses dosyalarımızı kullan
         if defaultVolume > 0.0 {
             // Ses için tap.wav sesini kullan (number_tap değil)
-            print("🔊 Ses seviyesi değişikliği için tap sesi çalınıyor")
+            log("🔊 Ses seviyesi değişikliği için tap sesi çalınıyor")
             
             if let player = loadSound(named: "tap", ofType: "wav") {
                 player.volume = Float(defaultVolume)
                 player.play()
             } else {
-                print("❌ tap.wav yüklenemedi, ses çalınamadı")
+                logError("tap.wav yüklenemedi, ses çalınamadı")
             }
         }
     }
     
     /// Ses ayarlarını günceller
     func updateSoundSettings(enabled: Bool) {
-        print("🔊 Ses ayarları güncelleniyor: \(enabled ? "Açık" : "Kapalı")")
+        log("🔊 Ses ayarları güncelleniyor: \(enabled ? "Açık" : "Kapalı")")
         enableSoundEffects = enabled
         
         // Ses ayarı değiştiğinde oynatıcıları sıfırla
@@ -488,15 +491,15 @@ class SoundManager: ObservableObject {
     
     // Geçici çözüm - system sound olarak bir test sesi çal
     func playBasicTestSound() {
-        print("🔊 Temel ses testi çalınıyor...")
+        log("🔊 Temel ses testi çalınıyor...")
         guard canPlaySound() else { 
-            print("❌ Ses ayarları kapalı olduğu için test sesi çalınamıyor")
+            log("❌ Ses ayarları kapalı olduğu için test sesi çalınamıyor")
             return 
         }
         
         // Ses seviyesine göre test sesleri
         if defaultVolume <= 0.0 {
-            print("❌ Ses seviyesi 0 olduğu için test sesi çalınamıyor")
+            log("❌ Ses seviyesi 0 olduğu için test sesi çalınamıyor")
             return
         }
         
@@ -538,7 +541,7 @@ class SoundManager: ObservableObject {
             }
         }
         
-        print("✅ Test sesi çalındı")
+        log("✅ Test sesi çalındı")
     }
     
     /// Kullanıcı ses ayarlarını kontrol eder
@@ -548,7 +551,7 @@ class SoundManager: ObservableObject {
     
     /// Sayı girildiğinde çalan ses
     func playNumberInputSound() {
-        print("🎵 playNumberInputSound çağrıldı")
+        log("🎵 playNumberInputSound çağrıldı")
         guard canPlaySound() else { return }
         
         // Sistem sesi DEVRE DIŞI - çift ses sorununu çözmek için
@@ -560,17 +563,17 @@ class SoundManager: ObservableObject {
             
             // Yükleme başarısız olursa log tut
             if numberInputPlayer == nil {
-                print("❌ number_tap.wav yüklenemedi, alternatif ses çalınamayacak")
+                log("❌ number_tap.wav yüklenemedi, alternatif ses çalınamayacak")
             }
         }
         
         guard let player = numberInputPlayer else { 
-            print("❌ Number input player nil olduğu için ses çalınamıyor")
+            log("❌ Number input player nil olduğu için ses çalınamıyor")
             return 
         }
         
         // İsmi ve formatı log'la
-        print("✅ playNumberInputSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+        log("✅ playNumberInputSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
         
         if player.isPlaying { player.stop() }
         player.currentTime = 0
@@ -580,7 +583,7 @@ class SoundManager: ObservableObject {
     
     /// Hatalı bir hamle yapıldığında çalan ses
     func playErrorSound() {
-        print("🎵 playErrorSound çağrıldı")
+        log("🎵 playErrorSound çağrıldı")
         guard canPlaySound() else { return }
         
         // System sound DEVRE DIŞI
@@ -601,7 +604,7 @@ class SoundManager: ObservableObject {
     
     /// Doğru bir hamle yapıldığında çalan ses
     func playCorrectSound() {
-        print("🎵 playCorrectSound çağrıldı")
+        log("🎵 playCorrectSound çağrıldı")
         guard canPlaySound() else { return }
         
         // System sound DEVRE DIŞI
@@ -642,7 +645,7 @@ class SoundManager: ObservableObject {
     
     /// Menü ve gezinme sesi
     func playNavigationSound() {
-        print("🎵 playNavigationSound çağrıldı")
+        log("🎵 playNavigationSound çağrıldı")
         guard canPlaySound() else { return }
         
         // Tüm sistem sesleri devre dışı bırakıldı
@@ -650,23 +653,23 @@ class SoundManager: ObservableObject {
         
         // Klasik yöntem - kendi ses dosyamızı kullanalım
         if navigationPlayer == nil {
-            print("⚠️ Navigation player oluşturuluyor - doğrudan tap.wav kullanılacak")
+            log("⚠️ Navigation player oluşturuluyor - doğrudan tap.wav kullanılacak")
             // Burada doğrudan "tap" dosyasını kullan, alternatif araması yapma
             navigationPlayer = loadSound(named: "tap", ofType: "wav")
             
             // Yükleme başarısız olursa log tut
             if navigationPlayer == nil {
-                print("❌ tap.wav yüklenemedi, ses çalınamayacak")
+                log("❌ tap.wav yüklenemedi, ses çalınamayacak")
             }
         }
         
         guard let player = navigationPlayer else { 
-            print("❌ Navigation player nil olduğu için ses çalınamıyor")
+            log("❌ Navigation player nil olduğu için ses çalınamıyor")
             return 
         }
         
         // İsmi ve formatı log'la
-        print("✅ playNavigationSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+        log("✅ playNavigationSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
         
         if player.isPlaying { player.stop() }
         player.currentTime = 0
@@ -679,11 +682,11 @@ class SoundManager: ObservableObject {
         switch action {
         case .tap:
             // TAP için özel bir print ekleyerek tam olarak ne çağrıldığını görelim
-            print("🔍 executeSound(.tap) çağrıldı -> doğrudan playNavigationSound çağrılıyor")
+            log("🔍 executeSound(.tap) çağrıldı -> doğrudan playNavigationSound çağrılıyor")
             playNavigationSound()
         case .numberInput:
             // NUMBER_INPUT için özel bir print ekleyerek ne çağrıldığını görelim
-            print("🔍 executeSound(.numberInput) çağrıldı -> playNumberInputSound çağrılıyor")
+            log("🔍 executeSound(.numberInput) çağrıldı -> playNumberInputSound çağrılıyor")
             playNumberInputSound()
         case .correct:
             playCorrectSound()
@@ -717,7 +720,7 @@ class SoundManager: ObservableObject {
     
     /// Silme tuşu için ses
     func playEraseSound() {
-        print("🎵 playEraseSound çağrıldı")
+        log("�� playEraseSound çağrıldı")
         guard canPlaySound() else { return }
         
         // Erase ses dosyasını çal - önceden yüklenmiş oynatıcıyı kullan
@@ -729,7 +732,7 @@ class SoundManager: ObservableObject {
         }
         
         guard let player = erasePlayer else { 
-            print("❌ Erase player nil olduğu için ses çalınamıyor")
+            log("❌ Erase player nil olduğu için ses çalınamıyor")
             return 
         }
         
@@ -742,12 +745,12 @@ class SoundManager: ObservableObject {
         player.play()
         
         // Log çıktısı
-        print("✅ playEraseSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+        log("✅ playEraseSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
     }
     
     // Ses seviyesi değiştiğinde çağrılan fonksiyon
     @objc private func handleVolumeChange(notification: Notification) {
-        print("🔊 Ses seviyesi değişikliği bildirimi alındı")
+        log("🔊 Ses seviyesi değişikliği bildirimi alındı")
         // Ses seviyesi değiştiğinde gerekli ayarlamaları yap
         // Tüm aktif ses oynatıcılarının ses seviyesini güncelle
         numberInputPlayer?.volume = Float(defaultVolume)
@@ -756,5 +759,24 @@ class SoundManager: ObservableObject {
         completionPlayer?.volume = Float(defaultVolume)
         navigationPlayer?.volume = Float(defaultVolume)
         erasePlayer?.volume = Float(defaultVolume)
+    }
+    
+    // MARK: - Log Yardımcı Metotları
+    
+    /// Loglama ayarının açılıp/kapatılması için
+    func toggleLogging(_ enabled: Bool) {
+        isLoggingEnabled = enabled
+        log("Loglama \(enabled ? "açıldı" : "kapatıldı")")
+    }
+    
+    /// Basit log fonksiyonu
+    private func log(_ message: String) {
+        guard isLoggingEnabled else { return }
+        print("🔊 SoundManager: \(message)")
+    }
+    
+    /// Hata log fonksiyonu - her zaman gösterilir
+    private func logError(_ message: String) {
+        print("❌ SoundManager Hatası: \(message)")
     }
 } 
