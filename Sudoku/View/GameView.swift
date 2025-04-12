@@ -996,4 +996,3 @@ struct DifficultyButton: View {
         .buttonStyle(PlainButtonStyle())
     }
 } 
-

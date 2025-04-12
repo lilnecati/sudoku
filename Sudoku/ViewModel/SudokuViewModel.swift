@@ -32,6 +32,8 @@ class SudokuViewModel: ObservableObject {
     // Performans iyileştirmesi: Pencil mark'ları hızlı erişim için önbelleğe al
     private var pencilMarkCache: [String: Set<Int>] = [:]
     private var validValuesCache: [String: Set<Int>] = [:]
+    private var highlightedCellsCache: [String: Bool] = [:]
+    private var sameValueCellsCache: [String: Bool] = [:]
     private var lastSelectedCell: (row: Int, column: Int)? = nil
     
     // Kullanıcının girdiği değerleri takip etmek için
@@ -49,6 +51,12 @@ class SudokuViewModel: ObservableObject {
     private var startTime: Date?
     // Duraklatıldığında geçen süre saklanır
     private var pausedElapsedTime: TimeInterval = 0
+    
+    // Orijinal tahta hücrelerini takip etmek için
+    private var originalBoardCells: [(Int, Int)] = []
+    
+    // Vurgulanan hücreleri önbelleğe almak için
+    private var cachedHighlightedPositions: Set<Position> = []
     
     // Oyun durumunu sıfırla - yeni oyun başlatırken kullanılır
     func resetGameState() {
@@ -121,24 +129,43 @@ class SudokuViewModel: ObservableObject {
     // MARK: - Core Oyun Metodları
     
     // Yeni bir oyun başlat - optimize edildi
-    func newGame(difficulty: SudokuBoard.Difficulty) {
-        board = SudokuBoard(difficulty: difficulty)
-        selectedCell = nil
-        invalidCells = []
-        elapsedTime = 0
-        pausedElapsedTime = 0
+    func newGame(difficulty: SudokuBoard.Difficulty? = nil) {
+        // Mevcut kayıt ID'sini sıfırla - böylece yeni bir kayıt oluşacak
+        self.currentGameID = nil
+        
+        // Önceden ayarlanmış zorluk seviyesini veya varsayılanı kullan
+        let selectedDifficulty = difficulty ?? board.difficulty
+        
+        // Yeni bir tahta oluştur
+        board = SudokuBoard(difficulty: selectedDifficulty)
+        
+        // Tahta durumunu orijinal olarak ayarla
+        originalBoardCells = []
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if board.getValue(row: row, column: col) != nil {
+                    originalBoardCells.append((row, col))
+                }
+            }
+        }
+        
+        // Kullanıcı tarafından girilen değerleri sıfırla
+        userEnteredValues = Array(repeating: Array(repeating: false, count: 9), count: 9)
+        
+        // Tüm state bilgilerini sıfırla
+        resetGameState()
+        
+        // Oyun durumunu güncelle
         gameState = .playing
-        moveCount = 0
-        errorCount = 0
-        hintCount = 0
-        remainingHints = 3  // Yeni oyunda ipucu hakkını sıfırla
         
-        // Önbellekleri temizle
-        pencilMarkCache.removeAll(keepingCapacity: true)
-        validValuesCache.removeAll(keepingCapacity: true)
-        
+        // Zamanlayıcıyı başlat
         startTimer()
+        
+        // Kullanılan sayıları güncelle
         updateUsedNumbers()
+        
+        // Önbelleği temizle
+        clearCaches()
     }
     
     // Hücre seçme - optimize edildi
@@ -169,8 +196,8 @@ class SudokuViewModel: ObservableObject {
         
         // Dokunsal geri bildirim
         if enableHapticFeedback && enableCellTapHaptic {
-            feedbackGenerator.prepare()
-            feedbackGenerator.impactOccurred(intensity: 0.5)
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred(intensity: 1.0) // Yoğunluğu artırdım
         }
         
         // Debug log
@@ -876,7 +903,7 @@ class SudokuViewModel: ObservableObject {
         
         // Hücreyi çöz
         enterValue(value, at: row, col: col)
-            hintCount += 1
+        hintCount += 1
         remainingHints -= 1
         
         // Tahtayı güncelle
@@ -1054,10 +1081,10 @@ class SudokuViewModel: ObservableObject {
         // Hücreyi çöz
         enterValue(value, at: row, col: col)
         hintCount += 1
-            remainingHints -= 1
-            
+        remainingHints -= 1
+        
         // Tahtayı güncelle
-            validateBoard()
+        validateBoard()
         updateUsedNumbers()
         
         return hint
@@ -1130,7 +1157,7 @@ class SudokuViewModel: ObservableObject {
         
         // Tahtayı güncelle
         validateBoard()
-            updateUsedNumbers()
+        updateUsedNumbers()
         
         return hint
     }
@@ -1298,7 +1325,7 @@ class SudokuViewModel: ObservableObject {
         // Titreşim geri bildirimi
         if enableHapticFeedback && enableNumberInputHaptic && value != nil {
             let feedback = UIImpactFeedbackGenerator(style: .medium)
-            feedback.impactOccurred()
+            feedback.impactOccurred(intensity: 1.0) // Yoğunluğu artırdım
         }
         
         // Kullanıcı girişi olarak işaretle
@@ -2197,9 +2224,6 @@ class SudokuViewModel: ObservableObject {
         }
     }
     
-    // Performans iyileştirmesi: Önbellekleme ile hücre vurgusu kontrolü
-    private var highlightedCellsCache: [String: Bool] = [:]
-    private var sameValueCellsCache: [String: Bool] = [:]
     
     // Geçici bir süre için önbellekleri geçersiz kıl
     func invalidateCellCache() {
@@ -2258,6 +2282,19 @@ class SudokuViewModel: ObservableObject {
         sameValueCellsCache[cacheKey] = result
         
         return result
+    }
+    
+    // Önbellekleri temizleme
+    private func clearCaches() {
+        // Önbellekleri temizle
+        pencilMarkCache.removeAll(keepingCapacity: true)
+        validValuesCache.removeAll(keepingCapacity: true)
+        highlightedCellsCache.removeAll(keepingCapacity: true)
+        sameValueCellsCache.removeAll(keepingCapacity: true)
+        
+        // Önbellek durumunu da sıfırla
+        cachedHighlightedPositions.removeAll()
+        invalidCells.removeAll()
     }
 } 
 

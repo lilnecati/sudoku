@@ -99,7 +99,7 @@ struct NumberPadView: View {
         return Button(action: {
             // Titreşim geri bildirimi - ayarlara bağlı
             if enableHapticFeedback && enableNumberInputHaptic {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UIImpactFeedbackGenerator(style: .light).impactOccurred(intensity: 1.0)
             }
             
             // Ses efekti çal
@@ -186,7 +186,7 @@ struct NumberPadView: View {
         return Button(action: {
             // Titreşim geri bildirimi - ayarlara bağlı
             if enableHapticFeedback && enableNumberInputHaptic {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 1.0)
             }
 
             // Ses efekti çal
@@ -254,7 +254,7 @@ struct NumberPadView: View {
         return Button(action: {
             // Titreşim geri bildirimi - ayarlara bağlı
             if enableHapticFeedback && enableNumberInputHaptic {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 1.0)
             }
             
             // Ses efekti çal

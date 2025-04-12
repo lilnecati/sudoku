@@ -33,8 +33,7 @@ struct SudokuCellView: View {
                 // Hücre seçildiğinde titreşim geri bildirimi - ayarlara bağlı
                 if enableHapticFeedback && enableCellTapHaptic {
                     let generator = UIImpactFeedbackGenerator(style: .medium)
-                    generator.prepare()
-                    generator.impactOccurred()
+                    generator.impactOccurred(intensity: 1.0)  // Yoğunluğu artırdım ve prepare() kaldırıldı
                 }
                 
                 // Ses efekti çal
