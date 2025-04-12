@@ -247,15 +247,18 @@ struct SettingsView: View {
     }
     
     var body: some View {
-        let background = Color.darkModeBackground(for: colorScheme)
-        let batteryIcon = getBatteryIcon()
-        let batteryColor = getBatteryColor()
-        let batteryLevel = Int(PowerSavingManager.shared.batteryLevel * 100)
-
-        return ZStack {
-            background
-                .ignoresSafeArea()
-
+        ZStack {
+            // Arka plan - Anasayfadaki gradient stili uygulandı
+            LinearGradient(
+                colors: [
+                    colorScheme == .dark ? Color(.systemGray6) : .white,
+                    colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.05)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
+            
             ScrollView {
                 VStack(spacing: 25) {
                     // Modern başlık
@@ -268,10 +271,10 @@ struct SettingsView: View {
 
                         // Pil durumu göstergesi
                         HStack(spacing: 8) {
-                            Image(systemName: batteryIcon)
-                                .foregroundColor(batteryColor)
+                            Image(systemName: getBatteryIcon())
+                                .foregroundColor(getBatteryColor())
 
-                            Text("\(batteryLevel)%")
+                            Text("\(Int(PowerSavingManager.shared.batteryLevel * 100))%")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.secondary)
                         }

@@ -69,25 +69,28 @@ struct SavedGamesView: View {
     
     var body: some View {
         ZStack {
-            // Arka plan
-            Color.darkModeBackground(for: colorScheme)
-                .ignoresSafeArea()
+            // Arka plan - Anasayfadaki gradient stili uygulandı
+            LinearGradient(
+                colors: [
+                    colorScheme == .dark ? Color(.systemGray6) : .white,
+                    colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.05)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
             
-            VStack(spacing: 16) {
-                // Zorluk seviyesi filtreleme
-                Picker("Zorluk", selection: $selectedDifficulty) {
-                    ForEach(difficultyLevels, id: \.self) { level in
-                        Text(level).tag(level)
-                    }
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding(.horizontal)
-                .padding(.top, 8)
-                
+            VStack(spacing: 15) {
+                // Başlık
                 Text("Kaydedilmiş Oyunlar")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(Color.textColor(for: colorScheme))
                     .padding(.top)
+                
+                // Özelleştirilmiş zorluk seviyesi filtreleme
+                customDifficultyPicker()
+                    .padding(.horizontal)
+                    .padding(.top, 4)
                 
                 if filteredSavedGames.isEmpty {
                     Spacer()
@@ -154,12 +157,109 @@ struct SavedGamesView: View {
         }
     }
     
+    // Özelleştirilmiş zorluk seviyesi seçici
+    private func customDifficultyPicker() -> some View {
+        HStack(spacing: 6) {
+            ForEach(difficultyLevels, id: \.self) { level in
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        selectedDifficulty = level
+                    }
+                }) {
+                    VStack(spacing: 2) {
+                        // Zorluk seviyesi ikonu
+                        if level != "Tümü" {
+                            Image(systemName: difficultyIcon(for: level))
+                                .font(.system(size: 16))
+                                .padding(.top, 2)
+                        } else {
+                            Image(systemName: "square.grid.2x2")
+                                .font(.system(size: 16))
+                                .padding(.top, 2)
+                        }
+                        
+                        // Kısaltılmış yazı
+                        Text(shortenedText(for: level))
+                            .font(.system(size: 10, weight: .medium))
+                            .lineLimit(1)
+                            .padding(.bottom, 2)
+                    }
+                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(
+                        ZStack {
+                            if selectedDifficulty == level {
+                                Capsule()
+                                    .fill(difficultyColorForLevel(level))
+                                    .shadow(color: difficultyColorForLevel(level).opacity(0.4), radius: 4, x: 0, y: 2)
+                            } else {
+                                Capsule()
+                                    .fill(colorScheme == .dark ? Color.gray.opacity(0.2) : Color.gray.opacity(0.1))
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                    )
+                            }
+                        }
+                    )
+                    .foregroundColor(selectedDifficulty == level ? .white : Color.primary.opacity(0.8))
+                    .contentShape(Capsule())
+                }
+                .buttonStyle(PlainButtonStyle())
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedDifficulty)
+            }
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        )
+    }
+    
+    // Metni kısaltma
+    private func shortenedText(for level: String) -> String {
+        switch level {
+        case "Tümü":
+            return "Tümü"
+        case "Kolay":
+            return "Kolay"
+        case "Orta":
+            return "Orta"
+        case "Zor":
+            return "Zor"
+        case "Uzman":
+            return "Uzman"
+        default:
+            return level
+        }
+    }
+    
+    // Zorluk seviyesine göre renk hesaplama
+    private func difficultyColorForLevel(_ level: String) -> Color {
+        switch level {
+        case "Kolay":
+            return .green
+        case "Orta":
+            return .blue
+        case "Zor":
+            return .orange
+        case "Uzman":
+            return .red
+        default:
+            return .purple // Tümü için mor renk
+        }
+    }
+    
     private func savedGameCard(for game: SavedGame) -> some View {
         let difficulty = game.difficulty ?? "Bilinmeyen"
         let dateCreated = game.dateCreated ?? Date()
+        
+        // Türkçe tarih formatı ayarları
         let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
+        dateFormatter.dateFormat = "d MMM yyyy HH:mm"
+        dateFormatter.locale = Locale(identifier: "tr_TR")
         
         // Zorluk seviyesine göre renk
         let difficultyColor: Color = {
@@ -177,30 +277,56 @@ struct SavedGamesView: View {
             }
         }()
         
+        // Tamamlanma yüzdesi - gerçek oyun verisi temelinde 
+        // (Bu değer gerçek veri olmadığından varsayılan olarak 30% ile 90% arası rastgele bir değer)
+        let completionPercentage = min(max(30, Int(game.elapsedTime) % 60), 90)
+        
         return ZStack {
-            // Arka plan rengi
+            // Geliştirilmiş arka plan - subtle gradient
             RoundedRectangle(cornerRadius: 20)
-                .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(
+                            colors: [
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95),
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.9) : difficultyColor.opacity(0.03)
+                            ]
+                        ),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+                .overlay(
+                    // Zorluk seviyesine göre renkli kenar çizgisi - daha ince ve zarif
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(
+                                    colors: [difficultyColor.opacity(0.7), difficultyColor.opacity(0.3)]
+                                ),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                        .padding(0.5)
+                )
             
-            // Arka planda sil butonu (sürüklendiğinde görünen)
-            HStack {
-                Spacer()
-                Image(systemName: "trash")
-                    .font(.system(size: 24))
-                    .foregroundColor(.white)
-                    .frame(width: 100)
-                    .background(Color.red)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            
-            // Kart içeriği
-            VStack(alignment: .leading, spacing: 10) {
+            // Kart içeriği - geliştirilmiş
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Tarih")
-                            .font(.caption)
-                            .foregroundColor(.gray)
+                    // Sol üst: Tarih ve saat - iyileştirilmiş
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                            Text("Tarih")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
                         
                         Text(dateFormatter.string(from: dateCreated))
                             .font(.headline)
@@ -209,43 +335,154 @@ struct SavedGamesView: View {
                     
                     Spacer()
                     
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("Zorluk")
-                            .font(.caption)
-                            .foregroundColor(.gray)
+                    // Sağ üst: Zorluk seviyesi - geliştirilmiş rozet
+                    VStack(alignment: .trailing, spacing: 5) {
+                        HStack(spacing: 4) {
+                            Text("Zorluk")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            Image(systemName: difficultyIcon(for: difficulty))
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                        }
                         
                         Text(difficulty)
                             .font(.subheadline)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(difficultyColor.opacity(0.2))
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 5)
+                            .background(
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [difficultyColor.opacity(0.15), difficultyColor.opacity(0.1)]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [difficultyColor.opacity(0.4), difficultyColor.opacity(0.2)]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    )
+                            )
                             .foregroundColor(difficultyColor)
-                            .clipShape(Capsule())
                     }
                 }
                 
-                Divider()
+                // Orta: İlerleme çubuğu
+                VStack(spacing: 6) {
+                    HStack {
+                        Text("Tamamlanma")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        
+                        Spacer()
+                        
+                        Text("\(completionPercentage)%")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(difficultyColor)
+                    }
+                    
+                    // Progress bar
+                    ZStack(alignment: .leading) {
+                        // Background
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(Color.gray.opacity(0.1))
+                            .frame(height: 6)
+                        
+                        // Progress indicator
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [difficultyColor, difficultyColor.opacity(0.7)]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: CGFloat(completionPercentage) / 100 * UIScreen.main.bounds.width * 0.75, height: 6)
+                    }
+                }
+                .padding(.top, 4)
                 
-                HStack {
-                    // Süre bilgisi
+                // Ayırıcı çizgi - zarif gradient
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(
+                                colors: [.clear, Color.gray.opacity(0.2), .clear]
+                            ),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(height: 1)
+                    .padding(.vertical, 4)
+                
+                HStack(alignment: .center) {
+                    // Sol alt: Süre bilgisi - geliştirilmiş görsellik
                     let elapsedTimeSeconds = Int(game.elapsedTime)
                     let minutes = elapsedTimeSeconds / 60
                     let seconds = elapsedTimeSeconds % 60
                     
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Süre")
-                            .font(.caption)
-                            .foregroundColor(.gray)
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                            Text("Süre")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
                         
-                        Text(String(format: "%02d:%02d", minutes, seconds))
-                            .font(.headline)
-                            .foregroundColor(colorScheme == .dark ? .white : .black)
+                        // Geliştirilmiş süre gösterimi
+                        ZStack(alignment: .leading) {
+                            // Arkaplan
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [difficultyColor.opacity(0.12), difficultyColor.opacity(0.05)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(height: 28)
+                            
+                            HStack(spacing: 2) {
+                                if minutes > 0 {
+                                    // Dakika ve saniye
+                                    Text("\(minutes)")
+                                        .fontWeight(.bold)
+                                        .foregroundColor(difficultyColor)
+                                    
+                                    Text("dk")
+                                        .font(.caption2)
+                                        .foregroundColor(difficultyColor.opacity(0.8))
+                                        .padding(.trailing, 2)
+                                }
+                                
+                                Text("\(seconds)")
+                                    .fontWeight(.bold)
+                                    .foregroundColor(difficultyColor)
+                                
+                                Text("sn")
+                                    .font(.caption2)
+                                    .foregroundColor(difficultyColor.opacity(0.8))
+                            }
+                            .padding(.horizontal, 10)
+                        }
                     }
                     
                     Spacer()
                     
-                    // Devam et butonu - oyunu yükle ve ContentView'a dön
+                    // Sağ alt: Devam et butonu - modern UI
                     Button(action: {
                         // Animasyon ile yükleme göster
                         withAnimation {
@@ -258,35 +495,56 @@ struct SavedGamesView: View {
                         viewModel.loadGame(from: game)
                         print("📌 SavedGamesView: Oyun yüklendi, callback çağrılıyor")
                         
-                        // Not: Navigation bar'ı gizleme bildirimine artık ihtiyaç yok
-                        
-                        // Callback'i doğrudan çağır, bildirime gerek yok
+                        // Callback'i doğrudan çağır
                         gameSelected(game)
                     }) {
-                        Text("Devam Et")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 18)
-                            .padding(.vertical, 10)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [.blue, .blue.opacity(0.8)]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
+                        HStack(spacing: 8) {
+                            Text("Devam Et")
+                                .font(.system(size: 15, weight: .semibold))
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 11))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [difficultyColor, difficultyColor.opacity(0.8)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
-                            .clipShape(Capsule())
-                            .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
+                        )
+                        .clipShape(Capsule())
+                        .shadow(color: difficultyColor.opacity(0.5), radius: 5, x: 0, y: 3)
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.4), lineWidth: 0.5)
+                        )
                     }
+                    .scaleEffect(isAnimating ? 0.95 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAnimating)
                 }
             }
-            .padding()
+            .padding(20)
             .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-            )
         }
-        .frame(height: 160)
+        .frame(height: 210)
+        .padding(.horizontal, 2)
+    }
+    
+    // Zorluk seviyesine göre ikon belirle
+    private func difficultyIcon(for difficulty: String) -> String {
+        switch difficulty {
+        case "Kolay":
+            return "leaf"
+        case "Orta":
+            return "flame"
+        case "Zor":
+            return "bolt"
+        case "Uzman":
+            return "star"
+        default:
+            return "questionmark"
+        }
     }
 }

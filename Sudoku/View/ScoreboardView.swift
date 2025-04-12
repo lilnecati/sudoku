@@ -12,15 +12,20 @@ struct ScoreboardView: View {
     @State private var selectedDifficulty: SudokuBoard.Difficulty = .easy
     @State private var statistics: ScoreboardStatistics = ScoreboardStatistics()
     @State private var recentScores: [NSManagedObject] = []
-    @State private var showingDetail = false
     @State private var selectedTab = 0
-    @State private var selectedScore: NSManagedObject? = nil
     
     var body: some View {
         ZStack {
-            // Arka plan
-            Color.darkModeBackground(for: colorScheme)
-                .ignoresSafeArea()
+            // Arka plan - Anasayfadaki gradient stili uygulandı
+            LinearGradient(
+                colors: [
+                    colorScheme == .dark ? Color(.systemGray6) : .white,
+                    colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.05)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 16) {
                 // Başlık
@@ -35,8 +40,9 @@ struct ScoreboardView: View {
                     tabButton(title: "Zorluk", tag: 1)
                 }
                 .background(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 16)
                         .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6))
+                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                 )
                 .padding(.horizontal)
                 .padding(.top, 8)
@@ -44,6 +50,9 @@ struct ScoreboardView: View {
                 if selectedTab == 0 {
                     ScrollView {
                         LazyVStack(spacing: 16) {
+                            // Zorluk seviyesi seçici
+                            difficultySelector
+                            
                             // İstatistik kartları
                             statisticsView
                             
@@ -59,6 +68,9 @@ struct ScoreboardView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 16) {
+                            // Zorluk seviyesi seçici
+                            difficultySelector
+                            
                             // Zorluk seviyesi karşılaştırma
                             difficultyComparisonView
                         }
@@ -66,11 +78,6 @@ struct ScoreboardView: View {
                     }
                     .padding(.top, 8)
                 }
-            }
-        }
-        .sheet(isPresented: $showingDetail) {
-            if let score = selectedScore {
-                ScoreDetailView(score: score)
             }
         }
         .onChange(of: selectedDifficulty) { oldValue, newValue in
@@ -85,6 +92,76 @@ struct ScoreboardView: View {
         }
     }
     
+    // Zorluk seviyesi seçici
+    private var difficultySelector: some View {
+        HStack(spacing: 8) {
+            ForEach(SudokuBoard.Difficulty.allCases) { difficulty in
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        selectedDifficulty = difficulty
+                    }
+                }) {
+                    VStack(spacing: 2) {
+                        // Zorluk seviyesi ikonu
+                        Image(systemName: getDifficultyIcon(difficulty))
+                            .font(.system(size: 16))
+                            .padding(.top, 2)
+                        
+                        // Kısaltılmış yazı
+                        Text(difficulty.localizedName)
+                            .font(.system(size: 10, weight: .medium))
+                            .lineLimit(1)
+                            .padding(.bottom, 2)
+                    }
+                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(
+                        ZStack {
+                            if selectedDifficulty == difficulty {
+                                Capsule()
+                                    .fill(getDifficultyColor(difficulty))
+                                    .shadow(color: getDifficultyColor(difficulty).opacity(0.4), radius: 4, x: 0, y: 2)
+                            } else {
+                                Capsule()
+                                    .fill(colorScheme == .dark ? Color.gray.opacity(0.2) : Color.gray.opacity(0.1))
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                    )
+                            }
+                        }
+                    )
+                    .foregroundColor(selectedDifficulty == difficulty ? .white : Color.primary.opacity(0.8))
+                    .contentShape(Capsule())
+                }
+                .buttonStyle(PlainButtonStyle())
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedDifficulty)
+            }
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        )
+        .padding(.horizontal)
+    }
+    
+    // Zorluk seviyesi için ikon
+    private func getDifficultyIcon(_ difficulty: SudokuBoard.Difficulty) -> String {
+        switch difficulty {
+        case .easy:
+            return "leaf"
+        case .medium:
+            return "flame"
+        case .hard:
+            return "bolt"
+        case .expert:
+            return "star"
+        }
+    }
+
     private var statisticsView: some View {
         VStack(spacing: 12) {
             HStack {
@@ -95,7 +172,7 @@ struct ScoreboardView: View {
                 Spacer()
                 
                 Image(systemName: "chart.bar.fill")
-                    .foregroundColor(.blue)
+                    .foregroundColor(getDifficultyColor(selectedDifficulty))
             }
             .padding(.horizontal)
             
@@ -107,22 +184,50 @@ struct ScoreboardView: View {
                     title: "En Yüksek Skor",
                     value: "\(statistics.bestScore)",
                     icon: "star.fill",
-                    color: .yellow
+                    color: .yellow,
+                    colorScheme: colorScheme
                 )
                 
                 StatCard(
                     title: "Ortalama Skor",
                     value: String(format: "%.0f", statistics.averageScore),
                     icon: "chart.line.uptrend.xyaxis",
-                    color: .green
+                    color: .green,
+                    colorScheme: colorScheme
                 )
             }
             .padding(.horizontal)
         }
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 15)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6))
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(
+                            colors: [
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
+                            ]
+                        ),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(
+                                    colors: [getDifficultyColor(selectedDifficulty).opacity(0.7), getDifficultyColor(selectedDifficulty).opacity(0.3)]
+                                ),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                        .padding(0.5)
+                )
         )
         .padding(.horizontal)
     }
@@ -137,7 +242,7 @@ struct ScoreboardView: View {
                 Spacer()
                 
                 Image(systemName: "gamecontroller.fill")
-                    .foregroundColor(.blue)
+                    .foregroundColor(getDifficultyColor(selectedDifficulty))
             }
             .padding(.horizontal)
             
@@ -149,36 +254,66 @@ struct ScoreboardView: View {
                     title: "Tamamlanan Oyunlar",
                     value: "\(statistics.totalGames)",
                     icon: "checkmark.circle.fill",
-                    color: .blue
+                    color: getDifficultyColor(selectedDifficulty),
+                    colorScheme: colorScheme
                 )
                 
                 StatCard(
                     title: "Ortalama Süre",
                     value: formatTime(statistics.averageTime),
                     icon: "clock.fill",
-                    color: .orange
+                    color: .orange,
+                    colorScheme: colorScheme
                 )
                 
                 StatCard(
                     title: "En Hızlı Oyun",
                     value: formatTime(statistics.bestTime),
                     icon: "bolt.fill",
-                    color: .purple
+                    color: .purple,
+                    colorScheme: colorScheme
                 )
                 
                 StatCard(
                     title: "Başarı Oranı",
                     value: "\(Int(statistics.successRate * 100))%",
                     icon: "percent",
-                    color: .teal
+                    color: .teal,
+                    colorScheme: colorScheme
                 )
             }
             .padding(.horizontal)
         }
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 15)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6))
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(
+                            colors: [
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
+                            ]
+                        ),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(
+                                    colors: [getDifficultyColor(selectedDifficulty).opacity(0.7), getDifficultyColor(selectedDifficulty).opacity(0.3)]
+                                ),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                        .padding(0.5)
+                )
         )
         .padding(.horizontal)
     }
@@ -193,7 +328,7 @@ struct ScoreboardView: View {
                 Spacer()
                 
                 Image(systemName: "trophy.fill")
-                    .foregroundColor(.blue)
+                    .foregroundColor(getDifficultyColor(selectedDifficulty))
             }
             .padding(.horizontal)
             
@@ -218,13 +353,7 @@ struct ScoreboardView: View {
             } else {
                 ForEach(0..<min(5, recentScores.count), id: \.self) { index in
                     let score = recentScores[index]
-                    Button(action: {
-                        // Detay görünümünü aç
-                        selectedScore = score
-                        showingDetail = true
-                    }) {
-                        RecentGameRow(score: score, rank: index + 1)
-                    }
+                    RecentGameRow(score: score, rank: index + 1)
                     .buttonStyle(PlainButtonStyle())
                     .padding(.bottom, 4)
                 }
@@ -233,8 +362,34 @@ struct ScoreboardView: View {
         }
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 15)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6))
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(
+                            colors: [
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
+                            ]
+                        ),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(
+                                    colors: [getDifficultyColor(selectedDifficulty).opacity(0.7), getDifficultyColor(selectedDifficulty).opacity(0.3)]
+                                ),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                        .padding(0.5)
+                )
         )
         .padding(.horizontal)
     }
@@ -249,35 +404,101 @@ struct ScoreboardView: View {
                 Spacer()
                 
                 Image(systemName: "chart.bar.xaxis")
-                    .foregroundColor(.blue)
+                    .foregroundColor(getDifficultyColor(selectedDifficulty))
             }
             .padding(.horizontal)
             
             HStack(spacing: 20) {
                 ForEach(SudokuBoard.Difficulty.allCases) { difficulty in
                     VStack(spacing: 8) {
+                        // Zorluk seviyesi ikonu
+                        Image(systemName: getDifficultyIcon(difficulty))
+                            .font(.system(size: 20))
+                            .foregroundColor(getDifficultyColor(difficulty))
+                            .frame(width: 40, height: 40)
+                            .background(
+                                Circle()
+                                    .fill(getDifficultyColor(difficulty).opacity(0.15))
+                            )
+                        
                         Text(difficulty.localizedName)
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
                         let bestScore = getBestScoreForDifficulty(difficulty)
-                        Text("\(bestScore)")
-                            .font(.headline)
-                            .foregroundColor(getDifficultyColor(difficulty))
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [getDifficultyColor(difficulty).opacity(0.15), getDifficultyColor(difficulty).opacity(0.05)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(height: 28)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [getDifficultyColor(difficulty).opacity(0.4), getDifficultyColor(difficulty).opacity(0.2)]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                )
+                            
+                            Text("\(bestScore)")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundColor(getDifficultyColor(difficulty))
+                        }
                         
                         Text("puan")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity)
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    )
                 }
             }
             .padding()
         }
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 15)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6))
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(
+                            colors: [
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
+                            ]
+                        ),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(
+                                    colors: [getDifficultyColor(selectedDifficulty).opacity(0.7), getDifficultyColor(selectedDifficulty).opacity(0.3)]
+                                ),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                        .padding(0.5)
+                )
         )
         .padding(.horizontal)
     }
@@ -394,15 +615,15 @@ struct ScoreboardView: View {
         }) {
             Text(title)
                 .fontWeight(selectedTab == tag ? .semibold : .regular)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity)
                 .background(
                     Group {
                         if selectedTab == tag {
-                            RoundedRectangle(cornerRadius: 6)
+                            Capsule()
                                 .fill(Color.blue.opacity(0.2))
-                                .padding(2)
+                                .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
                         }
                     }
                 )
@@ -425,27 +646,55 @@ struct StatCard: View {
     let value: String
     let icon: String
     let color: Color
+    let colorScheme: ColorScheme
     
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(color)
+        VStack(spacing: 10) {
+            // Başlık ve ikon
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 8)
             
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            // Değer - geliştirilmiş görünüm
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [color.opacity(0.12), color.opacity(0.05)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(height: 40)
+                
+                Text(value)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(color)
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [color.opacity(0.4), color.opacity(0.2)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
         }
-        .frame(maxWidth: .infinity)
-        .padding()
+        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorScheme == .dark ? Color(.systemGray5) : Color.white)
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 3)
         )
     }
 }
@@ -453,112 +702,280 @@ struct StatCard: View {
 struct RecentGameRow: View {
     let score: NSManagedObject
     let rank: Int
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        HStack {
-            // Sıralama
-            ZStack {
-                Circle()
-                    .fill(getDifficultyColor().opacity(0.2))
-                    .frame(width: 36, height: 36)
-                
-                Text("#\(rank)")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(getDifficultyColor())
-            }
-            .frame(width: 40)
+        ZStack {
+            // Kart arka planı - SavedGamesView stiline benzer şekilde geliştirildi
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(
+                            colors: [
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95),
+                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.9) : getDifficultyColor().opacity(0.03)
+                            ]
+                        ),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+                .overlay(
+                    // Zorluk seviyesine göre renkli kenar çizgisi
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(
+                                    colors: [getDifficultyColor().opacity(0.7), getDifficultyColor().opacity(0.3)]
+                                ),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                        .padding(0.5)
+                )
             
-            // Skor detayları
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .center, spacing: 4) {
-                    // Skor
-                    Text("\(calculateScore())")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.primary)
-                    
-                    Text("puan")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                    
-                    // Zorluk seviyesi rozeti
-                    if let difficultyString = score.value(forKey: "difficulty") as? String {
-                        Spacer()
-                        Text(difficultyString.capitalized)
-                            .font(.system(size: 12, weight: .medium))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(
-                                Capsule()
-                                    .fill(getDifficultyColor().opacity(0.2))
+            HStack(spacing: 16) {
+                // Sıralama ve puan bölümü (sol)
+                VStack(spacing: 8) {
+                    // Sıralama rozeti - geliştirilmiş
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(
+                                        colors: [
+                                            getDifficultyColor().opacity(0.9),
+                                            getDifficultyColor().opacity(0.5)
+                                        ]
+                                    ),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
                             )
-                            .foregroundColor(getDifficultyColor())
+                            .overlay(
+                                Circle().stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            )
+                            .shadow(color: getDifficultyColor().opacity(0.4), radius: 5, x: 0, y: 3)
+                            .frame(width: 50, height: 50)
+                        
+                        Text("#\(rank)")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    // Skor - geliştirilmiş
+                    VStack(spacing: 0) {
+                        Text("\(calculateScore())")
+                            .font(.system(size: 26, weight: .heavy, design: .rounded))
+                            .foregroundColor(.primary)
+                            .minimumScaleFactor(0.8)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: false, vertical: true)
+                        
+                        Text("puan")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
                     }
                 }
+                .frame(width: 80)
+                .padding(.leading, 8)
                 
-                // İstatistik ikonları
-                statsView
+                // Orta ayırıcı çizgi - zarif gradient
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(
+                                colors: [.clear, getDifficultyColor().opacity(0.3), .clear]
+                            ),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: 1)
+                    .padding(.vertical, 12)
+                
+                // Bilgiler bölümü (sağ)
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        // Zorluk seviyesi - geliştirilmiş rozet
+                        if let difficultyString = score.value(forKey: "difficulty") as? String {
+                            HStack(spacing: 4) {
+                                Image(systemName: getDifficultyIcon(difficultyString))
+                                    .font(.system(size: 12))
+                                
+                                Text(difficultyString)
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [getDifficultyColor().opacity(0.15), getDifficultyColor().opacity(0.1)]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [getDifficultyColor().opacity(0.4), getDifficultyColor().opacity(0.2)]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    )
+                            )
+                            .foregroundColor(getDifficultyColor())
+                        }
+                        
+                        Spacer()
+                        
+                        // Tarih - geliştirilmiş
+                        if let date = score.value(forKey: "date") as? Date {
+                            HStack(spacing: 4) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 10))
+                                
+                                Text(formatDate(date))
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    // İstatistikler - SavedGamesView tarzında geliştirilmiş
+                    statsSection()
+                }
+                .padding(.trailing, 16)
+            }
+            .padding(.vertical, 12)
+        }
+        .frame(height: 120)
+    }
+    
+    // Geliştirilmiş istatistik öğesi
+    private func statsSection() -> some View {
+        HStack(spacing: 16) {
+            // Süre - geliştirilmiş görselleştirme
+            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
+            let minutes = Int(elapsedTime) / 60
+            let seconds = Int(elapsedTime) % 60
+            
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.orange.opacity(0.12), Color.orange.opacity(0.05)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(height: 32)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.orange.opacity(0.2), lineWidth: 0.5)
+                    )
+                
+                HStack(spacing: 2) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                        .padding(.trailing, 2)
+                    
+                    Text("\(minutes):\(String(format: "%02d", seconds))")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.orange)
+                }
+                .padding(.horizontal, 8)
+            }
+            
+            // Hata sayısı - geliştirilmiş görselleştirme
+            if let errorCount = score.value(forKey: "errorCount") as? Int {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.red.opacity(0.12), Color.red.opacity(0.05)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(height: 32)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.red.opacity(0.2), lineWidth: 0.5)
+                        )
+                    
+                    HStack(spacing: 2) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.red)
+                            .padding(.trailing, 2)
+                        
+                        Text("\(errorCount)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.red)
+                    }
+                    .padding(.horizontal, 8)
+                }
+            }
+            
+            // İpucu sayısı - geliştirilmiş görselleştirme
+            if let hintCount = score.value(forKey: "hintCount") as? Int {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.yellow.opacity(0.12), Color.yellow.opacity(0.05)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(height: 32)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.yellow.opacity(0.2), lineWidth: 0.5)
+                        )
+                    
+                    HStack(spacing: 2) {
+                        Image(systemName: "lightbulb.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.yellow)
+                            .padding(.trailing, 2)
+                        
+                        Text("\(hintCount)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.yellow)
+                    }
+                    .padding(.horizontal, 8)
+                }
             }
             
             Spacer()
-            
-            VStack(alignment: .trailing, spacing: 4) {
-                // Tarih
-                if let date = score.value(forKey: "date") as? Date {
-                    Text(formatDate(date))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                // Detaya git ikonu
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 2)
-            }
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
-        )
-    }
-    
-    // İstatistik görünümü
-    private var statsView: some View {
-        HStack(spacing: 15) {
-            // Süre her zaman gösterilir
-            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
-            Label(formatTime(elapsedTime), systemImage: "clock")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            // Hata sayısı (varsa)
-            errorCountView
-            
-            // İpucu kullanımı (varsa)
-            hintCountView
         }
     }
     
-    // Hata sayısı görünümü
-    @ViewBuilder
-    private var errorCountView: some View {
-        if let errorCount = score.value(forKey: "errorCount") as? Int {
-            Label("\(errorCount)", systemImage: "xmark.circle")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-    
-    // İpucu kullanımı görünümü
-    @ViewBuilder
-    private var hintCountView: some View {
-        if let hintCount = score.value(forKey: "hintCount") as? Int {
-            Label("\(hintCount)", systemImage: "lightbulb")
-                .font(.caption)
-                .foregroundColor(.secondary)
+    // Zorluk seviyesi ikonu
+    private func getDifficultyIcon(_ difficulty: String) -> String {
+        switch difficulty {
+        case "Kolay":
+            return "leaf.fill"
+        case "Orta":
+            return "flame.fill"
+        case "Zor":
+            return "bolt.fill"
+        case "Uzman":
+            return "star.fill"
+        default:
+            return "questionmark"
         }
     }
     
@@ -593,172 +1010,9 @@ struct RecentGameRow: View {
     
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
+        formatter.dateFormat = "d MMM yyyy HH:mm"
+        formatter.locale = Locale(identifier: "tr_TR")
         return formatter.string(from: date)
-    }
-}
-
-struct ScoreDetailView: View {
-    let score: NSManagedObject
-    @Environment(\.presentationMode) var presentationMode
-    
-    var body: some View {
-        let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
-        
-        // Kayıtlı skoru kullan, yoksa hesapla
-        let calculatedScore: Int
-        if let totalScore = score.value(forKey: "totalScore") as? Int, totalScore > 0 {
-            calculatedScore = totalScore
-        } else {
-            calculatedScore = Int(10000 / (elapsedTime + 1))
-        }
-        
-        let difficulty = score.value(forKey: "difficulty") as? String ?? ""
-        let date = score.value(forKey: "date") as? Date
-        let playerName = score.value(forKey: "playerName") as? String
-        
-        // Ek istatistikler
-        let errorCount = score.value(forKey: "errorCount") as? Int
-        let hintCount = score.value(forKey: "hintCount") as? Int
-        let moveCount = score.value(forKey: "moveCount") as? Int
-        let baseScore = score.value(forKey: "baseScore") as? Int
-        let timeBonus = score.value(forKey: "timeBonus") as? Int
-        
-        // DateFormatter'ı View'da hazırla
-        let dateString: String
-        if let date = date {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .long
-            formatter.timeStyle = .medium
-            dateString = formatter.string(from: date)
-        } else {
-            dateString = ""
-        }
-        
-        return NavigationView {
-            List {
-                Section(header: Text("Oyun Detayları")) {
-                    HStack {
-                        Text("Skor")
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("\(calculatedScore) puan")
-                            .fontWeight(.medium)
-                    }
-                    
-                    HStack {
-                        Text("Tamamlanma Süresi")
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(formatTime(elapsedTime))
-                            .fontWeight(.medium)
-                    }
-                    
-                    if !difficulty.isEmpty {
-                        HStack {
-                            Text("Zorluk Seviyesi")
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text(difficulty)
-                                .fontWeight(.medium)
-                        }
-                    }
-                    
-                    if let moveCount = moveCount {
-                        HStack {
-                            Text("Toplam Hamle")
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text("\(moveCount)")
-                                .fontWeight(.medium)
-                        }
-                    }
-                    
-                    if let errorCount = errorCount {
-                        HStack {
-                            Text("Hata Sayısı")
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text("\(errorCount)")
-                                .fontWeight(.medium)
-                        }
-                    }
-                    
-                    if let hintCount = hintCount {
-                        HStack {
-                            Text("İpucu Kullanımı")
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text("\(hintCount)")
-                                .fontWeight(.medium)
-                        }
-                    }
-                }
-                
-                if baseScore != nil || timeBonus != nil {
-                    Section(header: Text("Skor Detayları")) {
-                        if let baseScore = baseScore {
-                            HStack {
-                                Text("Baz Puan")
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text("\(baseScore)")
-                                    .fontWeight(.medium)
-                            }
-                        }
-                        
-                        if let timeBonus = timeBonus {
-                            HStack {
-                                Text("Süre Bonusu")
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text("\(timeBonus)")
-                                    .fontWeight(.medium)
-                            }
-                        }
-                        
-                        if let errorCount = errorCount, let hintCount = hintCount {
-                            HStack {
-                                Text("Cezalar")
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text("-\(errorCount * 200 + hintCount * 300)")
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.red)
-                            }
-                        }
-                    }
-                }
-                
-                Section(header: Text("Oyuncu Bilgileri")) {
-                    if !dateString.isEmpty {
-                        HStack {
-                            Text("Oyun Tarihi")
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text(dateString)
-                                .fontWeight(.medium)
-                        }
-                    }
-                    
-                    if let playerName = playerName {
-                        HStack {
-                            Text("Oyuncu")
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text(playerName)
-                                .fontWeight(.medium)
-                        }
-                    }
-                }
-            }
-            .listStyle(InsetGroupedListStyle())
-            .navigationTitle("Oyun Detayı")
-            .navigationBarItems(trailing: Button("Kapat") {
-                presentationMode.wrappedValue.dismiss()
-            })
-        }
     }
 }
 
