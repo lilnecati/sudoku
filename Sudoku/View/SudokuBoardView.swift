@@ -188,7 +188,11 @@ struct SudokuBoardView: View {
         // Kalem işaretlerini al
         let pencilMarks = viewModel.getPencilMarks(at: row, col: column)
         
-        return SudokuCellView(
+        // Güç tasarrufu durumunu kontrol et
+        let isPowerSaving = PowerSavingManager.shared.isPowerSavingEnabled
+        let powerSavingLevel = PowerSavingManager.shared.powerSavingLevel
+        
+        let cellView = SudokuCellView(
             row: row,
             column: column,
             value: cellValue,
@@ -202,13 +206,19 @@ struct SudokuBoardView: View {
             isHintTarget: isHintTarget,
             onCellTapped: {
                 // PowerSavingManager ile etkileşimleri kontrol et
-                if !PowerSavingManager.shared.throttleInteractions() {
-                    viewModel.selectCell(row: row, column: column)
-                }
+                viewModel.selectCell(row: row, column: column)
             }
         )
         .id("cellView_\(row)_\(column)_\(cellValue ?? 0)_\(pencilMarks.hashValue)")
-        .drawingGroup()
+        
+        // Güç tasarrufu moduna göre drawingGroup'u uygula
+        if isPowerSaving && powerSavingLevel == .high {
+            // Yüksek güç tasarrufu modunda drawingGroup kullanma
+            return AnyView(cellView)
+        } else {
+            // Normal modda veya düşük güç tasarrufu modunda drawingGroup kullan
+            return AnyView(cellView.drawingGroup())
+        }
     }
     
     // Hücre arka plan rengini hesapla - önbelleğe alma için ayrı fonksiyon

@@ -6,6 +6,8 @@
 
 
 import SwiftUI
+import AudioToolbox
+import AVFoundation
 
 struct NumberPadView: View {
     @AppStorage("enableHapticFeedback") private var enableHapticFeedback = true
@@ -97,12 +99,7 @@ struct NumberPadView: View {
         @State var isPressed = false
         
         return Button(action: {
-            // Titreşim geri bildirimi - ayarlara bağlı
-            if enableHapticFeedback && enableNumberInputHaptic {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred(intensity: 1.0)
-            }
-            
-            // Ses efekti çal
+            // Ses efekti çal - artık SoundManager metotlarıyla titreşim de veriliyor
             SoundManager.shared.playNumberInputSound()
             
             // Basılı efekti için animasyon
@@ -184,12 +181,7 @@ struct NumberPadView: View {
         let buttonColor: Color = viewModel.pencilMode ? .purple : .gray
         
         return Button(action: {
-            // Titreşim geri bildirimi - ayarlara bağlı
-            if enableHapticFeedback && enableNumberInputHaptic {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 1.0)
-            }
-
-            // Ses efekti çal
+            // Ses efekti çal - artık SoundManager metotlarıyla titreşim de veriliyor
             SoundManager.shared.playNumberInputSound()
             
             // Kalem modunu değiştir - normal animasyon, layout boyutu animasyonsuz
@@ -252,12 +244,7 @@ struct NumberPadView: View {
         let isDisabled = !isEnabled || viewModel.selectedCell == nil
         
         return Button(action: {
-            // Titreşim geri bildirimi - ayarlara bağlı
-            if enableHapticFeedback && enableNumberInputHaptic {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 1.0)
-            }
-            
-            // Ses efekti çal
+            // Ses efekti çal - artık SoundManager metotlarıyla titreşim de veriliyor
             SoundManager.shared.playEraseSound()
             
             // Seçili hücreyi temizle

@@ -26,6 +26,7 @@ struct SettingsView: View {
     @AppStorage("prefersDarkMode") private var prefersDarkMode: Bool = false
     @AppStorage("powerSavingMode") private var powerSavingMode: Bool = false
     @AppStorage("autoPowerSaving") private var autoPowerSaving: Bool = true
+    @AppStorage("highPerformanceMode") private var highPerformanceMode: Bool = false
     
     // PowerSavingManager'a erişim
     @StateObject private var powerManager = PowerSavingManager.shared
@@ -210,10 +211,12 @@ struct SettingsView: View {
         defaultDifficulty = SudokuBoard.Difficulty.easy.rawValue
         powerSavingMode = false
         autoPowerSaving = true
+        highPerformanceMode = false
         
         // PowerSavingManager'ı sıfırla
         powerManager.powerSavingMode = false
         powerManager.autoPowerSaving = true
+        powerManager.setPowerSavingLevel(.off)
     }
     
     private func userProfileSection() -> some View {
@@ -320,6 +323,7 @@ struct SettingsView: View {
             UIDevice.current.isBatteryMonitoringEnabled = true
             powerSavingMode = powerManager.powerSavingMode
             autoPowerSaving = powerManager.autoPowerSaving
+            highPerformanceMode = powerManager.highPerformanceMode
 
             // Mevcut kullanıcıyı al
             currentUser = PersistenceController.shared.getCurrentUser()
@@ -390,14 +394,66 @@ struct SettingsView: View {
     
     private func gameSettingsView() -> some View {
         VStack(spacing: 20) {
-            // Ses Efektleri - modern toggle ile
-            ToggleSettingRow(
-                title: "Ses Efektleri",
-                description: "Oyun içi ses efektlerini aç/kapa",
-                isOn: $enableSoundEffects,
-                iconName: "speaker.wave.2.fill",
-                color: .blue
+            // Ses Efektleri
+            HStack(spacing: 15) {
+                // Sol taraftaki simge
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.blue)
+                }
+                
+                // Başlık ve açıklama
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Ses Efektleri")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    Text("Oyun içi ses efektlerini aç/kapa")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                // Toggle butonu
+                Button(action: {
+                    // Titreşim kontrolü
+                    if enableHapticFeedback {
+                        SoundManager.shared.playNavigationSound()
+                    } else {
+                        SoundManager.shared.playNavigationSoundOnly()
+                    }
+                    
+                    enableSoundEffects.toggle()
+                }) {
+                    ZStack {
+                        Capsule()
+                            .fill(enableSoundEffects ? Color.blue : Color.gray.opacity(0.3))
+                            .frame(width: 55, height: 34)
+                        
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 30, height: 30)
+                            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                            .offset(x: enableSoundEffects ? 10 : -10)
+                    }
+                    .animation(.spring(response: 0.2, dampingFraction: 0.7), value: enableSoundEffects)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
+            .padding(.horizontal)
             
             // Ses seviyesi kaydırıcısı - eğer ses açıksa
             if enableSoundEffects {
@@ -479,14 +535,68 @@ struct SettingsView: View {
                 .transition(.opacity)
             }
             
-            // Titreşim geri bildirimi - modern toggle ile
-            ToggleSettingRow(
-                title: "Titreşim Geri Bildirimi",
-                description: "Oyun içi titreşim efektlerini aç/kapa",
-                isOn: $enableHapticFeedback,
-                iconName: "iphone.radiowaves.left.and.right",
-                color: .orange
+            // Titreşim geri bildirimi
+            HStack(spacing: 15) {
+                // Sol taraftaki simge
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "iphone.radiowaves.left.and.right")
+                        .font(.system(size: 16))
+                        .foregroundColor(.orange)
+                }
+                
+                // Başlık ve açıklama
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Titreşim Geri Bildirimi")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    Text("Oyun içi titreşim efektlerini aç/kapa")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                // Toggle butonu - titreşim durumu için özel
+                Button(action: {
+                    // Eğer titreşim kapalıysa ve açılıyorsa, yani false iken true oluyor
+                    if enableHapticFeedback == false {
+                        // Açılırken titreşim verelim - direkt SoundManager kullanarak
+                        SoundManager.shared.playNavigationSound()
+                    } else {
+                        // Kapanırken titreşim vermeyelim
+                        SoundManager.shared.playNavigationSoundOnly()
+                    }
+                    
+                    enableHapticFeedback.toggle()
+                }) {
+                    ZStack {
+                        Capsule()
+                            .fill(enableHapticFeedback ? Color.orange : Color.gray.opacity(0.3))
+                            .frame(width: 55, height: 34)
+                        
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 30, height: 30)
+                            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                            .offset(x: enableHapticFeedback ? 10 : -10)
+                    }
+                    .animation(.spring(response: 0.2, dampingFraction: 0.7), value: enableHapticFeedback)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
+            .padding(.horizontal)
         }
     }
     
@@ -520,22 +630,30 @@ struct SettingsView: View {
                 Spacer()
                 
                 // Toggle butonu
-                ZStack {
-                    Capsule()
-                        .fill(themeManager.useSystemAppearance ? Color.indigo : Color.gray.opacity(0.3))
-                        .frame(width: 51, height: 31)
+                Button(action: {
+                    // Titreşim kontrolü yapılarak ses çal
+                    if enableHapticFeedback {
+                        SoundManager.shared.playNavigationSound()
+                    } else {
+                        SoundManager.shared.playNavigationSoundOnly()
+                    }
                     
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 27, height: 27)
-                        .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-                        .offset(x: themeManager.useSystemAppearance ? 10 : -10)
-                }
-                .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.useSystemAppearance)
-                .onTapGesture {
-                    SoundManager.shared.playNavigationSound()
                     themeManager.useSystemAppearance.toggle()
+                }) {
+                    ZStack {
+                        Capsule()
+                            .fill(themeManager.useSystemAppearance ? Color.indigo : Color.gray.opacity(0.3))
+                            .frame(width: 55, height: 34)
+                        
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 30, height: 30)
+                            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                            .offset(x: themeManager.useSystemAppearance ? 10 : -10)
+                    }
+                    .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.useSystemAppearance)
                 }
+                .buttonStyle(PlainButtonStyle())
             }
             .padding()
             .background(
@@ -574,22 +692,30 @@ struct SettingsView: View {
                     Spacer()
                     
                     // Toggle butonu
-                    ZStack {
-                        Capsule()
-                            .fill(themeManager.darkMode ? Color.blue : Color.gray.opacity(0.3))
-                            .frame(width: 51, height: 31)
+                    Button(action: {
+                        // Titreşim kontrolü yapılarak ses çal
+                        if enableHapticFeedback {
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
                         
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 27, height: 27)
-                            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-                            .offset(x: themeManager.darkMode ? 10 : -10)
-                    }
-                    .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.darkMode)
-                    .onTapGesture {
-                        SoundManager.shared.playNavigationSound()
                         themeManager.darkMode.toggle()
+                    }) {
+                        ZStack {
+                            Capsule()
+                                .fill(themeManager.darkMode ? Color.blue : Color.gray.opacity(0.3))
+                                .frame(width: 55, height: 34)
+                            
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 30, height: 30)
+                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                .offset(x: themeManager.darkMode ? 10 : -10)
+                        }
+                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.darkMode)
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 .padding()
                 .background(
@@ -730,7 +856,13 @@ struct SettingsView: View {
                 // Düşük pilde güç tasarrufu önerisi
                 if powerManager.batteryLevel <= 0.2 && !powerSavingMode {
                     Button(action: {
-                        SoundManager.shared.playNavigationSound()
+                        // Titreşim kontrolü yapılarak ses çal
+                        if enableHapticFeedback {
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
                         powerSavingMode = true
                         powerManager.powerSavingMode = true
                     }) {
@@ -759,56 +891,184 @@ struct SettingsView: View {
             )
             .padding(.horizontal)
             
-            // Güç tasarrufu modu - modern toggle ile
-            ToggleSettingRow(
-                title: "Güç Tasarrufu Modu",
-                description: "Animasyonları ve görsel efektleri azaltır",
-                isOn: $powerSavingMode,
-                iconName: "bolt.shield.fill",
-                color: .green
-            )
-            
-            // Otomatik güç tasarrufu - modern toggle ile
-            ToggleSettingRow(
-                title: "Otomatik Güç Tasarrufu",
-                description: "Pil seviyesi düşükken otomatik olarak etkinleşir",
-                isOn: $autoPowerSaving,
-                iconName: "bolt.circle.fill",
-                color: .orange
-            )
-            
-            // Açıklama kartı
-            HStack(alignment: .top, spacing: 15) {
-                // İkon
-                ZStack {
-                    Circle()
-                        .fill(Color.blue.opacity(0.15))
-                        .frame(width: 36, height: 36)
+            // Güç Tasarrufu Ayarları
+            Section {
+                // Güç tasarrufu modu
+                HStack {
+                    Label {
+                        Text("Güç Tasarrufu Modu")
+                    } icon: {
+                        Image(systemName: "battery.50")
+                            .foregroundColor(.green)
+                    }
                     
-                    Image(systemName: "info.circle.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.blue)
+                    Spacer()
+                    
+                    // Toggle görünümü - sadece buna basınca toggle olacak
+                    Button(action: {
+                        // Titreşim kontrolü yapılarak ses çal
+                        if enableHapticFeedback {
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Değeri tersine çevir
+                        powerSavingMode.toggle()
+                        
+                        if powerSavingMode {
+                            PowerSavingManager.shared.setPowerSavingLevel(.medium)
+                            // Yüksek performans modunu kapat
+                            if highPerformanceMode {
+                                highPerformanceMode = false
+                            }
+                        } else {
+                            PowerSavingManager.shared.setPowerSavingLevel(.off)
+                        }
+                    }) {
+                        ZStack {
+                            Capsule()
+                                .fill(powerSavingMode ? Color.green : Color.gray.opacity(0.3))
+                                .frame(width: 55, height: 34)
+                            
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 30, height: 30)
+                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                .offset(x: powerSavingMode ? 10 : -10)
+                        }
+                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: powerSavingMode)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal)
+                
+                // Yüksek performans modu
+                HStack {
+                    Label {
+                        Text("Yüksek Performans Modu")
+                    } icon: {
+                        Image(systemName: "bolt.fill")
+                            .foregroundColor(.yellow)
+                    }
+                    
+                    Spacer()
+                    
+                    // Toggle görünümü - sadece buna basınca toggle olacak
+                    Button(action: {
+                        // Titreşim kontrolü yapılarak ses çal
+                        if enableHapticFeedback {
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Değeri tersine çevir
+                        highPerformanceMode.toggle()
+                        
+                        PowerSavingManager.shared.highPerformanceMode = highPerformanceMode
+                        // Yüksek performans modunu açarken güç tasarrufunu kapat
+                        if highPerformanceMode && powerSavingMode {
+                            powerSavingMode = false
+                        }
+                    }) {
+                        ZStack {
+                            Capsule()
+                                .fill(highPerformanceMode ? Color.yellow : Color.gray.opacity(0.3))
+                                .frame(width: 55, height: 34)
+                            
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 30, height: 30)
+                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                .offset(x: highPerformanceMode ? 10 : -10)
+                        }
+                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: highPerformanceMode)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal)
+                
+                // Otomatik güç tasarrufu
+                HStack {
+                    Label {
+                        Text("Otomatik Güç Tasarrufu")
+                    } icon: {
+                        Image(systemName: "battery.25")
+                            .foregroundColor(.orange)
+                    }
+                    
+                    Spacer()
+                    
+                    // Toggle görünümü - sadece buna basınca toggle olacak
+                    Button(action: {
+                        // Titreşim kontrolü yapılarak ses çal
+                        if enableHapticFeedback {
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Değeri tersine çevir
+                        autoPowerSaving.toggle()
+                        
+                        PowerSavingManager.shared.isAutoPowerSavingEnabled = autoPowerSaving
+                    }) {
+                        ZStack {
+                            Capsule()
+                                .fill(autoPowerSaving ? Color.orange : Color.gray.opacity(0.3))
+                                .frame(width: 55, height: 34)
+                            
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 30, height: 30)
+                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                .offset(x: autoPowerSaving ? 10 : -10)
+                        }
+                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: autoPowerSaving)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal)
+                
+                // Güç tasarrufu açıklaması
+                if powerSavingMode || autoPowerSaving {
+                    Text("Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
                 }
                 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Güç Tasarrufu Hakkında")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.primary)
-                    
-                    Text("Güç tasarrufu modu, pil ömrünü uzatmak için animasyonları azaltır ve bazı görsel efektleri kapatır. Otomatik mod, pil %20'nin altına düştüğünde kendiliğinden devreye girer.")
-                        .font(.system(size: 14))
+                // Yüksek performans açıklaması
+                if highPerformanceMode {
+                    Text("Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır.")
+                        .font(.caption)
                         .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(3)
+                        .padding(.top, 4)
                 }
+            } header: {
+                Text("Performans")
+            } footer: {
+                Text("Güç tasarrufu modu, cihazınızın pil ömrünü uzatır.")
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
-            .padding(.horizontal)
         }
     }
     
@@ -1005,10 +1265,23 @@ struct ToggleSettingRow: View {
     var color: Color
     
     @Environment(\.colorScheme) var colorScheme
+    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
     
     var body: some View {
         Button(action: {
-            SoundManager.shared.playNavigationSound()
+            // Titreşim kontrolü - özellikle titreşim açık/kapalı düğmesi için
+            if title == "Titreşim Geri Bildirimi" {
+                // Titreşim düğmesi için, bu tuşu yönetiyoruz
+                // Titreşim vermeden sadece ses çal
+                SoundManager.shared.playNavigationSoundOnly()
+            } else if enableHapticFeedback {
+                // Diğer tüm düğmeler için, titreşim ayarı açıksa titreşimli ses çal
+                SoundManager.shared.playNavigationSound()
+            } else {
+                // Titreşim kapalıysa, sadece ses çal
+                SoundManager.shared.playNavigationSoundOnly()
+            }
+            
             isOn.toggle()
         }) {
             HStack(spacing: 15) {

@@ -5,6 +5,8 @@
 //
 
 import SwiftUI
+import AudioToolbox
+import AVFoundation
 
 struct SudokuCellView: View {
     @AppStorage("enableHapticFeedback") private var enableHapticFeedback = true
@@ -30,13 +32,7 @@ struct SudokuCellView: View {
     var body: some View {
         GeometryReader { geometry in
             Button(action: {
-                // Hücre seçildiğinde titreşim geri bildirimi - ayarlara bağlı
-                if enableHapticFeedback && enableCellTapHaptic {
-                    let generator = UIImpactFeedbackGenerator(style: .medium)
-                    generator.impactOccurred(intensity: 1.0)  // Yoğunluğu artırdım ve prepare() kaldırıldı
-                }
-                
-                // Ses efekti çal
+                // Ses efekti çal - artık playNavigationSound titreşim de içeriyor
                 SoundManager.shared.playNavigationSound()
                 
                 // Güç tasarrufu modunda değilse seçim animasyonunu tetikle
@@ -96,71 +92,35 @@ struct SudokuCellView: View {
                             .frame(width: min(geometry.size.width, geometry.size.height),
                                    height: min(geometry.size.width, geometry.size.height))
                         
+                        // Değer gösterimi
                         if let value = value {
-                            // Ana değer - sabit boyuta sahip bir ZStack içinde
-                            ZStack {
-                                Text("\(value)")
-                                    .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.6))
-                                    .fontWeight(isFixed ? .bold : (isUserEntered ? .bold : .medium))
-                                    .foregroundColor(getTextColor())
-                                    .scaleEffect(animateValue ? 1.3 : 1.0)
-                                    .opacity(animateValue ? 0.7 : 1.0)
-                                    .shadow(color: animateValue && !isFixed ? Color.blue.opacity(0.4) : Color.clear, radius: animateValue ? 4 : 0)
-                                    .id("cell_\(row)_\(column)_\(value)")
-                                    .onChange(of: value) { oldValue, newValue in
-                                        // Güç tasarrufu modunda değilse ve değer değiştiyse animasyon göster
-                                        if !isFixed && !powerManager.isPowerSavingEnabled && oldValue != newValue {
-                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                                                animateValue = true
-                                            }
-                                            
-                                            // Animasyonu sıfırla
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                                                withAnimation {
-                                                    animateValue = false
-                                                }
-                                            }
-                                        }
-                                    }
-                            }
-                            // Sayı için sabit boyut konteynerı
-                            .frame(width: min(geometry.size.width, geometry.size.height),
-                                   height: min(geometry.size.width, geometry.size.height))
-                            // Kesin boyut için kırpılma
-                            .clipped()
-                            // Geçiş animasyonu yerine sabit kal
-                            .transition(.identity)
-                        } else if !pencilMarks.isEmpty {
-                            // Kalem işaretleri (küçük notlar) - sabit boyutta
-                            PencilMarksView(
-                                pencilMarks: pencilMarks,
-                                cellSize: min(geometry.size.width, geometry.size.height)
-                            )
-                            // Kalem notu konteynerı - sabit boyutta ve kırpılmış
-                            .frame(width: min(geometry.size.width, geometry.size.height),
-                                   height: min(geometry.size.width, geometry.size.height))
-                            .clipped() // Taşmaları önle
-                            // Geçiş animasyonu yerine sabit kal
-                            .transition(.identity)
-                            .onChange(of: pencilMarks) { oldMarks, newMarks in
-                                if !powerManager.isPowerSavingEnabled && oldMarks != newMarks {
-                                    withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
-                                        animateValue = true
-                                    }
-                                    
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        withAnimation {
-                                            animateValue = false
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            // Boş durumda da aynı boyutu koruyacak görünmez placeholder
-                            Rectangle()
-                                .foregroundColor(.clear)
-                                .frame(width: min(geometry.size.width, geometry.size.height),
-                                       height: min(geometry.size.width, geometry.size.height))
+                            Text("\(value)")
+                                .font(.system(size: isFixed ? 26 : 24, weight: isFixed ? .bold : .semibold, design: .rounded))
+                                .foregroundColor(getTextColor())
+                                .contentTransition(.numericText())
+                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: value)
+                                .scaleEffect(animateValue ? 1.1 : 1.0)
+                                .opacity(animateValue ? 0.0 : 1.0)
+                                .animation(
+                                    animateValue ?
+                                        .spring(response: 0.3, dampingFraction: 0.7).delay(0.2) :
+                                        .spring(response: 0.3, dampingFraction: 0.7),
+                                    value: animateValue
+                                )
+                        }
+                        
+                        // Pencil marks - Optimize edilmiş versiyonu
+                        if pencilMarks.count > 0 && value == nil {
+                            PencilMarksViewOptimized(pencilMarks: pencilMarks)
+                                .frame(width: min(geometry.size.width, geometry.size.height) * 0.85, height: min(geometry.size.width, geometry.size.height) * 0.85)
+                                .clipped()
+                        }
+                        
+                        // Vurgulama - ipucu için
+                        if isHintTarget {
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.green.opacity(0.8), lineWidth: 3)
+                                .frame(width: min(geometry.size.width, geometry.size.height) * 0.9, height: min(geometry.size.width, geometry.size.height) * 0.9)
                         }
                     }
                     // Sabit boyut - bu frame değişmez
@@ -295,5 +255,35 @@ struct SudokuCellView_Previews: PreviewProvider {
         }
         .padding()
         .previewLayout(.sizeThatFits)
+    }
+}
+
+// Optimize edilmiş PencilMarksView
+struct PencilMarksViewOptimized: View {
+    let pencilMarks: Set<Int>
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let cellWidth = geometry.size.width / 3
+            let cellHeight = geometry.size.height / 3
+            
+            ZStack {
+                ForEach(Array(pencilMarks), id: \.self) { mark in
+                    // Hücre içinde doğru konumlandırmak için indeks hesapla
+                    let index = mark - 1
+                    let row = index / 3
+                    let col = index % 3
+                    
+                    Text("\(mark)")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .frame(width: cellWidth, height: cellHeight)
+                        .position(
+                            x: cellWidth * CGFloat(col) + cellWidth / 2,
+                            y: cellHeight * CGFloat(row) + cellHeight / 2
+                        )
+                }
+            }
+        }
     }
 }

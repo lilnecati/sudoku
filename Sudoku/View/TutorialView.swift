@@ -87,22 +87,49 @@ struct TutorialView: View {
     
     var body: some View {
         ZStack {
-            // Arka plan
-            Color.darkModeBackground(for: colorScheme)
-                .ignoresSafeArea()
+            // Modern gradient arka plan
+            LinearGradient(
+                colors: [
+                    colorScheme == .dark ? Color(.systemGray6) : .white,
+                    colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.05)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
-                // Başlık
-                Text("Sudoku Rehberi")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: true))
-                    .padding(.top)
+                // Başlık ve kapat butonu
+                HStack {
+                    Text("Nasıl Oynanır")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: true))
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        SoundManager.shared.executeSound(.tap)
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title)
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.top)
                 
                 // İlerleme göstergesi
-                ProgressView(value: Double(currentStep), total: Double(tutorialSteps.count - 1))
-                    .padding(.horizontal)
-                    .padding(.top, 5)
+                HStack(spacing: 4) {
+                    ForEach(0..<tutorialSteps.count, id: \.self) { index in
+                        Circle()
+                            .fill(currentStep >= index ? ColorManager.primaryBlue : Color.gray.opacity(0.3))
+                            .frame(width: 8, height: 8)
+                            .scaleEffect(currentStep == index ? 1.2 : 1.0)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentStep)
+                    }
+                }
+                .padding(.top, 8)
                 
                 // Rehber içeriği
                 TabView(selection: $currentStep) {
@@ -116,7 +143,7 @@ struct TutorialView: View {
                 .transition(.slide)
                 
                 // Alt butonlar
-                HStack {
+                HStack(spacing: 20) {
                     // Geri butonu
                     Button(action: {
                         SoundManager.shared.executeSound(.tap)
@@ -124,21 +151,28 @@ struct TutorialView: View {
                             withAnimation {
                                 currentStep -= 1
                             }
-                        } else {
-                            presentationMode.wrappedValue.dismiss()
                         }
                     }) {
                         HStack {
-                            Image(systemName: currentStep == 0 ? "xmark" : "chevron.left")
-                            Text(currentStep == 0 ? "Kapat" : "Geri")
+                            Image(systemName: "chevron.left")
+                            Text("Geri")
                         }
-                        .padding()
+                        .font(.headline)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 20)
                         .foregroundColor(.white)
-                        .background(Color.blue.opacity(0.8))
-                        .cornerRadius(10)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [ColorManager.primaryBlue, ColorManager.primaryBlue.opacity(0.8)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(12)
+                        .shadow(color: ColorManager.primaryBlue.opacity(0.4), radius: 4, x: 0, y: 3)
+                        .opacity(currentStep > 0 ? 1 : 0.5)
                     }
-                    
-                    Spacer()
+                    .disabled(currentStep == 0)
                     
                     // İleri/Bitir butonu
                     Button(action: {
@@ -152,16 +186,29 @@ struct TutorialView: View {
                         }
                     }) {
                         HStack {
-                            Text(currentStep == tutorialSteps.count - 1 ? "Bitir" : "İleri")
+                            Text(currentStep == tutorialSteps.count - 1 ? "Tamamla" : "İleri")
                             Image(systemName: currentStep == tutorialSteps.count - 1 ? "checkmark" : "chevron.right")
                         }
-                        .padding()
+                        .font(.headline)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 20)
                         .foregroundColor(.white)
-                        .background(Color.blue.opacity(0.8))
-                        .cornerRadius(10)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    currentStep == tutorialSteps.count - 1 ? ColorManager.primaryGreen : ColorManager.primaryBlue,
+                                    currentStep == tutorialSteps.count - 1 ? ColorManager.primaryGreen.opacity(0.8) : ColorManager.primaryBlue.opacity(0.8)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(12)
+                        .shadow(color: (currentStep == tutorialSteps.count - 1 ? ColorManager.primaryGreen : ColorManager.primaryBlue).opacity(0.4), radius: 4, x: 0, y: 3)
                     }
                 }
-                .padding()
+                .padding(.vertical, 24)
+                .padding(.horizontal)
             }
             .padding(.vertical)
         }
@@ -169,116 +216,152 @@ struct TutorialView: View {
     
     // Rehber adımı görünümü
     private func tutorialStepView(step: TutorialStep, stepNumber: Int) -> some View {
-        VStack(spacing: 20) {
-            // Adım başlığı
-            Text(step.title)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: true))
-                .multilineTextAlignment(.center)
-                .padding(.top)
-                .transition(.scale.combined(with: .opacity))
-            
-            // Adım numarası
-            Text("Adım \(stepNumber)/\(tutorialSteps.count)")
-                .font(.subheadline)
-                .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: false))
-                .padding(8)
-                .background(Color.blue.opacity(0.1))
-                .clipShape(Capsule())
-                .transition(.slide)
-            
-            // Görsel ve örnek icerik
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.cardBackground(for: colorScheme))
-                    .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 3)
+        ScrollView {
+            VStack(spacing: 20) {
+                // Adım numarası
+                Text("Adım \(stepNumber) / \(tutorialSteps.count)")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [ColorManager.primaryBlue, ColorManager.primaryBlue.opacity(0.7)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
+                    .transition(.scale.combined(with: .opacity))
                 
-                if step.title.contains("Tek Olasılık") || step.title.contains("Tek Konum") {
-                    // Strateji örnekleri için mini Sudoku tablosu göster
-                    tutorialExampleView(forStep: stepNumber)
-                        .padding()
-                } else {
-                    VStack {
-                        // Üstte ikon
-                        Image(systemName: getIconForStep(step: step))
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 80, height: 80)
-                            .foregroundColor(Color.accentColor)
+                // Adım başlığı
+                Text(step.title)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: true))
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 5)
+                    .padding(.horizontal)
+                    .transition(.scale.combined(with: .opacity))
+                
+                // Görsel ve örnek icerik
+                ZStack {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
+                                    colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [ColorManager.primaryBlue.opacity(0.5), ColorManager.primaryBlue.opacity(0.2)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                    
+                    if step.title.contains("Tek Olasılık") || step.title.contains("Tek Konum") {
+                        // Strateji örnekleri için mini Sudoku tablosu göster
+                        tutorialExampleView(forStep: stepNumber)
                             .padding()
-                            .transition(.scale)
-                        
-                        // Arkaplan öğeleri (değişen animasyonlar)
-                        if step.title.contains("Hoş Geldiniz") {
-                            // Rasgele sayılar animasyonu
-                            sudokuWelcomeAnimation
-                        } else if step.title.contains("Sayı Girişi") {
-                            // Sayı giriş animasyonu
-                            sudokuInputAnimation
-                        } else if step.title.contains("Notlar") {
-                            // Not alma animasyonu
-                            sudokuNotesAnimation
+                    } else {
+                        // Standart açıklama görünümü
+                        VStack(spacing: 16) {
+                            // İkon görünümü
+                            getStepIcon(for: step.title)
+                                .font(.system(size: 60))
+                                .foregroundColor(getStepColor(for: step.title))
+                                .padding(.top, 10)
+                            
+                            // Açıklama metni
+                            Text(step.description)
+                                .font(.body)
+                                .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: false))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                                .padding(.bottom, 10)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
+                        .padding()
                     }
                 }
-            }
-            .frame(height: 230)
-            .padding(.horizontal)
-            
-            // Açıklama
-            Text(step.description)
-                .font(.body)
-                .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: false))
-                .multilineTextAlignment(.center)
+                .frame(height: 280)
                 .padding(.horizontal)
-            
-            // İpucu
-            HStack {
-                Image(systemName: "lightbulb.fill")
-                    .foregroundColor(.yellow)
-                Text("İpucu: \(step.tip)")
-                    .font(.callout)
-                    .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: false))
+                
+                // İpucu bölümü
+                VStack(spacing: 8) {
+                    Text("İPUCU")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(ColorManager.primaryOrange)
+                    
+                    Text(step.tip)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.5) : Color(.systemGray6).opacity(0.5))
+                )
+                .padding(.horizontal, 20)
             }
-            .padding()
-            .background(Color.buttonBackground(for: colorScheme))
-            .cornerRadius(10)
-            .padding(.horizontal)
-            
-            Spacer()
+            .padding(.vertical)
         }
-        .padding()
-        .scaleInOut(isShowing: true)
     }
-}
-
-// Rehber adımı modeli
-struct TutorialStep {
-    let title: String
-    let description: String
-    let image: String
-    let tip: String
-}
-
-// MARK: - Animasyon ve Yardımcı Görünümler
-extension TutorialView {
-    // Adıma uygun ikon seçimi
-    func getIconForStep(step: TutorialStep) -> String {
-        if step.title.contains("Hoş Geldiniz") {
-            return "square.grid.3x3.fill"
-        } else if step.title.contains("Temel Kurallar") {
-            return "checkmark.seal.fill"
-        } else if step.title.contains("Sayı Girişi") {
-            return "hand.tap.fill"
-        } else if step.title.contains("Notlar") {
-            return "pencil.and.outline"
-        } else if step.title.contains("Strateji") || step.title.contains("Olasılık") {
-            return "brain.fill"
-        } else if step.title.contains("İpuçları") {
-            return "questionmark.circle.fill"
-        } else {
-            return "checkmark.circle.fill"
+    
+    // Rehber adımı için ikon seçimi
+    private func getStepIcon(for title: String) -> Image {
+        switch true {
+        case title.contains("Hoş Geldiniz"):
+            return Image(systemName: "square.grid.3x3.fill")
+        case title.contains("Temel Kurallar"):
+            return Image(systemName: "list.bullet")
+        case title.contains("Sayı Girişi"):
+            return Image(systemName: "hand.tap.fill")
+        case title.contains("Notlar"):
+            return Image(systemName: "pencil")
+        case title.contains("İpuçları"):
+            return Image(systemName: "lightbulb.fill")
+        case title.contains("Hazırsınız"):
+            return Image(systemName: "checkmark.circle.fill")
+        default:
+            return Image(systemName: "questionmark.circle.fill")
+        }
+    }
+    
+    // Rehber adımı için renk seçimi
+    private func getStepColor(for title: String) -> Color {
+        switch true {
+        case title.contains("Hoş Geldiniz"):
+            return ColorManager.primaryBlue
+        case title.contains("Temel Kurallar"):
+            return ColorManager.primaryPurple
+        case title.contains("Sayı Girişi"):
+            return ColorManager.primaryOrange
+        case title.contains("Notlar"):
+            return Color.blue
+        case title.contains("İpuçları"):
+            return Color.yellow
+        case title.contains("Hazırsınız"):
+            return ColorManager.primaryGreen
+        default:
+            return Color.gray
         }
     }
     
@@ -414,136 +497,14 @@ extension TutorialView {
                 .padding(.horizontal)
         }
     }
-    
-    // Hoş geldiniz animasyonu - rastgele sayılar
-    var sudokuWelcomeAnimation: some View {
-        ZStack {
-            ForEach(0..<10) { index in
-                Text("\(Int.random(in: 1...9))")
-                    .font(.title)
-                    .foregroundColor(Color.accentColor.opacity(Double.random(in: 0.2...0.7)))
-                    .position(
-                        x: CGFloat.random(in: 40...280),
-                        y: CGFloat.random(in: 20...100)
-                    )
-                    .opacity(animationProgress)
-                    .onAppear {
-                        withAnimation(Animation.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
-                            animationProgress = Double.random(in: 0.3...1.0)
-                        }
-                    }
-            }
-        }
-    }
-    
-    // Sayı girişi animasyonu
-    var sudokuInputAnimation: some View {
-        VStack {
-            ZStack {
-                // 3x3 mini ızgara
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                    .background(Color.white.opacity(0.2))
-                    .frame(width: 50, height: 50)
-                
-                // Animasyonlu sayı girişi
-                Text("\(inputAnimationValue)")
-                    .font(.title2)
-                    .foregroundColor(.blue)
-                    .scaleEffect(animateInputValue ? 1.2 : 0.8)
-                    .opacity(animateInputValue ? 1.0 : 0.0)
-                    .animation(.easeInOut(duration: 0.5), value: animateInputValue)
-                    .onAppear {
-                        // Sayı değiştirme animasyonu
-                        Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { _ in
-                            animateInputValue = false
-                            
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                inputAnimationValue = [1, 3, 5, 7, 9].randomElement() ?? 5
-                                withAnimation {
-                                    animateInputValue = true
-                                }
-                            }
-                        }
-                    }
-            }
-            
-            // Klavye gösterimi
-            HStack(spacing: 5) {
-                ForEach(1...3, id: \.self) { num in
-                    Text("\(num)")
-                        .frame(width: 25, height: 25)
-                        .background(num == inputAnimationValue ? Color.blue.opacity(0.3) : Color.gray.opacity(0.2))
-                        .cornerRadius(4)
-                }
-            }
-            .padding(.top, 20)
-        }
-    }
-    
-    // Not alma animasyonu
-    var sudokuNotesAnimation: some View {
-        VStack {
-            ZStack {
-                // 3x3 mini ızgara
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                    .background(Color.white.opacity(0.2))
-                    .frame(width: 50, height: 50)
-                
-                // Not içeriği - mini sayılar
-                VStack(spacing: 2) {
-                    ForEach(0..<3) { row in
-                        HStack(spacing: 2) {
-                            ForEach(0..<3) { col in
-                                let num = row * 3 + col + 1
-                                if notesSet.contains(num) {
-                                    Text("\(num)")
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.gray)
-                                        .frame(width: 12, height: 12)
-                                        .opacity(animateNote && lastAddedNote == num ? 0.3 : 1.0)
-                                        .scaleEffect(animateNote && lastAddedNote == num ? 1.5 : 1.0)
-                                } else {
-                                    Spacer()
-                                        .frame(width: 12, height: 12)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Açıklama
-            Text("Uzun basarak not ekleyin")
-                .font(.caption)
-                .foregroundColor(.gray)
-                .padding(.top, 10)
-        }
-        .onAppear {
-            // Not ekleme animasyonu
-            Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
-                let availableNotes = Array(1...9).filter { !notesSet.contains($0) }
-                if let noteToAdd = availableNotes.randomElement() {
-                    lastAddedNote = noteToAdd
-                    withAnimation(.spring()) {
-                        animateNote = true
-                        notesSet.insert(noteToAdd)
-                    }
-                    
-                    // Animasyonu sıfırla
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        withAnimation {
-                            animateNote = false
-                        }
-                    }
-                } else {
-                    // Tüm notlar eklendiyse temizle ve yeniden başla
-                    notesSet.removeAll()
-                }
-            }
-        }
-    }
+}
+
+// Rehber adımı modeli
+struct TutorialStep {
+    let title: String
+    let description: String
+    let image: String
+    let tip: String
 }
 
 // Preview

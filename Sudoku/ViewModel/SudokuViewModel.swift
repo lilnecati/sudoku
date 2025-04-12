@@ -8,6 +8,8 @@ import Foundation
 import SwiftUI
 import Combine
 import CoreData
+import AudioToolbox
+import AVFoundation
 
 // Position yapısı
 struct Position: Hashable {
@@ -32,8 +34,10 @@ class SudokuViewModel: ObservableObject {
     // Performans iyileştirmesi: Pencil mark'ları hızlı erişim için önbelleğe al
     private var pencilMarkCache: [String: Set<Int>] = [:]
     private var validValuesCache: [String: Set<Int>] = [:]
-    private var highlightedCellsCache: [String: Bool] = [:]
-    private var sameValueCellsCache: [String: Bool] = [:]
+    
+    // Performans iyileştirmesi: Hücreler için ön hesaplanmış konum haritası (yeni)
+    private var cellPositionMap: [[Set<Position>]] = Array(repeating: Array(repeating: Set<Position>(), count: 9), count: 3)
+    private var sameValueMap: [Int: Set<Position>] = [:]
     private var lastSelectedCell: (row: Int, column: Int)? = nil
     
     // Kullanıcının girdiği değerleri takip etmek için
@@ -173,31 +177,21 @@ class SudokuViewModel: ObservableObject {
         // Mevcut seçimi temizle
         if selectedCell?.row == row && selectedCell?.column == column {
             selectedCell = nil
-            // Önbellekleri temizle
-            highlightedCellsCache.removeAll(keepingCapacity: true)
-            sameValueCellsCache.removeAll(keepingCapacity: true)
+            // Haritaları güncelle
+            updateSameValueMap()
         } else {
-            // PowerSavingManager kontrolünü kaldırdık - her zaman çalışacak
-            // if PowerSavingManager.shared.throttleInteractions() {
-            //     return // Etkileşim sınırlanıyorsa işlemi iptal et
-            // }
-            
-            // Eski önbellekleri temizle
-            highlightedCellsCache.removeAll(keepingCapacity: true)
-            sameValueCellsCache.removeAll(keepingCapacity: true)
-            
             // Yeni hücreyi seç
             selectedCell = (row, column)
             lastSelectedCell = (row, column)
             
-            // Yeni seçim için önbellekleri oluştur
+            // Yeni seçim için haritaları güncelle
             precalculateHighlightedCells(row: row, column: column)
         }
         
         // Dokunsal geri bildirim
         if enableHapticFeedback && enableCellTapHaptic {
-            let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.impactOccurred(intensity: 1.0) // Yoğunluğu artırdım
+            // Sistem titreşim API'sini doğrudan kullan
+            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
         }
         
         // Debug log
@@ -206,14 +200,53 @@ class SudokuViewModel: ObservableObject {
     
     // Yeni seçilen hücreyle ilgili önbellekleri oluştur
     private func precalculateHighlightedCells(row: Int, column: Int) {
-        guard let value = board.getValue(row: row, column: column), value > 0 else { return }
+        // Haritaları yeniliyoruz
+        updateCellPositionMap()
+        updateSameValueMap()
+    }
+    
+    // Hücre pozisyon haritasını oluştur - tüm satır, sütun ve blokları gruplar
+    private func updateCellPositionMap() {
+        // Haritayı sıfırlayalım
+        cellPositionMap = Array(repeating: Array(repeating: Set<Position>(), count: 9), count: 3)
         
-        // Tüm tahta üzerindeki aynı değerleri hesapla
-        for r in 0..<9 {
-            for c in 0..<9 {
-                if (r != row || c != column) && board.getValue(row: r, column: c) == value {
-                    let cacheKey = "v_\(r)_\(c)_\(value)"
-                    sameValueCellsCache[cacheKey] = true
+        // Her satır, sütun ve blok için konum haritası oluştur
+        for row in 0..<9 {
+            for col in 0..<9 {
+                let pos = Position(row: row, col: col)
+                let blockRow = row / 3
+                let blockCol = col / 3
+                
+                // Satır haritası (0,0 = 0.satır, 0,1 = 1.satır...)
+                if cellPositionMap.count > 0 && cellPositionMap[0].count > row {
+                    cellPositionMap[0][row].insert(pos)
+                }
+                
+                // Sütun haritası (1,0 = 0.sütun, 1,1 = 1.sütun...)
+                if cellPositionMap.count > 1 && cellPositionMap[1].count > col {
+                    cellPositionMap[1][col].insert(pos)
+                }
+                
+                // Blok haritası (2,0 = sol üst blok, 2,1 = orta üst blok...)
+                let blockIndex = blockRow * 3 + blockCol
+                if cellPositionMap.count > 2 && cellPositionMap[2].count > blockIndex {
+                    cellPositionMap[2][blockIndex].insert(pos)
+                }
+            }
+        }
+    }
+    
+    // Aynı değerlere sahip hücrelerin haritasını günceller
+    private func updateSameValueMap() {
+        // Her kullanımda yeniden hesapla
+        sameValueMap.removeAll(keepingCapacity: true)
+        
+        // Tüm hücreleri tara ve değerlerine göre hücreleri grupla
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if let value = board.getValue(row: row, column: col), value > 0 {
+                    let pos = Position(row: row, col: col)
+                    sameValueMap[value, default: []].insert(pos)
                 }
             }
         }
@@ -468,9 +501,9 @@ class SudokuViewModel: ObservableObject {
     
     // Aynı değere sahip hücrelerin önbelleğini temizle
     private func invalidateSameValueCache() {
-        sameValueCellsCache.removeAll(keepingCapacity: true)
+        sameValueMap.removeAll(keepingCapacity: true)
         
-        // Yeni seçim için önbellekleri yeniden oluştur
+        // Yeni seçim için haritaları güncelle
         if let selected = selectedCell {
             precalculateHighlightedCells(row: selected.row, column: selected.column)
         }
@@ -480,8 +513,8 @@ class SudokuViewModel: ObservableObject {
     private func invalidatePencilMarksCache() {
         pencilMarkCache.removeAll(keepingCapacity: true)
         validValuesCache.removeAll(keepingCapacity: true)
-        sameValueCellsCache.removeAll(keepingCapacity: true)
-        highlightedCellsCache.removeAll(keepingCapacity: true)
+        sameValueMap.removeAll(keepingCapacity: true)
+        cellPositionMap = Array(repeating: Array(repeating: Set<Position>(), count: 3), count: 3)
     }
     
     // Kalem işaretlerini önbellekten al veya hesapla
@@ -1324,8 +1357,8 @@ class SudokuViewModel: ObservableObject {
         
         // Titreşim geri bildirimi
         if enableHapticFeedback && enableNumberInputHaptic && value != nil {
-            let feedback = UIImpactFeedbackGenerator(style: .medium)
-            feedback.impactOccurred(intensity: 1.0) // Yoğunluğu artırdım
+            // Sistem titreşim API'sini doğrudan kullan
+            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
         }
         
         // Kullanıcı girişi olarak işaretle
@@ -1841,7 +1874,7 @@ class SudokuViewModel: ObservableObject {
     func deleteSavedGame(_ game: NSManagedObject) {
         if let savedGame = game as? SavedGame {
             PersistenceController.shared.deleteSavedGame(savedGame)
-        loadSavedGames() // Kaydedilmiş oyunları yeniden yükle
+            loadSavedGames() // Kaydedilmiş oyunları yeniden yükle
         }
     }
     
@@ -2227,70 +2260,95 @@ class SudokuViewModel: ObservableObject {
     
     // Geçici bir süre için önbellekleri geçersiz kıl
     func invalidateCellCache() {
-        highlightedCellsCache.removeAll(keepingCapacity: true)
-        sameValueCellsCache.removeAll(keepingCapacity: true)
+        cellPositionMap = Array(repeating: Array(repeating: Set<Position>(), count: 9), count: 3)
+        sameValueMap.removeAll(keepingCapacity: true)
     }
     
-    // Hücre vurgu hesaplaması için önbellekli versiyon
+    // Hücre vurgu hesaplaması için yeni optimizasyonlu versiyon
     func isHighlighted(row: Int, column: Int) -> Bool {
         guard let selected = selectedCell else { return false }
         
-        // Önbellekten kontrol et
-        let cacheKey = "h_\(row)_\(column)_\(selected.row)_\(selected.column)"
-        if let cached = highlightedCellsCache[cacheKey] {
-            return cached
+        // Seçili hücre ile aynı ise doğrudan true döndür
+        if selected.row == row && selected.column == column {
+            return true
         }
         
-        // Aynı satır veya sütunda mı kontrol et
-        let result = selected.row == row || selected.column == column
+        // Hücre pozisyon haritası doğru boyutta değilse veya boşsa yeniden oluştur
+        if cellPositionMap.count < 3 || cellPositionMap[0].isEmpty {
+            updateCellPositionMap()
+        }
         
-        // Sonucu önbelleğe al
-        highlightedCellsCache[cacheKey] = result
+        // Hedef hücre konumu
+        let targetPos = Position(row: row, col: column)
         
-        return result
+        // Güvenlik kontrolleri ekleyelim
+        if cellPositionMap.count > 0 && cellPositionMap[0].count > selected.row {
+            // Aynı satırda mı?
+            if cellPositionMap[0][selected.row].contains(targetPos) {
+                return true
+            }
+        }
+        
+        if cellPositionMap.count > 1 && cellPositionMap[1].count > selected.column {
+            // Aynı sütunda mı?
+            if cellPositionMap[1][selected.column].contains(targetPos) {
+                return true
+            }
+        }
+        
+        // Aynı 3x3 bloğunda mı?
+        let selectedBlockRow = selected.row / 3
+        let selectedBlockCol = selected.column / 3
+        let selectedBlockIndex = selectedBlockRow * 3 + selectedBlockCol
+        
+        if cellPositionMap.count > 2 && cellPositionMap[2].count > selectedBlockIndex {
+            if cellPositionMap[2][selectedBlockIndex].contains(targetPos) {
+                return true
+            }
+        }
+        
+        return false
     }
     
-    // Aynı değere sahip hücreleri vurgulama için optimizasyon
+    // Aynı değere sahip hücreleri vurgulama için yeni optimizasyonlu versiyon
     func hasSameValue(row: Int, column: Int) -> Bool {
-        guard let selected = selectedCell else { return false }
-        
-        // Aynı hücre ise, aynı değere sahip değildir
-        if selected.row == row && selected.column == column {
-            return false
-        }
-        
-        // Seçili hücrenin değeri
-        guard let selectedValue = board.getValue(row: selected.row, column: selected.column), 
+        guard let selected = selectedCell, 
+              let selectedValue = board.getValue(row: selected.row, column: selected.column),
               selectedValue > 0 else {
             return false
         }
         
-        // Önbellekten kontrol et
-        let cacheKey = "v_\(row)_\(column)_\(selectedValue)"
-        if let cached = sameValueCellsCache[cacheKey] {
-            return cached
+        // Aynı hücre ise, false döndür
+        if selected.row == row && selected.column == column {
+            return false
         }
         
-        // Hücre değerini kontrol et
+        // Hücredeki değer
         let cellValue = board.getValue(row: row, column: column)
         
-        // Değerlerin birbirine eşit olup olmadığını kontrol et
-        // 0 değeri özel durum - boş hücre
-        let result = cellValue == selectedValue && cellValue != 0
+        // Değer yoksa veya seçili hücre değerinden farklıysa
+        if cellValue == nil || cellValue != selectedValue {
+            return false
+        }
         
-        // Sonucu önbelleğe al
-        sameValueCellsCache[cacheKey] = result
+        // sameValueMap boşsa güncelle
+        if sameValueMap.isEmpty {
+            updateSameValueMap()
+        }
         
-        return result
+        // Aynı değere sahip hücreler haritasında bu değer var mı ve bu hücre o değere sahip mi?
+        if let positions = sameValueMap[selectedValue] {
+            return positions.contains(Position(row: row, col: column))
+        }
+        
+        return false
     }
     
     // Önbellekleri temizleme
     private func clearCaches() {
-        // Önbellekleri temizle
         pencilMarkCache.removeAll(keepingCapacity: true)
         validValuesCache.removeAll(keepingCapacity: true)
-        highlightedCellsCache.removeAll(keepingCapacity: true)
-        sameValueCellsCache.removeAll(keepingCapacity: true)
+        sameValueMap.removeAll(keepingCapacity: true)
         
         // Önbellek durumunu da sıfırla
         cachedHighlightedPositions.removeAll()

@@ -1,9 +1,16 @@
 import SwiftUI
 import Combine
+import Foundation
+import UIKit
+import AudioToolbox
 
+/// Güç tasarrufu modunu yöneten sınıf
 class PowerSavingManager: ObservableObject {
     // Singleton örneği
     static let shared = PowerSavingManager()
+    
+    // AppStorage değişkenleri
+    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
     
     // Güç tasarrufu durumu
     @Published var powerSavingMode: Bool = UserDefaults.standard.bool(forKey: "powerSavingMode") {
@@ -15,6 +22,18 @@ class PowerSavingManager: ObservableObject {
     @Published var autoPowerSaving: Bool = UserDefaults.standard.bool(forKey: "autoPowerSaving") {
         didSet {
             UserDefaults.standard.set(autoPowerSaving, forKey: "autoPowerSaving")
+        }
+    }
+    
+    // Yüksek performans modu - güç tasarrufunu geçersiz kılar
+    @Published var highPerformanceMode: Bool = UserDefaults.standard.bool(forKey: "highPerformanceMode") {
+        didSet {
+            UserDefaults.standard.set(highPerformanceMode, forKey: "highPerformanceMode")
+            // Yüksek performans aktifse, güç tasarrufunu devre dışı bırak
+            if highPerformanceMode {
+                powerSavingMode = false
+                powerSavingLevel = .off
+            }
         }
     }
     
@@ -142,9 +161,13 @@ class PowerSavingManager: ObservableObject {
             powerSavingLevel = .off
         }
         
-        // Dokunsal geribildirim
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
+        // Titreşim açıksa titreşimli ses çal
+        if enableHapticFeedback {
+            SoundManager.shared.playNavigationSound()
+        } else {
+            // Titreşim kapalıysa sadece ses çal
+            SoundManager.shared.playNavigationSoundOnly()
+        }
     }
     
     // Güç tasarrufu seviyesini manuel olarak ayarla
@@ -156,11 +179,22 @@ class PowerSavingManager: ObservableObject {
         if powerSavingMode {
             isAutoPowerSavingActive = false
         }
+        
+        // Titreşim açıksa titreşimli ses çal
+        if enableHapticFeedback {
+            SoundManager.shared.playNavigationSound()
+        } else {
+            // Titreşim kapalıysa sadece ses çal
+            SoundManager.shared.playNavigationSoundOnly()
+        }
     }
     
     // Güç tasarrufu durumunu kontrol et
     var isPowerSavingEnabled: Bool {
-        get { return powerSavingMode }
+        get { 
+            // Yüksek performans modunda her zaman false döndür
+            return highPerformanceMode ? false : powerSavingMode 
+        }
         set { powerSavingMode = newValue }
     }
     
@@ -172,6 +206,10 @@ class PowerSavingManager: ObservableObject {
     
     // Animasyon hızı faktörü - seviyeye göre
     var animationSpeedFactor: Double {
+        if highPerformanceMode {
+            return 1.2  // Yüksek performans modunda daha hızlı animasyonlar
+        }
+        
         if !isPowerSavingEnabled {
             return 1.0
         }
@@ -186,6 +224,10 @@ class PowerSavingManager: ObservableObject {
     
     // Animasyon karmaşıklığı faktörü - seviyeye göre
     var animationComplexityFactor: Double {
+        if highPerformanceMode {
+            return 1.2  // Yüksek performans modunda daha karmaşık animasyonlar
+        }
+        
         if !isPowerSavingEnabled {
             return 1.0
         }
@@ -200,6 +242,10 @@ class PowerSavingManager: ObservableObject {
     
     // Görsel efekt kalitesi faktörü - seviyeye göre
     var visualEffectQualityFactor: Double {
+        if highPerformanceMode {
+            return 1.2  // Yüksek performans modunda daha yüksek kaliteli efektler
+        }
+        
         if !isPowerSavingEnabled {
             return 1.0
         }

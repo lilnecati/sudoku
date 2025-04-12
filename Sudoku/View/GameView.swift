@@ -7,6 +7,8 @@
 import SwiftUI
 import CoreData
 import UIKit
+import AudioToolbox
+import AVFoundation
 
 // Not: HideNavigationBar ViewModifier'a artık ihtiyaç yok çünkü fullScreenCover kullanıyoruz
 
@@ -217,8 +219,8 @@ struct GameView: View {
         .onChange(of: viewModel.pencilMode) { oldValue, newValue in
             // Hafif titreşim - ayarlara bağlı
             if enableHapticFeedback && enableNumberInputHaptic {
-                let feedback = UIImpactFeedbackGenerator(style: .light)
-                feedback.impactOccurred()
+                // Sistem titreşim API'sini doğrudan kullan
+                AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
             }
         }
         .onChange(of: viewModel.gameState) { oldValue, newValue in

@@ -661,42 +661,42 @@ struct ContentView: View {
             }
             
             // Rehber butonu
-            // Button(action: {
-            //     SoundManager.shared.playNavigationSound()
-            //     
-            //     if !hasSeenTutorial {
-            //         // Doğrudan eğitimi göster
-            //         showTutorial = true
-            //     } else {
-            //         // Eğitimi daha önce görmüşse, sor
-            //         showTutorialPrompt = true
-            //     }
-            // }) {
-            //     HStack {
-            //         Image(systemName: "questionmark.circle.fill")
-            //             .foregroundColor(.white)
-            //             .padding(10)
-            //             .background(Color.blue)
-            //             .clipShape(Circle())
-            //         
-            //         Text("Nasıl Oynanır?")
-            //             .fontWeight(.medium)
-            //         
-            //         Spacer()
-            //         
-            //         Image(systemName: "chevron.right")
-            //             .foregroundColor(.gray)
-            //             .font(.caption)
-            //     }
-            //     .padding()
-            //     .background(
-            //         RoundedRectangle(cornerRadius: 12)
-            //             .fill(Color(UIColor.secondarySystemBackground))
-            //     )
-            // }
-            // .buttonStyle(ScaleButtonStyle())
-            // .offset(y: buttonsOffset)
-            // .opacity(buttonsOpacity)
+            Button(action: {
+                SoundManager.shared.playNavigationSound()
+                
+                if !hasSeenTutorial {
+                    // Doğrudan eğitimi göster
+                    showTutorial = true
+                } else {
+                    // Eğitimi daha önce görmüşse, sor
+                    showTutorialPrompt = true
+                }
+            }) {
+                HStack {
+                    Image(systemName: "questionmark.circle.fill")
+                        .foregroundColor(.white)
+                        .padding(10)
+                        .background(Color.blue)
+                        .clipShape(Circle())
+                    
+                    Text("Nasıl Oynanır?")
+                        .fontWeight(.medium)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.gray)
+                        .font(.caption)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(UIColor.secondarySystemBackground))
+                )
+            }
+            .buttonStyle(ScaleButtonStyle())
+            .offset(y: buttonsOffset)
+            .opacity(buttonsOpacity)
         }
     }
     

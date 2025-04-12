@@ -15,6 +15,9 @@ class SoundManager: ObservableObject {
     // Singleton pattern
     static let shared = SoundManager()
     
+    // Titreşim ayarı
+    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
+    
     // Player nesnelerini önden yükleme için
     private var tapPlayer: AVAudioPlayer?
     private var numberInputPlayer: AVAudioPlayer?
@@ -278,7 +281,7 @@ class SoundManager: ObservableObject {
                             var fileTypeHint: String? = nil
                             if hexSignature.hasPrefix("5249") {  // "RIFF" (WAV)
                                 fileTypeHint = AVFileType.wav.rawValue
-                                log("�� Format: WAV (RIFF) algılandı")
+                                log("🔄 Format: WAV (RIFF) algılandı")
                             } else if hexSignature.hasPrefix("4944") || hexSignature.hasPrefix("FFFA") || hexSignature.hasPrefix("FFFB") {
                                 fileTypeHint = AVFileType.mp3.rawValue
                                 log("🔄 Format: MP3 algılandı")
@@ -373,7 +376,7 @@ class SoundManager: ObservableObject {
         }
         
         // Ana bundle içindeki ses kaynaklarını listele
-        log("\n�� Bundle kaynaklarını doğrudan kontrol ediyorum:")
+        log("\nBundle kaynaklarını doğrudan kontrol ediyorum:")
         
         // Test edilecek ses dosyaları
         let testSounds = ["tap", "error", "correct", "completion", "number_tap"]
@@ -552,12 +555,17 @@ class SoundManager: ObservableObject {
     /// Sayı girildiğinde çalan ses
     func playNumberInputSound() {
         log("🎵 playNumberInputSound çağrıldı")
+        
+        // Titreşim geri bildirimi - ayarlardan kontrol ederek
+        if UIDevice.current.userInterfaceIdiom == .phone && enableHapticFeedback {
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred(intensity: 0.75) // Daha güçlü titreşim
+        }
+        
+        // Ses kısmı (sadece ses açıksa çalışır)
         guard canPlaySound() else { return }
         
-        // Sistem sesi DEVRE DIŞI - çift ses sorununu çözmek için
-        // AudioServicesPlaySystemSound(1104)
-        
-        // Klasik yöntem - kendi ses dosyamızı kullanalım
+        // System sesi DEVRE DIŞI - çift ses sorununu çözmek için
         if numberInputPlayer == nil {
             numberInputPlayer = loadSound(named: "number_tap", ofType: "wav")
             
@@ -646,6 +654,14 @@ class SoundManager: ObservableObject {
     /// Menü ve gezinme sesi
     func playNavigationSound() {
         log("🎵 playNavigationSound çağrıldı")
+        
+        // Titreşim geri bildirimi - ayarlardan kontrol ederek
+        if UIDevice.current.userInterfaceIdiom == .phone && enableHapticFeedback {
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred(intensity: 0.75) // Daha güçlü titreşim
+        }
+        
+        // Ses kısmı (sadece ses açıksa çalışır)
         guard canPlaySound() else { return }
         
         // Tüm sistem sesleri devre dışı bırakıldı
@@ -677,6 +693,42 @@ class SoundManager: ObservableObject {
         player.play()
     }
     
+    /// Menü ve gezinme sesi - titreşim vermeden (ayarlar için)
+    func playNavigationSoundOnly() {
+        log("🎵 playNavigationSoundOnly çağrıldı - titreşim vermeden")
+        
+        // Ses kısmı (sadece ses açıksa çalışır)
+        guard canPlaySound() else { return }
+        
+        // Tüm sistem sesleri devre dışı bırakıldı
+        // Sadece kendi ses dosyamızı kullan
+        
+        // Klasik yöntem - kendi ses dosyamızı kullanalım
+        if navigationPlayer == nil {
+            log("⚠️ Navigation player oluşturuluyor - doğrudan tap.wav kullanılacak")
+            // Burada doğrudan "tap" dosyasını kullan, alternatif araması yapma
+            navigationPlayer = loadSound(named: "tap", ofType: "wav")
+            
+            // Yükleme başarısız olursa log tut
+            if navigationPlayer == nil {
+                log("❌ tap.wav yüklenemedi, ses çalınamayacak")
+            }
+        }
+        
+        guard let player = navigationPlayer else { 
+            log("❌ Navigation player nil olduğu için ses çalınamıyor")
+            return 
+        }
+        
+        // İsmi ve formatı log'la
+        log("✅ playNavigationSoundOnly: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+        
+        if player.isPlaying { player.stop() }
+        player.currentTime = 0
+        player.volume = Float(defaultVolume)
+        player.play()
+    }
+    
     // Sesle ilgili eylemleri daha basitleştirmek için bu fonksiyonu kullan
     func executeSound(_ action: SoundAction) {
         switch action {
@@ -695,9 +747,10 @@ class SoundManager: ObservableObject {
         case .completion:
             playCompletionSound()
         case .vibrate:
-            // Titreşim özelliğini koru, kullanıcının dokunsal geri bildirimi hissetmesi önemli
-            if UIDevice.current.userInterfaceIdiom == .phone {
-                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+            // Ayarlardaki butonlardaki gibi çok hafif dokunsal geri bildirim - ayarlardan kontrol ederek
+            if UIDevice.current.userInterfaceIdiom == .phone && enableHapticFeedback {
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.impactOccurred(intensity: 0.75) // Daha güçlü titreşim
             }
         case .test:
             playBasicTestSound()
@@ -720,7 +773,15 @@ class SoundManager: ObservableObject {
     
     /// Silme tuşu için ses
     func playEraseSound() {
-        log("�� playEraseSound çağrıldı")
+        log("🔄 playEraseSound çağrıldı")
+        
+        // Titreşim geri bildirimi - ayarlardan kontrol ederek
+        if UIDevice.current.userInterfaceIdiom == .phone && enableHapticFeedback {
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred(intensity: 0.75) // Daha güçlü titreşim
+        }
+        
+        // Ses kısmı (sadece ses açıksa çalışır)
         guard canPlaySound() else { return }
         
         // Erase ses dosyasını çal - önceden yüklenmiş oynatıcıyı kullan

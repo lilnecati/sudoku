@@ -351,35 +351,46 @@ class SudokuBoard: ObservableObject, Codable {
             return cached
         }
         
+        // Optimizasyon: Çözüm değeri önceden biliniyorsa, direkt kontrol et
+        if let solutionValue = solution[row][column], solutionValue != value {
+            validPlacementCache[cacheKey] = false
+            return false
+        }
+        
         // Hızlı yol: Eğer hücrede zaten bir değer varsa ve o değer gelen değerden farklıysa
         if let currentValue = board[row][column], currentValue != value {
             validPlacementCache[cacheKey] = false
             return false
         }
         
-        // Satırdaki tüm değerleri kontrol et
-        for col in 0..<9 {
-            if let cellValue = board[row][col], cellValue == value && col != column {
-                validPlacementCache[cacheKey] = false
-                return false
-            }
-        }
-        
-        // Sütundaki tüm değerleri kontrol et
-        for r in 0..<9 {
-            if let cellValue = board[r][column], cellValue == value && r != row {
-                validPlacementCache[cacheKey] = false
-                return false
-            }
-        }
-        
-        // 3x3 blok kontrolü
+        // Optimizasyon: Satır, sütun ve blok kontrollerini tek geçişte yapalım
         let blockRow = (row / 3) * 3
         let blockCol = (column / 3) * 3
         
+        // Satır ve sütun için birleştirilmiş hızlı kontrol
+        for i in 0..<9 {
+            // Satır kontrolü (row, i)
+            if let cellValue = board[row][i], cellValue == value && i != column {
+                validPlacementCache[cacheKey] = false
+                return false
+        }
+        
+            // Sütun kontrolü (i, column)
+            if let cellValue = board[i][column], cellValue == value && i != row {
+                validPlacementCache[cacheKey] = false
+                return false
+            }
+        }
+        
+        // 3x3 blok kontrolü - sadece aynı blokta ve satır/sütun dışındaki hücreler için
         for r in blockRow..<(blockRow + 3) {
             for c in blockCol..<(blockCol + 3) {
-                if let cellValue = board[r][c], cellValue == value && (r != row || c != column) {
+                // Satır ve sütun kontrolünde tekrar kontrol edilmiş hücreleri atlayalım
+                if r == row || c == column {
+                    continue
+                }
+                
+                if let cellValue = board[r][c], cellValue == value {
                     validPlacementCache[cacheKey] = false
                     return false
                 }
@@ -1093,25 +1104,47 @@ class SudokuBoard: ObservableObject, Codable {
     }
     
     // Bir hücreye yerleştirilebilecek olası değerleri getir
-    private func getPossibleValues(row: Int, column: Int) -> [Int] {
-        // Önbellek anahtarını oluştur
-        let cacheKey = "pv_\(row)_\(column)"
+    private func getPossibleValues(row: Int, column: Int) -> Set<Int> {
+        guard isValidIndex(row: row, column: column) else { return [] }
         
-        // Önbellekte varsa hemen döndür
-        if let cachedValues = validPlacementCache[cacheKey] as? [Int] {
-            return cachedValues
+        // Eğer hücrede zaten değer varsa, boş set döndür
+        if board[row][column] != nil {
+            return []
         }
         
-        var possibleValues = [Int]()
+        // Optimize edilmiş yaklaşım: tüm değerleri bir set olarak al ve kullanılanları çıkar
+        var possibleValues = Set(1...9)
         
-        for value in 1...9 {
-            if isValidPlacement(row: row, column: column, value: value) {
-                possibleValues.append(value)
+        // Optimizasyon: Satır, sütun ve blok kontrollerini tek geçişte yapalım
+        let blockRow = (row / 3) * 3
+        let blockCol = (column / 3) * 3
+        
+        // Satır ve sütun için birleştirilmiş tarama
+        for i in 0..<9 {
+            // Satırdaki kullanılan değerleri çıkar
+            if let value = board[row][i] {
+                possibleValues.remove(value)
+            }
+            
+            // Sütundaki kullanılan değerleri çıkar
+            if let value = board[i][column] {
+                possibleValues.remove(value)
             }
         }
         
-        // Sonucu önbelleğe al
-        validPlacementCache[cacheKey] = possibleValues
+        // 3x3 blok kontrolü - satır ve sütunda kontrol edilmeyen hücreler için
+        for r in blockRow..<(blockRow + 3) {
+            for c in blockCol..<(blockCol + 3) {
+                // Satır ve sütun kontrolünde tekrar kontrol edilmiş hücreleri atlayalım
+                if r == row || c == column {
+                    continue
+                }
+                
+                if let value = board[r][c] {
+                    possibleValues.remove(value)
+                }
+            }
+        }
         
         return possibleValues
     }
