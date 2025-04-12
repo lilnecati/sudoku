@@ -224,38 +224,8 @@ class PowerSavingManager: ObservableObject {
     
     // Kullanıcı etkileşimlerini sınırlandır
     func throttleInteractions() -> Bool {
-        // Zaten sınırlandırma yapılıyorsa, true döndür
-        if isThrottling {
-            return true
-        }
-        
-        // Güç tasarrufu modu kapalıysa hiç sınırlama yapma
-        if !isPowerSavingEnabled {
-            return false
-        }
-        
-        // Güç tasarrufu moduna göre değişken sınırlandırma
-        // Yüksek güç tasarrufu seviyesinde daha uzun sınırlandırma süresi
-        var duration = throttleDuration
-        switch powerSavingLevel {
-        case .high: duration = throttleDuration * 3
-        case .medium: duration = throttleDuration * 2
-        case .low: duration = throttleDuration
-        case .off: return false
-        }
-        
-        // Sınırlandırmayı etkinleştir
-        isThrottling = true
-        
-        // Varolan zamanlayıcıyı iptal et
-        throttleTimer?.invalidate()
-        
-        // Sınırlandırmayı belirli bir süre sonra kaldır
-        throttleTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
-            self?.isThrottling = false
-        }
-        
-        return true
+        // Devre dışı bırakıldı - her zaman false döndür
+        return false
     }
     
     // Etkileşim sınırlanıyor mu kontrol et

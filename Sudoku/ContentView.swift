@@ -58,7 +58,7 @@ struct ContentView: View {
     @State private var previousPage: AppPage = .home
     
     @AppStorage("selectedDifficulty") private var selectedDifficulty = 0
-    @AppStorage("hasSeenTutorial") private var hasSeenTutorial = false
+    @AppStorage("hasSeenTutorial") private var hasSeenTutorial = true  // true yaparak rehberi devre dışı bırakıyoruz
     @AppStorage("powerSavingMode") private var powerSavingMode = false // Animasyonlar için false (kapalı) olmalı
     
     @State private var showGame = false
@@ -185,12 +185,13 @@ struct ContentView: View {
     
     // MARK: - Timeout Check and Tutorial Setup
     private func checkTutorial() {
-        if !hasSeenTutorial {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                // NavigationLink için değişken ayarla
-                showTutorial = true
-            }
-        }
+        // Rehber kontrolünü kaldırıyoruz
+        // if !hasSeenTutorial {
+        //     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        //         // NavigationLink için değişken ayarla
+        //         showTutorial = true
+        //     }
+        // }
     }
     
     // Karşılama animasyonlarını başlat
@@ -660,42 +661,42 @@ struct ContentView: View {
             }
             
             // Rehber butonu
-            Button(action: {
-                SoundManager.shared.playNavigationSound()
-                
-                if !hasSeenTutorial {
-                    // Doğrudan eğitimi göster
-                    showTutorial = true
-                } else {
-                    // Eğitimi daha önce görmüşse, sor
-                    showTutorialPrompt = true
-                }
-            }) {
-                HStack {
-                    Image(systemName: "questionmark.circle.fill")
-                        .foregroundColor(.white)
-                        .padding(10)
-                        .background(Color.blue)
-                        .clipShape(Circle())
-                    
-                    Text("Nasıl Oynanır?")
-                        .fontWeight(.medium)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.gray)
-                        .font(.caption)
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(UIColor.secondarySystemBackground))
-                )
-            }
-            .buttonStyle(ScaleButtonStyle())
-            .offset(y: buttonsOffset)
-            .opacity(buttonsOpacity)
+            // Button(action: {
+            //     SoundManager.shared.playNavigationSound()
+            //     
+            //     if !hasSeenTutorial {
+            //         // Doğrudan eğitimi göster
+            //         showTutorial = true
+            //     } else {
+            //         // Eğitimi daha önce görmüşse, sor
+            //         showTutorialPrompt = true
+            //     }
+            // }) {
+            //     HStack {
+            //         Image(systemName: "questionmark.circle.fill")
+            //             .foregroundColor(.white)
+            //             .padding(10)
+            //             .background(Color.blue)
+            //             .clipShape(Circle())
+            //         
+            //         Text("Nasıl Oynanır?")
+            //             .fontWeight(.medium)
+            //         
+            //         Spacer()
+            //         
+            //         Image(systemName: "chevron.right")
+            //             .foregroundColor(.gray)
+            //             .font(.caption)
+            //     }
+            //     .padding()
+            //     .background(
+            //         RoundedRectangle(cornerRadius: 12)
+            //             .fill(Color(UIColor.secondarySystemBackground))
+            //     )
+            // }
+            // .buttonStyle(ScaleButtonStyle())
+            // .offset(y: buttonsOffset)
+            // .opacity(buttonsOpacity)
         }
     }
     
@@ -865,30 +866,9 @@ struct ContentView: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $showGame, onDismiss: {
-            // Oyun ekranı kapatıldığında, kaldığımız sekmede kalmaya devam edelim
-            // Burada bir şey yapmıyoruz, böylece mevcut sekme korunur
-            
-            // Oyun kapatıldığında, yükleme ekranını da kapatalım
-            isLoadingSelectedGame = false
-            
-            print("Oyun ekranı kapatıldı, mevcut sekme: \(currentPage)")
-        }) {
-            // Oyun görünümü
+        .fullScreenCover(isPresented: $showGame) {
             GameView(existingViewModel: viewModel)
                 .environmentObject(themeManager)
-        }
-        .alert(isPresented: $showTutorialPrompt) {
-            Alert(
-                title: Text("Rehberi Göster"),
-                message: Text("Rehberi tekrar görmek istiyor musunuz?"),
-                primaryButton: .default(Text("Evet")) {
-                    // Doğrudan showTutorial'ı true yaparak NavigationLink üzerinden
-                    // TutorialView'a git
-                    showTutorial = true
-                },
-                secondaryButton: .cancel(Text("Hayır"))
-            )
         }
     }
     

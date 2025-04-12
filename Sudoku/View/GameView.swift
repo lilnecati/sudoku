@@ -43,9 +43,17 @@ struct GameView: View {
     @State private var isBoardVisible = false
     @State private var isControlsVisible = false
     
-    // Rehberlik yöneticisi
-    @StateObject private var tutorialManager = TutorialManager()
-    @State private var showTutorialButton = true
+    // Rehber butonu
+    // if showTutorialButton && !tutorialManager.hasCompletedTutorial {
+    //     HStack {
+    //         Spacer()
+    //         TutorialButton {
+    //             tutorialManager.startTutorial()
+    //         }
+    //         .transition(.scale.combined(with: .opacity))
+    //     }
+    //     .padding(.horizontal)
+    // }
     
     // Arka plan gradient renkleri - önbelleklenmiş
     private var gradientColors: [Color] {
@@ -103,16 +111,16 @@ struct GameView: View {
             // Ana içerik
             VStack(spacing: 10) {
                 // Rehber butonu
-                if showTutorialButton && !tutorialManager.hasCompletedTutorial {
-                    HStack {
-                        Spacer()
-                        TutorialButton {
-                            tutorialManager.startTutorial()
-                        }
-                        .transition(.scale.combined(with: .opacity))
-                    }
-                    .padding(.horizontal)
-                }
+                // if showTutorialButton && !tutorialManager.hasCompletedTutorial {
+                //     HStack {
+                //         Spacer()
+                //         TutorialButton {
+                //             tutorialManager.startTutorial()
+                //         }
+                //         .transition(.scale.combined(with: .opacity))
+                //     }
+                //     .padding(.horizontal)
+                // }
                 Spacer()
                 
                 // Üst bilgi alanı
@@ -171,15 +179,15 @@ struct GameView: View {
             overlayViews
             
             // Rehber katmanı
-            if tutorialManager.isActive {
-                TutorialOverlayView(tutorialManager: tutorialManager) {
-                    withAnimation {
-                        tutorialManager.stopTutorial()
-                        showTutorialButton = false
-                    }
-                }
-                .transition(.opacity)
-            }
+            // if tutorialManager.isActive {
+            //     TutorialOverlayView(tutorialManager: tutorialManager) {
+            //         withAnimation {
+            //             tutorialManager.stopTutorial()
+            //             showTutorialButton = false
+            //         }
+            //     }
+            //     .transition(.opacity)
+            // }
             
             // Zorluk seçici
             if showDifficultyPicker {
@@ -482,11 +490,9 @@ struct GameView: View {
         }
         
         // İlk kullanımda rehberlik özelliğini otomatik başlat
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            if !tutorialManager.hasCompletedTutorial && viewModel.gameState == .playing {
-                tutorialManager.startTutorial()
-            }
-        }
+        // if !tutorialManager.hasCompletedTutorial && viewModel.gameState == .playing {
+        //     tutorialManager.startTutorial()
+        // }
     }
     
     // Zamanlayıcı güncelleyicisini ayarla
@@ -971,3 +977,4 @@ struct DifficultyButton: View {
         .buttonStyle(PlainButtonStyle())
     }
 } 
+

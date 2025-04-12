@@ -143,23 +143,23 @@ class SudokuViewModel: ObservableObject {
     
     // Hücre seçme - optimize edildi
     func selectCell(row: Int, column: Int) {
-        // Daha önceki bir seçim varsa ve aynı hücre seçilirse, seçimi kaldır
+        // Mevcut seçimi temizle
         if selectedCell?.row == row && selectedCell?.column == column {
             selectedCell = nil
             // Önbellekleri temizle
             highlightedCellsCache.removeAll(keepingCapacity: true)
             sameValueCellsCache.removeAll(keepingCapacity: true)
         } else {
-            // Performans için: PowerSavingManager'ı kullan ve etkileşimleri sınırla
-            if PowerSavingManager.shared.throttleInteractions() {
-                return // Etkileşim sınırlanıyorsa işlemi iptal et
-            }
+            // PowerSavingManager kontrolünü kaldırdık - her zaman çalışacak
+            // if PowerSavingManager.shared.throttleInteractions() {
+            //     return // Etkileşim sınırlanıyorsa işlemi iptal et
+            // }
             
             // Eski önbellekleri temizle
             highlightedCellsCache.removeAll(keepingCapacity: true)
             sameValueCellsCache.removeAll(keepingCapacity: true)
             
-            // Animasyon optimizasyonu: Yeni değer ayarla
+            // Yeni hücreyi seç
             selectedCell = (row, column)
             lastSelectedCell = (row, column)
             
@@ -167,11 +167,14 @@ class SudokuViewModel: ObservableObject {
             precalculateHighlightedCells(row: row, column: column)
         }
         
-        // Dokunsal geri bildirim - sadece gerekirse
+        // Dokunsal geri bildirim
         if enableHapticFeedback && enableCellTapHaptic {
-            feedbackGenerator.prepare() // Geri bildirimi hazırla (daha hızlı yanıt)
-            feedbackGenerator.impactOccurred(intensity: 0.5) // Daha hafif titreşim (pil tasarrufu)
+            feedbackGenerator.prepare()
+            feedbackGenerator.impactOccurred(intensity: 0.5)
         }
+        
+        // Debug log
+        print("Hücre seçildi: (\(row), \(column))")
     }
     
     // Yeni seçilen hücreyle ilgili önbellekleri oluştur
@@ -191,32 +194,45 @@ class SudokuViewModel: ObservableObject {
     
     // Seçili hücreye değer atar - optimize edildi
     func setValueAtSelectedCell(_ value: Int?) {
-        guard let selectedCell = selectedCell else { return }
+        guard let selectedCell = selectedCell else { 
+            print("Hücre seçili değil!")
+            return 
+        }
+        
         let row = selectedCell.row
         let col = selectedCell.column
         
+        // Debug log
+        print("setValueAtSelectedCell: \(value ?? 0) -> (\(row), \(col))")
+        
         // Eğer orijinal/sabit bir hücre ise, değişime izin verme
         if board.isFixed(at: row, col: col) {
+            print("Sabit hücre değiştirilemez: (\(row), \(col))")
             return
         }
         
         let currentValue = board.getValue(at: row, col: col)
+        let correctValue = board.getOriginalValue(at: row, col: col)
         
+        // Eğer hücredeki mevcut değer doğruysa, değişime izin verme
+        if currentValue == correctValue && currentValue != nil {
+            print("Hücre zaten doğru değere sahip: \(currentValue!)")
+            SoundManager.shared.playCorrectSound() // Doğru olduğunu bir daha hatırlat
+            return
+        }
+        
+        // Kalem modu için işlemler aynen kalsın
         if pencilMode {
             // Kalem modu işlemi - notlar için
             if let value = value {
                 togglePencilMark(at: row, col: col, value: value)
             } else {
                 // Silme işlemi - tüm pencil markları temizle
-                // Önce ses dosyasını çal, sonra işlemi yap
                 SoundManager.shared.playEraseSound()
                 clearPencilMarks(at: row, col: col)
             }
             return
         }
-        
-        // Doğru değer kontrolü - Sadece doğru çözüm değeri veya silme işlemi
-        let correctValue = board.getOriginalValue(at: row, col: col)
         
         // Değer silme işlemi - her zaman izin verilir
         if value == nil {
@@ -224,7 +240,7 @@ class SudokuViewModel: ObservableObject {
                 // Önce ses dosyasını çal, sonra işlemi yap
                 SoundManager.shared.playEraseSound()
                 
-                // Gecikmesiz silme işlemi uygula
+                // Değeri sil
                 enterValue(value, at: row, col: col)
                 // Önbellekleri geçersiz kıl
                 invalidatePencilMarksCache(forRow: row, column: col)
@@ -234,46 +250,15 @@ class SudokuViewModel: ObservableObject {
             return
         }
         
-        // Değer girme işlemi - sadece doğru çözüm değerine izin ver
-        if value != correctValue {
-            // Yanlış değer - hata geri bildirimi ve engellenecek
-            errorCount += 1
-            
-            // Hatalı hücreyi işaretle
-            let position = Position(row: row, col: col)
-            invalidCells.insert(position)
-            
-            // Hata sesi çal
-            SoundManager.shared.playErrorSound()
-            
-            // Hata geri bildirimi
-            if enableHapticFeedback && enableNumberInputHaptic {
-                let errorFeedback = UINotificationFeedbackGenerator()
-                errorFeedback.notificationOccurred(.error)
-            }
-            
-            // Hatayı kısa süre sonra temizle
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
-                self?.invalidCells.remove(position)
-            }
-            
-            // Maksimum hata sayısını kontrol et
-            if errorCount >= maxErrorCount {
-                gameState = .failed
-                stopTimer()
-            }
-            
-            // Hatalı değeri girmiyoruz
-            return
-        } else {
-            // Doğru değer
-            
-            // Performans: Sadece değişiklik varsa işlem yap
-            if currentValue != value {
-                // Doğru ses çal
+        // Performans: Sadece değişiklik varsa işlem yap
+        if currentValue != value {
+            // Doğru ya da yanlış olmasına göre ses çal
+            if value == correctValue {
                 SoundManager.shared.playCorrectSound()
                 
+                // Herhangi bir durumda değeri gir
                 enterValue(value, at: row, col: col)
+                
                 // Önbelleği geçersiz kıl
                 invalidatePencilMarksCache(forRow: row, column: col)
                 validateBoard()
@@ -289,9 +274,45 @@ class SudokuViewModel: ObservableObject {
                 checkGameCompletion()
                 
                 // Oyun tamamlandıysa veya başarısız olduysa kayıtlı oyunu sil
-                if gameState == .completed || gameState == .failed {
-                    deleteSavedGameIfExists()
+            } else {
+                SoundManager.shared.playErrorSound()
+                
+                // Hata sayısını artır
+                errorCount += 1
+                
+                // Hatalı hücreyi işaretle
+                let position = Position(row: row, col: col)
+                invalidCells.insert(position)
+                
+                // Hata geri bildirimi
+                if enableHapticFeedback && enableNumberInputHaptic {
+                    let errorFeedback = UINotificationFeedbackGenerator()
+                    errorFeedback.notificationOccurred(.error)
                 }
+                
+                // Maksimum hata sayısını kontrol et
+                if errorCount >= maxErrorCount {
+                    gameState = .failed
+                    stopTimer()
+                }
+                
+                // ÖNEMLİ DEĞİŞİKLİK: Hatalı değeri hücreye girme
+                // enterValue(value, at: row, col: col) - bu satırı kaldırıyoruz
+                
+                // Önbelleği güncelle ve doğrula
+                invalidatePencilMarksCache(forRow: row, column: col)
+                validateBoard()
+                updateUsedNumbers()
+                
+                // Hamle sayısını artır - hatalı girişleri de sayalım
+                moveCount += 1
+                
+                // Otomatik kaydet
+                autoSaveGame()
+                
+                // Hatalı giriş sonrasında da oyun tamamlanma kontrolü yap
+                // Önceki hücrelerin doğru doldurulduğundan emin olmak için
+                checkGameCompletion()
             }
         }
     }
@@ -328,6 +349,9 @@ class SudokuViewModel: ObservableObject {
             if gameState == .playing {
                 print("✅ Sudoku tamamlandı! Skor kaydedilecek.")
                 handleGameCompletion()
+                
+                // Kayıtlı oyunu sil (oyun tamamlandı)
+                deleteSavedGameIfExists()
             } else {
                 gameState = .completed
                 stopTimer()
@@ -1180,19 +1204,37 @@ class SudokuViewModel: ObservableObject {
     
     // Oyun tamamlandığında çağrılır
     private func handleGameCompletion() {
-        guard gameState == .playing else { return }
+        guard gameState == .playing else { 
+            print("⚠️ Oyun zaten tamamlanmış veya farklı bir durumda, işlem yapılmadı.")
+            return 
+        }
         
+        print("🎮 Oyun başarıyla tamamlandı! İstatistikler: Hamle: \(moveCount), Hata: \(errorCount), İpucu: \(3 - remainingHints), Süre: \(Int(elapsedTime)) saniye")
+        
+        // Oyun durumunu güncelle ve zamanlayıcıyı durdur
         gameState = .completed
-        timer?.invalidate()
+        stopTimer()
         
         // Skoru kaydet
+        let hintUsed = 3 - remainingHints
+        print("📊 Skor kaydediliyor... Zorluk: \(board.difficulty.rawValue), Süre: \(elapsedTime), Hatalar: \(errorCount), İpuçları: \(hintUsed)")
+        
         ScoreManager.shared.saveScore(
             difficulty: board.difficulty,
             timeElapsed: elapsedTime,
             errorCount: errorCount,
-            hintCount: 3 - remainingHints,
+            hintCount: hintUsed,
             moveCount: moveCount
         )
+        
+        // Oyun tamamlandığında bildirim gönder (gerekirse kullanılabilir)
+        NotificationCenter.default.post(name: NSNotification.Name("GameCompleted"), object: nil, userInfo: [
+            "difficulty": board.difficulty.rawValue,
+            "score": calculatePerformanceScore(),
+            "time": elapsedTime
+        ])
+        
+        print("✅ Oyun tamamlama işlemi tamamlandı ve skor kaydedildi.")
     }
     
     // Performans skorunu hesapla
@@ -1222,15 +1264,18 @@ class SudokuViewModel: ObservableObject {
     
     // Değer giriş işlemi
     private func enterValue(_ value: Int?, at row: Int, col: Int) {
-        // Animasyon ve titreşim efekti ile değeri ayarla
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-        board.setValue(at: row, col: col, value: value)
-            
-            // Sayı girildiğinde titreşim geri bildirimi
-            if enableHapticFeedback && enableNumberInputHaptic && value != nil {
-                let feedback = UIImpactFeedbackGenerator(style: .medium)
-                feedback.impactOccurred()
-            }
+        // Debug log
+        print("Değer giriliyor: \(value ?? 0) -> (\(row), \(col))")
+        
+        // Tahtaya değeri ayarla - direkt çağrı
+        let success = board.setValue(row: row, column: col, value: value)
+        
+        print("setValue sonucu: \(success)")
+        
+        // Titreşim geri bildirimi
+        if enableHapticFeedback && enableNumberInputHaptic && value != nil {
+            let feedback = UIImpactFeedbackGenerator(style: .medium)
+            feedback.impactOccurred()
         }
         
         // Kullanıcı girişi olarak işaretle

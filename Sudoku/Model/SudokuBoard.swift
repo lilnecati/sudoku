@@ -771,13 +771,37 @@ class SudokuBoard: ObservableObject, Codable {
         // 3x3 bloklarda hidden single ara
         for blockRow in 0..<3 {
             for blockCol in 0..<3 {
-                var blockCells = [(Int, Int)]()
-                for r in 0..<3 {
-                    for c in 0..<3 {
-                        blockCells.append((blockRow * 3 + r, blockCol * 3 + c))
+                // Her blok için hidden singles sayısını ekle
+                for value in 1...9 {
+                    // Blokta bu değerin olabileceği hücreleri kontrol et
+                    var possibleCells = [(Int, Int)]()
+                    
+                    for r in 0..<3 {
+                        for c in 0..<3 {
+                            let row = blockRow * 3 + r
+                            let col = blockCol * 3 + c
+                            
+                            if board[row][col] == nil && isValidPlacement(row: row, column: col, value: value) {
+                                possibleCells.append((row, col))
+                                if possibleCells.count > 1 {
+                                    break
+                                }
+                            }
+                        }
+                        if possibleCells.count > 1 {
+                            break
+                        }
+                    }
+                    
+                    // Eğer bir değer sadece bir hücreye yerleştirilebiliyorsa ve o hücre naked single değilse
+                    if possibleCells.count == 1 {
+                        let (row, col) = possibleCells[0]
+                        let allPossibleValues = getPossibleValues(row: row, column: col)
+                        if allPossibleValues.count > 1 {
+                            count += 1
+                        }
                     }
                 }
-                count += countHiddenSinglesInUnit(unit: blockCells)
             }
         }
         
@@ -836,20 +860,31 @@ class SudokuBoard: ObservableObject, Codable {
             }
         }
         
-        // Bilinen çalışan bir yöntem kullan: 3x3 bloklar içinde sayıları kaydır
-        let basePattern = [
-            [1, 2, 3, 4, 5, 6, 7, 8, 9],
-            [4, 5, 6, 7, 8, 9, 1, 2, 3],
-            [7, 8, 9, 1, 2, 3, 4, 5, 6],
-            [2, 3, 4, 5, 6, 7, 8, 9, 1],
-            [5, 6, 7, 8, 9, 1, 2, 3, 4],
-            [8, 9, 1, 2, 3, 4, 5, 6, 7],
-            [3, 4, 5, 6, 7, 8, 9, 1, 2],
-            [6, 7, 8, 9, 1, 2, 3, 4, 5],
-            [9, 1, 2, 3, 4, 5, 6, 7, 8]
-        ]
+        // Tamamen rastgele bir sudoku üretmek yerine, basePattern kullanıp onu çok daha fazla karıştıralım
+        // İlk olarak temel bir desen oluşturalım (standart Latin karesi)
+        var basePattern = Array(repeating: Array(repeating: 0, count: 9), count: 9)
         
-        // Temel deseni tahtaya kopyala
+        // İlk satırı 1-9 arasında rastgele düzenleyelim
+        var firstRow = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        firstRow.shuffle() // İlk satırı rastgele karıştır
+        
+        // İlk satırı yerleştir
+        for col in 0..<9 {
+            basePattern[0][col] = firstRow[col]
+        }
+        
+        // Sonraki satırları otomatik olarak kaydırarak oluştur (Latin kare özelliği)
+        for row in 1..<9 {
+            // Her satırı bir önceki satıra göre 3 adım kaydır (blok yapısını korurken çakışmaları önler)
+            let offset = (row % 3 == 0) ? 1 : 3
+            
+            for col in 0..<9 {
+                let sourceIdx = (col + offset) % 9
+                basePattern[row][col] = basePattern[row-1][sourceIdx]
+            }
+        }
+        
+        // Şimdi bu base pattern'i tahtaya kopyalayalım
         for row in 0..<9 {
             for col in 0..<9 {
                 board[row][col] = basePattern[row][col]
@@ -857,9 +892,93 @@ class SudokuBoard: ObservableObject, Codable {
             }
         }
         
-        // Sadece satırları ve sütunları blok içinde karıştır
-        // Değer değişimi atla, kararlı yapıyı tercih et
-        shuffleRowsAndColumns()
+        // Şimdi çok daha agresif bir karıştırma işlemi uygulayalım
+        mixSudokuCompletely()
+    }
+    
+    // Sudoku'yu tamamen karıştır
+    private func mixSudokuCompletely() {
+        // 50 kez rastgele dönüşüm uygula
+        for _ in 0..<50 {
+            // Rastgele bir dönüşüm seç
+            let transformation = Int.random(in: 0..<6)
+            
+            switch transformation {
+            case 0:
+                // Satır bloklarını karıştır
+                let blocks = [0, 1, 2].shuffled()
+                swapRowBlocks(blocks[0], blocks[1])
+            case 1:
+                // Sütun bloklarını karıştır
+                let blocks = [0, 1, 2].shuffled()
+                swapColumnBlocks(blocks[0], blocks[1])
+            case 2:
+                // Blok içi satırları karıştır
+                let blockRow = Int.random(in: 0..<3)
+                let rowsInBlock = [0, 1, 2].shuffled()
+                swapRows(blockRow * 3 + rowsInBlock[0], blockRow * 3 + rowsInBlock[1])
+            case 3:
+                // Blok içi sütunları karıştır
+                let blockCol = Int.random(in: 0..<3)
+                let colsInBlock = [0, 1, 2].shuffled()
+                swapColumns(blockCol * 3 + colsInBlock[0], blockCol * 3 + colsInBlock[1])
+            case 4:
+                // Sayı değerlerini değiştir (1-9 arası iki sayıyı takas et)
+                let num1 = Int.random(in: 1...9)
+                var num2 = Int.random(in: 1...9)
+                while num2 == num1 {
+                    num2 = Int.random(in: 1...9)
+                }
+                swapValues(num1, num2)
+            case 5:
+                // Tahtayı 90 derece döndür (opsiyonel)
+                rotateBoard()
+            default:
+                break
+            }
+        }
+    }
+    
+    // İki sütun bloğunu değiştir
+    private func swapColumnBlocks(_ block1: Int, _ block2: Int) {
+        guard block1 != block2 else { return }
+        
+        let col1 = block1 * 3
+        let col2 = block2 * 3
+        
+        // Her blokta 3 sütun var
+        for i in 0..<3 {
+            swapColumns(col1 + i, col2 + i)
+        }
+    }
+    
+    // Tahtadaki iki sayı değerini değiştir
+    private func swapValues(_ val1: Int, _ val2: Int) {
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if board[row][col] == val1 {
+                    board[row][col] = val2
+                    solution[row][col] = val2
+                } else if board[row][col] == val2 {
+                    board[row][col] = val1
+                    solution[row][col] = val1
+                }
+            }
+        }
+    }
+    
+    // Tahtayı 90 derece döndür
+    private func rotateBoard() {
+        let oldBoard = board
+        let oldSolution = solution
+        
+        for row in 0..<9 {
+            for col in 0..<9 {
+                // 90 derece döndürme: (row, col) -> (col, 8-row)
+                board[col][8-row] = oldBoard[row][col]
+                solution[col][8-row] = oldSolution[row][col]
+            }
+        }
     }
     
     // Çözümü rastgele karıştır (geçerliliği koruyarak)
@@ -1015,19 +1134,6 @@ class SudokuBoard: ObservableObject, Codable {
         // Her blokta 3 satır var
         for i in 0..<3 {
             swapRows(row1 + i, row2 + i)
-        }
-    }
-    
-    // İki sütun bloğunu takas et (her biri 3 sütundan oluşur)
-    private func swapColumnBlocks(_ block1: Int, _ block2: Int) {
-        guard block1 != block2 else { return }
-        
-        let col1 = block1 * 3
-        let col2 = block2 * 3
-        
-        // Her blokta 3 sütun var
-        for i in 0..<3 {
-            swapColumns(col1 + i, col2 + i)
         }
     }
     
