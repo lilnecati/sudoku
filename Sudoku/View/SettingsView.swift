@@ -8,6 +8,29 @@ import SwiftUI
 import CoreData
 import Combine
 
+// ScaledFont modifier - metinlerin ölçeklenmesi için
+struct ScaledFont: ViewModifier {
+    let size: CGFloat
+    let weight: Font.Weight
+    @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
+    
+    private var textSizePreference: TextSizePreference {
+        return TextSizePreference(rawValue: textSizeString) ?? .medium
+    }
+    
+    func body(content: Content) -> some View {
+        let scaledSize = size * textSizePreference.scaleFactor
+        return content.font(.system(size: scaledSize, weight: weight))
+    }
+}
+
+// View uzantısı olarak kullanım kolaylaştırma
+extension View {
+    func scaledFont(size: CGFloat, weight: Font.Weight = .regular) -> some View {
+        return self.modifier(ScaledFont(size: size, weight: weight))
+    }
+}
+
 struct SettingsView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
@@ -116,7 +139,7 @@ struct SettingsView: View {
                 .frame(width: 70, height: 70)
             
             Text(initial)
-                .font(.system(size: 30, weight: .bold))
+                .scaledFont(size: 30, weight: .bold)
                 .foregroundColor(.white)
         }
     }
@@ -146,7 +169,7 @@ struct SettingsView: View {
                 Image(systemName: "person.fill.badge.plus")
                     .font(.system(size: 16))
                 Text("Giriş Yap")
-                    .font(.system(size: 16, weight: .medium))
+                    .scaledFont(size: 16, weight: .medium)
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
@@ -165,7 +188,7 @@ struct SettingsView: View {
                 Image(systemName: "person.badge.plus")
                     .font(.system(size: 16))
                 Text("Kayıt Ol")
-                    .font(.system(size: 16, weight: .medium))
+                    .scaledFont(size: 16, weight: .medium)
             }
             .foregroundColor(.blue)
             .frame(maxWidth: .infinity)
@@ -187,6 +210,7 @@ struct SettingsView: View {
             HStack {
                 Image(systemName: "globe")
                 Text(displayText)
+                    .scaledFont(size: 14)
                 Spacer()
                 Image(systemName: "arrow.up.right.square")
                     .font(.caption)
@@ -232,9 +256,9 @@ struct SettingsView: View {
                     
                     VStack(alignment: .leading) {
                         Text("Profil Devre Dışı")
-                            .font(.headline)
+                            .scaledFont(size: 17, weight: .semibold)
                         Text("Navigasyon sorunu giderilene kadar")
-                            .font(.subheadline)
+                            .scaledFont(size: 14)
                             .foregroundColor(.secondary)
                     }
                     Spacer()
@@ -267,7 +291,7 @@ struct SettingsView: View {
                     // Modern başlık
                     HStack {
                         Text("Ayarlar")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .scaledFont(size: 32, weight: .bold)
                             .foregroundColor(.primary)
 
                         Spacer()
@@ -278,7 +302,7 @@ struct SettingsView: View {
                                 .foregroundColor(getBatteryColor())
 
                             Text("\(Int(PowerSavingManager.shared.batteryLevel * 100))%")
-                                .font(.system(size: 14, weight: .medium))
+                                .scaledFont(size: 14, weight: .medium)
                                 .foregroundColor(.secondary)
                         }
                         .padding(.horizontal, 12)
@@ -334,6 +358,12 @@ struct SettingsView: View {
                 print("Cihaz şarj oluyor mu? \(isCharging)")
                 previousChargingState = isCharging
             }
+            
+            // Metin boyutu değişikliği bildirimini dinle
+            NotificationCenter.default.addObserver(forName: Notification.Name("ForceUIUpdate"), object: nil, queue: .main) { _ in
+                // View'i zorla yeniden çizdirmek için aşağıdaki kod yeterli
+                print("📱 Metin boyutu güncellemesi algılandı: \(textSizePreference.rawValue)")
+            }
         }
         .sheet(isPresented: $showLoginView) {
             LoginView(isPresented: $showLoginView, currentUser: $currentUser)
@@ -384,7 +414,7 @@ struct SettingsView: View {
             }
             
             Text(title)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .scaledFont(size: 20, weight: .bold)
                 .foregroundColor(.primary)
             
             Spacer()
@@ -410,11 +440,11 @@ struct SettingsView: View {
                 // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Ses Efektleri")
-                        .font(.system(size: 16, weight: .semibold))
+                        .scaledFont(size: 16, weight: .semibold)
                         .foregroundColor(.primary)
                     
                     Text("Oyun içi ses efektlerini aç/kapa")
-                        .font(.system(size: 13))
+                        .scaledFont(size: 13)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
@@ -473,13 +503,13 @@ struct SettingsView: View {
                         // Başlık ve değer
                         HStack {
                             Text("Ses Seviyesi")
-                                .font(.system(size: 16, weight: .semibold))
+                                .scaledFont(size: 16, weight: .semibold)
                                 .foregroundColor(.primary)
                             
                             Spacer()
                             
                             Text("%\(Int(soundVolume * 100))")
-                                .font(.system(size: 14, weight: .medium))
+                                .scaledFont(size: 14, weight: .medium)
                                 .foregroundColor(.blue)
                         }
                         
@@ -512,7 +542,7 @@ struct SettingsView: View {
                                     .font(.system(size: 14))
                                 
                                 Text("Sesi Test Et")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .scaledFont(size: 14, weight: .medium)
                             }
                             .foregroundColor(.blue)
                             .frame(maxWidth: .infinity)
@@ -551,11 +581,11 @@ struct SettingsView: View {
                 // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Titreşim Geri Bildirimi")
-                        .font(.system(size: 16, weight: .semibold))
+                        .scaledFont(size: 16, weight: .semibold)
                         .foregroundColor(.primary)
                     
                     Text("Oyun içi titreşim efektlerini aç/kapa")
-                        .font(.system(size: 13))
+                        .scaledFont(size: 13)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
@@ -618,11 +648,11 @@ struct SettingsView: View {
                 // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Sistem Görünümünü Kullan")
-                        .font(.system(size: 16, weight: .semibold))
+                        .scaledFont(size: 16, weight: .semibold)
                         .foregroundColor(.primary)
                     
                     Text("Cihazın görünüm ayarını kullan (açık/koyu)")
-                        .font(.system(size: 13))
+                        .scaledFont(size: 13)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
@@ -680,11 +710,11 @@ struct SettingsView: View {
                     // Başlık ve açıklama
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Karanlık Mod")
-                            .font(.system(size: 16, weight: .semibold))
+                            .scaledFont(size: 16, weight: .semibold)
                             .foregroundColor(.primary)
                         
                         Text("Karanlık tema aktif eder")
-                            .font(.system(size: 13))
+                            .scaledFont(size: 13)
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     }
@@ -742,7 +772,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     // Başlık
                     Text("Metin Boyutu")
-                        .font(.system(size: 16, weight: .semibold))
+                        .scaledFont(size: 16, weight: .semibold)
                         .foregroundColor(.primary)
                     
                     // Seçim butonları
@@ -791,7 +821,7 @@ struct SettingsView: View {
         var body: some View {
             Button(action: action) {
                 Text(title)
-                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                    .scaledFont(size: 14, weight: isSelected ? .semibold : .regular)
                     .padding(.vertical, 8)
                     .padding(.horizontal, 12)
                     .background(
@@ -826,18 +856,18 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Pil Durumu")
-                            .font(.system(size: 18, weight: .bold))
+                            .scaledFont(size: 18, weight: .bold)
                             .foregroundColor(.primary)
                         
                         Text("(%\(Int(powerManager.batteryLevel * 100)))")
-                            .font(.system(size: 16, weight: .medium))
+                            .scaledFont(size: 16, weight: .medium)
                             .foregroundColor(getBatteryColor())
                     }
                     
                     // Pil durum mesajı
                     if powerManager.batteryLevel <= 0.2 {
                         Text("Düşük Pil")
-                            .font(.system(size: 14, weight: .medium))
+                            .scaledFont(size: 14, weight: .medium)
                             .foregroundColor(.orange)
                             .padding(.vertical, 4)
                             .padding(.horizontal, 10)
@@ -868,7 +898,7 @@ struct SettingsView: View {
                                 .font(.system(size: 12))
                             
                             Text("Güç Tasarrufu")
-                                .font(.system(size: 12, weight: .medium))
+                                .scaledFont(size: 12, weight: .medium)
                         }
                         .foregroundColor(.green)
                         .padding(.vertical, 6)
@@ -894,6 +924,7 @@ struct SettingsView: View {
                 HStack {
                     Label {
                         Text("Güç Tasarrufu Modu")
+                            .scaledFont(size: 16, weight: .medium)
                     } icon: {
                         Image(systemName: "battery.50")
                             .foregroundColor(.green)
@@ -950,6 +981,7 @@ struct SettingsView: View {
                 HStack {
                     Label {
                         Text("Yüksek Performans Modu")
+                            .scaledFont(size: 16, weight: .medium)
                     } icon: {
                         Image(systemName: "bolt.fill")
                             .foregroundColor(.yellow)
@@ -1002,6 +1034,7 @@ struct SettingsView: View {
                 HStack {
                     Label {
                         Text("Otomatik Güç Tasarrufu")
+                            .scaledFont(size: 16, weight: .medium)
                     } icon: {
                         Image(systemName: "battery.25")
                             .foregroundColor(.orange)
@@ -1049,7 +1082,7 @@ struct SettingsView: View {
                 // Güç tasarrufu açıklaması
                 if powerSavingMode || autoPowerSaving {
                     Text("Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir.")
-                        .font(.caption)
+                        .scaledFont(size: 12)
                         .foregroundColor(.secondary)
                         .padding(.top, 4)
                 }
@@ -1057,14 +1090,16 @@ struct SettingsView: View {
                 // Yüksek performans açıklaması
                 if highPerformanceMode {
                     Text("Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır.")
-                        .font(.caption)
+                        .scaledFont(size: 12)
                         .foregroundColor(.secondary)
                         .padding(.top, 4)
                 }
             } header: {
                 Text("Performans")
+                    .scaledFont(size: 18, weight: .bold)
             } footer: {
                 Text("Güç tasarrufu modu, cihazınızın pil ömrünü uzatır.")
+                    .scaledFont(size: 12)
             }
         }
     }
@@ -1086,17 +1121,17 @@ struct SettingsView: View {
                         .frame(width: 80, height: 80)
                     
                     Text("S")
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .scaledFont(size: 40, weight: .bold)
                         .foregroundColor(.white)
                 }
                 
                 // İsim ve Sürüm
                 Text("Sudoku")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .scaledFont(size: 24, weight: .bold)
                     .foregroundColor(.primary)
                 
                 Text("Sürüm 1.0")
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .scaledFont(size: 16, weight: .medium)
                     .foregroundColor(.secondary)
                 
                 // Yatay çizgi
@@ -1120,11 +1155,11 @@ struct SettingsView: View {
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Geliştrici")
-                            .font(.system(size: 14))
+                            .scaledFont(size: 14)
                             .foregroundColor(.secondary)
                         
                         Text("Necati Yıldırım")
-                            .font(.system(size: 16, weight: .medium))
+                            .scaledFont(size: 16, weight: .medium)
                             .foregroundColor(.primary)
                     }
                     
@@ -1157,7 +1192,7 @@ struct SettingsView: View {
                         .foregroundColor(.red)
                     
                     Text("Tüm Ayarları Sıfırla")
-                        .font(.system(size: 16, weight: .medium))
+                        .scaledFont(size: 16, weight: .medium)
                         .foregroundColor(.red)
                     
                     Spacer()
@@ -1180,7 +1215,7 @@ struct SettingsView: View {
             
             // Telif hakkı ve yapım yılı
             Text("© 2025 Necati Yıldırım")
-                .font(.system(size: 14, weight: .regular))
+                .scaledFont(size: 14, weight: .regular)
                 .foregroundColor(.secondary)
                 .padding(.top)
         }
@@ -1209,11 +1244,11 @@ struct SettingsView: View {
                 
                 VStack(alignment: .leading, spacing: 8) {
                     Text(title)
-                        .font(.system(size: 16, weight: .semibold))
+                        .scaledFont(size: 16, weight: .semibold)
                         .foregroundColor(.primary)
                     
                     Text(description)
-                        .font(.system(size: 14))
+                        .scaledFont(size: 14)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .lineSpacing(3)
@@ -1242,6 +1277,11 @@ struct SettingsView: View {
         // Bildirim sesi çal
         SoundManager.shared.playNavigationSound()
         
+        // Görünümün tümünü zorla yenile
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+        }
+        
         print("📱 Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)")
     }
 }
@@ -1255,6 +1295,7 @@ struct SettingRow<Content: View>: View {
     var body: some View {
         HStack {
             Text(title)
+                .scaledFont(size: 16)
                 .foregroundColor(.primary)
             
             Spacer()
@@ -1312,11 +1353,11 @@ struct ToggleSettingRow: View {
                 // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.system(size: 16, weight: .semibold))
+                        .scaledFont(size: 16, weight: .semibold)
                         .foregroundColor(.primary)
                     
                     Text(description)
-                        .font(.system(size: 13))
+                        .scaledFont(size: 13)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
