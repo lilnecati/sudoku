@@ -73,6 +73,7 @@ struct ScoreboardView: View {
                 }
             }
         }
+        .animation(nil, value: selectedTab) // Tab içeriği değişimini animasyonsuz yap
         .onChange(of: selectedDifficulty) { oldValue, newValue in
             loadData()
         }
@@ -836,9 +837,8 @@ struct ScoreboardView: View {
     // Tab butonları
     private func tabButton(title: String, tag: Int) -> some View {
         Button(action: {
-            withAnimation {
-                selectedTab = tag
-            }
+            // Animasyonu kaldır
+            selectedTab = tag
         }) {
             Text(title)
                 .font(.system(size: 16, weight: selectedTab == tag ? .semibold : .medium))

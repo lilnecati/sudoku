@@ -685,7 +685,7 @@ struct SettingsView: View {
                             .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
                             .offset(x: themeManager.useSystemAppearance ? 10 : -10)
                     }
-                    .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.useSystemAppearance)
+                    .animation(nil, value: themeManager.useSystemAppearance)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -747,7 +747,7 @@ struct SettingsView: View {
                                 .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
                                 .offset(x: themeManager.darkMode ? 10 : -10)
                         }
-                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.darkMode)
+                        .animation(nil, value: themeManager.darkMode)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }

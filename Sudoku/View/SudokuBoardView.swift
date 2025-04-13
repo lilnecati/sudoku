@@ -57,7 +57,6 @@ struct SudokuBoardView: View {
                                     cellView(row: row, column: column)
                                         .id("cell_\(row)_\(column)")
                                         .frame(width: localCellSize + (cellPadding * 2), height: localCellSize + (cellPadding * 2))
-                                        .drawingGroup() // Metal hızlandırması
                                 }
                             }
                             // Satır boyutunu sabitle
@@ -66,13 +65,13 @@ struct SudokuBoardView: View {
                     }
                     .frame(width: minDimension, height: minDimension)
                     .clipped() // Taşmaları önle
+                    .drawingGroup(opaque: true) // Metal hızlandırması - performans için opacity: true eklendi
                     
                     // Izgara çizgilerini üst katmanda göster
                     gridOverlay
                         .frame(width: minDimension, height: minDimension)
                 }
                 .aspectRatio(1, contentMode: .fit) // Kare oranını koru
-                .drawingGroup() // Metal hızlandırması
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
             // Görünüm dışında state güncelleme

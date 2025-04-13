@@ -118,19 +118,34 @@ class SudokuViewModel: ObservableObject {
     init(difficulty: SudokuBoard.Difficulty = .easy) {
         self.board = SudokuBoard(difficulty: difficulty)
         
-        // CoreData'dan yüksek skorları ve kaydedilmiş oyunları yükle
-
-        loadSavedGames()
-        
         // Zaman değişkenlerini sıfırla
         elapsedTime = 0
         pausedElapsedTime = 0
         
+        // İlk çalıştırma bayrağı - oyunun ilk açılışta otomatik kaydedilmesini önler
+        let isFirstLaunchKey = "SudokuViewModel.isFirstLaunch"
+        let isFirstLaunch = !UserDefaults.standard.bool(forKey: isFirstLaunchKey)
+        
+        // Otomatik kaydetmeyi devre dışı bırakmak için bayrak
+        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+        
         // Uygulama arka plana alındığında oyunu otomatik olarak duraklatmak için bildirim dinleyicisi ekle
         setupNotificationObservers()
         
-        startTimer()
-        updateUsedNumbers()
+        // Sadece kaydedilmiş oyunları yükle, yeni bir oyun kaydetme
+        loadSavedGames()
+        
+        if isFirstLaunch {
+            // İlk çalıştırma ise, bayrağı ayarla ve otomatik kaydetme yapma
+            UserDefaults.standard.set(true, forKey: isFirstLaunchKey)
+            UserDefaults.standard.set(true, forKey: noAutoSaveKey) // Otomatik kaydetmeyi kapat
+            print("🆕 İlk çalıştırma, otomatik kaydetme devre dışı")
+            gameState = .ready // Oyunu ready durumunda başlat
+        } else {
+            // Normal çalıştırma
+            startTimer()
+            updateUsedNumbers()
+        }
     }
     
     // MARK: - Core Oyun Metodları
@@ -173,6 +188,11 @@ class SudokuViewModel: ObservableObject {
         
         // Önbelleği temizle
         clearCaches()
+        
+        // Otomatik kaydetmeyi etkinleştir - kullanıcı bilinçli olarak yeni oyun başlattı
+        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+        UserDefaults.standard.set(false, forKey: noAutoSaveKey)
+        print("🔄 Yeni oyun başlatıldı, otomatik kaydetme etkinleştirildi")
     }
     
     // Hücre seçme - optimize edildi
@@ -336,7 +356,11 @@ class SudokuViewModel: ObservableObject {
                 // Hamle sayısını artır
                 moveCount += 1
                 
-                // Otomatik kaydet
+                // Otomatik kaydetmeyi etkinleştir - kullanıcı aktif olarak oynuyor 
+                let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+                UserDefaults.standard.set(false, forKey: noAutoSaveKey)
+                
+                // Otomatik kaydet - her hamle sonrası kaydetmeyi dene
                 autoSaveGame()
                 
                 // Oyun tamamlanma kontrolü
@@ -1595,14 +1619,29 @@ class SudokuViewModel: ObservableObject {
     
     // Otomatik kaydet - çok sık çağrılmaması için zamanlayıcı eklenebilir
     private func autoSaveGame() {
+        // Otomatik kaydetme devre dışı bırakılmışsa atla
+        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+        if UserDefaults.standard.bool(forKey: noAutoSaveKey) {
+            print("⏭️ Otomatik kaydetme devre dışı, işlem atlanıyor")
+            return
+        }
+        
         // Eğer oyun tamamlanmamışsa ve aktif oynanıyorsa kaydet
         if gameState == .playing {
+            // Belirli koşullar altında kaydetmeyi atla:
+            // 1. Oyun süresi 5 saniyeden az ise (tamamen yeni başlamış oyun)
+            // 2. Hiç hamle yapılmamışsa (henüz gerçek bir oyun değil)
+            if elapsedTime < 5 || moveCount < 1 {
+                print("⏭️ Otomatik kaydetme atlandı (oyun çok yeni başladı veya hamle yapılmadı)")
+                return
+            }
+            
             // Oyun ID'si varsa güncelle, yoksa yeni kaydet
-            print("Otomatik kaydetme başladı...")
+            print("💾 Otomatik kaydetme başladı...")
             saveGame(forceNewSave: false) // Var olan kaydı güncelle
-            print("Otomatik kaydetme tamamlandı.")
+            print("✅ Otomatik kaydetme tamamlandı.")
         } else {
-            print("Oyun \(gameState) durumunda olduğu için otomatik kaydedilmedi.")
+            print("ℹ️ Oyun \(gameState) durumunda olduğu için otomatik kaydedilmedi.")
         }
     }
     
@@ -1613,6 +1652,11 @@ class SudokuViewModel: ObservableObject {
     // Kaydedilmiş oyunu yükle
     func loadGame(from savedGame: NSManagedObject) {
         print("Kayıtlı oyun yükleniyor: \(savedGame)")
+        
+        // Otomatik kaydetmeyi etkinleştir - kullanıcı bilinçli olarak kayıtlı oyun yüklüyor
+        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+        UserDefaults.standard.set(false, forKey: noAutoSaveKey)
+        print("🔄 Kayıtlı oyun yükleniyor, otomatik kaydetme etkinleştirildi")
         
         // Güvenli bir şekilde boardState'i al
         guard let boardData = savedGame.value(forKey: "boardState") as? Data else {
@@ -2076,7 +2120,13 @@ class SudokuViewModel: ObservableObject {
         if gameState == .playing {
             print("🔊 Oyun otomatik olarak duraklatıldı (arka plan)")
             togglePause() // Oyunu duraklat
-            saveGame() // Oyun durumunu kaydet
+            
+            // Sadece anlamlı bir süre oynanmışsa ve hamle yapılmışsa kaydet
+            if elapsedTime > 5 && moveCount > 0 {
+                saveGame() // Oyun durumunu kaydet
+            } else {
+                print("⏭️ Arka plana geçişte kaydetme atlandı (yeterli oynama yok)")
+            }
         }
     }
     
@@ -2126,54 +2176,18 @@ class SudokuViewModel: ObservableObject {
     
     // Uygulama belirli bir süre (2 dakika) arka planda kaldıktan sonra oyunu kayıtlara ekle ve sıfırla
     @objc private func resetGameAfterTimeout() {
-        print("⏰ Oyun zaman aşımına uğradı - kayıtlara ekleniyor ve sıfırlanıyor")
+        print("⏰ Oyun zaman aşımına uğradı - sıfırlanıyor")
         
-        // Mevcut oyun durumunu kayıtlara ekle (eğer kayıt şartlarını karşılıyorsa)
-        if shouldSaveGameAfterTimeout() {
-            // Oyunu normal kaydet, ancak zorluk seviyesini değiştirerek özel olarak işaretle
-            let currentDifficulty = board.difficulty
-            let timeoutSuffix = " - " + playerName + " (Arka Plan)"
-            let modifiedDifficulty = currentDifficulty.rawValue + timeoutSuffix
-            
-            // Aynı zorluk seviyesinde "(Arka Plan)" ekiyle kaydedilmiş ve aynı zorluk seviyesinde olan oyunları bul
-            let existingBackgroundGameID = checkForExistingBackgroundGame(difficulty: modifiedDifficulty)
-            
-            if let existingID = existingBackgroundGameID {
-                // Mevcut arka plan oyununu güncelle
-                print("🔄 Mevcut arka plan oyunu güncelleniyor, ID: \(existingID)")
-                
-                // Mevcut oyun verilerini al
-                if let jsonData = createGameStateJSONForTimeout() {
-                    // Mevcut oyunu güncelle
-                    // board.getBoardArray() kullanarak 2D Int dizisi oluştur
-                    let boardArray = board.getBoardArray()
-                    
-                    // Mevcut oyunu güncelle
-                    PersistenceController.shared.updateSavedGame(
-                        gameID: existingID,
-                        board: boardArray,
-                        difficulty: modifiedDifficulty,
-                        elapsedTime: elapsedTime,
-                        jsonData: jsonData
-                    )
-                    
-                    // Mevcut oyun ID'sini güncelle
-                    currentGameID = existingID
-                }
-            } else {
-                // Normal kaydetme fonksiyonunu kullan
-                saveGame(forceNewSave: true) // Yeni bir oyun olarak kaydet
-                
-                // Kaydedilen oyunun zorluk seviyesini güncelle
-                if let gameID = currentGameID {
-                    PersistenceController.shared.updateGameDifficulty(gameID: gameID, newDifficulty: modifiedDifficulty)
-                }
-            }
-            
-            print("✅ Zaman aşımına uğrayan oyun kayıtlara eklendi")
-        } else {
-            print("ℹ️ Oyun kayıt şartlarını karşılamıyor, kaydedilmedi")
-        }
+        // Mevcut oyunu silmeden önce mevcut oyun ID'sini kaydediyoruz
+        let currentID = currentGameID
+        
+        // Mevcut oyun ID'sini sıfırla - böylece yeni bir oyun veya kayıtlı başka bir oyun yüklenebilir
+        currentGameID = nil
+        
+        // Otomatik kaydetmeyi devre dışı bırak
+        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+        UserDefaults.standard.set(true, forKey: noAutoSaveKey)
+        print("🔒 Otomatik kaydetme devre dışı bırakıldı")
         
         // Ana menüyü göstermek için bildirim gönder
         NotificationCenter.default.post(name: Notification.Name("ShowMainMenuAfterTimeout"), object: nil)
@@ -2185,6 +2199,18 @@ class SudokuViewModel: ObservableObject {
         let currentDifficulty = board.difficulty
         board = SudokuBoard(difficulty: currentDifficulty)
         updateUsedNumbers()
+        
+        // Tüm kayıtlı oyunları temizleme kısmını kaldırıyoruz
+        // Kullanıcının diğer kaydedilmiş oyunlarına dokunmuyoruz
+        
+        // Sadece mevcut ID'ye sahip oyunu sil (varsa)
+        if let gameID = currentID {
+            print("🗑️ Süre aşımı nedeniyle mevcut oyun siliniyor, ID: \(gameID)")
+            PersistenceController.shared.deleteSavedGameWithID(gameID)
+        }
+        
+        // Kaydedilmiş oyunlar listesini güncelle
+        loadSavedGames()
     }
     
     // Oyunun kayıt şartlarını karşılayıp karşılamadığını kontrol et

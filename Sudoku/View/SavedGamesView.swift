@@ -23,9 +23,7 @@ struct SavedGamesView: View {
     // Oyun seçme fonksiyonu - ContentView'a oyunu iletmek için
     var gameSelected: (NSManagedObject) -> Void
     
-    // Animasyon durumları
-    @State private var cardOffset: [NSManagedObjectID: CGFloat] = [:]
-    @State private var isAnimating = false
+    // Animasyonları kaldırmak için önce dosyanın içeriğini okumam gerekiyor
     
     @Environment(\.colorScheme) var colorScheme
     
@@ -85,6 +83,10 @@ struct SavedGamesView: View {
                     .padding(.horizontal)
                     .padding(.top, 4)
                 
+                // Filtreleme butonları ile liste arasına boşluk ekle
+                Spacer()
+                    .frame(height: 15)
+                
                 if filteredSavedGames.isEmpty {
                     Spacer()
                     emptyStateView
@@ -100,13 +102,11 @@ struct SavedGamesView: View {
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
                                         // Onay sormadan direkt sil
-                                        withAnimation {
-                                            viewContext.delete(game)
-                                            do {
-                                                try viewContext.save()
-                                            } catch {
-                                                print("Error saving context: \(error)")
-                                            }
+                                        viewContext.delete(game)
+                                        do {
+                                            try viewContext.save()
+                                        } catch {
+                                            print("Error saving context: \(error)")
                                         }
                                     } label: {
                                         Label("Sil", systemImage: "trash")
@@ -126,25 +126,17 @@ struct SavedGamesView: View {
                 message: Text("Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?"),
                 primaryButton: .destructive(Text("Sil")) {
                     if let game = gameToDelete {
-                        withAnimation {
-                            viewContext.delete(game)
-                            do {
-                                try viewContext.save()
-                                // Silinen oyunun offset değerini temizle
-                                cardOffset.removeValue(forKey: game.objectID)
-                            } catch {
-                                print("Error saving context: \(error)")
-                            }
+                        viewContext.delete(game)
+                        do {
+                            try viewContext.save()
+                        } catch {
+                            print("Error saving context: \(error)")
                         }
                     }
                 },
                 secondaryButton: .cancel(Text("İptal")) {
                     // İptal edildiğinde kartı eski konumuna döndür
-                    if let game = gameToDelete {
-                        withAnimation {
-                            cardOffset[game.objectID] = 0
-                        }
-                    }
+                    // Animasyon kaldırıldı
                 }
             )
         }
@@ -155,9 +147,8 @@ struct SavedGamesView: View {
         HStack(spacing: 6) {
             ForEach(difficultyLevels, id: \.self) { level in
                 Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selectedDifficulty = level
-                    }
+                    // Animasyon kaldırıldı
+                    selectedDifficulty = level
                 }) {
                     VStack(spacing: 2) {
                         // Zorluk seviyesi ikonu
@@ -199,7 +190,7 @@ struct SavedGamesView: View {
                     .contentShape(Capsule())
                 }
                 .buttonStyle(PlainButtonStyle())
-                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedDifficulty)
+                .animation(nil, value: selectedDifficulty) // Animasyon kaldırıldı
             }
         }
         .padding(.horizontal, 4)
@@ -477,10 +468,7 @@ struct SavedGamesView: View {
                     
                     // Sağ alt: Devam et butonu - modern UI
                     Button(action: {
-                        // Animasyon ile yükleme göster
-                        withAnimation {
-                            isAnimating = true
-                        }
+                        // Animasyon kaldırıldı
                         
                         print("\n📌 SavedGamesView: Oyun yükleniyor ID: \(game.value(forKey: "id") ?? "ID yok")")
                         
@@ -514,8 +502,6 @@ struct SavedGamesView: View {
                                 .stroke(Color.white.opacity(0.4), lineWidth: 0.5)
                         )
                     }
-                    .scaleEffect(isAnimating ? 0.95 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAnimating)
                 }
             }
             .padding(20)

@@ -771,9 +771,7 @@ struct ContentView: View {
                 viewModel.loadGame(from: game)
                 
                 // Direkt olarak oyunu göster, yükleme ekranı kullanma
-                withAnimation(.spring()) {
-                    showGame = true
-                }
+                showGame = true
             })
             .tabItem {
                 Label(AppPage.savedGames.title, systemImage: AppPage.savedGames.icon)
@@ -788,13 +786,12 @@ struct ContentView: View {
                 }
                 .tag(AppPage.settings)
         }
+        .animation(nil, value: currentPage) // Tab geçişlerini animasyonsuz yap
         .onChange(of: currentPage) { oldPage, newPage in
             // Her tab değişiminde çalışacak
             if previousPage != newPage {
-                print("📱 Tab değişti: \(previousPage) -> \(newPage)")
-                // Tüm tab değişimlerinde ses çal
-                SoundManager.shared.playNavigationSound()
                 previousPage = newPage
+                SoundManager.shared.playNavigationSound()
             }
         }
         .onAppear {

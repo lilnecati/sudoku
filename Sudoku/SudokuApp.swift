@@ -25,21 +25,25 @@ extension EnvironmentValues {
 class ThemeManager: ObservableObject {
     @AppStorage("darkMode") var darkMode: Bool = false {
         didSet {
-            updateTheme()
+            // Hızlı tema değişimi için doğrudan renk şemasını ayarla
+            colorScheme = useSystemAppearance ? nil : (darkMode ? .dark : .light)
         }
     }
     @AppStorage("useSystemAppearance") var useSystemAppearance: Bool = false {
         didSet {
-            updateTheme()
+            // Hızlı tema değişimi için doğrudan renk şemasını ayarla
+            colorScheme = useSystemAppearance ? nil : (darkMode ? .dark : .light)
         }
     }
     
     @Published var colorScheme: ColorScheme?
     
     init() {
-        updateTheme()
+        // Başlangıç teması ayarla
+        colorScheme = useSystemAppearance ? nil : (darkMode ? .dark : .light)
     }
     
+    // Bu metot artık doğrudan çağrılmayacak
     func updateTheme() {
         colorScheme = useSystemAppearance ? nil : (darkMode ? .dark : .light)
     }

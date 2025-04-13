@@ -59,7 +59,6 @@ struct SudokuCellView: View {
                     // Hücre arka planı - hata veya seçiliyse Metal kullan
                     cellBackground
                         .scaleEffect(animateSelection ? 0.95 : 1.0)
-                        .drawingGroup(opaque: true, colorMode: .linear) // Daha hızlı Metal hızlandırması
                     
                     // Hatalı hücre göstergesi - sadece hatalı ise çiz
                     if isInvalid {
@@ -73,7 +72,8 @@ struct SudokuCellView: View {
                 // Sadece seçili, hatalı veya vurgulanmış hücrelerde Metal kullan
                 .drawingGroup(opaque: true, colorMode: .linear)
             }
-            .powerSavingAwareAnimation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+            // Animasyonu basitleştirelim - yalnızca seçili durum değiştiğinde ve güç tasarrufunda değilse
+            .powerSavingAwareAnimation(isSelected ? .spring(response: 0.25, dampingFraction: 0.7) : .none, value: isSelected)
             .aspectRatio(1, contentMode: .fit)
         }
     }
@@ -209,7 +209,6 @@ struct SudokuCellView: View {
                 Text("\(value)")
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundColor(getTextColor())
-                    .animation(isInvalid ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: value)
             }
             
             // Pencil marks - sadece varsa çiz
@@ -230,7 +229,7 @@ struct SudokuCellView: View {
         .frame(width: cellDimension, height: cellDimension)
         // Tüm içeriğin kırpılmasını zorunlu kıl
         .clipped()
-        // Düz bir geçiş kullan
+        // Tüm animasyonları devre dışı bırakalım
         .animation(.none, value: value)
         .animation(.none, value: pencilMarks)
     }
