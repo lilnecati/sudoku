@@ -820,7 +820,9 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $showGame) {
             GameView(existingViewModel: viewModel)
                 .environmentObject(themeManager)
+                .localizationAware()
         }
+        .localizationAware()
     }
     
     

@@ -1,5 +1,5 @@
 {
-  "sourceLanguage" : "tr",
+  "sourceLanguage" : "en",
   "strings" : {
     "?" : {
 
@@ -11,7 +11,14 @@
 
     },
     "%@ zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved games found for %@ difficulty level."
+          }
+        }
+      }
     },
     "%%%lld" : {
 
@@ -21,7 +28,7 @@
     },
     "%lld:%@" : {
       "localizations" : {
-        "tr" : {
+        "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$lld:%2$@"
@@ -54,585 +61,930 @@
 
     },
     "3 hata yaptınız ve Sudoku oyununu kaybettiniz." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You made 3 mistakes and lost the Sudoku game."
+          }
+        }
+      }
     },
     "5" : {
 
     },
     "Ad Soyad" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Name"
+          }
+        }
+      }
     },
     "Adım %lld / %lld" : {
       "localizations" : {
-        "tr" : {
+        "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Adım %1$lld / %2$lld"
+            "state" : "translated",
+            "value" : "Step %1$lld / %2$lld"
           }
         }
       }
     },
     "Adınızı ve soyadınızı girin" : {
-
-    },
-    "Anasayfaya Dön" : {
-
-    },
-    "Anladım" : {
-
-    },
-    "app.name" : {
-      "comment" : "Application name",
-      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sudoku"
+            "value" : "Enter your full name"
+          }
+        }
+      }
+    },
+    "Anasayfaya Dön" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Return to Home"
+          }
+        }
+      }
+    },
+    "Anladım" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I Understand"
+          }
+        }
+      }
+    },
+    "Bitti" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finished"
+          }
+        }
+      }
+    },
+    "Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only this cell can contain 5 in this region because there's no place for 5 in other cells."
+          }
+        }
+      }
+    },
+    "Bu işlem geri alınamaz. Tüm verileriniz silinecektir." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This action cannot be undone. All your data will be deleted."
+          }
+        }
+      }
+    },
+    "Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete this saved game?"
+          }
+        }
+      }
+    },
+    "Cihazın görünüm ayarını kullan (açık/koyu)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use device appearance setting (light/dark)"
+          }
+        }
+      }
+    },
+    "Çıkış Yap" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logout"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sudoku"
+            "value" : "Çıkış Yap"
           }
         }
       }
     },
-    "Ayarlar" : {
-
+    "Devam Et" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
     },
-    "Bitti" : {
-
+    "dk" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "min"
+          }
+        }
+      }
     },
-    "Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok." : {
-
+    "Düşük Pil" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low Battery"
+          }
+        }
+      }
     },
-    "Bu işlem geri alınamaz. Tüm verileriniz silinecektir." : {
-
+    "E-posta" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email"
+          }
+        }
+      }
     },
-    "Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?" : {
-
+    "E-posta adresiniz" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your email address"
+          }
+        }
+      }
     },
-    "button.cancel" : {
-      "comment" : "Cancel button text",
-      "extractionState" : "manual",
+    "E-posta adresinizi girin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter your email address"
+          }
+        }
+      }
+    },
+    "En az 4 karakter" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least 4 characters"
+          }
+        }
+      }
+    },
+    "Geliştirici" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Developer"
+          }
+        }
+      }
+    },
+    "Geliştirici: Necati Yıldırım" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Developer: Necati Yıldırım"
+          }
+        }
+      }
+    },
+    "Geliştrici" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Developer"
+          }
+        }
+      }
+    },
+    "Geri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        }
+      }
+    },
+    "Giriş Yap" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Login"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giriş Yap"
+          }
+        }
+      }
+    },
+    "Giriş Yapmadınız" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not Logged In"
+          }
+        }
+      }
+    },
+    "Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power saving mode disables or simplifies some visual effects and animations."
+          }
+        }
+      }
+    },
+    "Güç tasarrufu modu, cihazınızın pil ömrünü uzatır." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power saving mode extends your device's battery life."
+          }
+        }
+      }
+    },
+    "Güçlü Şifre Gereksinimleri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strong Password Requirements"
+          }
+        }
+      }
+    },
+    "Güçlü şifre nedir?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What is a strong password?"
+          }
+        }
+      }
+    },
+    "Güçlü Şifre Örnekleri:" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strong Password Examples:"
+          }
+        }
+      }
+    },
+    "Hata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error"
+          }
+        }
+      }
+    },
+    "Hata: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error: %@"
+          }
+        }
+      }
+    },
+    "Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved games found. To save a game, use the 'Save' button in the game screen."
+          }
+        }
+      }
+    },
+    "Henüz tamamlanmış oyun yok" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No completed games yet"
+          }
+        }
+      }
+    },
+    "Her oyunda yalnızca 3 ipucu kullanabilirsiniz!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can use only 3 hints in each game!"
+          }
+        }
+      }
+    },
+    "Hesabı Sil" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Account"
+          }
+        }
+      }
+    },
+    "Hesabınız yok mu?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't have an account?"
+          }
+        }
+      }
+    },
+    "Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter your account email address, we'll send password reset instructions."
+          }
+        }
+      }
+    },
+    "İleri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        }
+      }
+    },
+    "İptal" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
           }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "İptal"
-          }
         }
       }
-    },
-    "button.save" : {
-      "comment" : "Save button text",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kaydet"
-          }
-        }
-      }
-    },
-    "Cihazın görünüm ayarını kullan (açık/koyu)" : {
-
-    },
-    "Çıkış Yap" : {
-
-    },
-    "Devam Et" : {
-
-    },
-    "dk" : {
-
-    },
-    "Düşük Pil" : {
-
-    },
-    "E-posta" : {
-
-    },
-    "E-posta adresiniz" : {
-
-    },
-    "E-posta adresinizi girin" : {
-
-    },
-    "En az 4 karakter" : {
-
-    },
-    "Geliştirici" : {
-
-    },
-    "Geliştirici: Necati Yıldırım" : {
-
-    },
-    "Geliştrici" : {
-
-    },
-    "Geri" : {
-
-    },
-    "Giriş Yap" : {
-
-    },
-    "Giriş Yapmadınız" : {
-
-    },
-    "Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir." : {
-
-    },
-    "Güç tasarrufu modu, cihazınızın pil ömrünü uzatır." : {
-
-    },
-    "Güçlü Şifre Gereksinimleri" : {
-
-    },
-    "Güçlü şifre nedir?" : {
-
-    },
-    "Güçlü Şifre Örnekleri:" : {
-
-    },
-    "Hata" : {
-
-    },
-    "Hata: %@" : {
-
-    },
-    "Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın." : {
-
-    },
-    "Henüz tamamlanmış oyun yok" : {
-
-    },
-    "Her oyunda yalnızca 3 ipucu kullanabilirsiniz!" : {
-
-    },
-    "Hesabı Sil" : {
-
-    },
-    "Hesabınız yok mu?" : {
-
-    },
-    "Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz." : {
-
-    },
-    "İleri" : {
-
-    },
-    "İptal" : {
-
     },
     "İPUCU" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HINT"
+          }
+        }
+      }
     },
     "İpucu (%lld)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hint (%lld)"
+          }
+        }
+      }
     },
     "Kaldığın yerden devam et" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue where you left off"
+          }
+        }
+      }
     },
     "Karanlık Mod" : {
-
-    },
-    "Karanlık tema aktif eder" : {
-
-    },
-    "Kaydedilmiş oyun bulunamadı" : {
-
-    },
-    "Kaydedilmiş Oyunlar" : {
-
-    },
-    "Kaydet" : {
-
-    },
-    "Kayıt Ol" : {
-
-    },
-    "Kendinize uygun bir zorluk seviyesi belirleyin" : {
-
-    },
-    "Kullanıcı Adı" : {
-
-    },
-    "Kullanıcı adınızı girin" : {
-
-    },
-    "Metin Boyutu" : {
-
-    },
-    "Mevcut Şifre" : {
-
-    },
-    "N" : {
-
-    },
-    "Nasıl Oynanır" : {
-
-    },
-    "Nasıl Oynanır?" : {
-
-    },
-    "Navigasyon sorunu giderilene kadar" : {
-
-    },
-    "Necati Yıldırım" : {
-
-    },
-    "Not Aktif" : {
-
-    },
-    "Not Modu" : {
-
-    },
-    "Örnek Gösterilemiyor" : {
-
-    },
-    "Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir" : {
-
-    },
-    "Örnek: Bu hücreye sadece 4 girebilir" : {
-
-    },
-    "Otomatik Güç Tasarrufu" : {
-
-    },
-    "Oyun Bitti!" : {
-
-    },
-    "Oyun içi ses efektlerini aç/kapa" : {
-
-    },
-    "Oyun içi titreşim efektlerini aç/kapa" : {
-
-    },
-    "Oyun İstatistikleri" : {
-
-    },
-    "Oyun yükleniyor..." : {
-
-    },
-    "Oyunu Başlat" : {
-
-    },
-    "Oyunu Sil" : {
-
-    },
-    "Performans" : {
-
-    },
-    "Performans İstatistikleri" : {
-
-    },
-    "Pil Durumu" : {
-
-    },
-    "Profil Devre Dışı" : {
-
-    },
-    "Profil Düzenle" : {
-
-    },
-    "Profili Düzenle" : {
-
-    },
-    "puan" : {
-
-    },
-    "PUAN" : {
-
-    },
-    "Rehber" : {
-
-    },
-    "S" : {
-
-    },
-    "Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir." : {
-
-    },
-    "Ses Efektleri" : {
-
-    },
-    "Ses Seviyesi" : {
-
-    },
-    "Sesi Test Et" : {
-
-    },
-    "settings.about" : {
-      "comment" : "About section title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "About"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hakkında"
-          }
-        }
-      }
-    },
-    "settings.appearance" : {
-      "comment" : "Title for appearance settings section",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appearance Settings"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Görünüm Ayarları"
-          }
-        }
-      }
-    },
-    "settings.autopowersaving" : {
-      "comment" : "Auto power saving toggle",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auto Power Saving"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Otomatik Güç Tasarrufu"
-          }
-        }
-      }
-    },
-    "settings.haptic" : {
-      "comment" : "Haptic feedback settings title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Haptic Feedback"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Titreşim Geri Bildirimi"
-          }
-        }
-      }
-    },
-    "settings.haptic.description" : {
-      "comment" : "Description for haptic feedback",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enable or disable in-game vibration effects"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oyun içi titreşim efektlerini aç/kapa"
-          }
-        }
-      }
-    },
-    "settings.highperformance" : {
-      "comment" : "High performance mode toggle",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "High Performance Mode"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yüksek Performans Modu"
-          }
-        }
-      }
-    },
-    "settings.powersaving" : {
-      "comment" : "Power saving settings section title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Power Saving"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Güç Tasarrufu"
-          }
-        }
-      }
-    },
-    "settings.powersaving.mode" : {
-      "comment" : "Power saving mode toggle",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Power Saving Mode"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Güç Tasarrufu Modu"
-          }
-        }
-      }
-    },
-    "settings.sound.effects" : {
-      "comment" : "Sound effects settings title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sound Effects"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ses Efektleri"
-          }
-        }
-      }
-    },
-    "settings.sound.effects.description" : {
-      "comment" : "Description for sound effects",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enable or disable in-game sound effects"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oyun içi ses efektlerini aç/kapa"
-          }
-        }
-      }
-    },
-    "settings.sound.test" : {
-      "comment" : "Button to test sound",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Test Sound"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sesi Test Et"
-          }
-        }
-      }
-    },
-    "settings.sound.volume" : {
-      "comment" : "Sound volume slider title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sound Volume"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ses Seviyesi"
-          }
-        }
-      }
-    },
-    "settings.theme.dark" : {
-      "comment" : "Dark mode option",
-      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dark Mode"
           }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Karanlık Mod"
-          }
         }
       }
     },
-    "settings.theme.system" : {
-      "comment" : "Use system appearance",
-      "extractionState" : "manual",
+    "Karanlık tema aktif eder" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Use System Appearance"
+            "value" : "Activates dark theme"
+          }
+        }
+      }
+    },
+    "Kaydedilmiş oyun bulunamadı" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved games found"
+          }
+        }
+      }
+    },
+    "Kaydedilmiş Oyunlar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved Games"
+          }
+        }
+      }
+    },
+    "Kaydet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "Kayıt Ol" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Register"
+          }
+        }
+      }
+    },
+    "Kendinize uygun bir zorluk seviyesi belirleyin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set a difficulty level suitable for you"
+          }
+        }
+      }
+    },
+    "Kullanıcı Adı" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Username"
+          }
+        }
+      }
+    },
+    "Kullanıcı adınızı girin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter your username"
+          }
+        }
+      }
+    },
+    "language.en" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "English"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sistem Görünümünü Kullan"
+            "value" : "İngilizce"
+          }
+        }
+      }
+    },
+    "language.selection" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language Selection"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dil Seçimi"
+          }
+        }
+      }
+    },
+    "language.tr" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turkish"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Türkçe"
+          }
+        }
+      }
+    },
+    "Mevcut Şifre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current Password"
+          }
+        }
+      }
+    },
+    "N" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "N"
+          }
+        }
+      }
+    },
+    "Nasıl Oynanır" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How to Play"
+          }
+        }
+      }
+    },
+    "Nasıl Oynanır?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How to Play?"
+          }
+        }
+      }
+    },
+    "Navigasyon sorunu giderilene kadar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Until navigation issue is fixed"
+          }
+        }
+      }
+    },
+    "Necati Yıldırım" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Necati Yıldırım"
+          }
+        }
+      }
+    },
+    "Not Aktif" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note Active"
+          }
+        }
+      }
+    },
+    "Not Modu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note Mode"
+          }
+        }
+      }
+    },
+    "Örnek Gösterilemiyor" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Example Cannot Be Shown"
+          }
+        }
+      }
+    },
+    "Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Example: Number 5 can only be placed in this cell"
+          }
+        }
+      }
+    },
+    "Örnek: Bu hücreye sadece 4 girebilir" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Example: Only 4 can be entered in this cell"
+          }
+        }
+      }
+    },
+    "Otomatik Güç Tasarrufu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic Power Saving"
+          }
+        }
+      }
+    },
+    "Oyun Bitti!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game Over!"
+          }
+        }
+      }
+    },
+    "Oyun içi ses efektlerini aç/kapa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toggle in-game sound effects"
+          }
+        }
+      }
+    },
+    "Oyun içi titreşim efektlerini aç/kapa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toggle in-game haptic feedback"
+          }
+        }
+      }
+    },
+    "Oyun İstatistikleri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game Statistics"
+          }
+        }
+      }
+    },
+    "Oyun yükleniyor..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading game..."
+          }
+        }
+      }
+    },
+    "Oyunu Başlat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Game"
+          }
+        }
+      }
+    },
+    "Oyunu Sil" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Game"
+          }
+        }
+      }
+    },
+    "Performans" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Performance"
+          }
+        }
+      }
+    },
+    "Performans İstatistikleri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Performance Statistics"
+          }
+        }
+      }
+    },
+    "Pil Durumu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery Status"
+          }
+        }
+      }
+    },
+    "Profil Devre Dışı" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile Disabled"
+          }
+        }
+      }
+    },
+    "Profil Düzenle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Profile"
+          }
+        }
+      }
+    },
+    "profile.edit" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Profile"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profili Düzenle"
+          }
+        }
+      }
+    },
+    "puan" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "points"
+          }
+        }
+      }
+    },
+    "PUAN" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "POINTS"
+          }
+        }
+      }
+    },
+    "Rehber" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guide"
+          }
+        }
+      }
+    },
+    "S" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S"
+          }
+        }
+      }
+    },
+    "Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due to other numbers in the row, column, and 3x3 region, only 4 can be placed in this cell."
+          }
+        }
+      }
+    },
+    "Ses Efektleri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound Effects"
+          }
+        }
+      }
+    },
+    "Ses Seviyesi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume"
+          }
+        }
+      }
+    },
+    "Sesi Test Et" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test Sound"
           }
         }
       }
     },
     "settings.title" : {
-      "comment" : "Title for settings screen",
-      "extractionState" : "manual",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -649,142 +1001,538 @@
       }
     },
     "Şifre" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password"
+          }
+        }
+      }
     },
     "Şifre Değiştir" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change Password"
+          }
+        }
+      }
     },
     "Şifre Onayı" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password Confirmation"
+          }
+        }
+      }
     },
     "Şifreler eşleşiyor" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwords match"
+          }
+        }
+      }
     },
     "Şifreler eşleşmiyor" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwords don't match"
+          }
+        }
+      }
     },
     "Şifremi Unuttum" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forgot Password"
+          }
+        }
+      }
     },
     "Şifrenizi girin" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter your password"
+          }
+        }
+      }
     },
     "Şifrenizi tekrar girin" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Re-enter your password"
+          }
+        }
+      }
     },
     "Sil" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
     },
     "Sistem Görünümünü Kullan" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use System Appearance"
+          }
+        }
+      }
     },
     "Skor Tablosu" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scoreboard"
+          }
+        }
+      }
     },
     "Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Login to save your scores and synchronize across devices"
+          }
+        }
+      }
     },
     "sn" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sec"
+          }
+        }
+      }
     },
     "Son Kalan Hücre" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last Remaining Cell"
+          }
+        }
+      }
     },
     "Son Oyunlar" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent Games"
+          }
+        }
+      }
     },
     "Sudoku" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku"
+          }
+        }
+      }
     },
     "SUDOKU" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SUDOKU"
+          }
+        }
+      }
     },
     "Sudoku bulmacasını %@ sürede tamamladınız!" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You completed the Sudoku puzzle in %@!"
+          }
+        }
+      }
     },
     "Sudoku'yu Tamamladınız" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You Completed the Sudoku"
+          }
+        }
+      }
     },
     "Süre" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        }
+      }
     },
     "Süre: %@" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time: %@"
+          }
+        }
+      }
     },
     "Sürüm 1.0" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version 1.0"
+          }
+        }
+      }
     },
     "Talimatları Gönder" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send Instructions"
+          }
+        }
+      }
     },
     "Tamam" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
     },
     "Tamamla" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete"
+          }
+        }
+      }
     },
     "Tamamlanma" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completion"
+          }
+        }
+      }
     },
     "Tarih" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Date"
+          }
+        }
+      }
     },
     "Tebrikler!" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Congratulations!"
+          }
+        }
+      }
     },
     "Tekrar Dene" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try Again"
+          }
+        }
+      }
+    },
+    "text.size" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text Size"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin Boyutu"
+          }
+        }
+      }
+    },
+    "text.size.large" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Large"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük"
+          }
+        }
+      }
+    },
+    "text.size.medium" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medium"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orta"
+          }
+        }
+      }
+    },
+    "text.size.small" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Small"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Küçük"
+          }
+        }
+      }
     },
     "Titreşim Geri Bildirimi" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptic Feedback"
+          }
+        }
+      }
     },
     "Tüm Ayarları Sıfırla" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset All Settings"
+          }
+        }
+      }
     },
     "Uygulama Başlatılamadı" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Could Not Be Started"
+          }
+        }
+      }
     },
     "Uygulamayı kapatıp tekrar açmayı deneyin." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try closing and reopening the app."
+          }
+        }
+      }
     },
     "Yeni Hesap Oluştur" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create New Account"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni Hesap Oluştur"
+          }
+        }
+      }
     },
     "Yeni Oyun" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Game"
+          }
+        }
+      }
     },
     "Yeni Şifre" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Password"
+          }
+        }
+      }
     },
     "Yeni Şifre (Tekrar)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Password (Again)"
+          }
+        }
+      }
     },
     "Yükleniyor..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading..."
+          }
+        }
+      }
     },
     "Yüksek Performans Modu" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "High Performance Mode"
+          }
+        }
+      }
     },
     "Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "High performance mode provides smoother animations and visual effects but increases battery usage."
+          }
+        }
+      }
     },
     "Zaten hesabınız var mı?" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already have an account?"
+          }
+        }
+      }
     },
     "Zihninizi Çalıştırın" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercise Your Mind"
+          }
+        }
+      }
     },
     "Zorluk" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difficulty"
+          }
+        }
+      }
     },
     "Zorluk Seviyesi" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difficulty Level"
+          }
+        }
+      }
     },
     "Zorluk Seviyesi Karşılaştırma" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difficulty Level Comparison"
+          }
+        }
+      }
     },
     "Zorluk Seviyesi Seçin" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Difficulty Level"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

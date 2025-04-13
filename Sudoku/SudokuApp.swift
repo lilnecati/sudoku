@@ -104,6 +104,7 @@ struct ColorManager {
 @main
 struct SudokuApp: App {
     @StateObject private var themeManager = ThemeManager()
+    @StateObject private var localizationManager = LocalizationManager.shared
     @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
     @AppStorage("highPerformanceMode") private var highPerformanceMode = false
     
@@ -161,7 +162,9 @@ struct SudokuApp: App {
                     StartupView()
                         .environment(\.managedObjectContext, viewContext)
                         .environmentObject(themeManager)
+                        .environmentObject(localizationManager)
                         .preferredColorScheme(themeManager.colorScheme)
+                        .environment(\.locale, Locale(identifier: LocalizationManager.shared.currentLanguage))
                         .environment(\.textScale, textSizePreference.scaleFactor)
                         .environment(\.dynamicTypeSize, textSizePreference.toDynamicTypeSize())
                         .onAppear {
@@ -182,6 +185,19 @@ struct SudokuApp: App {
                                 
                                 // UI'ı yenile
                                 DispatchQueue.main.async {
+                                    NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+                                }
+                            }
+                            
+                            // Dil değişikliği bildirimini dinle
+                            NotificationCenter.default.addObserver(forName: Notification.Name("AppLanguageChanged"), object: nil, queue: .main) { notification in
+                                print("🌐 App language changed")
+                                
+                                // UI'ı yenile
+                                DispatchQueue.main.async {
+                                    // Locale environment değerini güncelle
+                                    // Burada doğrudan değiştiremiyoruz, o yüzden force update kullanılıyor
+                                    localizationManager.objectWillChange.send()
                                     NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
                                 }
                             }

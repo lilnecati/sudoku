@@ -50,6 +50,7 @@ struct StartupView: View {
             if isReady {
                 // Hazır olduğunda ContentView'u göster
                 ContentView()
+                    .localizationAware()
             } else {
                 // Açılış ekranı
                 ZStack {

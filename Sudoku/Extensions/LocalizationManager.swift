@@ -2,20 +2,14 @@ import Foundation
 import SwiftUI
 
 // MARK: - Language Struct
-struct AppLanguage: Identifiable, Hashable {
-    var id: String { code }
-    let code: String
-    let name: String
-    let flag: String
-    
-    static let english = AppLanguage(code: "en", name: "English", flag: "🇺🇸")
-    static let turkish = AppLanguage(code: "tr", name: "Türkçe", flag: "🇹🇷")
+struct AppLanguage: Equatable {
+    static let english = AppLanguage(code: "en", name: "English")
+    static let turkish = AppLanguage(code: "tr", name: "Türkçe")
     
     static let allLanguages = [english, turkish]
     
-    static func language(for code: String) -> AppLanguage {
-        return allLanguages.first { $0.code == code } ?? turkish
-    }
+    let code: String
+    let name: String
 }
 
 // MARK: - Localization Manager
@@ -23,44 +17,33 @@ struct AppLanguage: Identifiable, Hashable {
 class LocalizationManager: ObservableObject {
     static let shared = LocalizationManager()
     
-    @AppStorage("appLanguage") private var appLanguageCode: String = Locale.current.language.languageCode?.identifier ?? "tr"
-    
-    @Published var currentLanguage: AppLanguage {
-        didSet {
-            appLanguageCode = currentLanguage.code
-            objectWillChange.send()
-        }
-    }
+    @AppStorage("app_language") var currentLanguage: String = "en"
     
     private init() {
-        // Önce geçici değişkene ata, self referansı vermeden
-        let languageCode = Locale.current.language.languageCode?.identifier ?? "tr"
-        let storedCode = UserDefaults.standard.string(forKey: "appLanguage") ?? languageCode
-        
-        // Sonra currentLanguage'i başlat
-        self.currentLanguage = AppLanguage.language(for: storedCode)
-        
-        print("🌐 Language initialized with: \(currentLanguage.name) (\(currentLanguage.code))")
+        // Başlangıçta kullanıcının tercih ettiği dili ayarla
+        let preferredLanguages = Locale.preferredLanguages
+        if let firstLanguage = preferredLanguages.first {
+            let code = String(firstLanguage.prefix(2))
+            if AppLanguage.allLanguages.contains(where: { $0.code == code }) {
+                currentLanguage = code
+            }
+        }
     }
     
     func setLanguage(_ language: AppLanguage) {
-        guard language.code != currentLanguage.code else { return }
+        UserDefaults.standard.set([language.code], forKey: "AppleLanguages")
+        UserDefaults.standard.set(language.code, forKey: "app_language")
+        currentLanguage = language.code
         
-        print("🌐 Changing language to: \(language.name) (\(language.code))")
-        self.currentLanguage = language
-        
-        // Force UI update by notifying
-        NotificationCenter.default.post(name: Notification.Name("AppLanguageChanged"), object: nil)
+        // Yeni dili uygula ve UI'ı güncelle
+        NotificationCenter.default.post(name: Notification.Name("LanguageChanged"), object: nil)
     }
     
-    func localizedString(for key: String, defaultValue: String? = nil) -> String {
-        // Get the bundle that contains our strings file
-        // This function uses String(localized:) with bundle but also provides caching if needed
-        let value = String(localized: String.LocalizationValue(key))
-        if value != key || defaultValue == nil {
-            return value
-        }
-        return defaultValue ?? key
+    func localizedString(for key: String, comment: String = "") -> String {
+        let path = Bundle.main.path(forResource: currentLanguage, ofType: "lproj") 
+        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        
+        return bundle?.localizedString(forKey: key, value: nil, table: "Localizable") ?? key
     }
 }
 
@@ -75,37 +58,50 @@ extension View {
 // MARK: - Localization View Modifier
 struct LocalizationViewModifier: ViewModifier {
     @StateObject private var localizationManager = LocalizationManager.shared
+    @State private var refreshID = UUID() // Görünümü zorla yenilemek için
     
     func body(content: Content) -> some View {
         content
-            .environment(\.locale, Locale(identifier: localizationManager.currentLanguage.code))
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("AppLanguageChanged"))) { _ in
+            .id(refreshID) // View'ı zorla yenilemek için
+            .environment(\.locale, Locale(identifier: localizationManager.currentLanguage))
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))) { _ in
                 // Force view refresh when language changes
+                localizationManager.objectWillChange.send()
+                
+                // View'ı zorla yenile
+                refreshID = UUID()
             }
-    }
-}
-
-// MARK: - String Extension
-extension String {
-    @MainActor
-    var localized: String {
-        return LocalizationManager.shared.localizedString(for: self)
-    }
-    
-    // Asenkron çalışan alternatif (gerekirse)
-    func localizedAsync() async -> String {
-        await MainActor.run {
-            return LocalizationManager.shared.localizedString(for: self)
-        }
     }
 }
 
 // MARK: - Text Extension for SwiftUI
 extension Text {
-    /// Creates a text view that displays localized content identified by a key
+    /// Creates a text view that displays localized content
     @MainActor
-    static func localized(_ key: String, defaultValue: String? = nil) -> Text {
-        let localizedString = LocalizationManager.shared.localizedString(for: key, defaultValue: defaultValue)
+    static func localized(_ key: String) -> Text {
+        return Text(LocalizationManager.shared.localizedString(for: key))
+    }
+    
+    /// Creates a text view that displays localized content, safe for use in any context
+    static func localizedSafe(_ key: String) -> Text {
+        // Bu metod izole olmayan contextlerde kullanılabilir
+        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
+        let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        
+        let localizedString = bundle?.localizedString(forKey: key, value: key, table: "Localizable") ?? key
+        return Text(localizedString)
+    }
+    
+    /// Creates a text view that displays localized content with a custom default value
+    static func localizedSafe(_ key: String, defaultValue: String) -> Text {
+        // Bu metod izole olmayan contextlerde kullanılabilir
+        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
+        let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        
+        let localizedString = bundle?.localizedString(forKey: key, value: defaultValue, table: "Localizable") ?? defaultValue
         return Text(localizedString)
     }
 } 
+

@@ -51,6 +51,9 @@ struct SettingsView: View {
     @AppStorage("autoPowerSaving") private var autoPowerSaving: Bool = true
     @AppStorage("highPerformanceMode") private var highPerformanceMode: Bool = false
     
+    // LocalizationManager'a erişim
+    @StateObject private var localizationManager = LocalizationManager.shared
+    
     // PowerSavingManager'a erişim
     @StateObject private var powerManager = PowerSavingManager.shared
     
@@ -275,66 +278,12 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 25) {
-                    // Hesap ve profil bölümü - En yukarı taşındı
-                    sectionHeader(title: "Profil", systemImage: "person.crop.circle.fill")
-                    
-                    // Profil ve hesap ayarları bölümü
-                    profileSettingsView()
-                    
-                    // Ayarlar başlığı
-                    sectionHeader(title: "Oyun Ayarları", systemImage: "gamecontroller.fill")
-                    
-                    // Oyun ayarları bölümü
-                    gameSettingsView()
-                    
-                    // Görünüm ayarları
-                    sectionHeader(title: "Görünüm", systemImage: "paintbrush.fill")
-                    
-                    // Görünüm ayarları bölümü
-                    appearanceSettingsView()
-                    
-                    // Güç tasarrufu ayarları (eğer pil yüzdesi 50'den düşükse ön plana çıkar)
-                    if powerManager.batteryLevel < 0.5 {
-                        sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle.fill")
-                        powerSavingSettingsView()
-                    } else {
-                        sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle")
-                        powerSavingSettingsView()
-                    }
-                    
-                    // Alt bilgi
-                    VStack(spacing: 5) {
-                        Text("Geliştirici: Necati Yıldırım")
-                            .scaledFont(size: 14)
-                            .foregroundColor(.secondary)
-                        
-                        Text("Sürüm 1.0")
-                            .scaledFont(size: 12)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 30)
-                    .padding(.bottom, 20)
-                }
-                .padding(.top)
-            }
-            .environmentObject(themeManager)
-            .environment(\.colorScheme, themeManager.colorScheme ?? colorScheme)
-            .navigationBarTitle("Ayarlar", displayMode: .inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Tamam")
-                            .fontWeight(.semibold)
-                            .foregroundColor(.blue)
-                    }
-                }
-            }
+            mainSettingsView
+                .navigationBarTitle(Text.localized("settings.title"), displayMode: .large)
+                .navigationBarItems(trailing: closeButton)
         }
+        .navigationViewStyle(StackNavigationViewStyle())
+        .localizationAware()
         .sheet(isPresented: $showRegisterView) {
             RegisterViewContainer()
         }
@@ -760,6 +709,47 @@ struct SettingsView: View {
                 .padding(.horizontal)
             }
             
+            // Dil Seçimi
+            HStack(spacing: 15) {
+                // İkon
+                ZStack {
+                    Circle()
+                        .fill(Color.green.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "globe")
+                        .font(.system(size: 16))
+                        .foregroundColor(.green)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    // Başlık
+                    Text.localizedSafe("language.selection")
+                        .scaledFont(size: 16, weight: .semibold)
+                        .foregroundColor(.primary)
+                    
+                    // Seçim butonları
+                    HStack(spacing: 12) {
+                        ForEach(AppLanguage.allLanguages) { language in
+                            LanguageButton(
+                                language: language,
+                                isSelected: localizationManager.currentLanguage == language.code,
+                                action: {
+                                    updateLanguagePreference(language)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
+            .padding(.horizontal)
+            
             // Metin boyutu
             HStack(spacing: 15) {
                 // İkon
@@ -775,14 +765,14 @@ struct SettingsView: View {
                 
                 VStack(alignment: .leading, spacing: 8) {
                     // Başlık
-                    Text("Metin Boyutu")
+                    Text.localizedSafe("text.size")
                         .scaledFont(size: 16, weight: .semibold)
                         .foregroundColor(.primary)
                     
                     // Seçim butonları
                     HStack(spacing: 12) {
                         TextSizeButton(
-                            title: "Küçük",
+                            title: "text.size.small",
                             isSelected: textSizeString == TextSizePreference.small.rawValue,
                             action: {
                                 updateTextSizePreference(TextSizePreference.small)
@@ -790,7 +780,7 @@ struct SettingsView: View {
                         )
                         
                         TextSizeButton(
-                            title: "Orta", 
+                            title: "text.size.medium", 
                             isSelected: textSizeString == TextSizePreference.medium.rawValue,
                             action: {
                                 updateTextSizePreference(TextSizePreference.medium)
@@ -798,7 +788,7 @@ struct SettingsView: View {
                         )
                         
                         TextSizeButton(
-                            title: "Büyük", 
+                            title: "text.size.large", 
                             isSelected: textSizeString == TextSizePreference.large.rawValue,
                             action: {
                                 updateTextSizePreference(TextSizePreference.large)
@@ -824,7 +814,7 @@ struct SettingsView: View {
         
         var body: some View {
             Button(action: action) {
-                Text(title)
+                Text.localizedSafe(title)
                     .scaledFont(size: 14, weight: isSelected ? .semibold : .regular)
                     .padding(.vertical, 8)
                     .padding(.horizontal, 12)
@@ -837,6 +827,34 @@ struct SettingsView: View {
                             )
                     )
                     .foregroundColor(isSelected ? .orange : .primary)
+            }
+        }
+    }
+    
+    struct LanguageButton: View {
+        var language: AppLanguage
+        var isSelected: Bool
+        var action: () -> Void
+        
+        var body: some View {
+            Button(action: action) {
+                HStack {
+                    Text(language.flag)
+                        .font(.system(size: 16))
+                    Text.localizedSafe("language." + language.code)
+                        .scaledFont(size: 14, weight: isSelected ? .semibold : .regular)
+                }
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(isSelected ? Color.green.opacity(0.2) : Color.clear)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(isSelected ? Color.green : Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                )
+                .foregroundColor(isSelected ? .green : .primary)
             }
         }
     }
@@ -1206,6 +1224,31 @@ struct SettingsView: View {
         print("📱 Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)")
     }
     
+    // Dil değişikliğini işleme fonksiyonu
+    private func updateLanguagePreference(_ newValue: AppLanguage) {
+        // Mevcut dil değerini al - string olarak
+        let previousLanguageCode = localizationManager.currentLanguage
+        
+        // Değerleri aynıysa erken çık
+        guard previousLanguageCode != newValue.code else { return }
+        
+        // Dili değiştir
+        localizationManager.setLanguage(newValue)
+        
+        // Bildirim sesi çal
+        SoundManager.shared.playNavigationSound()
+        
+        // Görünümün tümünü zorla yenile
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+        }
+        
+        // Önceki dil kodunu kullanarak dil ismini bul
+        let previousLanguageName = AppLanguage.allLanguages.first(where: { $0.code == previousLanguageCode })?.name ?? previousLanguageCode
+        
+        print("🌐 Dil değiştirildi: \(previousLanguageName) -> \(newValue.name)")
+    }
+    
     // Profil ve hesap ayarları görünümü
     private func profileSettingsView() -> some View {
         VStack(spacing: 20) {
@@ -1278,7 +1321,7 @@ struct SettingsView: View {
                 NavigationLink(destination: ProfileEditView()) {
                     HStack {
                         Label {
-                            Text("Profili Düzenle")
+                            Text.localizedSafe("profile.edit")
                                 .scaledFont(size: 16, weight: .medium)
                                 .foregroundColor(.primary)
                         } icon: {
@@ -1345,7 +1388,7 @@ struct SettingsView: View {
                 }) {
                     HStack {
                         Label {
-                            Text("Çıkış Yap")
+                            Text.localizedSafe("Çıkış Yap")
                                 .scaledFont(size: 16, weight: .medium)
                                 .foregroundColor(.red)
                         } icon: {
@@ -1369,7 +1412,7 @@ struct SettingsView: View {
                 NavigationLink(destination: LoginViewContainer()) {
                     HStack {
                         Label {
-                            Text("Giriş Yap")
+                            Text.localizedSafe("Giriş Yap")
                                 .scaledFont(size: 16, weight: .medium)
                                 .foregroundColor(.blue)
                         } icon: {
@@ -1396,7 +1439,7 @@ struct SettingsView: View {
                 NavigationLink(destination: RegisterViewContainer()) {
                     HStack {
                         Label {
-                            Text("Yeni Hesap Oluştur")
+                            Text.localizedSafe("Yeni Hesap Oluştur")
                                 .scaledFont(size: 16, weight: .medium)
                                 .foregroundColor(.green)
                         } icon: {
@@ -1423,6 +1466,63 @@ struct SettingsView: View {
         }
     }
     
+    private var mainSettingsView: some View {
+        ScrollView {
+            VStack(spacing: 25) {
+                // Hesap ve profil bölümü - En yukarı taşındı
+                sectionHeader(title: "Profil", systemImage: "person.crop.circle.fill")
+                
+                // Profil ve hesap ayarları bölümü
+                profileSettingsView()
+                
+                // Ayarlar başlığı
+                sectionHeader(title: "Oyun Ayarları", systemImage: "gamecontroller.fill")
+                
+                // Oyun ayarları bölümü
+                gameSettingsView()
+                
+                // Görünüm ayarları
+                sectionHeader(title: "Görünüm", systemImage: "paintbrush.fill")
+                
+                // Görünüm ayarları bölümü
+                appearanceSettingsView()
+                
+                // Güç tasarrufu ayarları (eğer pil yüzdesi 50'den düşükse ön plana çıkar)
+                if powerManager.batteryLevel < 0.5 {
+                    sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle.fill")
+                    powerSavingSettingsView()
+                } else {
+                    sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle")
+                    powerSavingSettingsView()
+                }
+                
+                // Alt bilgi
+                VStack(spacing: 5) {
+                    Text("Geliştirici: Necati Yıldırım")
+                        .scaledFont(size: 14)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Sürüm 1.0")
+                        .scaledFont(size: 12)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 30)
+                .padding(.bottom, 20)
+            }
+            .padding(.top)
+        }
+    }
+    
+    private var closeButton: some View {
+        Button(action: {
+            presentationMode.wrappedValue.dismiss()
+        }) {
+            Text("Tamam")
+                .fontWeight(.semibold)
+                .foregroundColor(.blue)
+        }
+    }
 }
 
 struct SettingRow<Content: View>: View {
