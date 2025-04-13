@@ -854,15 +854,19 @@ struct SettingsView: View {
                 
                 // Başlık ve durum
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack {
+                    // Pil durumu ve yüzde - tek satırda kalacak şekilde
+                    HStack(spacing: 4) {
                         Text("Pil Durumu")
-                            .scaledFont(size: 18, weight: .bold)
+                            .scaledFont(size: 16, weight: .bold)
                             .foregroundColor(.primary)
+                            .lineLimit(1)
                         
-                        Text("(%\(Int(powerManager.batteryLevel * 100)))")
-                            .scaledFont(size: 16, weight: .medium)
+                        Text("\(Int(powerManager.batteryLevel * 100))%")
+                            .scaledFont(size: 14, weight: .medium)
                             .foregroundColor(getBatteryColor())
+                            .lineLimit(1)
                     }
+                    .minimumScaleFactor(0.8) // Yazı sığmazsa küçültebilir
                     
                     // Pil durum mesajı
                     if powerManager.batteryLevel <= 0.2 {
@@ -879,36 +883,6 @@ struct SettingsView: View {
                 }
                 
                 Spacer()
-                
-                // Düşük pilde güç tasarrufu önerisi
-                if powerManager.batteryLevel <= 0.2 && !powerSavingMode {
-                    Button(action: {
-                        // Titreşim kontrolü yapılarak ses çal
-                        if enableHapticFeedback {
-                            SoundManager.shared.playNavigationSound()
-                        } else {
-                            SoundManager.shared.playNavigationSoundOnly()
-                        }
-                        
-                        powerSavingMode = true
-                        powerManager.powerSavingMode = true
-                    }) {
-                        HStack {
-                            Image(systemName: "bolt.shield")
-                                .font(.system(size: 12))
-                            
-                            Text("Güç Tasarrufu")
-                                .scaledFont(size: 12, weight: .medium)
-                        }
-                        .foregroundColor(.green)
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.green.opacity(0.15))
-                        )
-                    }
-                }
             }
             .padding()
             .background(
@@ -1214,7 +1188,7 @@ struct SettingsView: View {
             }
             
             // Telif hakkı ve yapım yılı
-            Text("© 2025 Necati Yıldırım")
+            Text("© 2024 Necati Yıldırım")
                 .scaledFont(size: 14, weight: .regular)
                 .foregroundColor(.secondary)
                 .padding(.top)

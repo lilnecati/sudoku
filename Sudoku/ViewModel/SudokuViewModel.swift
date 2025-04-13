@@ -110,6 +110,9 @@ class SudokuViewModel: ObservableObject {
     // Kullanılan rakamların sayısını takip et
     @Published var usedNumbers: [Int: Int] = [:]
     
+    // Başlangıçtaki değişkenlere eklenecek
+    @Published var pendingErrorCells: Set<Position> = []
+    
     // MARK: - İlklendirme
     
     init(difficulty: SudokuBoard.Difficulty = .easy) {
@@ -337,40 +340,56 @@ class SudokuViewModel: ObservableObject {
             } else {
                 SoundManager.shared.playErrorSound()
                 
-                // Hatalı değeri hücreye yerleştir
-                enterValue(value, at: row, col: col)
+                // Hatalı değeri hücreye yerleştir - enterValue kullanmak yerine direkt board'a yazıyoruz
+                _ = board.setValue(row: row, column: col, value: value)
                 
-                // 3 saniye sonra hatalı değeri otomatik olarak sil
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-                    guard let self = self else { return }
-                    
-                    // Eğer hala aynı değer varsa sil
-                    if self.board.getValue(at: row, col: col) == value {
-                        // Silme işlemi (sessiz yap - ses çalmadan)
-                        self.enterValue(nil, at: row, col: col)
-                        
-                        // Hatalı hücre işaretini kaldır
-                        let position = Position(row: row, col: col)
-                        self.invalidCells.remove(position)
-                        
-                        // Tahta durumunu güncelle
-                        self.validateBoard()
-                        self.updateUsedNumbers()
-                    }
-                }
-                
-                // Hata sayısını artır
-                errorCount += 1
+                // Kullanıcı giriş matrisini güncelle
+                userEnteredValues[row][col] = true
                 
                 // Hatalı hücreyi işaretle
                 let position = Position(row: row, col: col)
                 invalidCells.insert(position)
+                
+                // Bekleyen hata olarak da işaretle - kaydetme işleminde kullanılacak
+                pendingErrorCells.insert(position)
+                
+                // Doğrulama yapmak yerine sadece kullanılan sayıları güncelle
+                updateUsedNumbers()
+                
+                // ObservableObject değişiklik bildirimi
+                objectWillChange.send()
                 
                 // Hata geri bildirimi
                 if enableHapticFeedback && enableNumberInputHaptic {
                     let errorFeedback = UINotificationFeedbackGenerator()
                     errorFeedback.notificationOccurred(.error)
                 }
+                
+                // 3 saniye sonra hatalı değeri otomatik olarak sil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                    guard let self = self else { return }
+                    
+                    // Silme işlemi
+                    _ = self.board.setValue(row: row, column: col, value: nil)
+                    
+                    // Kullanıcı girişini güncelle
+                    self.userEnteredValues[row][col] = false
+                    
+                    // Hatalı hücre işaretini kaldır
+                    self.invalidCells.remove(position)
+                    
+                    // Bekleyen hatalar listesinden de kaldır
+                    self.pendingErrorCells.remove(position)
+                    
+                    // Sadece kullanılan sayıları güncelle, tahta doğrulaması yapma
+                    self.updateUsedNumbers()
+                    
+                    // UI'ı güncellemek için ObjectWillChange sinyali gönder
+                    self.objectWillChange.send()
+                }
+                
+                // Hata sayısını artır
+                errorCount += 1
                 
                 // Maksimum hata sayısını kontrol et
                 if errorCount >= maxErrorCount {
@@ -382,20 +401,14 @@ class SudokuViewModel: ObservableObject {
                     print("❌ Oyun kaybedildi! Kayıtlı oyun silindi.")
                 }
                 
-                // Önbelleği güncelle ve doğrula
+                // Önbelleği güncelle - validateBoard() çağırmayacağız
                 invalidatePencilMarksCache(forRow: row, column: col)
-                validateBoard()
-                updateUsedNumbers()
                 
                 // Hamle sayısını artır - hatalı girişleri de sayalım
                 moveCount += 1
                 
-                // Otomatik kaydet
-                autoSaveGame()
-                
-                // Hatalı giriş sonrasında da oyun tamamlanma kontrolü yap
-                // Önceki hücrelerin doğru doldurulduğundan emin olmak için
-                checkGameCompletion()
+                // Hatalı girişleri kaydetmiyoruz!
+                // autoSaveGame() çağrısını kaldırdık
             }
         }
     }
@@ -1443,6 +1456,17 @@ class SudokuViewModel: ObservableObject {
             return
         }
         
+        // Bekleyen hatalı girişleri geçici olarak tahtadan kaldır
+        var tempErrorValues: [(Position, Int?)] = []
+        
+        for position in pendingErrorCells {
+            if let value = board.getValue(row: position.row, column: position.col) {
+                tempErrorValues.append((position, value))
+                // Hatalı değeri geçici olarak sil
+                _ = board.setValue(row: position.row, column: position.col, value: nil)
+            }
+        }
+        
         // Oyun tahtası kontrolü
         let currentBoard = board // board Optional olmadığı için doğrudan kullanıyoruz
         
@@ -1483,7 +1507,14 @@ class SudokuViewModel: ObservableObject {
         jsonDict["stats"] = stats
         
         // Kullanıcının girdiği değerleri kaydet
-        jsonDict["userEnteredValues"] = userEnteredValues
+        var cleanUserEnteredValues = userEnteredValues
+        // pendingErrorCells pozisyonlarındaki kullanıcı girişlerini false yap
+        for position in pendingErrorCells {
+            if position.row < cleanUserEnteredValues.count && position.col < cleanUserEnteredValues[position.row].count {
+                cleanUserEnteredValues[position.row][position.col] = false
+            }
+        }
+        jsonDict["userEnteredValues"] = cleanUserEnteredValues
                 
         // Veriyi json formatına dönüştür
         do {
@@ -1527,6 +1558,11 @@ class SudokuViewModel: ObservableObject {
             loadSavedGames() // Kaydedilmiş oyunları yeniden yükle
         } catch {
             print("❌ JSON oluşturma veya kaydetme hatası: \(error)")
+        }
+        
+        // Geçici olarak kaldırılan hatalı değerleri geri ekle
+        for (position, value) in tempErrorValues {
+            _ = board.setValue(row: position.row, column: position.col, value: value)
         }
     }
     
@@ -2354,6 +2390,12 @@ class SudokuViewModel: ObservableObject {
         cachedHighlightedPositions.removeAll()
         invalidCells.removeAll()
     }
+    
+    // Hatalı değeri gösterdiğimizden emin olmak için değişkenleri kullanacağız
+    @Published var showingErrorValue: Bool = false
+    @Published var lastErrorValue: Int? = nil
+    @Published var lastErrorPosition: (row: Int, col: Int)? = nil
+    @Published var errorRemovalTimer: Timer? = nil
 } 
 
 // MARK: - NSManagedObject Extensions for HighScoresView Compatibility

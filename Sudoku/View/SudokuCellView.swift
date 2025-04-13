@@ -95,19 +95,9 @@ struct SudokuCellView: View {
                         // Değer gösterimi
                         if let value = value {
                             Text("\(value)")
-                                .font(.system(size: isFixed ? 26 : 24, weight: isFixed ? .bold : .semibold, design: .rounded))
+                                .font(.system(size: 26, weight: .bold, design: .rounded))
                                 .foregroundColor(getTextColor())
-                                .contentTransition(.numericText())
-                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: value)
-                                .scaleEffect(animateValue ? 1.1 : 1.0)
-                                .opacity(animateValue ? 0.0 : 1.0)
-                                .animation(
-                                    animateValue ?
-                                        .spring(response: 0.3, dampingFraction: 0.7).delay(0.2) :
-                                        .spring(response: 0.3, dampingFraction: 0.7),
-                                    value: animateValue
-                                )
-                                .dynamicTypeSize(.medium)
+                                .animation(isInvalid ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: value)
                         }
                         
                         // Pencil marks - Optimize edilmiş versiyonu
