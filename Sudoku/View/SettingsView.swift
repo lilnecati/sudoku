@@ -258,7 +258,7 @@ struct SettingsView: View {
                         .foregroundColor(.accentColor)
                     
                     VStack(alignment: .leading) {
-                        Text("Profil Devre Dışı")
+                        Text.localizedSafe("Profil")
                             .scaledFont(size: 17, weight: .semibold)
                         Text("Navigasyon sorunu giderilene kadar")
                             .scaledFont(size: 14)
@@ -366,7 +366,7 @@ struct SettingsView: View {
                     .foregroundColor(.blue)
             }
             
-            Text(title)
+            Text.localizedSafe(title)
                 .scaledFont(size: 20, weight: .bold)
                 .foregroundColor(.primary)
             

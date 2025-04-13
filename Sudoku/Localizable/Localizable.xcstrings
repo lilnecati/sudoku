@@ -103,15 +103,25 @@
         }
       }
     },
-    "Anasayfaya Dön" : {
+    "Ana Sayfa" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Return to Home"
+            "value" : "Home"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ana Sayfa"
           }
         }
       }
+    },
+    "Anasayfaya Dön" : {
+
     },
     "Anladım" : {
       "localizations" : {
@@ -119,6 +129,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "I Understand"
+          }
+        }
+      }
+    },
+    "Ayarlar" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
           }
         }
       }
@@ -190,6 +211,7 @@
       }
     },
     "Devam Et" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -200,6 +222,7 @@
       }
     },
     "dk" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -259,6 +282,28 @@
         }
       }
     },
+    "En Hızlı Oyun" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fastest Game"
+          }
+        }
+      }
+    },
+    "En Yüksek Skor" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best Score"
+          }
+        }
+      }
+    },
     "Geliştirici" : {
       "localizations" : {
         "en" : {
@@ -285,6 +330,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Developer"
+          }
+        }
+      }
+    },
+    "Genel" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
           }
         }
       }
@@ -325,6 +381,17 @@
         }
       }
     },
+    "Görünüm" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance"
+          }
+        }
+      }
+    },
     "Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir." : {
       "localizations" : {
         "en" : {
@@ -341,6 +408,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Power saving mode extends your device's battery life."
+          }
+        }
+      }
+    },
+    "Güç Yönetimi" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power Management"
           }
         }
       }
@@ -496,6 +574,7 @@
       }
     },
     "Kaldığın yerden devam et" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -536,6 +615,7 @@
       }
     },
     "Kaydedilmiş Oyunlar" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -565,12 +645,57 @@
         }
       }
     },
+    "Kayıtlı Oyunlar" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved Games"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kayıtlı Oyunlar"
+          }
+        }
+      }
+    },
     "Kendinize uygun bir zorluk seviyesi belirleyin" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Set a difficulty level suitable for you"
+          }
+        }
+      }
+    },
+    "Kolay" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Easy"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kolay"
+          }
+        }
+      }
+    },
+    "Kolay Oyunları" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Easy Games"
           }
         }
       }
@@ -677,6 +802,7 @@
       }
     },
     "Nasıl Oynanır?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -756,12 +882,73 @@
         }
       }
     },
+    "Orta" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medium"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orta"
+          }
+        }
+      }
+    },
+    "Orta Oyunları" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medium Games"
+          }
+        }
+      }
+    },
+    "Ortalama Skor" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average Score"
+          }
+        }
+      }
+    },
+    "Ortalama Süre" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average Time"
+          }
+        }
+      }
+    },
     "Otomatik Güç Tasarrufu" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatic Power Saving"
+          }
+        }
+      }
+    },
+    "Oyun Ayarları" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game Settings"
           }
         }
       }
@@ -797,6 +984,7 @@
       }
     },
     "Oyun İstatistikleri" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -812,6 +1000,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Loading game..."
+          }
+        }
+      }
+    },
+    "Oyunları" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Games"
           }
         }
       }
@@ -866,7 +1065,19 @@
         }
       }
     },
+    "Profil" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile"
+          }
+        }
+      }
+    },
     "Profil Devre Dışı" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1101,6 +1312,7 @@
       }
     },
     "Skor Tablosu" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1121,6 +1333,7 @@
       }
     },
     "sn" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1141,6 +1354,7 @@
       }
     },
     "Son Oyunlar" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1191,6 +1405,7 @@
       }
     },
     "Süre" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1251,6 +1466,7 @@
       }
     },
     "Tamamlanma" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1368,12 +1584,34 @@
         }
       }
     },
+    "Toplam Oyunlar" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total Games"
+          }
+        }
+      }
+    },
     "Tüm Ayarları Sıfırla" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reset All Settings"
+          }
+        }
+      }
+    },
+    "Tümü" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All"
           }
         }
       }
@@ -1394,6 +1632,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Try closing and reopening the app."
+          }
+        }
+      }
+    },
+    "Uzman" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expert"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uzman"
+          }
+        }
+      }
+    },
+    "Uzman Oyunları" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expert Games"
           }
         }
       }
@@ -1494,7 +1760,36 @@
         }
       }
     },
+    "Zor" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hard"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zor"
+          }
+        }
+      }
+    },
+    "Zor Oyunları" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hard Games"
+          }
+        }
+      }
+    },
     "Zorluk" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

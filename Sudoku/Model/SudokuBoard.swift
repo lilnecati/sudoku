@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // Sudoku tahtasını temsil eden sınıf
 class SudokuBoard: ObservableObject, Codable {
@@ -12,7 +13,12 @@ class SudokuBoard: ObservableObject, Codable {
         var id: String { self.rawValue }
         
         var localizedName: String {
-            return self.rawValue
+            // Text.localizedSafe yerine doğrudan LocalizationManager kullanarak diziyi alıyoruz
+            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
+            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+            let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+            
+            return bundle?.localizedString(forKey: self.rawValue, value: self.rawValue, table: "Localizable") ?? self.rawValue
         }
         
         // Zorluk seviyesi açıklaması

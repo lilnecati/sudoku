@@ -27,7 +27,16 @@ struct SavedGamesView: View {
     
     @Environment(\.colorScheme) var colorScheme
     
-    var difficultyLevels = ["Tümü", "Kolay", "Orta", "Zor", "Uzman"]
+    var difficultyLevels: [String] {
+        // Dile göre zorluk seviyelerini ayarla
+        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+        
+        if languageCode == "en" {
+            return ["All", "Easy", "Medium", "Hard", "Expert"]
+        } else {
+            return ["Tümü", "Kolay", "Orta", "Zor", "Uzman"]
+        }
+    }
     
     var filteredSavedGames: [SavedGame] {
         if selectedDifficulty == "Tümü" {
@@ -73,7 +82,7 @@ struct SavedGamesView: View {
             
             VStack(spacing: 15) {
                 // Başlık
-                Text("Kaydedilmiş Oyunlar")
+                Text.localizedSafe("Kaydedilmiş Oyunlar")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(Color.textColor(for: colorScheme))
                     .padding(.top)
@@ -152,15 +161,9 @@ struct SavedGamesView: View {
                 }) {
                     VStack(spacing: 2) {
                         // Zorluk seviyesi ikonu
-                        if level != "Tümü" {
-                            Image(systemName: difficultyIcon(for: level))
-                                .font(.system(size: 16))
-                                .padding(.top, 2)
-                        } else {
-                            Image(systemName: "square.grid.2x2")
-                                .font(.system(size: 16))
-                                .padding(.top, 2)
-                        }
+                        Image(systemName: difficultyIcon(for: level))
+                            .font(.system(size: 16))
+                            .padding(.top, 2)
                         
                         // Kısaltılmış yazı
                         Text(shortenedText(for: level))
@@ -204,35 +207,40 @@ struct SavedGamesView: View {
     
     // Metni kısaltma
     private func shortenedText(for level: String) -> String {
-        switch level {
-        case "Tümü":
-            return "Tümü"
-        case "Kolay":
-            return "Kolay"
-        case "Orta":
-            return "Orta"
-        case "Zor":
-            return "Zor"
-        case "Uzman":
-            return "Uzman"
-        default:
-            return level
-        }
+        // Zaten kısa olduğu için doğrudan döndür
+        return level
     }
     
     // Zorluk seviyesine göre renk hesaplama
     private func difficultyColorForLevel(_ level: String) -> Color {
-        switch level {
-        case "Kolay":
-            return .green
-        case "Orta":
-            return .blue
-        case "Zor":
-            return .orange
-        case "Uzman":
-            return .red
-        default:
-            return .purple // Tümü için mor renk
+        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+        
+        if languageCode == "en" {
+            switch level {
+            case "Easy":
+                return .green
+            case "Medium":
+                return .blue
+            case "Hard":
+                return .orange
+            case "Expert":
+                return .red
+            default:
+                return .purple // All için mor renk
+            }
+        } else {
+            switch level {
+            case "Kolay":
+                return .green
+            case "Orta":
+                return .blue
+            case "Zor":
+                return .orange
+            case "Uzman":
+                return .red
+            default:
+                return .purple // Tümü için mor renk
+            }
         }
     }
     
@@ -322,7 +330,7 @@ struct SavedGamesView: View {
                     // Sağ üst: Zorluk seviyesi - geliştirilmiş rozet
                     VStack(alignment: .trailing, spacing: 5) {
                         HStack(spacing: 4) {
-                            Text("Zorluk")
+                            Text.localizedSafe("Zorluk")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                             Image(systemName: difficultyIcon(for: difficulty))
@@ -330,7 +338,7 @@ struct SavedGamesView: View {
                                 .foregroundColor(.gray)
                         }
                         
-                        Text(difficulty)
+                        Text.localizedSafe(difficulty)
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .padding(.horizontal, 12)
@@ -363,7 +371,7 @@ struct SavedGamesView: View {
                 // Orta: İlerleme çubuğu
                 VStack(spacing: 6) {
                     HStack {
-                        Text("Tamamlanma")
+                        Text.localizedSafe("Tamamlanma")
                             .font(.caption)
                             .foregroundColor(.gray)
                         
@@ -421,7 +429,7 @@ struct SavedGamesView: View {
                             Image(systemName: "clock")
                                 .font(.system(size: 12))
                                 .foregroundColor(.gray)
-                            Text("Süre")
+                            Text.localizedSafe("Süre")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
@@ -446,7 +454,7 @@ struct SavedGamesView: View {
                                         .fontWeight(.bold)
                                         .foregroundColor(difficultyColor)
                                     
-                                    Text("dk")
+                                    Text.localizedSafe("dk")
                                         .font(.caption2)
                                         .foregroundColor(difficultyColor.opacity(0.8))
                                         .padding(.trailing, 2)
@@ -456,7 +464,7 @@ struct SavedGamesView: View {
                                     .fontWeight(.bold)
                                     .foregroundColor(difficultyColor)
                                 
-                                Text("sn")
+                                Text.localizedSafe("sn")
                                     .font(.caption2)
                                     .foregroundColor(difficultyColor.opacity(0.8))
                             }
@@ -480,7 +488,7 @@ struct SavedGamesView: View {
                         gameSelected(game)
                     }) {
                         HStack(spacing: 8) {
-                            Text("Devam Et")
+                            Text.localizedSafe("Devam Et")
                                 .font(.system(size: 15, weight: .semibold))
                             Image(systemName: "play.fill")
                                 .font(.system(size: 11))
@@ -513,17 +521,34 @@ struct SavedGamesView: View {
     
     // Zorluk seviyesine göre ikon belirle
     private func difficultyIcon(for difficulty: String) -> String {
-        switch difficulty {
-        case "Kolay":
-            return "leaf"
-        case "Orta":
-            return "flame"
-        case "Zor":
-            return "bolt"
-        case "Uzman":
-            return "star"
-        default:
-            return "questionmark"
+        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+        
+        if languageCode == "en" {
+            switch difficulty {
+            case "Easy":
+                return "leaf"
+            case "Medium":
+                return "flame"
+            case "Hard":
+                return "bolt"
+            case "Expert":
+                return "star"
+            default:
+                return "square.grid.2x2" // All için grid ikonu
+            }
+        } else {
+            switch difficulty {
+            case "Kolay":
+                return "leaf"
+            case "Orta":
+                return "flame"
+            case "Zor":
+                return "bolt"
+            case "Uzman":
+                return "star"
+            default:
+                return "square.grid.2x2" // Tümü için grid ikonu
+            }
         }
     }
 }

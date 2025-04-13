@@ -19,10 +19,26 @@ enum AppPage: Int, CaseIterable, Identifiable {
     
     var title: String {
         switch self {
-        case .home: return "Ana Sayfa"
-        case .scoreboard: return "Skor Tablosu"
-        case .savedGames: return "Kayıtlı Oyunlar"
-        case .settings: return "Ayarlar"
+        case .home:
+            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
+            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+            let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+            return bundle?.localizedString(forKey: "Ana Sayfa", value: "Ana Sayfa", table: "Localizable") ?? "Ana Sayfa"
+        case .scoreboard:
+            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
+            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+            let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+            return bundle?.localizedString(forKey: "Skor Tablosu", value: "Skor Tablosu", table: "Localizable") ?? "Skor Tablosu"
+        case .savedGames:
+            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
+            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+            let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+            return bundle?.localizedString(forKey: "Kayıtlı Oyunlar", value: "Kayıtlı Oyunlar", table: "Localizable") ?? "Kayıtlı Oyunlar"
+        case .settings:
+            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
+            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+            let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+            return bundle?.localizedString(forKey: "Ayarlar", value: "Ayarlar", table: "Localizable") ?? "Ayarlar"
         }
     }
     
@@ -332,12 +348,12 @@ struct ContentView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Devam Et")
+                    Text.localizedSafe("Devam Et")
                         .font(.headline)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
                     
-                    Text("Kaldığın yerden devam et")
+                    Text.localizedSafe("Kaldığın yerden devam et")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -378,7 +394,7 @@ struct ContentView: View {
             // Yeni Oyun bölümü - görsel iyileştirmeler
             VStack(alignment: .leading, spacing: 18) {
                 HStack {
-                    Text("Yeni Oyun")
+                    Text.localizedSafe("Yeni Oyun")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
                     
@@ -679,7 +695,7 @@ struct ContentView: View {
                         .background(Color.blue)
                         .clipShape(Circle())
                     
-                    Text("Nasıl Oynanır?")
+                    Text.localizedSafe("Nasıl Oynanır?")
                         .fontWeight(.medium)
                     
                     Spacer()

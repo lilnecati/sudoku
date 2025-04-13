@@ -84,24 +84,51 @@ extension Text {
     
     /// Creates a text view that displays localized content, safe for use in any context
     static func localizedSafe(_ key: String) -> Text {
-        // Bu metod izole olmayan contextlerde kullanılabilir
-        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
-        let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
-        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        // Dil kodunu al
+        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
         
-        let localizedString = bundle?.localizedString(forKey: key, value: key, table: "Localizable") ?? key
-        return Text(localizedString)
+        // Desteklenen diller için kontrol yap
+        guard let path = Bundle.main.path(forResource: languageCode, ofType: "lproj"),
+              let bundle = Bundle(path: path) else {
+            // Yerelleştirme paketi bulunamadıysa varsayılan metni göster
+            return Text(key)
+        }
+        
+        // Yerelleştirilmiş metni bul veya varsayılanı kullan
+        let localizedString = NSLocalizedString(key, bundle: bundle, comment: "")
+        // Yerelleştirme bulunamadıysa key'i göster
+        return Text(localizedString != key ? localizedString : key)
     }
     
     /// Creates a text view that displays localized content with a custom default value
     static func localizedSafe(_ key: String, defaultValue: String) -> Text {
-        // Bu metod izole olmayan contextlerde kullanılabilir
-        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
-        let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
-        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        // Dil kodunu al
+        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
         
-        let localizedString = bundle?.localizedString(forKey: key, value: defaultValue, table: "Localizable") ?? defaultValue
-        return Text(localizedString)
+        // Desteklenen diller için kontrol yap
+        guard let path = Bundle.main.path(forResource: languageCode, ofType: "lproj"),
+              let bundle = Bundle(path: path) else {
+            // Yerelleştirme paketi bulunamadıysa varsayılan metni göster
+            return Text(defaultValue)
+        }
+        
+        // Yerelleştirilmiş metni bul veya varsayılanı kullan
+        let localizedString = NSLocalizedString(key, bundle: bundle, comment: "")
+        // Yerelleştirme bulunamadıysa defaultValue'yi göster
+        return Text(localizedString != key ? localizedString : defaultValue)
+    }
+}
+
+// Text uzantısı - Text nesnesinden String değeri almak için
+extension Text {
+    var string: String {
+        let mirror = Mirror(reflecting: self)
+        for child in mirror.children {
+            if let string = child.value as? String {
+                return string
+            }
+        }
+        return ""
     }
 } 
 

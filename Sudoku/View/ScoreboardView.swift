@@ -22,7 +22,7 @@ struct ScoreboardView: View {
             
             VStack(spacing: 16) {
                 // Başlık
-                Text("Skor Tablosu")
+                Text.localizedSafe("Skor Tablosu")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(Color.textColor(for: colorScheme))
                     .padding(.top)
@@ -159,7 +159,7 @@ struct ScoreboardView: View {
     private var statisticsView: some View {
         VStack(spacing: 12) {
             HStack {
-                Text("Performans İstatistikleri")
+                Text.localizedSafe("Performans İstatistikleri")
                     .font(.headline)
                     .foregroundColor(.primary)
                 
@@ -229,7 +229,7 @@ struct ScoreboardView: View {
     private var gameStatsView: some View {
         VStack(spacing: 12) {
             HStack {
-                Text("Oyun İstatistikleri")
+                Text.localizedSafe("Oyun İstatistikleri")
                     .font(.headline)
                     .foregroundColor(.primary)
                 
@@ -253,7 +253,7 @@ struct ScoreboardView: View {
                 )
                 
                 StatCard(
-                    title: "\(selectedDifficulty.localizedName) Oyunları",
+                    title: getLocalizedDifficultyGamesText(selectedDifficulty),
                     value: "\(statistics.difficultyGames)",
                     icon: getDifficultyIcon(selectedDifficulty),
                     color: getDifficultyColor(selectedDifficulty),
@@ -313,15 +313,15 @@ struct ScoreboardView: View {
     }
     
     private var recentGamesView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 12) {
             HStack {
-                Text("Son Oyunlar")
+                Text.localizedSafe("Son Oyunlar")
                     .font(.headline)
                     .foregroundColor(.primary)
                 
                 Spacer()
                 
-                Image(systemName: "clock.arrow.circlepath")
+                Image(systemName: "clock.fill")
                     .foregroundColor(getDifficultyColor(selectedDifficulty))
             }
             .padding(.horizontal)
@@ -405,7 +405,7 @@ struct ScoreboardView: View {
                         .foregroundColor(getDifficultyColor(for: score))
                         .minimumScaleFactor(0.7)
                     
-                    Text("puan")
+                    Text.localizedSafe("puan")
                         .font(.caption)
                         .foregroundColor(getDifficultyColor(for: score).opacity(0.7))
                 }
@@ -419,7 +419,7 @@ struct ScoreboardView: View {
                                 Image(systemName: getDifficultyIconFromString(difficultyString))
                                     .font(.system(size: 12))
                                 
-                                Text(difficultyString)
+                                Text.localizedSafe(difficultyString)
                                     .font(.system(size: 12, weight: .medium))
                             }
                             .padding(.horizontal, 10)
@@ -853,7 +853,7 @@ struct ScoreboardView: View {
             // Animasyonu kaldır
             selectedTab = tag
         }) {
-            Text(title)
+            Text.localizedSafe(title)
                 .font(.system(size: 16, weight: selectedTab == tag ? .semibold : .medium))
                 .foregroundColor(selectedTab == tag ? .blue : .primary)
                 .padding(.vertical, 12)
@@ -892,6 +892,21 @@ struct ScoreboardView: View {
             return "questionmark"
         }
     }
+    
+    // Zorluk seviyesine özel oyunlar metni için yardımcı fonksiyon
+    private func getLocalizedDifficultyGamesText(_ difficulty: SudokuBoard.Difficulty) -> String {
+        // Zorluk seviyesi + "Oyunları" birleşimini yerelleştirmek için
+        switch difficulty {
+        case .easy:
+            return "Kolay Oyunları"
+        case .medium:
+            return "Orta Oyunları"
+        case .hard:
+            return "Zor Oyunları"
+        case .expert:
+            return "Uzman Oyunları"
+        }
+    }
 }
 
 // Yardımcı fonksiyonlar
@@ -916,7 +931,7 @@ struct StatCard: View {
                 Image(systemName: icon)
                     .font(.system(size: 12))
                     .foregroundColor(.gray)
-                Text(title)
+                Text.localizedSafe(title)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -952,22 +967,6 @@ struct StatCard: View {
             )
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(colorScheme == .dark ? Color(.systemGray5) : Color.white)
-                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 3)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(
-                            LinearGradient(
-                                gradient: Gradient(colors: [color.opacity(0.5), color.opacity(0.2)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-        )
     }
 }
 
@@ -1048,7 +1047,7 @@ struct RecentGameRow: View {
                             .lineLimit(1)
                             .fixedSize(horizontal: false, vertical: true)
                         
-                        Text("puan")
+                        Text.localizedSafe("puan")
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     }
@@ -1079,7 +1078,7 @@ struct RecentGameRow: View {
                                 Image(systemName: getDifficultyIconFromString(difficultyString))
                                     .font(.system(size: 12))
                                 
-                                Text(difficultyString)
+                                Text.localizedSafe(difficultyString)
                                     .font(.system(size: 12, weight: .medium))
                             }
                             .padding(.horizontal, 10)
