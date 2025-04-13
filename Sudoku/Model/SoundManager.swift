@@ -651,6 +651,32 @@ class SoundManager: ObservableObject {
         player.play()
     }
     
+    /// Oyun tamamlandığında tebrik ekranı için çalan özel ses
+    func playGameCompletedSound() {
+        log("🏆 playGameCompletedSound çağrıldı")
+        guard canPlaySound() else { return }
+        
+        // completionSound'u kullan ancak daha yüksek sesle
+        if completionPlayer == nil {
+            completionPlayer = loadSound(named: "completion", ofType: "wav") ?? loadSound(named: "completion", ofType: "mp3")
+        }
+        
+        guard let player = completionPlayer else { return }
+        
+        if player.isPlaying { player.stop() }
+        player.currentTime = 0
+        player.volume = min(Float(defaultVolume) * 1.5, 1.0) // Biraz daha yüksek sesle çal, maksimum 1.0
+        player.play()
+        
+        // Daha uzun bir etki için biraz gecikmeli ikinci bir hafif ses
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            if let tapPlayer = self.loadSound(named: "tap", ofType: "wav") {
+                tapPlayer.volume = Float(self.defaultVolume)
+                tapPlayer.play()
+            }
+        }
+    }
+    
     /// Menü ve gezinme sesi
     func playNavigationSound() {
         log("🎵 playNavigationSound çağrıldı")

@@ -23,20 +23,50 @@ class PersistenceController {
     
     func registerUser(username: String, password: String, email: String, name: String) -> Bool {
         let context = container.viewContext
-        let user = User(context: context)
         
-        user.username = username
-        user.password = password 
-        user.email = email
-        user.name = name
-        user.registrationDate = Date()
-        user.isLoggedIn = true
+        // Kullanıcı adının benzersiz olduğunu kontrol et
+        let usernameCheck = NSFetchRequest<User>(entityName: "User")
+        usernameCheck.predicate = NSPredicate(format: "username == %@", username)
+        
+        // E-posta adresinin benzersiz olduğunu kontrol et
+        let emailCheck = NSFetchRequest<User>(entityName: "User")
+        emailCheck.predicate = NSPredicate(format: "email == %@", email)
         
         do {
+            // Kullanıcı adı kontrolü
+            if try context.count(for: usernameCheck) > 0 {
+                print("❌ Bu kullanıcı adı zaten kullanılıyor: \(username)")
+                return false
+            }
+            
+            // E-posta kontrolü
+            if try context.count(for: emailCheck) > 0 {
+                print("❌ Bu e-posta zaten kullanılıyor: \(email)")
+                return false
+            }
+            
+            // Yeni kullanıcı oluştur
+            let user = User(context: context)
+            
+            // Şifre güvenliği için salt oluştur
+            let salt = SecurityManager.shared.generateSalt()
+            let hashedPassword = SecurityManager.shared.hashPassword(password, salt: salt)
+            
+            // Kullanıcı bilgilerini ayarla
+            user.id = UUID()
+            user.username = username
+            user.password = hashedPassword
+            user.passwordSalt = salt
+            user.email = email
+            user.name = name
+            user.registrationDate = Date()
+            user.isLoggedIn = true
+            
             try context.save()
+            print("✅ Kullanıcı başarıyla oluşturuldu: \(username)")
             return true
         } catch {
-            print("Kullanıcı kaydı başarısız: \(error)")
+            print("❌ Kullanıcı kaydı başarısız: \(error.localizedDescription)")
             return false
         }
     }
@@ -44,19 +74,51 @@ class PersistenceController {
     func loginUser(username: String, password: String) -> NSManagedObject? {
         let context = container.viewContext
         let request: NSFetchRequest<User> = User.fetchRequest()
-        request.predicate = NSPredicate(format: "username == %@ AND password == %@", username, password)
+        request.predicate = NSPredicate(format: "username == %@", username)
         
         do {
             let users = try context.fetch(request)
+            
             if let user = users.first {
-                user.isLoggedIn = true
-                try? context.save()
-                return user
+                // Şifre doğrulama
+                if let storedPassword = user.password,
+                   let salt = user.passwordSalt {
+                    // Güvenli şifre doğrulama
+                    if SecurityManager.shared.verifyPassword(password, against: storedPassword, salt: salt) {
+                        // Başarılı giriş
+                        user.isLoggedIn = true
+                        try context.save()
+                        print("✅ Kullanıcı girişi başarılı: \(username)")
+                        return user
+                    } else {
+                        print("❌ Şifre yanlış: \(username)")
+                        return nil
+                    }
+                } else {
+                    // Eski kullanıcılar için geriye dönük uyumluluk (salt olmadan doğrudan şifre karşılaştırma)
+                    if user.password == password {
+                        // Başarılı giriş - eski kullanıcı
+                        print("⚠️ Eski format kullanıcı girişi - güvenlik güncellemesi uygulanıyor")
+                        
+                        // Kullanıcı şifresini güncelle (salt ekle ve hashle)
+                        let salt = SecurityManager.shared.generateSalt()
+                        let hashedPassword = SecurityManager.shared.hashPassword(password, salt: salt)
+                        user.password = hashedPassword
+                        user.passwordSalt = salt
+                        
+                        user.isLoggedIn = true
+                        try context.save()
+                        return user
+                    }
+                }
             }
+            
+            print("❌ Kullanıcı bulunamadı: \(username)")
+            return nil
         } catch {
-            print("Giriş başarısız: \(error)")
+            print("❌ Giriş başarısız: \(error.localizedDescription)")
+            return nil
         }
-        return nil
     }
     
     func fetchUser(username: String) -> NSManagedObject? {
@@ -80,8 +142,29 @@ class PersistenceController {
         
         do {
             let users = try context.fetch(request)
-            users.forEach { $0.isLoggedIn = false }
-            try context.save()
+            var anonymousUserExists = false
+            
+            for user in users {
+                // Anonim kullanıcıyı kontrol et
+                if user.isAnonymous {
+                    // Anonim kullanıcı için çıkış yapmıyoruz, sadece var olduğunu not edelim
+                    anonymousUserExists = true
+                    continue
+                }
+                
+                // Normal kullanıcı için çıkış yap
+                user.isLoggedIn = false
+            }
+            
+            // Değişiklikler varsa kaydet
+            if context.hasChanges {
+                try context.save()
+            }
+            
+            // Eğer mevcut anonim kullanıcı yoksa ve bir kullanıcı çıkış yaptıysa yeni anonim kullanıcı oluştur
+            if !anonymousUserExists && users.contains(where: { !$0.isAnonymous }) {
+                _ = getOrCreateAnonymousUser()
+            }
         } catch {
             print("Çıkış hatası: \(error)")
         }
@@ -107,6 +190,14 @@ class PersistenceController {
     func getAllSavedGames() -> [SavedGame] {
         let context = container.viewContext
         let fetchRequest: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
+        
+        // Eğer oturum açmış bir kullanıcı varsa, sadece onun oyunlarını getir
+        if let currentUser = getCurrentUser() {
+            fetchRequest.predicate = NSPredicate(format: "user == %@", currentUser)
+        } else {
+            // Kullanıcı yoksa boş liste döndür
+            return []
+        }
         
         do {
             let savedGames = try context.fetch(fetchRequest)
@@ -162,6 +253,16 @@ class PersistenceController {
         let request: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
         
+        // Eğer oturum açmış bir kullanıcı varsa, sadece onun oyunlarını güncelle
+        if let currentUser = getCurrentUser() {
+            let userPredicate = NSPredicate(format: "user == %@", currentUser)
+            let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                request.predicate!,
+                userPredicate
+            ])
+            request.predicate = compoundPredicate
+        }
+        
         do {
             let games = try context.fetch(request)
             
@@ -184,7 +285,7 @@ class PersistenceController {
                 try context.save()
                 // Başarı mesajı SudokuViewModel'de gösterildiği için burada kaldırıldı
             } else {
-                print("❓ Güncellenecek oyun bulunamadı, ID: \(gameID). Yeni oyun olarak kaydediliyor.")
+                print("⚠️ Güncellenecek oyun bulunamadı, ID: \(gameID). Yeni oyun olarak kaydediliyor.")
                 // Oyun bulunamadıysa yeni oluştur
                 saveGame(gameID: gameID, board: board, difficulty: difficulty, elapsedTime: elapsedTime)
             }
@@ -200,6 +301,9 @@ class PersistenceController {
         // Eğer oturum açmış bir kullanıcı varsa, sadece onun oyunlarını yükleyin
         if let currentUser = getCurrentUser() {
             request.predicate = NSPredicate(format: "user == %@", currentUser)
+        } else {
+            // Kullanıcı yoksa boş liste döndür
+            return []
         }
         
         request.sortDescriptors = [NSSortDescriptor(keyPath: \SavedGame.dateCreated, ascending: false)]
@@ -315,6 +419,107 @@ class PersistenceController {
             } catch {
                 print("CoreData kaydetme hatası: \(error)")
             }
+        }
+    }
+    
+    // Anonim kullanıcı oluşturma veya alma
+    func getOrCreateAnonymousUser() -> User? {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "isAnonymous == YES")
+        
+        do {
+            let anonymousUsers = try context.fetch(request)
+            
+            if let anonymousUser = anonymousUsers.first {
+                return anonymousUser
+            } else {
+                // Anonim kullanıcı oluştur
+                let anonymousUser = User(context: context)
+                anonymousUser.id = UUID()
+                anonymousUser.username = "anonymous_\(UUID().uuidString.prefix(8))"
+                anonymousUser.isAnonymous = true
+                anonymousUser.isLoggedIn = true
+                anonymousUser.registrationDate = Date()
+                
+                try context.save()
+                return anonymousUser
+            }
+        } catch {
+            print("❌ Anonim kullanıcı oluşturulamadı: \(error)")
+            return nil
+        }
+    }
+    
+    // Yeni bir skor kaydet
+    func saveHighScore(difficulty: String, elapsedTime: TimeInterval, errorCount: Int, hintCount: Int, score: Int) -> Bool {
+        let context = container.viewContext
+        let highScore = HighScore(context: context)
+        
+        // Skor bilgilerini ayarla
+        highScore.id = UUID()
+        highScore.difficulty = difficulty
+        highScore.elapsedTime = elapsedTime
+        highScore.errorCount = Int16(errorCount)
+        highScore.hintCount = Int16(hintCount)
+        highScore.totalScore = Int32(score)
+        highScore.date = Date()
+        
+        // Eğer oturum açmış bir kullanıcı varsa, skoru onunla ilişkilendir
+        if let currentUser = getCurrentUser() {
+            highScore.setValue(currentUser, forKey: "user")
+            highScore.playerName = currentUser.name
+        } else if let anonymousUser = getOrCreateAnonymousUser() {
+            // Anonim kullanıcı ile ilişkilendir
+            highScore.setValue(anonymousUser, forKey: "user")
+            highScore.playerName = "Anonim Oyuncu"
+        }
+        
+        do {
+            try context.save()
+            return true
+        } catch {
+            print("❌ Yüksek skor kaydedilemedi: \(error)")
+            return false
+        }
+    }
+    
+    // Belirli bir zorluk seviyesine ait yüksek skorları getir
+    func getHighScores(for difficulty: String) -> [HighScore] {
+        let context = container.viewContext
+        let request: NSFetchRequest<HighScore> = HighScore.fetchRequest()
+        
+        // Zorluk seviyesine göre filtrele
+        request.predicate = NSPredicate(format: "difficulty == %@", difficulty)
+        
+        // Eğer oturum açmış bir kullanıcı varsa, sadece onun skorlarını getir
+        if let currentUser = getCurrentUser() {
+            let userPredicate = NSPredicate(format: "user == %@", currentUser)
+            let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                request.predicate!,
+                userPredicate
+            ])
+            request.predicate = compoundPredicate
+        } else if let anonymousUser = getOrCreateAnonymousUser() {
+            // Anonim kullanıcının skorlarını getir
+            let userPredicate = NSPredicate(format: "user == %@", anonymousUser)
+            let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                request.predicate!,
+                userPredicate
+            ])
+            request.predicate = compoundPredicate
+        } else {
+            return []
+        }
+        
+        // Skorları puan değerine göre sırala (yüksekten düşüğe)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \HighScore.totalScore, ascending: false)]
+        
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("❌ Yüksek skorlar getirilemedi: \(error)")
+            return []
         }
     }
 }

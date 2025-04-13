@@ -1341,6 +1341,22 @@ class SudokuViewModel: ObservableObject {
             "time": elapsedTime
         ])
         
+        // Ses efekti çal
+        SoundManager.shared.playGameCompletedSound()
+        
+        // Haptic feedback (titreşim)
+        if enableHapticFeedback {
+            let generator = UINotificationFeedbackGenerator()
+            generator.prepare()
+            generator.notificationOccurred(.success)
+            
+            // Daha güçlü bir etki için kısa aralıklarla birkaç kez titreşim
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                let secondGen = UIImpactFeedbackGenerator(style: .medium)
+                secondGen.impactOccurred()
+            }
+        }
+        
         print("✅ Oyun tamamlama işlemi tamamlandı ve skor kaydedildi.")
     }
     
@@ -2377,6 +2393,44 @@ class SudokuViewModel: ObservableObject {
     @Published var lastErrorValue: Int? = nil
     @Published var lastErrorPosition: (row: Int, col: Int)? = nil
     @Published var errorRemovalTimer: Timer? = nil
+    
+    // Oyunu tamamla (tüm hücreler doğru şekilde doldurulduğunda)
+    func completeGame() {
+        print("📱 Oyun tamamlandı!")
+        
+        // Oyun durumunu güncelle ve zamanlayıcıyı durdur
+        gameState = .completed
+        stopTimer()
+        
+        // Skoru kaydet
+        let hintUsed = 3 - remainingHints
+        print("📊 Skor kaydediliyor... Zorluk: \(board.difficulty.rawValue), Süre: \(elapsedTime), Hatalar: \(errorCount), İpuçları: \(hintUsed)")
+        
+        ScoreManager.shared.saveScore(
+            difficulty: board.difficulty,
+            timeElapsed: elapsedTime,
+            errorCount: errorCount,
+            hintCount: hintUsed,
+            moveCount: moveCount
+        )
+        
+        // Oyun tamamlandığında bildirim gönder (gerekirse kullanılabilir)
+        NotificationCenter.default.post(name: NSNotification.Name("GameCompleted"), object: nil, userInfo: [
+            "difficulty": board.difficulty.rawValue,
+            "score": calculatePerformanceScore(),
+            "time": elapsedTime
+        ])
+        
+        print("✅ Oyun tamamlama işlemi tamamlandı ve skor kaydedildi.")
+        
+        // Haptik feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+        
+        // Ses çal
+        SoundManager.shared.playGameCompletedSound()
+    }
 } 
 
 // MARK: - NSManagedObject Extensions for HighScoresView Compatibility

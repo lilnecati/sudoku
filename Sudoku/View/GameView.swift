@@ -64,6 +64,9 @@ struct GameView: View {
         [Color(.systemBackground), Color.blue.opacity(0.05)]
     }
     
+    // Ek çıkarım değişkenleri
+    @State private var safeBottomPadding: CGFloat = 0
+    
     // Zorluk renkleri önbelleği
     private let difficultyColors: [SudokuBoard.Difficulty: Color] = [
         .easy: .green,
@@ -101,154 +104,77 @@ struct GameView: View {
     
     var body: some View {
         ZStack {
-            // Tab bar'ı ve navigation bar'ı gizle
-            Color.clear
-                .toolbar(.hidden, for: .tabBar)
-                .toolbar(.hidden, for: .navigationBar)
-            
-            // Izgara arka planı
+            // Arka plan
             GridBackgroundView()
-                .edgesIgnoringSafeArea(.all)
+                .ignoresSafeArea()
             
             // Ana içerik
-            VStack(spacing: 10) {
-                // Rehber butonu
-                // if showTutorialButton && !tutorialManager.hasCompletedTutorial {
-                //     HStack {
-                //         Spacer()
-                //         TutorialButton {
-                //             tutorialManager.startTutorial()
-                //         }
-                //         .transition(.scale.combined(with: .opacity))
-                //     }
-                //     .padding(.horizontal)
-                // }
-                // Spacer'ı kaldırdık
-
-                // Üst bilgi alanı
-                headerView
-                    .padding(.horizontal)
-                    .padding(.top, 5) // Dynamic Island ile arasındaki mesafeyi azalttık
-                    .padding(.bottom, 5) // Tablo ile üst bilgi arasında ufak boşluk
-                    .opacity(isHeaderVisible ? 1 : 0)
-                    .offset(y: isHeaderVisible ? 0 : -20)
+            VStack(spacing: 0) {
+                if isHeaderVisible {
+                    headerView
+                        .padding(.horizontal)
+                        .padding(.top, 15)
+                        .padding(.bottom, 5)
+                        .transition(.opacity)
+                }
                 
-                // Sudoku tahtası - ekranın çoğunu kaplar
-                SudokuBoardView(viewModel: viewModel)
-                    .id(boardKey) // Tahtayı zorla yenilemek için id gerek
-                    .aspectRatio(1, contentMode: .fit)
-                    .padding(.horizontal, 5)
-                    .opacity(isBoardVisible ? 1 : 0)
-                    .offset(y: isBoardVisible ? 0 : 20)
-                    .disabled(viewModel.gameState == .failed || viewModel.gameState == .completed || showDifficultyPicker)
-                    // Metal ile hızlandırılmış render
-                    .drawingGroup()
-                    .frame(maxHeight: .infinity) // Maksimum yüksekliği kullan
+                // Oyun tahtası
+                if isBoardVisible {
+                    SudokuBoardView(viewModel: viewModel)
+                        .id(boardKey) // Tahtayı zorla yenilemek için id gerek
+                        .aspectRatio(1, contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: UIScreen.main.bounds.width * 0.95)
+                        .padding(.horizontal, 4)
+                        .transition(.opacity)
+                        .disabled(viewModel.gameState == .failed || viewModel.gameState == .completed || showDifficultyPicker)
+                        // Metal ile hızlandırılmış render
+                        .drawingGroup()
+                }
                 
-                // Rakam tuşları ve kontrol düğmeleri
-                ZStack {
-                    // Sabit boyut garantisi için boş konteyner
-                    Rectangle()
-                        .foregroundColor(.clear)
-                        .frame(height: 250) // Sabit yükseklik
-                    
-                    // Asıl kontroller
+                // Kontroller
+                if isControlsVisible {
                     controlsView
                         .padding(.horizontal)
-                        .clipped() // Taşmaları engelle
+                        .padding(.top, 10)
+                        .padding(.bottom, safeBottomPadding + 10)
+                        .transition(.opacity)
                 }
-                .padding(.bottom, 15) // Tab bar'ı kaldırdık, padding azaltıldı
-                .opacity(isControlsVisible ? 1 : 0)
-                .offset(y: isControlsVisible ? 0 : 20)
-                // Sabit boyutlar
-                .fixedSize(horizontal: false, vertical: true)
-                // Görünüm stabilitesi için
-                .drawingGroup()
-                .disabled(viewModel.gameState == .failed || viewModel.gameState == .completed || showDifficultyPicker)
             }
-            .padding(.top, 0) // Üst padding'i tamamen kaldırdık
             
-            // Uyarı ve bilgi ekranları
+            // Tüm overlay'ler
             overlayViews
-            
-            // Rehber katmanı
-            // if tutorialManager.isActive {
-            //     TutorialOverlayView(tutorialManager: tutorialManager) {
-            //         withAnimation {
-            //             tutorialManager.stopTutorial()
-            //             showTutorialButton = false
-            //         }
-            //     }
-            //     .transition(.opacity)
-            // }
-            
-            // Zorluk seçici
-            if showDifficultyPicker {
-                difficultyPickerView
-            }
-            
-            // Oyun tamamlama ekranı
-            if showCompletionView {
-                GameCompletionView(
-                    difficulty: viewModel.board.difficulty,
-                    timeElapsed: viewModel.elapsedTime,
-                    errorCount: viewModel.errorCount,
-                    hintCount: 3 - viewModel.remainingHints,
-                    score: viewModel.calculatePerformanceScore(),
-                    isNewHighScore: isNewHighScore(),
-                    onNewGame: {
-                        showCompletionView = false
-                        showDifficultyPicker = true
-                    },
-                    onDismiss: {
-                        showCompletionView = false
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                )
-                .padding()
-                .transition(.scale.combined(with: .opacity))
-            }
-            
-            // Tam ekran arkaplan engelleme - oyun bittiğinde
-            if viewModel.gameState == .failed || viewModel.gameState == .completed || showDifficultyPicker {
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    .zIndex(90)
-            }
         }
-        .onChange(of: viewModel.pencilMode) { oldValue, newValue in
-            // Hafif titreşim - ayarlara bağlı
-            if enableHapticFeedback && enableNumberInputHaptic {
-                // Sistem titreşim API'sini doğrudan kullan
-                AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
-            }
-        }
-        .onChange(of: viewModel.gameState) { oldValue, newValue in
-            if newValue == .completed && oldValue != .completed {
-                withAnimation {
-                    showCompletionView = true
+        // SafeArea hesaplaması ekleyerek çalışması sağlandı
+        .background(
+            GeometryReader { proxy in
+                Color.clear.onAppear {
+                    // Alt safe area boşluğunu hesapla
+                    safeBottomPadding = proxy.safeAreaInsets.bottom
                 }
             }
-        }
+        )
         // Artık HideNavigationBar modifier'a ihtiyaç yok, fullScreenCover kullanıyoruz
         .onAppear {
             setupInitialAnimations()
             setupTimerUpdater()
         }
+        .onChange(of: viewModel.gameState) { oldValue, newValue in
+            if newValue == .completed && oldValue != .completed {
+                // Oyun tamamlandığında tebrik ekranını göster
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showingGameComplete = true
+                }
+            }
+            
+            if newValue == .failed && oldValue != .failed {
+                // Oyun kaybedildiğinde kaybedildi ekranı otomatik gösterilir
+                // GameView.swift viewModel.gameState == .failed koşulunu zaten izliyor
+            }
+        }
         // Modern navigasyon çubuğu gizleme
         .toolbar(.hidden, for: .navigationBar)
         .toolbarRole(.navigationStack)
-        .sheet(isPresented: $showDifficultyPicker) {
-            difficultyPickerView
-        }
-        .alert("Tebrikler!", isPresented: $showingGameComplete) {
-            Button("Tamam", role: .cancel) {}
-            Button("Yeni Oyun") {
-                showDifficultyPicker = true
-            }
-        } message: {
-            Text("Sudoku bulmacasını \(timeString(from: viewModel.elapsedTime)) sürede tamamladınız!")
-        }
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
@@ -438,17 +364,38 @@ struct GameView: View {
     
     // Uyarı ve bilgi ekranları
     private var overlayViews: some View {
-        Group {
+        ZStack {
             if showDifficultyPicker {
+                Color.black.opacity(0.4)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture {
+                        showDifficultyPicker = false
+                    }
+                
                 difficultyPickerView
+                    .zIndex(10)
             }
             
             if showingGameComplete {
+                Color.black.opacity(0.7)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture {
+                        // Dokunmayı yakala ama hiçbir şey yapma
+                    }
+                
                 congratulationsView
+                    .zIndex(10)
             }
             
             if viewModel.gameState == .failed {
+                Color.black.opacity(0.7)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture {
+                        // Dokunmayı yakala ama hiçbir şey yapma
+                    }
+                
                 gameOverView
+                    .zIndex(10)
             }
             
             if showNoHintsMessage {
@@ -673,7 +620,13 @@ struct GameView: View {
                 .padding(.top, 10)
             
             Button(action: {
-                showDifficultyPicker = true
+                // Tebrikler ekranını kapat
+                showingGameComplete = false
+                
+                // Yeni bir oyun başlat
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    showDifficultyPicker = true
+                }
             }) {
                 HStack {
                     Image(systemName: "plus.circle.fill")
@@ -697,6 +650,29 @@ struct GameView: View {
                 .shadow(color: ColorManager.primaryBlue.opacity(0.4), radius: 5, x: 0, y: 3)
             }
             .padding(.top, 10)
+            
+            // Anasayfaya Dön Butonu
+            Button(action: {
+                // Önce ekranı kapatalım
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    dismiss()
+                }
+            }) {
+                HStack {
+                    Image(systemName: "house.fill")
+                    Text("Anasayfaya Dön")
+                        .fontWeight(.medium)
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray, lineWidth: 1)
+                )
+                .foregroundColor(.primary)
+            }
+            .padding(.top, 5)
         }
         .padding(25)
         .background(
@@ -715,6 +691,7 @@ struct GameView: View {
                     lineWidth: colorScheme == .dark ? 0.5 : 0
                 )
         )
+        .padding(.horizontal, 20)
     }
     
     // Performans istatistik kartı
@@ -767,7 +744,9 @@ struct GameView: View {
                 .padding(.top, 5)
             
             Button(action: {
-                showDifficultyPicker = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    showDifficultyPicker = true
+                }
             }) {
                 HStack {
                     Image(systemName: "arrow.clockwise.circle.fill")
@@ -788,7 +767,10 @@ struct GameView: View {
             
             // Anasayfaya Dön Butonu
             Button(action: {
-                dismiss()
+                // Önce ekranı kapatalım
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    dismiss()
+                }
             }) {
                 HStack {
                     Image(systemName: "house.fill")

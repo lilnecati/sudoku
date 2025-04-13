@@ -4,6 +4,9 @@
     "?" : {
 
     },
+    "@%@" : {
+
+    },
     "#%lld" : {
 
     },
@@ -27,6 +30,18 @@
       }
     },
     "%lld%%" : {
+
+    },
+    "•" : {
+
+    },
+    "• G1zl!Sudoku" : {
+
+    },
+    "• Oyun_Seviyorum1" : {
+
+    },
+    "• Sudoku2024!" : {
 
     },
     "© 2024 Necati Yıldırım" : {
@@ -63,6 +78,9 @@
     "Anasayfaya Dön" : {
 
     },
+    "Anladım" : {
+
+    },
     "app.name" : {
       "comment" : "Application name",
       "extractionState" : "manual",
@@ -88,6 +106,9 @@
 
     },
     "Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok." : {
+
+    },
+    "Bu işlem geri alınamaz. Tüm verileriniz silinecektir." : {
 
     },
     "Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?" : {
@@ -147,10 +168,16 @@
     "E-posta" : {
 
     },
+    "E-posta adresiniz" : {
+
+    },
     "E-posta adresinizi girin" : {
 
     },
     "Geliştirici" : {
+
+    },
+    "Geliştirici: Necati Yıldırım" : {
 
     },
     "Geliştrici" : {
@@ -165,7 +192,7 @@
     "Giriş Yap" : {
 
     },
-    "Güç Tasarrufu Modu" : {
+    "Giriş Yapmadınız" : {
 
     },
     "Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir." : {
@@ -174,7 +201,13 @@
     "Güç tasarrufu modu, cihazınızın pil ömrünü uzatır." : {
 
     },
-    "Hata" : {
+    "Güçlü Şifre Gereksinimleri" : {
+
+    },
+    "Güçlü şifre nedir?" : {
+
+    },
+    "Güçlü Şifre Örnekleri:" : {
 
     },
     "Hata: %@" : {
@@ -187,6 +220,15 @@
 
     },
     "Her oyunda yalnızca 3 ipucu kullanabilirsiniz!" : {
+
+    },
+    "Hesabı Sil" : {
+
+    },
+    "Hesabınız yok mu?" : {
+
+    },
+    "Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz." : {
 
     },
     "İleri" : {
@@ -216,6 +258,9 @@
     "Kaydedilmiş Oyunlar" : {
 
     },
+    "Kaydet" : {
+
+    },
     "Kayıt Hatası" : {
 
     },
@@ -232,6 +277,9 @@
 
     },
     "Metin Boyutu" : {
+
+    },
+    "Mevcut Şifre" : {
 
     },
     "N" : {
@@ -298,6 +346,12 @@
 
     },
     "Profil Devre Dışı" : {
+
+    },
+    "Profil Düzenle" : {
+
+    },
+    "Profili Düzenle" : {
 
     },
     "puan" : {
@@ -597,7 +651,19 @@
     "Şifre" : {
 
     },
+    "Şifre Değiştir" : {
+
+    },
     "Şifre Onayı" : {
+
+    },
+    "Şifreler eşleşiyor" : {
+
+    },
+    "Şifreler eşleşmiyor" : {
+
+    },
+    "Şifremi Unuttum" : {
 
     },
     "Şifrenizi girin" : {
@@ -613,6 +679,9 @@
 
     },
     "Skor Tablosu" : {
+
+    },
+    "Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın" : {
 
     },
     "sn" : {
@@ -645,6 +714,9 @@
     "Sürüm 1.0" : {
 
     },
+    "Talimatları Gönder" : {
+
+    },
     "Tamam" : {
 
     },
@@ -675,7 +747,16 @@
     "Uygulamayı kapatıp tekrar açmayı deneyin." : {
 
     },
+    "Yeni Hesap Oluştur" : {
+
+    },
     "Yeni Oyun" : {
+
+    },
+    "Yeni Şifre" : {
+
+    },
+    "Yeni Şifre (Tekrar)" : {
 
     },
     "Yükleniyor..." : {

@@ -137,6 +137,20 @@ struct SudokuApp: App {
         // PowerSavingManager'ı başlat
         _ = PowerSavingManager.shared
         print("🔋 Power Saving Manager initialized")
+        
+        // Anonim kullanıcı için kontrol et
+        setupAnonymousUserIfNeeded()
+    }
+    
+    // Eğer giriş yapmış kullanıcı yoksa anonim kullanıcı oluştur/getir
+    private func setupAnonymousUserIfNeeded() {
+        // Hiç giriş yapmış kullanıcı yoksa anonim kullanıcı oluştur
+        if PersistenceController.shared.getCurrentUser() == nil {
+            // Anonim kullanıcı oluştur veya mevcut olanı getir
+            if let anonymousUser = PersistenceController.shared.getOrCreateAnonymousUser() {
+                print("👤 Anonim kullanıcı oluşturuldu/alındı: \(anonymousUser.username ?? "N/A")")
+            }
+        }
     }
     
     var body: some Scene {
@@ -181,6 +195,9 @@ struct SudokuApp: App {
                                     NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
                                 }
                             }
+                            
+                            // Kullanıcı giriş/çıkış bildirimlerini dinle
+                            setupUserChangeObservers()
                         }
                 }
             }
@@ -221,6 +238,31 @@ struct SudokuApp: App {
                         NotificationCenter.default.post(name: Notification.Name("AppBecameActive"), object: nil)
                     }
                 }
+            }
+        }
+    }
+    
+    // Kullanıcı değişikliği bildirimlerini ayarla
+    private func setupUserChangeObservers() {
+        // Kullanıcı çıkış yaptığında dinleyici
+        NotificationCenter.default.addObserver(forName: Notification.Name("UserLoggedOut"), object: nil, queue: .main) { _ in
+            print("👤 Kullanıcı çıkış yaptı")
+            
+            // Kullanıcı çıkışında mevcut kullanıcıyı kontrol et
+            // PersistenceController içinde anonim kullanıcı otomatik olarak yönetildiği için
+            // burada tekrar anonim kullanıcı oluşturmaya gerek yok
+            
+            // Görüntüleri yenile
+            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+        }
+        
+        // Kullanıcı giriş yaptığında dinleyici
+        NotificationCenter.default.addObserver(forName: Notification.Name("UserLoggedIn"), object: nil, queue: .main) { _ in
+            if let user = PersistenceController.shared.getCurrentUser() {
+                print("👤 Kullanıcı giriş yaptı: \(user.username ?? "N/A")")
+                
+                // Görüntüleri yenile
+                NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
             }
         }
     }

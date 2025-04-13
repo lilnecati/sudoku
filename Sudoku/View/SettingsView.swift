@@ -274,99 +274,110 @@ struct SettingsView: View {
     }
     
     var body: some View {
-        ZStack {
-            // Izgara arka planı
-            GridBackgroundView()
-                .edgesIgnoringSafeArea(.all)
-            
+        NavigationView {
             ScrollView {
                 VStack(spacing: 25) {
-                    // Modern başlık
-                    HStack {
-                        Text("Ayarlar")
-                            .scaledFont(size: 32, weight: .bold)
-                            .foregroundColor(.primary)
-
-                        Spacer()
-
-                        // Pil durumu göstergesi
-                        HStack(spacing: 8) {
-                            Image(systemName: getBatteryIcon())
-                                .foregroundColor(getBatteryColor())
-
-                            Text("\(Int(PowerSavingManager.shared.batteryLevel * 100))%")
-                                .scaledFont(size: 14, weight: .medium)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(colorScheme == .dark ? Color(hex: "252525") : Color(hex: "F0F0F5"))
-                        )
-                    }
-                    .padding(.top, 20)
-                    .padding(.horizontal)
-
-                    // Kullanıcı profili
-                    userProfileSection()
-                        .padding(.horizontal)
-
-                    // Oyun ayarları - modern tasarım
-                    settingsSection(title: "Oyun Ayarları", systemImage: "gamecontroller.fill") {
-                        gameSettingsView()
-                    }
-
-                    // Görünüm ayarları - modern tasarım
-                    settingsSection(title: "Görünüm Ayarları", systemImage: "paintpalette.fill") {
-                        appearanceSettingsView()
-                    }
-
-                    // Güç tasarrufu ayarları - modern tasarım
-                    settingsSection(title: "Güç Tasarrufu", systemImage: "bolt.fill") {
+                    // Hesap ve profil bölümü - En yukarı taşındı
+                    sectionHeader(title: "Profil", systemImage: "person.crop.circle.fill")
+                    
+                    // Profil ve hesap ayarları bölümü
+                    profileSettingsView()
+                    
+                    // Ayarlar başlığı
+                    sectionHeader(title: "Oyun Ayarları", systemImage: "gamecontroller.fill")
+                    
+                    // Oyun ayarları bölümü
+                    gameSettingsView()
+                    
+                    // Görünüm ayarları
+                    sectionHeader(title: "Görünüm", systemImage: "paintbrush.fill")
+                    
+                    // Görünüm ayarları bölümü
+                    appearanceSettingsView()
+                    
+                    // Güç tasarrufu ayarları (eğer pil yüzdesi 50'den düşükse ön plana çıkar)
+                    if powerManager.batteryLevel < 0.5 {
+                        sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle.fill")
+                        powerSavingSettingsView()
+                    } else {
+                        sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle")
                         powerSavingSettingsView()
                     }
-
-                    // Hakkında bölümü - modern tasarım
-                    settingsSection(title: "Hakkında", systemImage: "info.circle.fill") {
-                        aboutSettingsView()
+                    
+                    // Alt bilgi
+                    VStack(spacing: 5) {
+                        Text("Geliştirici: Necati Yıldırım")
+                            .scaledFont(size: 14)
+                            .foregroundColor(.secondary)
+                        
+                        Text("Sürüm 1.0")
+                            .scaledFont(size: 12)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 30)
+                    .padding(.bottom, 20)
+                }
+                .padding(.top)
+            }
+            .environmentObject(themeManager)
+            .environment(\.colorScheme, themeManager.colorScheme ?? colorScheme)
+            .navigationBarTitle("Ayarlar", displayMode: .inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Text("Tamam")
+                            .fontWeight(.semibold)
+                            .foregroundColor(.blue)
                     }
                 }
-                .padding(.bottom, 30)
             }
-        }
-        .onAppear {
-            // Pil durumunu güncelle
-            UIDevice.current.isBatteryMonitoringEnabled = true
-            powerSavingMode = powerManager.powerSavingMode
-            autoPowerSaving = powerManager.autoPowerSaving
-            highPerformanceMode = powerManager.highPerformanceMode
-
-            // Mevcut kullanıcıyı al
-            currentUser = PersistenceController.shared.getCurrentUser()
-
-            // Şarj durumu değişikliğini kontrol et
-            let isCharging = PowerSavingManager.shared.isCharging
-            if previousChargingState != isCharging {
-                print("Cihaz şarj oluyor mu? \(isCharging)")
-                previousChargingState = isCharging
-            }
-            
-            // Metin boyutu değişikliği bildirimini dinle
-            NotificationCenter.default.addObserver(forName: Notification.Name("ForceUIUpdate"), object: nil, queue: .main) { _ in
-                // View'i zorla yeniden çizdirmek için aşağıdaki kod yeterli
-                print("📱 Metin boyutu güncellemesi algılandı: \(textSizePreference.rawValue)")
-            }
-        }
-        .sheet(isPresented: $showLoginView) {
-            LoginView(isPresented: $showLoginView, currentUser: $currentUser)
         }
         .sheet(isPresented: $showRegisterView) {
-            RegisterView(isPresented: $showRegisterView, currentUser: $currentUser)
+            RegisterViewContainer()
         }
-        .alert(isPresented: $showError) {
-            Alert(title: Text("Hata"), message: Text(errorMessage), dismissButton: .default(Text("Tamam")))
+        .onAppear {
+            // Bildirim dinleyicilerini ayarla
+            setupObservers()
         }
+        .onDisappear {
+            // Bildirim dinleyicilerini temizle
+            removeObservers()
+        }
+        .onChange(of: powerManager.batteryLevel) { _, _ in
+            // Pil seviyesi değişince arayüzü güncelle
+            updateUIOnBatteryChange()
+        }
+    }
+    
+    // Bildirim dinleyicilerini ayarla
+    private func setupObservers() {
+        // Giriş sayfasından kayıt sayfasına geçiş için bildirim dinleyicisi
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("ShowRegisterView"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            showRegisterView = true
+        }
+    }
+    
+    // Bildirim dinleyicileri temizle
+    private func removeObservers() {
+        NotificationCenter.default.removeObserver(
+            self,
+            name: Notification.Name("ShowRegisterView"),
+            object: nil
+        )
+    }
+    
+    // Pil seviyesi değişince arayüzü güncelle
+    private func updateUIOnBatteryChange() {
+        // Burada pil durumu değiştiğinde yapılacak işlemler
+        // Pil seviyesine göre otomatik güç tasarrufu önerileri vs.
+        // Bu fonksiyon onChange(of: powerManager.batteryLevel) içinde çağrılıyor
     }
     
     private func settingsSection<Content: View>(title: String, systemImage: String, @ViewBuilder content: () -> Content) -> some View {
@@ -887,63 +898,6 @@ struct SettingsView: View {
             
             // Güç Tasarrufu Ayarları
             Section {
-                // Güç tasarrufu modu
-                HStack {
-                    Label {
-                        Text("Güç Tasarrufu Modu")
-                            .scaledFont(size: 16, weight: .medium)
-                    } icon: {
-                        Image(systemName: "battery.50")
-                            .foregroundColor(.green)
-                    }
-                    
-                    Spacer()
-                    
-                    // Toggle görünümü - sadece buna basınca toggle olacak
-                    Button(action: {
-                        // Titreşim kontrolü yapılarak ses çal
-                        if enableHapticFeedback {
-                            SoundManager.shared.playNavigationSound()
-                        } else {
-                            SoundManager.shared.playNavigationSoundOnly()
-                        }
-                        
-                        // Değeri tersine çevir
-                        powerSavingMode.toggle()
-                        
-                        if powerSavingMode {
-                            PowerSavingManager.shared.setPowerSavingLevel(.medium)
-                            // Yüksek performans modunu kapat
-                            if highPerformanceMode {
-                                highPerformanceMode = false
-                            }
-                        } else {
-                            PowerSavingManager.shared.setPowerSavingLevel(.off)
-                        }
-                    }) {
-                        ZStack {
-                            Capsule()
-                                .fill(powerSavingMode ? Color.green : Color.gray.opacity(0.3))
-                                .frame(width: 55, height: 34)
-                            
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 30, height: 30)
-                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-                                .offset(x: powerSavingMode ? 10 : -10)
-                        }
-                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: powerSavingMode)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                )
-                .padding(.horizontal)
-                
                 // Yüksek performans modu
                 HStack {
                     Label {
@@ -1251,6 +1205,203 @@ struct SettingsView: View {
         
         print("📱 Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)")
     }
+    
+    // Profil ve hesap ayarları görünümü
+    private func profileSettingsView() -> some View {
+        VStack(spacing: 20) {
+            // Kullanıcı profil kartı
+            HStack {
+                // Profil resmi
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.15))
+                        .frame(width: 70, height: 70)
+                    
+                    // Kullanıcı giriş durumuna göre farklı sembol göster
+                    if let user = PersistenceController.shared.getCurrentUser() {
+                        VStack {
+                            Text(String(user.name?.prefix(1) ?? "U"))
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundColor(.blue)
+                        }
+                    } else {
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.blue)
+                    }
+                }
+                
+                Spacer()
+                .frame(width: 15)
+                
+                // Kullanıcı bilgileri
+                VStack(alignment: .leading, spacing: 5) {
+                    if let user = PersistenceController.shared.getCurrentUser() {
+                        // Giriş yapılmışsa kullanıcı bilgilerini göster
+                        Text(user.name ?? "İsimsiz Kullanıcı")
+                            .scaledFont(size: 18, weight: .bold)
+                            .foregroundColor(.primary)
+                        
+                        Text("@\(user.username ?? "")")
+                            .scaledFont(size: 14)
+                            .foregroundColor(.secondary)
+                        
+                        Text(user.email ?? "")
+                            .scaledFont(size: 14)
+                            .foregroundColor(.secondary)
+                    } else {
+                        // Giriş yapılmamışsa giriş seçenekleri göster
+                        Text("Giriş Yapmadınız")
+                            .scaledFont(size: 18, weight: .bold)
+                            .foregroundColor(.primary)
+                        
+                        Text("Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın")
+                            .scaledFont(size: 14)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
+            )
+            .padding(.horizontal)
+            
+            // Profil yönetimi butonu
+            if let _ = PersistenceController.shared.getCurrentUser() {
+                // Kullanıcı giriş yapmışsa profil düzenleme ve çıkış butonları
+                NavigationLink(destination: ProfileEditView()) {
+                    HStack {
+                        Label {
+                            Text("Profili Düzenle")
+                                .scaledFont(size: 16, weight: .medium)
+                                .foregroundColor(.primary)
+                        } icon: {
+                            Image(systemName: "pencil.circle.fill")
+                                .foregroundColor(.blue)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 14))
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal)
+                
+                // Çıkış butonu
+                Button(action: {
+                    // Çıkış işlemi
+                    PersistenceController.shared.logoutCurrentUser()
+                    
+                    // Titreşim ve ses
+                    if enableHapticFeedback {
+                        SoundManager.shared.playNavigationSound()
+                    } else {
+                        SoundManager.shared.playNavigationSoundOnly()
+                    }
+                    
+                    // Kullanıcı çıkışından sonra veri yenileme bildirimi
+                    NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
+                    
+                    // Başarılı çıkış bildirimi
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.prepare()
+                    impactFeedback.impactOccurred()
+                }) {
+                    HStack {
+                        Label {
+                            Text("Çıkış Yap")
+                                .scaledFont(size: 16, weight: .medium)
+                                .foregroundColor(.red)
+                        } icon: {
+                            Image(systemName: "arrow.right.circle.fill")
+                                .foregroundColor(.red)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal)
+            } else {
+                // Kullanıcı giriş yapmamışsa giriş ve kayıt butonları
+                NavigationLink(destination: LoginViewContainer()) {
+                    HStack {
+                        Label {
+                            Text("Giriş Yap")
+                                .scaledFont(size: 16, weight: .medium)
+                                .foregroundColor(.blue)
+                        } icon: {
+                            Image(systemName: "person.circle.fill")
+                                .foregroundColor(.blue)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 14))
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal)
+                
+                NavigationLink(destination: RegisterViewContainer()) {
+                    HStack {
+                        Label {
+                            Text("Yeni Hesap Oluştur")
+                                .scaledFont(size: 16, weight: .medium)
+                                .foregroundColor(.green)
+                        } icon: {
+                            Image(systemName: "person.badge.plus")
+                                .foregroundColor(.green)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 14))
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.horizontal)
+            }
+        }
+    }
+    
 }
 
 struct SettingRow<Content: View>: View {
