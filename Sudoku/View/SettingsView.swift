@@ -751,8 +751,7 @@ struct SettingsView: View {
                             title: "Küçük",
                             isSelected: textSizeString == TextSizePreference.small.rawValue,
                             action: {
-                                SoundManager.shared.playNavigationSound()
-                                textSizeString = TextSizePreference.small.rawValue
+                                updateTextSizePreference(TextSizePreference.small)
                             }
                         )
                         
@@ -760,8 +759,7 @@ struct SettingsView: View {
                             title: "Orta", 
                             isSelected: textSizeString == TextSizePreference.medium.rawValue,
                             action: {
-                                SoundManager.shared.playNavigationSound()
-                                textSizeString = TextSizePreference.medium.rawValue
+                                updateTextSizePreference(TextSizePreference.medium)
                             }
                         )
                         
@@ -769,8 +767,7 @@ struct SettingsView: View {
                             title: "Büyük", 
                             isSelected: textSizeString == TextSizePreference.large.rawValue,
                             action: {
-                                SoundManager.shared.playNavigationSound()
-                                textSizeString = TextSizePreference.large.rawValue
+                                updateTextSizePreference(TextSizePreference.large)
                             }
                         )
                     }
@@ -1230,6 +1227,22 @@ struct SettingsView: View {
             )
             .padding(.horizontal)
         }
+    }
+    
+    // TextSize değişikliğini işleme fonksiyonu
+    private func updateTextSizePreference(_ newValue: TextSizePreference) {
+        // Değişikliği AppStorage'a kaydet
+        let previousValue = textSizePreference
+        // String değeri güncelle
+        textSizeString = newValue.rawValue
+        
+        // Değişikliği bildir
+        NotificationCenter.default.post(name: Notification.Name("TextSizeChanged"), object: nil)
+        
+        // Bildirim sesi çal
+        SoundManager.shared.playNavigationSound()
+        
+        print("📱 Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)")
     }
 }
 

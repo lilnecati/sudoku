@@ -1,0 +1,710 @@
+{
+  "sourceLanguage" : "tr",
+  "strings" : {
+    "?" : {
+
+    },
+    "(%%%lld)" : {
+
+    },
+    "#%lld" : {
+
+    },
+    "%@ zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır." : {
+
+    },
+    "%%%lld" : {
+
+    },
+    "%lld" : {
+
+    },
+    "%lld:%@" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld:%2$@"
+          }
+        }
+      }
+    },
+    "%lld%%" : {
+
+    },
+    "© 2025 Necati Yıldırım" : {
+
+    },
+    "🎉 Yeni Rekor! 🎉" : {
+
+    },
+    "0" : {
+
+    },
+    "3 hata yaptınız ve Sudoku oyununu kaybettiniz." : {
+
+    },
+    "5" : {
+
+    },
+    "Ad Soyad" : {
+
+    },
+    "Adım %lld / %lld" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Adım %1$lld / %2$lld"
+          }
+        }
+      }
+    },
+    "Adınızı ve soyadınızı girin" : {
+
+    },
+    "Anasayfaya Dön" : {
+
+    },
+    "app.name" : {
+      "comment" : "Application name",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku"
+          }
+        }
+      }
+    },
+    "Ayarlar" : {
+
+    },
+    "Biten Oyunlar" : {
+
+    },
+    "Bitti" : {
+
+    },
+    "Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok." : {
+
+    },
+    "Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?" : {
+
+    },
+    "button.cancel" : {
+      "comment" : "Cancel button text",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İptal"
+          }
+        }
+      }
+    },
+    "button.save" : {
+      "comment" : "Save button text",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaydet"
+          }
+        }
+      }
+    },
+    "Cihazın görünüm ayarını kullan (açık/koyu)" : {
+
+    },
+    "Çıkış Yap" : {
+
+    },
+    "Devam Et" : {
+
+    },
+    "dk" : {
+
+    },
+    "Düşük Pil" : {
+
+    },
+    "E-posta" : {
+
+    },
+    "E-posta adresinizi girin" : {
+
+    },
+    "Geliştirici" : {
+
+    },
+    "Geliştrici" : {
+
+    },
+    "Geri" : {
+
+    },
+    "Giriş Hatası" : {
+
+    },
+    "Giriş Yap" : {
+
+    },
+    "Güç Tasarrufu" : {
+
+    },
+    "Güç Tasarrufu Modu" : {
+
+    },
+    "Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir." : {
+
+    },
+    "Güç tasarrufu modu, cihazınızın pil ömrünü uzatır." : {
+
+    },
+    "Hata" : {
+
+    },
+    "Hata: %@" : {
+
+    },
+    "Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın." : {
+
+    },
+    "Henüz tamamlanmış oyun yok" : {
+
+    },
+    "Her oyunda yalnızca 3 ipucu kullanabilirsiniz!" : {
+
+    },
+    "İleri" : {
+
+    },
+    "İptal" : {
+
+    },
+    "İPUCU" : {
+
+    },
+    "İpucu (%lld)" : {
+
+    },
+    "Kaldığın yerden devam et" : {
+
+    },
+    "Karanlık Mod" : {
+
+    },
+    "Karanlık tema aktif eder" : {
+
+    },
+    "Kaydedilmiş oyun bulunamadı" : {
+
+    },
+    "Kaydedilmiş Oyunlar" : {
+
+    },
+    "Kayıt Hatası" : {
+
+    },
+    "Kayıt Ol" : {
+
+    },
+    "Kendinize uygun bir zorluk seviyesi belirleyin" : {
+
+    },
+    "Kullanıcı Adı" : {
+
+    },
+    "Kullanıcı adınızı girin" : {
+
+    },
+    "Metin Boyutu" : {
+
+    },
+    "N" : {
+
+    },
+    "Nasıl Oynanır" : {
+
+    },
+    "Nasıl Oynanır?" : {
+
+    },
+    "Navigasyon sorunu giderilene kadar" : {
+
+    },
+    "Necati Yıldırım" : {
+
+    },
+    "Not Aktif" : {
+
+    },
+    "Not Modu" : {
+
+    },
+    "Örnek Gösterilemiyor" : {
+
+    },
+    "Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir" : {
+
+    },
+    "Örnek: Bu hücreye sadece 4 girebilir" : {
+
+    },
+    "Otomatik Güç Tasarrufu" : {
+
+    },
+    "Oyun Bitti!" : {
+
+    },
+    "Oyun içi ses efektlerini aç/kapa" : {
+
+    },
+    "Oyun içi titreşim efektlerini aç/kapa" : {
+
+    },
+    "Oyun İstatistikleri" : {
+
+    },
+    "Oyun yükleniyor..." : {
+
+    },
+    "Oyunları tamamladıkça burada listelenecek" : {
+
+    },
+    "Oyunu Sil" : {
+
+    },
+    "Performans" : {
+
+    },
+    "Performans İstatistikleri" : {
+
+    },
+    "Pil Durumu" : {
+
+    },
+    "Profil Devre Dışı" : {
+
+    },
+    "puan" : {
+
+    },
+    "PUAN" : {
+
+    },
+    "Rehber" : {
+
+    },
+    "S" : {
+
+    },
+    "Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir." : {
+
+    },
+    "Ses Efektleri" : {
+
+    },
+    "Ses Seviyesi" : {
+
+    },
+    "Sesi Test Et" : {
+
+    },
+    "settings.about" : {
+      "comment" : "About section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hakkında"
+          }
+        }
+      }
+    },
+    "settings.appearance" : {
+      "comment" : "Title for appearance settings section",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance Settings"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Görünüm Ayarları"
+          }
+        }
+      }
+    },
+    "settings.autopowersaving" : {
+      "comment" : "Auto power saving toggle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto Power Saving"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otomatik Güç Tasarrufu"
+          }
+        }
+      }
+    },
+    "settings.haptic" : {
+      "comment" : "Haptic feedback settings title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptic Feedback"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titreşim Geri Bildirimi"
+          }
+        }
+      }
+    },
+    "settings.haptic.description" : {
+      "comment" : "Description for haptic feedback",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable or disable in-game vibration effects"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oyun içi titreşim efektlerini aç/kapa"
+          }
+        }
+      }
+    },
+    "settings.highperformance" : {
+      "comment" : "High performance mode toggle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "High Performance Mode"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yüksek Performans Modu"
+          }
+        }
+      }
+    },
+    "settings.powersaving" : {
+      "comment" : "Power saving settings section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power Saving"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Güç Tasarrufu"
+          }
+        }
+      }
+    },
+    "settings.powersaving.mode" : {
+      "comment" : "Power saving mode toggle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power Saving Mode"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Güç Tasarrufu Modu"
+          }
+        }
+      }
+    },
+    "settings.sound.effects" : {
+      "comment" : "Sound effects settings title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound Effects"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses Efektleri"
+          }
+        }
+      }
+    },
+    "settings.sound.effects.description" : {
+      "comment" : "Description for sound effects",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable or disable in-game sound effects"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oyun içi ses efektlerini aç/kapa"
+          }
+        }
+      }
+    },
+    "settings.sound.test" : {
+      "comment" : "Button to test sound",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test Sound"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi Test Et"
+          }
+        }
+      }
+    },
+    "settings.sound.volume" : {
+      "comment" : "Sound volume slider title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound Volume"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses Seviyesi"
+          }
+        }
+      }
+    },
+    "settings.theme.dark" : {
+      "comment" : "Dark mode option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark Mode"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karanlık Mod"
+          }
+        }
+      }
+    },
+    "settings.theme.system" : {
+      "comment" : "Use system appearance",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use System Appearance"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistem Görünümünü Kullan"
+          }
+        }
+      }
+    },
+    "settings.title" : {
+      "comment" : "Title for settings screen",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayarlar"
+          }
+        }
+      }
+    },
+    "Şifre" : {
+
+    },
+    "Şifre Onayı" : {
+
+    },
+    "Şifrenizi girin" : {
+
+    },
+    "Şifrenizi tekrar girin" : {
+
+    },
+    "Sil" : {
+
+    },
+    "Sistem Görünümünü Kullan" : {
+
+    },
+    "Skor Tablosu" : {
+
+    },
+    "sn" : {
+
+    },
+    "Son Kalan Hücre" : {
+
+    },
+    "Sudoku" : {
+
+    },
+    "SUDOKU" : {
+
+    },
+    "Sudoku bulmacasını %@ sürede tamamladınız!" : {
+
+    },
+    "Sudoku'yu Tamamladınız" : {
+
+    },
+    "Süre" : {
+
+    },
+    "Süre: %@" : {
+
+    },
+    "Sürüm 1.0" : {
+
+    },
+    "Tamam" : {
+
+    },
+    "Tamamla" : {
+
+    },
+    "Tamamlanma" : {
+
+    },
+    "Tarih" : {
+
+    },
+    "Tebrikler!" : {
+
+    },
+    "Tekrar Dene" : {
+
+    },
+    "Titreşim Geri Bildirimi" : {
+
+    },
+    "Tüm Ayarları Sıfırla" : {
+
+    },
+    "Uygulama Başlatılamadı" : {
+
+    },
+    "Uygulamayı kapatıp tekrar açmayı deneyin." : {
+
+    },
+    "Yeni Oyun" : {
+
+    },
+    "Yükleniyor..." : {
+
+    },
+    "Yüksek Performans Modu" : {
+
+    },
+    "Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır." : {
+
+    },
+    "Zihninizi Çalıştırın" : {
+
+    },
+    "Zorluk" : {
+
+    },
+    "Zorluk Seviyesi Karşılaştırma" : {
+
+    },
+    "Zorluk Seviyesi Seçin" : {
+
+    }
+  },
+  "version" : "1.0"
+}

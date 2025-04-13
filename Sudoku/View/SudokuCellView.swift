@@ -107,6 +107,7 @@ struct SudokuCellView: View {
                                         .spring(response: 0.3, dampingFraction: 0.7),
                                     value: animateValue
                                 )
+                                .dynamicTypeSize(.medium)
                         }
                         
                         // Pencil marks - Optimize edilmiş versiyonu
@@ -282,6 +283,7 @@ struct PencilMarksViewOptimized: View {
                             x: cellWidth * CGFloat(col) + cellWidth / 2,
                             y: cellHeight * CGFloat(row) + cellHeight / 2
                         )
+                        .dynamicTypeSize(.medium)
                 }
             }
         }

@@ -135,6 +135,7 @@ struct NumberPadView: View {
                     Text("\(number)")
                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                         .foregroundColor(isDisabled ? buttonColor.opacity(0.3) : buttonColor)
+                        .dynamicTypeSize(.medium)
                     
                     // İkinci satır için SABIT BOYUTLU placeholder - her zaman aynı boyutta
                     ZStack {
@@ -142,6 +143,7 @@ struct NumberPadView: View {
                         Text("0")
                             .font(.system(size: 12))
                             .foregroundColor(.clear)
+                            .dynamicTypeSize(.medium)
                         
                         // İçerik - kalem modu veya kalan sayı
                         if viewModel.pencilMode {
@@ -154,6 +156,7 @@ struct NumberPadView: View {
                                 .foregroundColor(buttonColor.opacity(0.6))
                                 .transition(.opacity.combined(with: .scale))
                                 .id("remaining_\(number)_\(remaining)")
+                                .dynamicTypeSize(.medium)
                         }
                     }
                 }
@@ -266,11 +269,13 @@ struct NumberPadView: View {
                     Image(systemName: "delete.left")
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundColor(isDisabled ? buttonColor.opacity(0.3) : buttonColor)
+                        .dynamicTypeSize(.medium)
                     
                     // Sabit boyutlu metin - her zaman aynı boyutta
                     Text("Sil")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(isDisabled ? buttonColor.opacity(0.3) : buttonColor.opacity(0.8))
+                        .dynamicTypeSize(.medium)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.vertical, 8)

@@ -159,6 +159,7 @@ struct SudokuApp: App {
                         .environmentObject(themeManager)
                         .preferredColorScheme(themeManager.colorScheme)
                         .environment(\.textScale, textSizePreference.scaleFactor)
+                        .environment(\.dynamicTypeSize, textSizePreference.toDynamicTypeSize())
                         .onAppear {
                             if !isInitialized {
                                 isInitialized = true
@@ -169,6 +170,16 @@ struct SudokuApp: App {
                                 print("🔋 Power saving mode: \(powerManager.isPowerSavingEnabled ? "ON" : "OFF")")
                                 
                                 // StartupView ile başlangıç sorununu çözdük
+                            }
+                            
+                            // Metin boyutu değişim bildirimini dinle
+                            NotificationCenter.default.addObserver(forName: Notification.Name("TextSizeChanged"), object: nil, queue: .main) { notification in
+                                print("📱 Text size changed to: \(self.textSizePreference.rawValue)")
+                                
+                                // UI'ı yenile
+                                DispatchQueue.main.async {
+                                    NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+                                }
                             }
                         }
                 }
