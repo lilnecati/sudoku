@@ -105,9 +105,9 @@ struct GameView: View {
             Color.clear
                 .toolbar(.hidden, for: .tabBar)
                 .toolbar(.hidden, for: .navigationBar)
-            // Aktif olmadığında gizlenecek boş alan (sayfa geçişleri için)
-            // Arka plan
-            LinearGradient(gradient: Gradient(colors: gradientColors), startPoint: .top, endPoint: .bottom)
+            
+            // Izgara arka planı
+            GridBackgroundView()
                 .edgesIgnoringSafeArea(.all)
             
             // Ana içerik

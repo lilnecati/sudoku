@@ -22,16 +22,9 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            // Arkaplan
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.blue.opacity(0.1),
-                    Color.purple.opacity(0.1)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Izgara arka planı
+            GridBackgroundView()
+                .ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 25) {
@@ -43,7 +36,7 @@ struct LoginView: View {
                         
                         Text("Giriş Yap")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
                     }
                     .padding(.top, 40)
                     .padding(.bottom, 30)
@@ -54,39 +47,41 @@ struct LoginView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Kullanıcı Adı")
                                 .font(.headline)
-                                .foregroundColor(.primary)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                             
                             TextField("Kullanıcı adınızı girin", text: $username)
                                 .padding()
-                                .background(Color.secondary.opacity(0.1))
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
                                 )
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                         }
                         
                         // Şifre
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Şifre")
                                 .font(.headline)
-                                .foregroundColor(.primary)
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                             
                             SecureField("Şifrenizi girin", text: $password)
                                 .padding()
-                                .background(Color.secondary.opacity(0.1))
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
                                 )
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
                         }
                         
                         // Giriş butonu
                         Button(action: loginUser) {
                             if isLoading {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .progressViewStyle(CircularProgressViewStyle(tint: colorScheme == .dark ? .white : .blue))
                             } else {
                                 Text("Giriş Yap")
                                     .fontWeight(.semibold)
@@ -96,7 +91,7 @@ struct LoginView: View {
                         .padding()
                         .background(
                             LinearGradient(
-                                gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.8)]),
+                                gradient: Gradient(colors: [Color.purple, Color.blue]),
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -105,6 +100,7 @@ struct LoginView: View {
                         .cornerRadius(10)
                         .disabled(username.isEmpty || password.isEmpty || isLoading)
                         .opacity((username.isEmpty || password.isEmpty || isLoading) ? 0.6 : 1)
+                        .shadow(color: Color.purple.opacity(colorScheme == .dark ? 0.5 : 0.3), radius: colorScheme == .dark ? 10 : 5, x: 0, y: 5)
                         
                         // İptal butonu
                         Button(action: {
@@ -115,9 +111,13 @@ struct LoginView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.secondary.opacity(0.1))
-                        .foregroundColor(.primary)
+                        .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                        .foregroundColor(colorScheme == .dark ? .white : .black)
                         .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(colorScheme == .dark ? Color.white.opacity(0.2) : Color.black.opacity(0.1), lineWidth: 1)
+                        )
                     }
                     .padding(.horizontal)
                     

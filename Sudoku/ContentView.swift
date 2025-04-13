@@ -703,55 +703,9 @@ struct ContentView: View {
     // MARK: - Main Content View
     var mainContentView: some View {
         ZStack {
-            // Arka plan tasarımı - güç tasarrufu ve visual appeal arasında denge
-            if powerSavingMode {
-                // Güç tasarrufu modu açıkken basit arka plan
-                Color(UIColor.systemBackground)
-                    .edgesIgnoringSafeArea(.all)
-            } else {
-                // Gelişmiş ve modern arka plan tasarımı
-                ZStack {
-                    // Yumuşak gradient
-                    LinearGradient(gradient: Gradient(colors: [
-                        Color.blue.opacity(0.08),
-                        Color.purple.opacity(0.12),
-                        Color(UIColor.systemBackground)
-                    ]), startPoint: .topLeading, endPoint: .bottom)
-                    
-                    // Arka planda dekoratif sudoku şablonu - daha yumuşak
-                    VStack(spacing: 0) {
-                        ForEach(0..<9) { row in
-                            HStack(spacing: 0) {
-                                ForEach(0..<9) { column in
-                                    Rectangle()
-                                        .stroke(Color.gray.opacity(0.08), lineWidth: 0.5)
-                                        .background(((row/3 + column/3) % 2 == 0) ?
-                                                    Color.gray.opacity(0.02) : Color.clear)
-                                        .frame(width: 22, height: 22)
-                                }
-                            }
-                        }
-                    }
-                    .rotationEffect(.degrees(8))
-                    .scaleEffect(2.2)
-                    .offset(x: 60, y: -180)
-                    .opacity(0.3)
-                    
-                    // Dekoratif parlama efektleri
-                    Circle()
-                        .fill(Color.blue.opacity(0.1))
-                        .frame(width: 250, height: 250)
-                        .blur(radius: 80)
-                        .offset(x: -120, y: -200)
-                    
-                    Circle()
-                        .fill(Color.purple.opacity(0.1))
-                        .frame(width: 200, height: 200)
-                        .blur(radius: 70)
-                        .offset(x: 150, y: 250)
-                }
+            // Yeni ızgara arka planı
+            GridBackgroundView()
                 .edgesIgnoringSafeArea(.all)
-            }
             
             // Yükleme/hata durumları veya ana içerik
             if isLoading {

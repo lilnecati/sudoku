@@ -84,9 +84,6 @@
     "Ayarlar" : {
 
     },
-    "Biten Oyunlar" : {
-
-    },
     "Bitti" : {
 
     },
@@ -285,7 +282,7 @@
     "Oyun yükleniyor..." : {
 
     },
-    "Oyunları tamamladıkça burada listelenecek" : {
+    "Oyunu Başlat" : {
 
     },
     "Oyunu Sil" : {
@@ -624,6 +621,9 @@
     "Son Kalan Hücre" : {
 
     },
+    "Son Oyunlar" : {
+
+    },
     "Sudoku" : {
 
     },
@@ -691,6 +691,9 @@
 
     },
     "Zorluk" : {
+
+    },
+    "Zorluk Seviyesi" : {
 
     },
     "Zorluk Seviyesi Karşılaştırma" : {

@@ -26,16 +26,9 @@ struct RegisterView: View {
     
     var body: some View {
         ZStack {
-            // Arkaplan
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.blue.opacity(0.1),
-                    Color.purple.opacity(0.1)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Izgara arka planı
+            GridBackgroundView()
+                .ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 25) {

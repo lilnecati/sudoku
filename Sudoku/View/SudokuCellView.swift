@@ -31,6 +31,9 @@ struct SudokuCellView: View {
     
     var body: some View {
         GeometryReader { geometry in
+            // Perfomans için değerleri önbelleğe al
+            let cellDimension = min(geometry.size.width, geometry.size.height)
+            
             Button(action: {
                 // Ses efekti çal - artık playNavigationSound titreşim de içeriyor
                 SoundManager.shared.playNavigationSound()
@@ -53,77 +56,22 @@ struct SudokuCellView: View {
                 onCellTapped()
             }) {
                 ZStack {
-                    // Hücre arka planı
+                    // Hücre arka planı - hata veya seçiliyse Metal kullan
                     cellBackground
                         .scaleEffect(animateSelection ? 0.95 : 1.0)
-                        .drawingGroup() // Metal hızlandırması
+                        .drawingGroup(opaque: true, colorMode: .linear) // Daha hızlı Metal hızlandırması
                     
-                    // Hatalı hücre göstergesi
+                    // Hatalı hücre göstergesi - sadece hatalı ise çiz
                     if isInvalid {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color.red, lineWidth: 2.5)
-                                .background(Color.red.opacity(0.2))
-                                .cornerRadius(4)
-                                .drawingGroup() // Metal hızlandırması
-                            
-                            // Hata animasyonu - bayan bir titreşim/parlama
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color.red, lineWidth: 2.5)
-                                .opacity(animateValue ? 0.2 : 0.7)
-                                .animation(
-                                    Animation.easeInOut(duration: 0.6)
-                                    .repeatForever(autoreverses: true),
-                                    value: animateValue
-                                )
-                                .onAppear {
-                                    animateValue = true
-                                }
-                                .drawingGroup() // Metal hızlandırması
-                        }
+                        invalidCellOverlay
                     }
                     
                     // Hücre içeriği (sayı veya kalem işaretleri)
-                    // Sabit boyutlu konteyner - bütün içerik için sabit çerçeve
-                    ZStack {
-                        // İçerik bölgesini sabit tutacak temel çerçeve
-                        Rectangle()
-                            .foregroundColor(.clear)
-                            .frame(width: min(geometry.size.width, geometry.size.height),
-                                   height: min(geometry.size.width, geometry.size.height))
-                        
-                        // Değer gösterimi
-                        if let value = value {
-                            Text("\(value)")
-                                .font(.system(size: 26, weight: .bold, design: .rounded))
-                                .foregroundColor(getTextColor())
-                                .animation(isInvalid ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: value)
-                        }
-                        
-                        // Pencil marks - Optimize edilmiş versiyonu
-                        if pencilMarks.count > 0 && value == nil {
-                            PencilMarksViewOptimized(pencilMarks: pencilMarks)
-                                .frame(width: min(geometry.size.width, geometry.size.height) * 0.85, height: min(geometry.size.width, geometry.size.height) * 0.85)
-                                .clipped()
-                        }
-                        
-                        // Vurgulama - ipucu için
-                        if isHintTarget {
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color.green.opacity(0.8), lineWidth: 3)
-                                .frame(width: min(geometry.size.width, geometry.size.height) * 0.9, height: min(geometry.size.width, geometry.size.height) * 0.9)
-                        }
-                    }
-                    // Sabit boyut - bu frame değişmez
-                    .frame(width: min(geometry.size.width, geometry.size.height),
-                           height: min(geometry.size.width, geometry.size.height))
-                    // Tüm içeriğin kırpılmasını zorunlu kıl
-                    .clipped()
-                    // Düz bir geçiş kullan
-                    .animation(.none, value: value)
-                    .animation(.none, value: pencilMarks)
+                    // Sabit boyutlu konteyner - sadece içerik varsa çiz
+                    cellContent(cellDimension: cellDimension)
                 }
-                .drawingGroup() // Metal hızlandırması
+                // Sadece seçili, hatalı veya vurgulanmış hücrelerde Metal kullan
+                .drawingGroup(opaque: true, colorMode: .linear)
             }
             .powerSavingAwareAnimation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
             .aspectRatio(1, contentMode: .fit)
@@ -227,6 +175,65 @@ struct SudokuCellView: View {
             return colorScheme == .dark ? Color.gray : Color.gray
         }
     }
+    
+    // Hatalı hücre göstergesi - ayrı bir görünüm olarak optimize edildi
+    private var invalidCellOverlay: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(Color.red, lineWidth: 2.5)
+                .background(Color.red.opacity(0.2))
+                .cornerRadius(4)
+                
+            // Hata animasyonu - güç tasarrufu modunda animasyonu kapat
+            if !powerManager.isPowerSavingEnabled {
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(Color.red, lineWidth: 2.5)
+                    .opacity(animateValue ? 0.2 : 0.7)
+                    .animation(
+                        Animation.easeInOut(duration: 0.6)
+                        .repeatForever(autoreverses: true),
+                        value: animateValue
+                    )
+                    .onAppear {
+                        animateValue = true
+                    }
+            }
+        }
+    }
+    
+    // Hücre içeriği - sadece gerekli olduğunda çizilir
+    private func cellContent(cellDimension: CGFloat) -> some View {
+        ZStack {
+            // Değer gösterimi
+            if let value = value {
+                Text("\(value)")
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundColor(getTextColor())
+                    .animation(isInvalid ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: value)
+            }
+            
+            // Pencil marks - sadece varsa çiz
+            else if !pencilMarks.isEmpty {
+                PencilMarksViewOptimized(pencilMarks: pencilMarks)
+                    .frame(width: cellDimension * 0.85, height: cellDimension * 0.85)
+                    .clipped()
+            }
+            
+            // Vurgulama - ipucu için - sadece ipucu hedefiyse çiz
+            if isHintTarget {
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(Color.green.opacity(0.8), lineWidth: 3)
+                    .frame(width: cellDimension * 0.9, height: cellDimension * 0.9)
+            }
+        }
+        // Sabit boyut - bu frame değişmez
+        .frame(width: cellDimension, height: cellDimension)
+        // Tüm içeriğin kırpılmasını zorunlu kıl
+        .clipped()
+        // Düz bir geçiş kullan
+        .animation(.none, value: value)
+        .animation(.none, value: pencilMarks)
+    }
 }
 
 // Preview Provider
@@ -249,7 +256,7 @@ struct SudokuCellView_Previews: PreviewProvider {
     }
 }
 
-// Optimize edilmiş PencilMarksView
+// Optimize edilmiş pencil marks görünümü
 struct PencilMarksViewOptimized: View {
     let pencilMarks: Set<Int>
     
@@ -258,7 +265,8 @@ struct PencilMarksViewOptimized: View {
             let cellWidth = geometry.size.width / 3
             let cellHeight = geometry.size.height / 3
             
-            ZStack {
+            // Tek bir ZStack içinde tüm rakamları çiz
+            ZStack(alignment: .topLeading) {
                 ForEach(Array(pencilMarks), id: \.self) { mark in
                     // Hücre içinde doğru konumlandırmak için indeks hesapla
                     let index = mark - 1
@@ -273,9 +281,10 @@ struct PencilMarksViewOptimized: View {
                             x: cellWidth * CGFloat(col) + cellWidth / 2,
                             y: cellHeight * CGFloat(row) + cellHeight / 2
                         )
-                        .dynamicTypeSize(.medium)
                 }
             }
+            // Metal hızlandırması
+            .drawingGroup(opaque: true, colorMode: .linear)
         }
     }
 }

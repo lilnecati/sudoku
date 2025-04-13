@@ -241,10 +241,16 @@ class SudokuViewModel: ObservableObject {
     
     // Aynı değerlere sahip hücrelerin haritasını günceller
     private func updateSameValueMap() {
-        // Her kullanımda yeniden hesapla
+        // Yeniden kullanım için haritayı temizle ama kapasiteyi koru
         sameValueMap.removeAll(keepingCapacity: true)
         
-        // Tüm hücreleri tara ve değerlerine göre hücreleri grupla
+        // Kapasiteyi önceden tahsis et (1-9 arası sayılar için)
+        for value in 1...9 {
+            sameValueMap[value] = Set<Position>()
+        }
+        
+        // Her satırı tek döngüde işle - tek geçişte hücreleri grupla
+        // Satır düzeni belleğe seri erişim sağlar - cache dostu
         for row in 0..<9 {
             for col in 0..<9 {
                 if let value = board.getValue(row: row, column: col), value > 0 {
@@ -591,20 +597,25 @@ class SudokuViewModel: ObservableObject {
     
     // Kullanılan rakamları güncelle - optimize edildi
     private func updateUsedNumbers() {
-        var counts = [Int: Int]()
+        var newCounts = [Int: Int]()
         
-        // Sayma optimizasyonu: tek bir döngüde tüm değerleri topla
+        // Önceden kapasiteyi tahsis et (1-9 arası)
+        for num in 1...9 {
+            newCounts[num] = 0
+        }
+        
+        // Satır öncelikli işlem - cache dostu
         for row in 0..<9 {
             for col in 0..<9 {
                 if let value = board.getValue(at: row, col: col), value > 0 {
-                    counts[value, default: 0] += 1
+                    newCounts[value, default: 0] += 1
                 }
             }
         }
         
         // Sadece değişiklik varsa UI'ı güncelle
-        if counts != usedNumbers {
-            usedNumbers = counts
+        if newCounts != usedNumbers {
+            usedNumbers = newCounts
         }
     }
     
@@ -2302,82 +2313,52 @@ class SudokuViewModel: ObservableObject {
     
     // Hücre vurgu hesaplaması için yeni optimizasyonlu versiyon
     func isHighlighted(row: Int, column: Int) -> Bool {
-        guard let selected = selectedCell else { return false }
+        // Seçili hücre yoksa hiçbir hücre vurgulanmaz
+        guard let selectedCell = selectedCell else {
+            return false
+        }
         
-        // Seçili hücre ile aynı ise doğrudan true döndür
-        if selected.row == row && selected.column == column {
+        // Hücre seçili olan hücre ise
+        if selectedCell.row == row && selectedCell.column == column {
             return true
         }
         
-        // Hücre pozisyon haritası doğru boyutta değilse veya boşsa yeniden oluştur
-        if cellPositionMap.count < 3 || cellPositionMap[0].isEmpty {
-            updateCellPositionMap()
+        // Hızlı konum kontrolü - seçili hücre ile aynı satırda mı
+        if selectedCell.row == row {
+            return true
         }
         
-        // Hedef hücre konumu
-        let targetPos = Position(row: row, col: column)
-        
-        // Güvenlik kontrolleri ekleyelim
-        if cellPositionMap.count > 0 && cellPositionMap[0].count > selected.row {
-            // Aynı satırda mı?
-            if cellPositionMap[0][selected.row].contains(targetPos) {
-                return true
-            }
+        // Hızlı konum kontrolü - seçili hücre ile aynı sütunda mı
+        if selectedCell.column == column {
+            return true
         }
         
-        if cellPositionMap.count > 1 && cellPositionMap[1].count > selected.column {
-            // Aynı sütunda mı?
-            if cellPositionMap[1][selected.column].contains(targetPos) {
-                return true
-            }
-        }
+        // Hızlı konum kontrolü - seçili hücre ile aynı 3x3 bloğunda mı
+        let selectedBlockRow = selectedCell.row / 3
+        let selectedBlockCol = selectedCell.column / 3
+        let blockRow = row / 3
+        let blockCol = column / 3
         
-        // Aynı 3x3 bloğunda mı?
-        let selectedBlockRow = selected.row / 3
-        let selectedBlockCol = selected.column / 3
-        let selectedBlockIndex = selectedBlockRow * 3 + selectedBlockCol
-        
-        if cellPositionMap.count > 2 && cellPositionMap[2].count > selectedBlockIndex {
-            if cellPositionMap[2][selectedBlockIndex].contains(targetPos) {
-                return true
-            }
-        }
-        
-        return false
+        return selectedBlockRow == blockRow && selectedBlockCol == blockCol
     }
     
-    // Aynı değere sahip hücreleri vurgulama için yeni optimizasyonlu versiyon
+    // Hücrenin seçili hücre ile aynı değere sahip olup olmadığını kontrol et - optimize edildi
     func hasSameValue(row: Int, column: Int) -> Bool {
-        guard let selected = selectedCell, 
-              let selectedValue = board.getValue(row: selected.row, column: selected.column),
+        // Seçili hücre veya değer yoksa kontrol etme
+        guard let selectedCell = selectedCell,
+              let selectedValue = board.getValue(row: selectedCell.row, column: selectedCell.column),
               selectedValue > 0 else {
             return false
         }
         
-        // Aynı hücre ise, false döndür
-        if selected.row == row && selected.column == column {
-            return false
+        // Aynı hücre olup olmadığını kontrol et
+        if selectedCell.row == row && selectedCell.column == column {
+            return false // Seçilen hücrenin kendisi aynı değere sahip sayılmaz
         }
         
-        // Hücredeki değer
+        // Hücrenin değerini kontrol et
         let cellValue = board.getValue(row: row, column: column)
-        
-        // Değer yoksa veya seçili hücre değerinden farklıysa
-        if cellValue == nil || cellValue != selectedValue {
-            return false
-        }
-        
-        // sameValueMap boşsa güncelle
-        if sameValueMap.isEmpty {
-            updateSameValueMap()
-        }
-        
-        // Aynı değere sahip hücreler haritasında bu değer var mı ve bu hücre o değere sahip mi?
-        if let positions = sameValueMap[selectedValue] {
-            return positions.contains(Position(row: row, col: column))
-        }
-        
-        return false
+        return cellValue == selectedValue
     }
     
     // Önbellekleri temizleme

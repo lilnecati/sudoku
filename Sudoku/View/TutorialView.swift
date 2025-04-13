@@ -87,16 +87,9 @@ struct TutorialView: View {
     
     var body: some View {
         ZStack {
-            // Modern gradient arka plan
-            LinearGradient(
-                colors: [
-                    colorScheme == .dark ? Color(.systemGray6) : .white,
-                    colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.05)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .edgesIgnoringSafeArea(.all)
+            // Izgara arka planı
+            GridBackgroundView()
+                .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
                 // Başlık ve kapat butonu

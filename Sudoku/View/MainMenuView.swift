@@ -14,93 +14,94 @@ struct MainMenuView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 25) {
-                // Animasyonlu logo ve başlık
-                VStack(spacing: 10) {
-                    // Sistem ikonu kullanarak logo
-                    Image(systemName: "grid.circle.fill")
-                        .font(.system(size: 80))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [ColorManager.primaryBlue, ColorManager.primaryGreen],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+            ZStack {
+                // Izgara arka planı
+                GridBackgroundView()
+                    .edgesIgnoringSafeArea(.all)
+                
+                VStack(spacing: 25) {
+                    // Animasyonlu logo ve başlık
+                    VStack(spacing: 10) {
+                        // Sistem ikonu kullanarak logo
+                        Image(systemName: "grid.circle.fill")
+                            .font(.system(size: 80))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.purple, .blue],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
                             )
-                        )
-                    
-                    Text("Sudoku")
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
-                }
-                .padding(.top, 50)
-                
-                Spacer()
-                
-                // Ana menü butonları
-                VStack(spacing: 15) {
-                    // Yeni Oyun butonu
-                    NavigationLink {
-                        GameView(difficulty: .easy)
-                    } label: {
-                        MenuButton(
-                            title: "Yeni Oyun",
-                            icon: "play.fill",
-                            color: ColorManager.primaryGreen
-                        )
+                            .shadow(color: .purple.opacity(0.6), radius: 10, x: 0, y: 0)
+                        
+                        Text("SUDOKU")
+                            .font(.system(size: 42, weight: .bold, design: .rounded))
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
+                            .shadow(color: .blue.opacity(0.6), radius: 5, x: 0, y: 0)
                     }
+                    .padding(.top, 50)
                     
-                    // Devam Et butonu
-                    if hasSavedGame {
+                    Spacer()
+                    
+                    // Ana menü butonları
+                    VStack(spacing: 18) {
+                        // Yeni Oyun butonu
                         NavigationLink {
-                            if let savedGame = loadLastGame() {
-                                GameView(savedGame: savedGame)
-                            }
+                            GameView(difficulty: .easy)
                         } label: {
-                            MenuButton(
-                                title: "Devam Et",
-                                icon: "arrow.clockwise",
-                                color: ColorManager.primaryBlue
+                            NeonMenuButton(
+                                title: "Yeni Oyun",
+                                icon: "play.fill",
+                                color: .green,
+                                colorScheme: colorScheme
+                            )
+                        }
+                        
+                        // Devam Et butonu
+                        if hasSavedGame {
+                            NavigationLink {
+                                if let savedGame = loadLastGame() {
+                                    GameView(savedGame: savedGame)
+                                }
+                            } label: {
+                                NeonMenuButton(
+                                    title: "Devam Et",
+                                    icon: "arrow.clockwise",
+                                    color: .blue,
+                                    colorScheme: colorScheme
+                                )
+                            }
+                        }
+                        
+                        // Skor Tablosu butonu
+                        NavigationLink {
+                            ScoreboardView()
+                        } label: {
+                            NeonMenuButton(
+                                title: "Skor Tablosu",
+                                icon: "trophy.fill",
+                                color: .orange,
+                                colorScheme: colorScheme
+                            )
+                        }
+                        
+                        // Ayarlar butonu
+                        NavigationLink {
+                            SettingsView()
+                        } label: {
+                            NeonMenuButton(
+                                title: "Ayarlar",
+                                icon: "gearshape.fill",
+                                color: .purple,
+                                colorScheme: colorScheme
                             )
                         }
                     }
+                    .padding(.horizontal, 30)
                     
-                    // Skor Tablosu butonu
-                    NavigationLink {
-                        ScoreboardView()
-                    } label: {
-                        MenuButton(
-                            title: "Skor Tablosu",
-                            icon: "trophy.fill",
-                            color: ColorManager.primaryOrange
-                        )
-                    }
-                    
-                    // Ayarlar butonu
-                    NavigationLink {
-                        SettingsView()
-                    } label: {
-                        MenuButton(
-                            title: "Ayarlar",
-                            icon: "gearshape.fill",
-                            color: ColorManager.primaryPurple
-                        )
-                    }
+                    Spacer()
                 }
-                .padding(.horizontal, 30)
-                
-                Spacer()
             }
-            .background(
-                LinearGradient(
-                    colors: [
-                        colorScheme == .dark ? Color(.systemGray6) : .white,
-                        colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.05)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .edgesIgnoringSafeArea(.all)
-            )
         }
         .onAppear {
             checkForSavedGame()
@@ -138,39 +139,70 @@ struct MainMenuView: View {
     }
 }
 
-struct MenuButton: View {
+// Neon efektli menü butonu
+struct NeonMenuButton: View {
     let title: String
     let icon: String
     let color: Color
+    let colorScheme: ColorScheme
     
     var body: some View {
         HStack {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(.white)
-                .frame(width: 36, height: 36)
-                .background(
-                    Circle()
-                        .fill(color)
-                )
+            // İkon
+            ZStack {
+                Circle()
+                    .fill(color.opacity(colorScheme == .dark ? 0.3 : 0.15))
+                    .frame(width: 44, height: 44)
+                    .overlay(
+                        Circle()
+                            .stroke(color, lineWidth: colorScheme == .dark ? 2 : 1)
+                            .blur(radius: colorScheme == .dark ? 2 : 0)
+                    )
+                    .shadow(color: color.opacity(colorScheme == .dark ? 0.8 : 0.3), radius: 8, x: 0, y: 0)
+                
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundColor(colorScheme == .dark ? .white : color)
+            }
             
+            // Başlık
             Text(title)
-                .font(.title3)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .font(.title3.bold())
+                .foregroundColor(colorScheme == .dark ? .white : .black)
             
             Spacer()
             
+            // Sağ ok işareti
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.secondary)
+                .foregroundColor(colorScheme == .dark ? .white.opacity(0.8) : .gray)
         }
-        .padding()
+        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            ZStack {
+                // Arkaplan
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(colorScheme == .dark ? 
+                          Color.black.opacity(0.5) : 
+                          Color.white.opacity(0.7))
+                
+                // Kenar çizgileri
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                color.opacity(colorScheme == .dark ? 0.7 : 0.3), 
+                                color.opacity(colorScheme == .dark ? 0.3 : 0.1)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: colorScheme == .dark ? 1.5 : 1.0
+                    )
+            }
         )
+        .shadow(color: color.opacity(colorScheme == .dark ? 0.4 : 0.2), radius: colorScheme == .dark ? 10 : 5, x: 0, y: 4)
     }
 }
 

@@ -69,16 +69,9 @@ struct SavedGamesView: View {
     
     var body: some View {
         ZStack {
-            // Arka plan - Anasayfadaki gradient stili uygulandı
-            LinearGradient(
-                colors: [
-                    colorScheme == .dark ? Color(.systemGray6) : .white,
-                    colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.05)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .edgesIgnoringSafeArea(.all)
+            // Izgara arka planı
+            GridBackgroundView()
+                .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 15) {
                 // Başlık

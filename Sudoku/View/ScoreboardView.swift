@@ -16,16 +16,9 @@ struct ScoreboardView: View {
     
     var body: some View {
         ZStack {
-            // Arka plan - Anasayfadaki gradient stili uygulandı
-            LinearGradient(
-                colors: [
-                    colorScheme == .dark ? Color(.systemGray6) : .white,
-                    colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.05)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .edgesIgnoringSafeArea(.all)
+            // Izgara arka planı
+            GridBackgroundView()
+                .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 16) {
                 // Başlık
@@ -148,17 +141,17 @@ struct ScoreboardView: View {
         .padding(.horizontal)
     }
     
-    // Zorluk seviyesi için ikon
+    // Zorluk seviyesi ikonu
     private func getDifficultyIcon(_ difficulty: SudokuBoard.Difficulty) -> String {
         switch difficulty {
         case .easy:
-            return "leaf"
+            return "leaf.fill"
         case .medium:
-            return "flame"
+            return "flame.fill"
         case .hard:
-            return "bolt"
+            return "bolt.fill"
         case .expert:
-            return "star"
+            return "star.fill"
         }
     }
 
@@ -319,45 +312,48 @@ struct ScoreboardView: View {
     }
     
     private var recentGamesView: some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Biten Oyunlar")
+                Text("Son Oyunlar")
                     .font(.headline)
                     .foregroundColor(.primary)
                 
                 Spacer()
                 
-                Image(systemName: "trophy.fill")
+                Image(systemName: "clock.arrow.circlepath")
                     .foregroundColor(getDifficultyColor(selectedDifficulty))
             }
             .padding(.horizontal)
             
             if recentScores.isEmpty {
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     Image(systemName: "gamecontroller")
-                        .font(.system(size: 36))
-                        .foregroundColor(.secondary.opacity(0.7))
-                        .padding(.bottom, 5)
+                        .font(.system(size: 32))
+                        .foregroundColor(.gray.opacity(0.7))
                     
                     Text("Henüz tamamlanmış oyun yok")
+                        .font(.system(size: 16))
                         .foregroundColor(.secondary)
-                        .font(.system(size: 16, weight: .medium))
-                    
-                    Text("Oyunları tamamladıkça burada listelenecek")
-                        .foregroundColor(.secondary.opacity(0.8))
-                        .font(.caption)
                         .multilineTextAlignment(.center)
                 }
-                .padding()
                 .frame(maxWidth: .infinity)
+                .padding(.vertical, 30)
             } else {
-                ForEach(0..<min(5, recentScores.count), id: \.self) { index in
-                    let score = recentScores[index]
-                    RecentGameRow(score: score, rank: index + 1)
-                    .buttonStyle(PlainButtonStyle())
-                    .padding(.bottom, 4)
+                LazyVStack {
+                    ForEach(0..<min(recentScores.count, 5), id: \.self) { index in
+                        let currentScore = recentScores[index]
+                        
+                        VStack {
+                            scoreCard(for: currentScore)
+                            
+                            if index < min(recentScores.count, 5) - 1 {
+                                Divider()
+                                    .padding(.horizontal, 16)
+                            }
+                        }
+                    }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 8)
             }
         }
         .padding(.vertical, 12)
@@ -375,7 +371,7 @@ struct ScoreboardView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 4)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
@@ -392,6 +388,237 @@ struct ScoreboardView: View {
                 )
         )
         .padding(.horizontal)
+    }
+    
+    @ViewBuilder
+    private func scoreCard(for score: NSManagedObject) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center) {
+                // Puan
+                VStack(alignment: .leading, spacing: 2) {
+                    // Skor
+                    let scoreValue = calculateScore(for: score)
+                    
+                    Text("\(scoreValue)")
+                        .font(.system(size: 36, weight: .bold))
+                        .foregroundColor(getDifficultyColor(for: score))
+                        .minimumScaleFactor(0.7)
+                    
+                    Text("puan")
+                        .font(.caption)
+                        .foregroundColor(getDifficultyColor(for: score).opacity(0.7))
+                }
+                .frame(width: 110, alignment: .leading)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        // Zorluk
+                        if let difficultyString = score.value(forKey: "difficulty") as? String {
+                            HStack(spacing: 4) {
+                                Image(systemName: getDifficultyIconFromString(difficultyString))
+                                    .font(.system(size: 12))
+                                
+                                Text(difficultyString)
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [getDifficultyColor(for: score).opacity(0.15), getDifficultyColor(for: score).opacity(0.1)]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [getDifficultyColor(for: score).opacity(0.4), getDifficultyColor(for: score).opacity(0.2)]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    )
+                            )
+                            .foregroundColor(getDifficultyColor(for: score))
+                        }
+                        
+                        Spacer()
+                        
+                        // Tarih - geliştirilmiş
+                        if let date = score.value(forKey: "date") as? Date {
+                            HStack(spacing: 4) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 10))
+                                
+                                Text(formatDate(date))
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    // İstatistikler - SavedGamesView tarzında geliştirilmiş
+                    statsSection(for: score)
+                }
+                .padding(.trailing, 16)
+            }
+        }
+        .padding(.vertical, 12)
+        .frame(height: 120)
+    }
+    
+    // Geliştirilmiş istatistik öğesi
+    private func statsSection(for score: NSManagedObject) -> some View {
+        HStack(spacing: 12) {
+            // Süre - geliştirilmiş görselleştirme
+            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
+            let minutes = Int(elapsedTime) / 60
+            let seconds = Int(elapsedTime) % 60
+            
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.orange.opacity(0.12), Color.orange.opacity(0.05)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 70, height: 32)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.orange.opacity(0.2), lineWidth: 0.5)
+                    )
+                
+                HStack(spacing: 2) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                        .padding(.trailing, 2)
+                    
+                    Text("\(minutes):\(String(format: "%02d", seconds))")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.orange)
+                }
+            }
+            
+            // Hata sayısı - geliştirilmiş görselleştirme
+            if let errorCount = score.value(forKey: "errorCount") as? Int {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.red.opacity(0.12), Color.red.opacity(0.05)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 32)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.red.opacity(0.2), lineWidth: 0.5)
+                        )
+                    
+                    HStack(spacing: 2) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.red)
+                        
+                        Text("\(errorCount)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+            
+            // İpucu sayısı - geliştirilmiş görselleştirme
+            if let hintCount = score.value(forKey: "hintCount") as? Int {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.yellow.opacity(0.12), Color.yellow.opacity(0.05)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 32)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.yellow.opacity(0.2), lineWidth: 0.5)
+                        )
+                    
+                    HStack(spacing: 2) {
+                        Image(systemName: "lightbulb.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.yellow)
+                        
+                        Text("\(hintCount)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.yellow)
+                    }
+                }
+            }
+            
+            Spacer()
+        }
+    }
+    
+    // Skor hesaplama
+    private func calculateScore(for score: NSManagedObject) -> Int {
+        if let totalScore = score.value(forKey: "totalScore") as? Int, totalScore > 0 {
+            return totalScore
+        } else {
+            // Geliştirilmiş skor hesaplama formülü
+            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
+            let errorCount = score.value(forKey: "errorCount") as? Int ?? 0
+            let hintCount = score.value(forKey: "hintCount") as? Int ?? 0
+            
+            // Temel puan: süreye göre hesaplama
+            let baseScore = Int(10000 / (elapsedTime + 1))
+            
+            // Hata ve ipucu için düzeltme faktörü (her hata %5, her ipucu %10 puan azaltır)
+            let penaltyFactor = max(0.0, 1.0 - (Double(errorCount) * 0.05 + Double(hintCount) * 0.1))
+            
+            // Zorluk seviyesi katsayısı (opsiyonel)
+            var difficultyMultiplier = 1.0
+            if let difficultyString = score.value(forKey: "difficulty") as? String,
+               let difficulty = SudokuBoard.Difficulty(rawValue: difficultyString) {
+                switch difficulty {
+                case .easy: difficultyMultiplier = 1.0
+                case .medium: difficultyMultiplier = 1.2
+                case .hard: difficultyMultiplier = 1.5
+                case .expert: difficultyMultiplier = 2.0
+                }
+            }
+            
+            // Final skor hesaplama
+            return Int(Double(baseScore) * penaltyFactor * difficultyMultiplier)
+        }
+    }
+    
+    // Zorluk seviyesine göre renk
+    private func getDifficultyColor(for score: NSManagedObject) -> Color {
+        guard let difficultyString = score.value(forKey: "difficulty") as? String,
+              let difficulty = SudokuBoard.Difficulty(rawValue: difficultyString) else {
+            return .blue
+        }
+        
+        switch difficulty {
+        case .easy:
+            return .green
+        case .medium:
+            return .blue
+        case .hard:
+            return .orange
+        case .expert:
+            return .red
+        }
     }
     
     private var difficultyComparisonView: some View {
@@ -606,30 +833,51 @@ struct ScoreboardView: View {
         }
     }
     
-    // Tab butonu
+    // Tab butonları
     private func tabButton(title: String, tag: Int) -> some View {
         Button(action: {
-            withAnimation(.spring()) {
+            withAnimation {
                 selectedTab = tag
             }
         }) {
             Text(title)
-                .fontWeight(selectedTab == tag ? .semibold : .regular)
-                .padding(.vertical, 10)
+                .font(.system(size: 16, weight: selectedTab == tag ? .semibold : .medium))
+                .foregroundColor(selectedTab == tag ? .blue : .primary)
+                .padding(.vertical, 12)
                 .padding(.horizontal, 20)
-                .frame(maxWidth: .infinity)
                 .background(
-                    Group {
+                    ZStack {
                         if selectedTab == tag {
-                            Capsule()
-                                .fill(Color.blue.opacity(0.2))
-                                .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.blue.opacity(0.12))
                         }
                     }
                 )
         }
-        .buttonStyle(PlainButtonStyle())
         .foregroundColor(selectedTab == tag ? .blue : .primary)
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM HH:mm"
+        formatter.locale = Locale(identifier: "tr_TR")
+        return formatter.string(from: date)
+    }
+    
+    // Zorluk seviyesi metin stringinden ikonu döndürür
+    private func getDifficultyIconFromString(_ difficultyString: String) -> String {
+        switch difficultyString {
+        case "Kolay":
+            return "leaf.fill"
+        case "Orta":
+            return "flame.fill"
+        case "Zor":
+            return "bolt.fill"
+        case "Uzman":
+            return "star.fill"
+        default:
+            return "questionmark"
+        }
     }
 }
 
@@ -695,6 +943,17 @@ struct StatCard: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(colorScheme == .dark ? Color(.systemGray5) : Color.white)
                 .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 3)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(colors: [color.opacity(0.5), color.opacity(0.2)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
         )
     }
 }
@@ -804,7 +1063,7 @@ struct RecentGameRow: View {
                         // Zorluk seviyesi - geliştirilmiş rozet
                         if let difficultyString = score.value(forKey: "difficulty") as? String {
                             HStack(spacing: 4) {
-                                Image(systemName: getDifficultyIcon(difficultyString))
+                                Image(systemName: getDifficultyIconFromString(difficultyString))
                                     .font(.system(size: 12))
                                 
                                 Text(difficultyString)
@@ -863,7 +1122,7 @@ struct RecentGameRow: View {
     
     // Geliştirilmiş istatistik öğesi
     private func statsSection() -> some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             // Süre - geliştirilmiş görselleştirme
             let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
             let minutes = Int(elapsedTime) / 60
@@ -878,7 +1137,7 @@ struct RecentGameRow: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(height: 32)
+                    .frame(width: 70, height: 32)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(Color.orange.opacity(0.2), lineWidth: 0.5)
@@ -894,7 +1153,6 @@ struct RecentGameRow: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.orange)
                 }
-                .padding(.horizontal, 8)
             }
             
             // Hata sayısı - geliştirilmiş görselleştirme
@@ -908,7 +1166,7 @@ struct RecentGameRow: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(height: 32)
+                        .frame(width: 40, height: 32)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(Color.red.opacity(0.2), lineWidth: 0.5)
@@ -918,13 +1176,11 @@ struct RecentGameRow: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 10))
                             .foregroundColor(.red)
-                            .padding(.trailing, 2)
                         
                         Text("\(errorCount)")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.red)
                     }
-                    .padding(.horizontal, 8)
                 }
             }
             
@@ -939,7 +1195,7 @@ struct RecentGameRow: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(height: 32)
+                        .frame(width: 40, height: 32)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(Color.yellow.opacity(0.2), lineWidth: 0.5)
@@ -949,33 +1205,15 @@ struct RecentGameRow: View {
                         Image(systemName: "lightbulb.fill")
                             .font(.system(size: 10))
                             .foregroundColor(.yellow)
-                            .padding(.trailing, 2)
                         
                         Text("\(hintCount)")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.yellow)
                     }
-                    .padding(.horizontal, 8)
                 }
             }
             
             Spacer()
-        }
-    }
-    
-    // Zorluk seviyesi ikonu
-    private func getDifficultyIcon(_ difficulty: String) -> String {
-        switch difficulty {
-        case "Kolay":
-            return "leaf.fill"
-        case "Orta":
-            return "flame.fill"
-        case "Zor":
-            return "bolt.fill"
-        case "Uzman":
-            return "star.fill"
-        default:
-            return "questionmark"
         }
     }
     
@@ -984,12 +1222,42 @@ struct RecentGameRow: View {
         if let totalScore = score.value(forKey: "totalScore") as? Int, totalScore > 0 {
             return totalScore
         } else {
+            // Geliştirilmiş skor hesaplama formülü
             let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
-            return Int(10000 / (elapsedTime + 1))
+            let errorCount = score.value(forKey: "errorCount") as? Int ?? 0
+            let hintCount = score.value(forKey: "hintCount") as? Int ?? 0
+            
+            // Temel puan: süreye göre hesaplama
+            let baseScore = Int(10000 / (elapsedTime + 1))
+            
+            // Hata ve ipucu için düzeltme faktörü (her hata %5, her ipucu %10 puan azaltır)
+            let penaltyFactor = max(0.0, 1.0 - (Double(errorCount) * 0.05 + Double(hintCount) * 0.1))
+            
+            // Zorluk seviyesi katsayısı (opsiyonel)
+            var difficultyMultiplier = 1.0
+            if let difficultyString = score.value(forKey: "difficulty") as? String,
+               let difficulty = SudokuBoard.Difficulty(rawValue: difficultyString) {
+                switch difficulty {
+                case .easy: difficultyMultiplier = 1.0
+                case .medium: difficultyMultiplier = 1.2
+                case .hard: difficultyMultiplier = 1.5
+                case .expert: difficultyMultiplier = 2.0
+                }
+            }
+            
+            // Final skor hesaplama
+            return Int(Double(baseScore) * penaltyFactor * difficultyMultiplier)
         }
     }
     
-    // Zorluk seviyesine göre renk
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM HH:mm"
+        formatter.locale = Locale(identifier: "tr_TR")
+        return formatter.string(from: date)
+    }
+    
+    // Zorluk seviyesine göre renk - ScoreboardView'dakinin aynısı
     private func getDifficultyColor() -> Color {
         guard let difficultyString = score.value(forKey: "difficulty") as? String,
               let difficulty = SudokuBoard.Difficulty(rawValue: difficultyString) else {
@@ -1008,11 +1276,20 @@ struct RecentGameRow: View {
         }
     }
     
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMM yyyy HH:mm"
-        formatter.locale = Locale(identifier: "tr_TR")
-        return formatter.string(from: date)
+    // Zorluk seviyesi metin stringinden ikonu döndürür - ScoreboardView'dakinin aynısı
+    private func getDifficultyIconFromString(_ difficultyString: String) -> String {
+        switch difficultyString {
+        case "Kolay":
+            return "leaf.fill"
+        case "Orta":
+            return "flame.fill"
+        case "Zor":
+            return "bolt.fill"
+        case "Uzman":
+            return "star.fill"
+        default:
+            return "questionmark"
+        }
     }
 }
 

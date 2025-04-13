@@ -105,68 +105,74 @@ struct SudokuBoardView: View {
         return false
     }
     
-    // Grid çizgilerini çiz
+    // Grid çizgilerini çiz - performans için sadece değişiklik olduğunda yeniden hesapla
     private var gridOverlay: some View {
-        ZStack {
-            // Tüm hücreler için ince çizgiler
-            gridCellLines
+        // Önbellekten kullan - grid overlay çok sık değişmiyor
+        let gridColor = colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.6)
+        let gridLinesColor = colorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.3)
+        
+        return ZStack {
+            // Tüm hücreler için ince çizgiler - tek bir drawingGroup içinde birleştir
+            gridCellLines(gridLinesColor: gridLinesColor)
+                .drawingGroup() // İnce çizgiler için Metal hızlandırması
             
-            // 3x3 bölgeleri için kalın çizgiler
-            gridLines
+            // 3x3 bölgeleri için kalın çizgiler - tek bir drawingGroup içinde birleştir
+            gridBoldLines(gridColor: gridColor)
+                .drawingGroup() // Kalın çizgiler için Metal hızlandırması
         }
     }
     
-    // İnce hücre çizgileri
-    private var gridCellLines: some View {
+    // İnce hücre çizgileri - renk parametresiyle önbellekleme için
+    private func gridCellLines(gridLinesColor: Color) -> some View {
         ZStack {
-            // Tüm yatay ince çizgiler
-            ForEach(0..<10, id: \.self) { index in
-                Path { path in
+            // Tüm yatay ince çizgiler - tek bir Path içinde birleştir
+            Path { path in
+                for index in 0..<10 {
                     let yPosition = gridSize / 9 * CGFloat(index)
                     path.move(to: CGPoint(x: 0, y: yPosition))
                     path.addLine(to: CGPoint(x: gridSize, y: yPosition))
                 }
-                .stroke(colorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: normalLineWidth)
             }
+            .stroke(gridLinesColor, lineWidth: normalLineWidth)
             
-            // Tüm dikey ince çizgiler
-            ForEach(0..<10, id: \.self) { index in
-                Path { path in
+            // Tüm dikey ince çizgiler - tek bir Path içinde birleştir
+            Path { path in
+                for index in 0..<10 {
                     let xPosition = gridSize / 9 * CGFloat(index)
                     path.move(to: CGPoint(x: xPosition, y: 0))
                     path.addLine(to: CGPoint(x: xPosition, y: gridSize))
                 }
-                .stroke(colorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: normalLineWidth)
             }
+            .stroke(gridLinesColor, lineWidth: normalLineWidth)
         }
     }
     
-    // Kalın grid çizgileri
-    private var gridLines: some View {
+    // Kalın grid çizgileri - renk parametresiyle önbellekleme için
+    private func gridBoldLines(gridColor: Color) -> some View {
         ZStack {
-            // Yatay kalın çizgiler
-            ForEach([3, 6], id: \.self) { index in
-                Path { path in
+            // Tüm yatay kalın çizgiler - tek bir Path içinde birleştir
+            Path { path in
+                for index in [3, 6] {
                     let yPosition = gridSize / 9 * CGFloat(index)
                     path.move(to: CGPoint(x: 0, y: yPosition))
                     path.addLine(to: CGPoint(x: gridSize, y: yPosition))
                 }
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.6), lineWidth: boldLineWidth)
             }
+            .stroke(gridColor, lineWidth: boldLineWidth)
             
-            // Dikey kalın çizgiler
-            ForEach([3, 6], id: \.self) { index in
-                Path { path in
+            // Tüm dikey kalın çizgiler - tek bir Path içinde birleştir
+            Path { path in
+                for index in [3, 6] {
                     let xPosition = gridSize / 9 * CGFloat(index)
                     path.move(to: CGPoint(x: xPosition, y: 0))
                     path.addLine(to: CGPoint(x: xPosition, y: gridSize))
                 }
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.6), lineWidth: boldLineWidth)
             }
+            .stroke(gridColor, lineWidth: boldLineWidth)
             
             // Dış çerçeve
             Rectangle()
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.6), lineWidth: boldLineWidth)
+                .stroke(gridColor, lineWidth: boldLineWidth)
         }
     }
     
@@ -190,7 +196,9 @@ struct SudokuBoardView: View {
         
         // Güç tasarrufu durumunu kontrol et
         let isPowerSaving = PowerSavingManager.shared.isPowerSavingEnabled
-        let powerSavingLevel = PowerSavingManager.shared.powerSavingLevel
+        
+        // Hücrenin "aktif" olup olmadığını belirle - Metal hızlandırması seçiciliği için
+        let isActiveCell = isSelected || isInvalid || isHintTarget || (pencilMarks.count > 0)
         
         let cellView = SudokuCellView(
             row: row,
@@ -211,13 +219,11 @@ struct SudokuBoardView: View {
         )
         .id("cellView_\(row)_\(column)_\(cellValue ?? 0)_\(pencilMarks.hashValue)")
         
-        // Güç tasarrufu moduna göre drawingGroup'u uygula
-        if isPowerSaving && powerSavingLevel == .high {
-            // Yüksek güç tasarrufu modunda drawingGroup kullanma
-            return AnyView(cellView)
-        } else {
-            // Normal modda veya düşük güç tasarrufu modunda drawingGroup kullan
+        // Metal hızlandırmasını seçici uygula - sadece aktif hücrelere veya güç tasarrufu kapalıysa
+        if isActiveCell && !isPowerSaving {
             return AnyView(cellView.drawingGroup())
+        } else {
+            return AnyView(cellView)
         }
     }
     
