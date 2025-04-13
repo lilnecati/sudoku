@@ -61,106 +61,95 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            // Izgara arka planı
-            GridBackgroundView()
+            // Izgara arka planı - ağır arka plan animasyonlarını kaldırdık
+            Color(UIColor.systemBackground)
                 .ignoresSafeArea()
             
+            // Ana içerik için ScrollView
             ScrollView {
-                VStack(spacing: 25) {
-                    // Logo ve başlık
-                    let titleSection = VStack(spacing: 10) {
+                VStack(spacing: 20) {
+                    // Logo ve başlık - Basit hale getirildi
+                    VStack(spacing: 10) {
                         Image(systemName: "person.circle.fill")
-                            .font(.system(size: 80))
+                            .font(.system(size: 60))
                             .foregroundColor(.blue)
                         
                         Text("Giriş Yap")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(colorScheme == .dark ? .white : .black)
+                            .font(.system(size: 24, weight: .bold))
                     }
-                    .padding(.top, 40)
-                    .padding(.bottom, 30)
+                    .padding(.top, 20)
+                    .padding(.bottom, 20)
                     
-                    titleSection
-                    
-                    // Giriş formu
-                    VStack(spacing: 20) {
+                    // Giriş formu - Basitleştirildi
+                    VStack(spacing: 15) {
                         // Kullanıcı adı
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("Kullanıcı Adı")
                                 .font(.headline)
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
                             
-                            let usernameTextField = TextField("Kullanıcı adınızı girin", text: $username)
+                            TextField("Kullanıcı adınızı girin", text: $username)
                                 .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
                                 .submitLabel(.next)
                                 .onSubmit {
-                                    // Şifre alanına odaklan
                                     focusPassword = true
                                 }
                                 .focused($focusUsername)
-                            
-                            let backgroundDarkMode = Color.white.opacity(0.1)
-                            let backgroundLightMode = Color.black.opacity(0.05)
-                            let backgroundColor = colorScheme == .dark ? backgroundDarkMode : backgroundLightMode
-                            
-                            usernameTextField
-                                .background(backgroundColor)
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
-                                )
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
                         }
                         
                         // Şifre
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("Şifre")
                                 .font(.headline)
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
                             
-                            let passwordField = SecureField("Şifrenizi girin", text: $password)
+                            SecureField("Şifrenizi girin", text: $password)
                                 .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
                                 .submitLabel(.done)
                                 .onSubmit {
-                                    // Klavyeyi kapat ve giriş yap
                                     if !username.isEmpty && !password.isEmpty {
                                         loginUser()
                                     }
                                 }
                                 .focused($focusPassword)
-                            
-                            let backgroundDarkMode = Color.white.opacity(0.1)
-                            let backgroundLightMode = Color.black.opacity(0.05)
-                            let backgroundColor = colorScheme == .dark ? backgroundDarkMode : backgroundLightMode
-                            
-                            passwordField
-                                .background(backgroundColor)
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
-                                )
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
                         }
                         
                         // Şifremi Unuttum
                         Button(action: {
-                            // Klavyeyi kapat
                             dismissKeyboard()
                             showForgotPassword = true
                         }) {
                             Text("Şifremi Unuttum")
                                 .font(.subheadline)
-                                .foregroundColor(Color.blue)
+                                .foregroundColor(.blue)
                         }
                         .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.top, -10)
                         
-                        // Giriş butonu - performans için önbelleğe alınmış
-                        loginButton(isDisabled: username.isEmpty || password.isEmpty || isLoading)
+                        // Giriş butonu - Basitleştirildi
+                        Button(action: loginUser) {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            } else {
+                                Text("Giriş Yap")
+                                    .fontWeight(.semibold)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            (username.isEmpty || password.isEmpty || isLoading) ? 
+                                Color.gray : Color.blue
+                        )
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .disabled(username.isEmpty || password.isEmpty || isLoading)
                         
                         // Kayıt ol butonu
                         HStack {
@@ -168,55 +157,50 @@ struct LoginView: View {
                                 .foregroundColor(.secondary)
                             
                             Button(action: {
-                                // Klavyeyi kapat
                                 dismissKeyboard()
-                                // Giriş sayfasını kapat ve kayıt sayfasını göster
                                 isPresented = false
-                                // RegisterView'ı ana SettingsView'dan çağırabilmek için bildirim gönder
                                 NotificationCenter.default.post(name: Notification.Name("ShowRegisterView"), object: nil)
                             }) {
                                 Text("Kayıt Ol")
                                     .foregroundColor(.blue)
                             }
                         }
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 8)
                         
                         // İptal butonu
                         Button(action: {
-                            // Klavyeyi kapat
                             dismissKeyboard()
                             presentationMode.wrappedValue.dismiss()
                         }) {
                             Text("İptal")
-                                .fontWeight(.medium)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .foregroundColor(.primary)
+                                .cornerRadius(8)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
-                        .foregroundColor(colorScheme == .dark ? .white : .black)
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(colorScheme == .dark ? Color.white.opacity(0.2) : Color.black.opacity(0.1), lineWidth: 1)
-                        )
                     }
                     .padding(.horizontal)
-                    
-                    Spacer()
                 }
                 .padding()
+                .frame(maxWidth: 500) // Ekran genişliğini sınırla
+                .padding(.bottom, 20)
             }
-            .scrollDismissesKeyboard(.immediately)
-            .onTapGesture {
-                dismissKeyboard()
+            // Hata mesajı gösterme
+            .alert(isPresented: $showError) {
+                Alert(
+                    title: Text("Hata"),
+                    message: Text(errorMessage),
+                    dismissButton: .default(Text("Tamam"))
+                )
+            }
+            // Şifremi unuttum gösterme
+            .sheet(isPresented: $showForgotPassword) {
+                forgotPasswordView
             }
         }
-        .alert(isPresented: $showError) {
-            Alert(title: Text("Giriş Hatası"), message: Text(errorMessage), dismissButton: .default(Text("Tamam")))
-        }
-        .sheet(isPresented: $showForgotPassword) {
-            forgotPasswordView
-        }
+        // Ekstra arka plan özelleştirmelerini kaldır
+        .animation(nil, value: isLoading) // Animasyonu kaldır
     }
     
     private func loginUser() {

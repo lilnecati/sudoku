@@ -1304,23 +1304,44 @@ struct SettingsView: View {
                 
                 // Çıkış butonu
                 Button(action: {
-                    // Çıkış işlemi
-                    PersistenceController.shared.logoutCurrentUser()
+                    // Çıkış işlemi öncesi debug
+                    debugPrint("Çıkış işlemi başlatılıyor, mevcut kullanıcı: \(String(describing: PersistenceController.shared.getCurrentUser()?.username))")
                     
-                    // Titreşim ve ses
-                    if enableHapticFeedback {
-                        SoundManager.shared.playNavigationSound()
-                    } else {
-                        SoundManager.shared.playNavigationSoundOnly()
+                    // Force UI update first to make sure changes are reflected
+                    withAnimation(nil) {
+                        // Çıkış işlemi
+                        PersistenceController.shared.logoutCurrentUser()
+                        
+                        // Titreşim ve ses
+                        if enableHapticFeedback {
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Başarılı çıkış bildirimi
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.prepare()
+                        impactFeedback.impactOccurred()
                     }
                     
-                    // Kullanıcı çıkışından sonra veri yenileme bildirimi
-                    NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
+                    // Çıkış işlemi sonrası debug
+                    debugPrint("Çıkış işlemi tamamlandı, mevcut kullanıcı: \(String(describing: PersistenceController.shared.getCurrentUser()?.username))")
                     
-                    // Başarılı çıkış bildirimi
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                    impactFeedback.prepare()
-                    impactFeedback.impactOccurred()
+                    // UI güncellemesi için garanti mekanizması
+                    DispatchQueue.main.async {
+                        // Kullanıcı çıkışından sonra veri yenileme bildirimi
+                        NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
+                        
+                        // Force refresh
+                        NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+                        
+                        // UI'ı tamamen sıfırlamak için sayfayı kapat
+                        presentationMode.wrappedValue.dismiss()
+                        
+                        // Dummy state değişkeni ile görünümü yenileme
+                        isRefreshing.toggle()
+                    }
                 }) {
                     HStack {
                         Label {

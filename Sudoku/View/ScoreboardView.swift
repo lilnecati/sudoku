@@ -245,9 +245,17 @@ struct ScoreboardView: View {
                 GridItem(.flexible())
             ], spacing: 12) {
                 StatCard(
-                    title: "Tamamlanan Oyunlar",
+                    title: "Toplam Oyunlar",
                     value: "\(statistics.totalGames)",
                     icon: "checkmark.circle.fill",
+                    color: .blue,
+                    colorScheme: colorScheme
+                )
+                
+                StatCard(
+                    title: "\(selectedDifficulty.localizedName) Oyunları",
+                    value: "\(statistics.difficultyGames)",
+                    icon: getDifficultyIcon(selectedDifficulty),
                     color: getDifficultyColor(selectedDifficulty),
                     colorScheme: colorScheme
                 )
@@ -265,14 +273,6 @@ struct ScoreboardView: View {
                     value: formatTime(statistics.bestTime),
                     icon: "bolt.fill",
                     color: .purple,
-                    colorScheme: colorScheme
-                )
-                
-                StatCard(
-                    title: "Başarı Oranı",
-                    value: "\(Int(statistics.successRate * 100))%",
-                    icon: "percent",
-                    color: .teal,
                     colorScheme: colorScheme
                 )
             }
@@ -737,17 +737,28 @@ struct ScoreboardView: View {
         let bestScore = ScoreManager.shared.getBestScore(for: selectedDifficulty)
         let averageScore = ScoreManager.shared.getAverageScore(for: selectedDifficulty)
         
-        // Oyun sayısını ve ortalama süreyi hesapla
+        // Seçili zorluk seviyesi için skorları hesapla
         let request = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
         request.predicate = NSPredicate(format: "difficulty == %@", selectedDifficulty.rawValue)
         request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
         
+        // Tüm zorluk seviyelerindeki toplam oyun sayısını hesaplamak için
+        let totalGamesRequest = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
+        totalGamesRequest.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
+        
         do {
             let context = PersistenceController.shared.container.viewContext
-            let scores = try context.fetch(request)
-            let totalGames = scores.count
             
-            print("📝 \(selectedDifficulty.rawValue) zorluk seviyesi için \(totalGames) skor bulundu")
+            // Seçili zorluk seviyesi için skorları getir
+            let scores = try context.fetch(request)
+            let difficultyGames = scores.count
+            
+            // Tüm zorluk seviyelerindeki toplam oyun sayısı
+            let allScores = try context.fetch(totalGamesRequest)
+            let totalGames = allScores.count
+            
+            print("📝 \(selectedDifficulty.rawValue) zorluk seviyesi için \(difficultyGames) skor bulundu")
+            print("📝 Tüm zorluk seviyeleri için toplam \(totalGames) skor bulundu")
             
             // Son oyunları kaydet
             recentScores = scores
@@ -790,12 +801,13 @@ struct ScoreboardView: View {
                 }
             }
             
-            let averageTime = totalGames > 0 ? totalTime / Double(totalGames) : 0
-            let calculatedAverageScore = totalGames > 0 ? Double(totalScore) / Double(totalGames) : 0
-            let successRate: Double = totalGames > 0 ? 1.0 : 0.0 // Tüm oyunlar tamamlanmış kabul edilir
+            let averageTime = difficultyGames > 0 ? totalTime / Double(difficultyGames) : 0
+            let calculatedAverageScore = difficultyGames > 0 ? Double(totalScore) / Double(difficultyGames) : 0
+            let successRate: Double = difficultyGames > 0 ? 1.0 : 0.0 // Tüm oyunlar tamamlanmış kabul edilir
             
             statistics = ScoreboardStatistics(
-                totalGames: totalGames,
+                totalGames: totalGames,  // Tüm zorluk seviyelerindeki toplam oyun sayısı
+                difficultyGames: difficultyGames, // Sadece seçili zorluk seviyesindeki oyun sayısı
                 totalScore: totalScore,
                 averageScore: calculatedAverageScore,
                 bestScore: bestTotalScore > 0 ? bestTotalScore : bestScore, // Yeni en yüksek skoru kullan
@@ -807,6 +819,7 @@ struct ScoreboardView: View {
             print("❌ Oyun istatistikleri alınamadı: \(error.localizedDescription)")
             statistics = ScoreboardStatistics(
                 totalGames: 0,
+                difficultyGames: 0,
                 totalScore: 0,
                 averageScore: averageScore,
                 bestScore: bestScore,
@@ -1296,6 +1309,7 @@ struct RecentGameRow: View {
 // İstatistik modeli
 struct ScoreboardStatistics {
     var totalGames: Int = 0
+    var difficultyGames: Int = 0
     var totalScore: Int = 0
     var averageScore: Double = 0
     var bestScore: Int = 0

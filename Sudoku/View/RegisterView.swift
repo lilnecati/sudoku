@@ -90,72 +90,83 @@ struct RegisterView: View {
     
     var body: some View {
         ZStack {
-            // Arka plan
-            GridBackgroundView()
+            // Basit arka plan - GridBackgroundView yerine düz renk
+            Color(UIColor.systemBackground)
                 .ignoresSafeArea()
             
             ScrollView {
-                VStack(spacing: 25) {
-                    // Başlık
+                VStack(spacing: 20) {
+                    // Başlık - basitleştirildi
                     Text("Yeni Hesap Oluştur")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
-                        .padding(.top, 30)
+                        .font(.system(size: 24, weight: .bold))
+                        .padding(.top, 20)
                     
-                    VStack(spacing: 20) {
-                        // Ad Soyad
-                        inputField(
-                            title: "Ad Soyad", 
-                            placeholder: "Adınızı ve soyadınızı girin", 
-                            value: $name,
-                            focusState: $focusName,
-                            onSubmit: { focusEmail = true }
-                        )
+                    VStack(spacing: 16) {
+                        // Ad Soyad - basitleştirildi
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Ad Soyad")
+                                .font(.headline)
+                            
+                            TextField("Adınızı ve soyadınızı girin", text: $name)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .focused($focusName)
+                                .submitLabel(.next)
+                                .onSubmit { focusEmail = true }
+                        }
                         
-                        // E-posta
-                        inputField(
-                            title: "E-posta", 
-                            placeholder: "E-posta adresinizi girin", 
-                            value: $email, 
-                            keyboardType: .emailAddress,
-                            focusState: $focusEmail,
-                            onSubmit: { focusUsername = true }
-                        )
+                        // E-posta - basitleştirildi
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("E-posta")
+                                .font(.headline)
+                            
+                            TextField("E-posta adresinizi girin", text: $email)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .keyboardType(.emailAddress)
+                                .autocapitalization(.none)
+                                .focused($focusEmail)
+                                .submitLabel(.next)
+                                .onSubmit { focusUsername = true }
+                        }
                         
-                        // Kullanıcı adı
-                        inputField(
-                            title: "Kullanıcı Adı", 
-                            placeholder: "En az 4 karakter", 
-                            value: $username,
-                            focusState: $focusUsername,
-                            onSubmit: { focusPassword = true }
-                        )
+                        // Kullanıcı adı - basitleştirildi
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Kullanıcı Adı")
+                                .font(.headline)
+                            
+                            TextField("En az 4 karakter", text: $username)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                                .focused($focusUsername)
+                                .submitLabel(.next)
+                                .onSubmit { focusPassword = true }
+                        }
                         
-                        // Şifre
-                        VStack(alignment: .leading, spacing: 8) {
+                        // Şifre - basitleştirildi
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("Şifre")
                                 .font(.headline)
-                                .foregroundColor(.primary)
                             
                             SecureField("Şifrenizi girin", text: $password)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
                                 .focused($focusPassword)
                                 .submitLabel(.next)
                                 .onSubmit { focusConfirmPassword = true }
-                                .padding()
-                                .background(Color.secondary.opacity(0.1))
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                                )
                             
-                            // Parola gücü bilgisi
+                            // Parola gücü bilgisi - basitleştirildi
                             if !password.isEmpty {
                                 let passwordCheck = SecurityManager.shared.isStrongPassword(password)
                                 Text(passwordCheck.message)
                                     .font(.caption)
                                     .foregroundColor(passwordCheck.isStrong ? .green : .red)
-                                    .padding(.top, 4)
                             }
                             
                             // Şifre bilgisi butonu
@@ -169,18 +180,19 @@ struct RegisterView: View {
                                     Text("Güçlü şifre nedir?")
                                         .font(.caption)
                                 }
+                                .foregroundColor(.blue)
                             }
-                            .foregroundColor(.blue)
-                            .padding(.top, 2)
                         }
                         
-                        // Şifre onay
-                        VStack(alignment: .leading, spacing: 8) {
+                        // Şifre onay - basitleştirildi
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("Şifre Onayı")
                                 .font(.headline)
-                                .foregroundColor(.primary)
                             
                             SecureField("Şifrenizi tekrar girin", text: $confirmPassword)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
                                 .focused($focusConfirmPassword)
                                 .submitLabel(.done)
                                 .onSubmit {
@@ -189,60 +201,88 @@ struct RegisterView: View {
                                         registerUser()
                                     }
                                 }
-                                .padding()
-                                .background(Color.secondary.opacity(0.1))
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                                )
                             
-                            // Şifre eşleşme bilgisi
+                            // Şifre eşleşme bilgisi - basitleştirildi
                             if !confirmPassword.isEmpty {
-                                Text(password == confirmPassword ? "Şifreler eşleşiyor" : "Şifreler eşleşmiyor")
-                                    .font(.caption)
-                                    .foregroundColor(password == confirmPassword ? .green : .red)
-                                    .padding(.top, 4)
+                                if password == confirmPassword {
+                                    Text("Şifreler eşleşiyor")
+                                        .font(.caption)
+                                        .foregroundColor(.green)
+                                } else {
+                                    Text("Şifreler eşleşmiyor")
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
                             }
                         }
                         
-                        // Kayıt ol butonu - önbelleğe alınmış
-                        registerButton(isDisabled: isFormInvalid)
-                            .padding(.top, 10)
+                        // Kayıt Ol butonu - basitleştirildi
+                        Button(action: registerUser) {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            } else {
+                                Text("Kayıt Ol")
+                                    .fontWeight(.semibold)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(isFormInvalid ? Color.gray : Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .disabled(isFormInvalid)
                         
-                        // İptal butonu
+                        // Zaten hesabınız var mı butonu
+                        HStack {
+                            Text("Zaten hesabınız var mı?")
+                                .foregroundColor(.secondary)
+                            
+                            Button(action: {
+                                dismissKeyboard()
+                                isPresented = false
+                            }) {
+                                Text("Giriş Yap")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        
+                        // İptal butonu - basitleştirildi
                         Button(action: {
                             dismissKeyboard()
-                            isPresented = false
+                            presentationMode.wrappedValue.dismiss()
                         }) {
                             Text("İptal")
-                                .fontWeight(.medium)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.secondary.opacity(0.1))
+                                .background(Color(.systemGray6))
                                 .foregroundColor(.primary)
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                                )
+                                .cornerRadius(8)
                         }
                     }
-                    .padding()
+                    .padding(.horizontal)
                 }
-                .padding(.bottom, 30)
+                .padding()
+                .frame(maxWidth: 500) // Ekran genişliğini sınırla
+                .padding(.bottom, 20)
             }
-            .scrollDismissesKeyboard(.immediately)
-            .onTapGesture {
-                dismissKeyboard()
+            
+            // Hata mesajı
+            .alert(isPresented: $showError) {
+                Alert(
+                    title: Text("Hata"),
+                    message: Text(errorMessage),
+                    dismissButton: .default(Text("Tamam"))
+                )
+            }
+            .sheet(isPresented: $showStrongPasswordInfo) {
+                passwordInfoSheet
             }
         }
-        .alert(isPresented: $showError) {
-            Alert(title: Text("Kayıt Hatası"), message: Text(errorMessage), dismissButton: .default(Text("Tamam")))
-        }
-        .sheet(isPresented: $showStrongPasswordInfo) {
-            passwordInfoSheet
-        }
+        .animation(nil, value: isLoading) // Animasyonu kaldır
     }
     
     // Klavyeyi kapat

@@ -174,6 +174,9 @@
     "E-posta adresinizi girin" : {
 
     },
+    "En az 4 karakter" : {
+
+    },
     "Geliştirici" : {
 
     },
@@ -184,9 +187,6 @@
 
     },
     "Geri" : {
-
-    },
-    "Giriş Hatası" : {
 
     },
     "Giriş Yap" : {
@@ -208,6 +208,9 @@
 
     },
     "Güçlü Şifre Örnekleri:" : {
+
+    },
+    "Hata" : {
 
     },
     "Hata: %@" : {
@@ -259,9 +262,6 @@
 
     },
     "Kaydet" : {
-
-    },
-    "Kayıt Hatası" : {
 
     },
     "Kayıt Ol" : {
@@ -766,6 +766,9 @@
 
     },
     "Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır." : {
+
+    },
+    "Zaten hesabınız var mı?" : {
 
     },
     "Zihninizi Çalıştırın" : {

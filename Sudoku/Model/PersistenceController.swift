@@ -9,6 +9,10 @@ class PersistenceController {
     init() {
         container = NSPersistentContainer(name: "SudokuModel")
         
+        // ÖNCELİKLE history tracking ayarlanmalı
+        let description = container.persistentStoreDescriptions.first
+        description?.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+        
         container.loadPersistentStores { description, error in
             if let error = error {
                 print("CoreData yüklenemedi: \(error.localizedDescription)")
@@ -140,33 +144,37 @@ class PersistenceController {
         let request: NSFetchRequest<User> = User.fetchRequest()
         request.predicate = NSPredicate(format: "isLoggedIn == YES")
         
+        debugPrint("🔄 LogoutCurrentUser başladı")
+        
         do {
             let users = try context.fetch(request)
-            var anonymousUserExists = false
+            debugPrint("👥 Giriş yapmış kullanıcı sayısı: \(users.count)")
             
             for user in users {
-                // Anonim kullanıcıyı kontrol et
-                if user.isAnonymous {
-                    // Anonim kullanıcı için çıkış yapmıyoruz, sadece var olduğunu not edelim
-                    anonymousUserExists = true
-                    continue
-                }
-                
-                // Normal kullanıcı için çıkış yap
+                // Anonim kullanıcı sistemini kaldırdığımız için tüm kullanıcıları çıkış yaptırıyoruz
+                debugPrint("👤 Çıkış yapan kullanıcı: \(user.username ?? "bilinmiyor")")
                 user.isLoggedIn = false
             }
             
             // Değişiklikler varsa kaydet
             if context.hasChanges {
                 try context.save()
+                debugPrint("✅ Kullanıcı çıkış bilgileri kaydedildi")
+            } else {
+                debugPrint("ℹ️ Kaydedilecek değişiklik yok")
             }
             
-            // Eğer mevcut anonim kullanıcı yoksa ve bir kullanıcı çıkış yaptıysa yeni anonim kullanıcı oluştur
-            if !anonymousUserExists && users.contains(where: { !$0.isAnonymous }) {
-                _ = getOrCreateAnonymousUser()
+            // Artık anonim kullanıcı oluşturmuyoruz
+            
+            // Son kontrol
+            if let currentUser = getCurrentUser() {
+                debugPrint("ℹ️ İşlem sonrası giriş yapmış kullanıcı: \(currentUser.username ?? "bilinmiyor")")
+            } else {
+                debugPrint("✅ Tüm kullanıcılar başarıyla çıkış yaptı")
             }
+            
         } catch {
-            print("Çıkış hatası: \(error)")
+            debugPrint("❌ Çıkış hatası: \(error)")
         }
     }
     
@@ -428,25 +436,39 @@ class PersistenceController {
         let request: NSFetchRequest<User> = User.fetchRequest()
         request.predicate = NSPredicate(format: "isAnonymous == YES")
         
+        debugPrint("🔄 getOrCreateAnonymousUser çağrıldı")
+        
         do {
             let anonymousUsers = try context.fetch(request)
             
+            debugPrint("👥 Mevcut anonim kullanıcı sayısı: \(anonymousUsers.count)")
+            
             if let anonymousUser = anonymousUsers.first {
+                debugPrint("✅ Mevcut anonim kullanıcı bulundu: \(anonymousUser.username ?? "bilinmiyor")")
+                // Giriş durumunu garantiye al
+                if !anonymousUser.isLoggedIn {
+                    anonymousUser.isLoggedIn = true
+                    try context.save()
+                    debugPrint("ℹ️ Anonim kullanıcının giriş durumu güncellendi")
+                }
                 return anonymousUser
             } else {
                 // Anonim kullanıcı oluştur
+                debugPrint("ℹ️ Yeni anonim kullanıcı oluşturuluyor...")
                 let anonymousUser = User(context: context)
                 anonymousUser.id = UUID()
-                anonymousUser.username = "anonymous_\(UUID().uuidString.prefix(8))"
+                let anonymousID = UUID().uuidString.prefix(8)
+                anonymousUser.username = "anonymous_\(anonymousID)"
                 anonymousUser.isAnonymous = true
                 anonymousUser.isLoggedIn = true
                 anonymousUser.registrationDate = Date()
                 
                 try context.save()
+                debugPrint("✅ Yeni anonim kullanıcı oluşturuldu: \(anonymousUser.username ?? "bilinmiyor")")
                 return anonymousUser
             }
         } catch {
-            print("❌ Anonim kullanıcı oluşturulamadı: \(error)")
+            debugPrint("❌ Anonim kullanıcı oluşturulamadı: \(error)")
             return nil
         }
     }
@@ -468,11 +490,10 @@ class PersistenceController {
         // Eğer oturum açmış bir kullanıcı varsa, skoru onunla ilişkilendir
         if let currentUser = getCurrentUser() {
             highScore.setValue(currentUser, forKey: "user")
-            highScore.playerName = currentUser.name
-        } else if let anonymousUser = getOrCreateAnonymousUser() {
-            // Anonim kullanıcı ile ilişkilendir
-            highScore.setValue(anonymousUser, forKey: "user")
-            highScore.playerName = "Anonim Oyuncu"
+            highScore.playerName = currentUser.name ?? "Oyuncu"
+        } else {
+            // Kullanıcı giriş yapmamışsa, geçici oyuncu adı ver
+            highScore.playerName = "Misafir Oyuncu"
         }
         
         do {
@@ -500,16 +521,10 @@ class PersistenceController {
                 userPredicate
             ])
             request.predicate = compoundPredicate
-        } else if let anonymousUser = getOrCreateAnonymousUser() {
-            // Anonim kullanıcının skorlarını getir
-            let userPredicate = NSPredicate(format: "user == %@", anonymousUser)
-            let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-                request.predicate!,
-                userPredicate
-            ])
-            request.predicate = compoundPredicate
         } else {
-            return []
+            // Kullanıcı giriş yapmamışsa - sadece zorluk seviyesine göre skorları getir 
+            // ama kullanıcıya göre filtreleme.
+            // request.predicate ifadesi zaten difficulty'yi filtreliyor, bu yeterli
         }
         
         // Skorları puan değerine göre sırala (yüksekten düşüğe)
