@@ -175,8 +175,18 @@ struct GameView: View {
         // Modern navigasyon çubuğu gizleme
         .toolbar(.hidden, for: .navigationBar)
         .toolbarRole(.navigationStack)
+        .preferredColorScheme(themeManager.colorScheme)
+        .onChange(of: themeManager.darkMode) { _, _ in
+            // Tema değiştiğinde tahtayı zorla yenile
+            boardKey = UUID().uuidString
+        }
+        .onChange(of: themeManager.useSystemAppearance) { _, _ in
+            // Sistem görünümü değiştiğinde tahtayı zorla yenile
+            boardKey = UUID().uuidString
+        }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+                .environmentObject(themeManager)
         }
         // Onay iletişim kutusuna gerek yok, otomatik kayıt var
     }

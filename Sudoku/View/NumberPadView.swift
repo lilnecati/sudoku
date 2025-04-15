@@ -99,23 +99,25 @@ struct NumberPadView: View {
         @State var isPressed = false
         
         return Button(action: {
-            // Ses efekti çal - artık SoundManager metotlarıyla titreşim de veriliyor
-            SoundManager.shared.playNumberInputSound()
+            // 1. ÖNCE SAYIYI GİR (en önemli işlem)
+            viewModel.setValueAtSelectedCell(number)
             
-            // Basılı efekti için animasyon
-            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+            // 2. HIZLI ANİMASYON EFEKT
+            withAnimation(.easeOut(duration: 0.1)) {
                 isPressed = true
             }
             
-            // Tuş etkisini tamamla
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            // 3. EN SON SES EFEKT (arka planda)
+            DispatchQueue.global(qos: .userInitiated).async {
+                SoundManager.shared.playNumberInputSoundOptimized()
+            }
+            
+            // Tuş etkisini geri çek
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.easeIn(duration: 0.1)) {
                     isPressed = false
                 }
             }
-            
-            // Numara değerini ayarla
-            viewModel.setValueAtSelectedCell(number)
         }) {
             // Sabit boyutlu dış konteyner
             ZStack {
@@ -182,14 +184,27 @@ struct NumberPadView: View {
     // Kalem modu tuşu - sabit boyutla optimize edilmiş
     private var pencilModeButton: some View {
         let buttonColor: Color = viewModel.pencilMode ? .purple : .gray
+        @State var isPressed = false
         
         return Button(action: {
-            // Ses efekti çal - artık SoundManager metotlarıyla titreşim de veriliyor
-            SoundManager.shared.playNumberInputSound()
+            // 1. ÖNCE KALEM MODUNU DEĞİŞTİR
+            viewModel.pencilMode.toggle()
             
-            // Kalem modunu değiştir - normal animasyon, layout boyutu animasyonsuz
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                viewModel.pencilMode.toggle()
+            // 2. HIZLI ANİMASYON EFEKT
+            withAnimation(.easeOut(duration: 0.1)) {
+                isPressed = true
+            }
+            
+            // 3. EN SON SES EFEKT (arka planda)
+            DispatchQueue.global(qos: .userInitiated).async {
+                SoundManager.shared.playNavigationSoundOptimized()
+            }
+            
+            // Tuş etkisini geri çek
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.easeIn(duration: 0.1)) {
+                    isPressed = false
+                }
             }
         }) {
             // Sabit boyutlu dış konteyner
@@ -201,6 +216,7 @@ struct NumberPadView: View {
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(buttonColor.opacity(0.3), lineWidth: 1)
                     )
+                    .scaleEffect(isPressed ? 0.95 : 1.0)
                 
                 // İçerik alanı
                 VStack(spacing: 2) {
@@ -245,13 +261,28 @@ struct NumberPadView: View {
     private var eraseButton: some View {
         let buttonColor: Color = .red
         let isDisabled = !isEnabled || viewModel.selectedCell == nil
+        @State var isPressed = false
         
         return Button(action: {
-            // Ses efekti çal - artık SoundManager metotlarıyla titreşim de veriliyor
-            SoundManager.shared.playEraseSound()
-            
-            // Seçili hücreyi temizle
+            // 1. ÖNCE SİLME İŞLEMİNİ YAP
             viewModel.setValueAtSelectedCell(nil)
+            
+            // 2. HIZLI ANİMASYON EFEKT
+            withAnimation(.easeOut(duration: 0.1)) {
+                isPressed = true
+            }
+            
+            // 3. EN SON SES EFEKT (arka planda)
+            DispatchQueue.global(qos: .userInitiated).async {
+                SoundManager.shared.playEraseSoundOptimized()
+            }
+            
+            // Tuş etkisini geri çek
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.easeIn(duration: 0.1)) {
+                    isPressed = false
+                }
+            }
         }) {
             // Sabit boyutlu dış konteyner
             ZStack {
@@ -262,6 +293,7 @@ struct NumberPadView: View {
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(buttonColor.opacity(0.3), lineWidth: 1)
                     )
+                    .scaleEffect(isPressed ? 0.95 : 1.0)
                 
                 // İçerik alanı
                 VStack(spacing: 2) {

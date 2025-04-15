@@ -589,6 +589,28 @@ class SoundManager: ObservableObject {
         player.play()
     }
     
+    /// Sayı girildiğinde çalan ses - optimize versiyonu
+    func playNumberInputSoundOptimized() {
+        // Önce titreşim - kritik UI yanıt için
+        if UIDevice.current.userInterfaceIdiom == .phone && enableHapticFeedback {
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred(intensity: 0.7)
+        }
+        
+        // Ses kapalıysa çalmaya çalışma
+        if !enableSoundEffects { return }
+        
+        // Ses çalmayı arka planda yap
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self, let player = self.numberInputPlayer else { return }
+            if player.isPlaying { return } // Zaten çalıyorsa tekrar çalma
+            
+            player.currentTime = 0
+            player.volume = Float(self.defaultVolume)
+            player.play()
+        }
+    }
+    
     /// Hatalı bir hamle yapıldığında çalan ses
     func playErrorSound() {
         log("🎵 playErrorSound çağrıldı")
@@ -719,6 +741,28 @@ class SoundManager: ObservableObject {
         player.play()
     }
     
+    /// Menü ve gezinme sesi - optimize versiyonu
+    func playNavigationSoundOptimized() {
+        // Önce titreşim - kritik UI yanıt için
+        if UIDevice.current.userInterfaceIdiom == .phone && enableHapticFeedback {
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred(intensity: 0.7)
+        }
+        
+        // Ses kapalıysa çalmaya çalışma
+        if !enableSoundEffects { return }
+        
+        // Ses çalmayı arka planda yap
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self, let player = self.navigationPlayer else { return }
+            if player.isPlaying { return } // Zaten çalıyorsa tekrar çalma
+            
+            player.currentTime = 0
+            player.volume = Float(self.defaultVolume)
+            player.play()
+        }
+    }
+    
     /// Menü ve gezinme sesi - titreşim vermeden (ayarlar için)
     func playNavigationSoundOnly() {
         log("🎵 playNavigationSoundOnly çağrıldı - titreşim vermeden")
@@ -833,6 +877,28 @@ class SoundManager: ObservableObject {
         
         // Log çıktısı
         log("✅ playEraseSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+    }
+    
+    /// Silme tuşu için ses - optimize versiyonu
+    func playEraseSoundOptimized() {
+        // Önce titreşim - kritik UI yanıt için
+        if UIDevice.current.userInterfaceIdiom == .phone && enableHapticFeedback {
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred(intensity: 0.7)
+        }
+        
+        // Ses kapalıysa çalmaya çalışma
+        if !enableSoundEffects { return }
+        
+        // Ses çalmayı arka planda yap
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self, let player = self.erasePlayer else { return }
+            if player.isPlaying { return } // Zaten çalıyorsa tekrar çalma
+            
+            player.currentTime = 0
+            player.volume = Float(self.defaultVolume)
+            player.play()
+        }
     }
     
     // Ses seviyesi değiştiğinde çağrılan fonksiyon

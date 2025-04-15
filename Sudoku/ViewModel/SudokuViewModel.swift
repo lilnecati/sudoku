@@ -1439,37 +1439,6 @@ class SudokuViewModel: ObservableObject {
     
     // Kalem işareti değiştirme
     func togglePencilMark(at row: Int, col: Int, value: Int) {
-        // Eğer rakam doğru çözüm değeri ise ve pencilMode'dayız, rakamı direkt yerleştir
-        let correctValue = board.getOriginalValue(at: row, col: col)
-        
-        if value == correctValue && pencilMode {
-            // Doğru değeri bulduğumuzda hücreye direkt yerleştir
-            // Kalem modundan çık
-            pencilMode = false
-            
-            // Hücreye değeri yerleştir - gecikmesiz
-            enterValue(value, at: row, col: col)
-            
-            // Ses çal
-            SoundManager.shared.playCorrectSound()
-            
-            // Önbelleği geçersiz kıl
-            invalidatePencilMarksCache(forRow: row, column: col)
-            validateBoard()
-            updateUsedNumbers()
-            
-            // Oyun tamamlanma kontrolü
-            checkGameCompletion()
-            
-            // Hamle sayısını artır
-            moveCount += 1
-            
-            // Otomatik kaydet
-            autoSaveGame()
-            
-            return
-        }
-        
         // Normal pencil mark işlemleri
         board.togglePencilMark(at: row, col: col, value: value)
         

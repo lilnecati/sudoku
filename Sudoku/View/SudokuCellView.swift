@@ -24,10 +24,14 @@ struct SudokuCellView: View {
     let isHintTarget: Bool // İpucu gösterildiğinde hedef olup olmadığı
     let onCellTapped: () -> Void
     
-    @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var powerManager = PowerSavingManager.shared
     @State private var animateSelection = false
     @State private var animateValue = false
+    
+    private var effectiveColorScheme: ColorScheme {
+        return themeManager.colorScheme ?? .light // Varsayılan olarak light, ama ThemeManager'dan gelir
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -35,22 +39,22 @@ struct SudokuCellView: View {
             let cellDimension = min(geometry.size.width, geometry.size.height)
             
             Button(action: {
-                // Ses efekti çal - artık playNavigationSound titreşim de içeriyor
-                SoundManager.shared.playNavigationSound()
+                // Daha etkileyici baskı hissi için pulsamayı kullan
+                withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                    animateSelection = true
+                }
                 
-                // Güç tasarrufu modunda değilse seçim animasyonunu tetikle
-                if !powerManager.isPowerSavingEnabled {
-                    // Daha etkileyici baskı hissi için pulsamayı kullan
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
-                        animateSelection = true
+                // Yavaşça normal boyuta dönüş
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                        animateSelection = false
                     }
-                    
-                    // Yavaşça normal boyuta dönüş
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                            animateSelection = false
-                        }
-                    }
+                }
+                
+                // Titreşim geri bildirimi (performans için ses olmadan)
+                if enableHapticFeedback && enableCellTapHaptic {
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.impactOccurred(intensity: 0.75)
                 }
                 
                 onCellTapped()
@@ -72,8 +76,7 @@ struct SudokuCellView: View {
                 // Sadece seçili, hatalı veya vurgulanmış hücrelerde Metal kullan
                 .drawingGroup(opaque: true, colorMode: .linear)
             }
-            // Animasyonu basitleştirelim - yalnızca seçili durum değiştiğinde ve güç tasarrufunda değilse
-            .powerSavingAwareAnimation(isSelected ? .spring(response: 0.25, dampingFraction: 0.7) : .none, value: isSelected)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
             .aspectRatio(1, contentMode: .fit)
         }
     }
@@ -86,7 +89,6 @@ struct SudokuCellView: View {
                 RoundedRectangle(cornerRadius: 4)
                     .stroke(isInvalid ? Color.red : getCellBorderColor(), lineWidth: isInvalid ? 2 : (isSelected ? 2 : (isMatchingValue ? 1.5 : 0.5)))
             )
-            .powerSavingAwareEffect(isEnabled: isSelected || isMatchingValue || isInvalid)
     }
     
     // Hücre arka plan rengi - Tek renk temali modern tasarım
@@ -98,25 +100,25 @@ struct SudokuCellView: View {
         
         // Hatalı giriş için kırmızı arka plan
         if isInvalid {
-            return colorScheme == .dark ? errorColor.opacity(0.25) : errorColor.opacity(0.15)
+            return effectiveColorScheme == .dark ? errorColor.opacity(0.25) : errorColor.opacity(0.15)
         }
         // İpucu hedefiyse mavi renkle vurgula (görsellerdeki gibi)
         else if isHintTarget {
-            return colorScheme == .dark ? hintColor.opacity(0.45) : hintColor.opacity(0.25) 
+            return effectiveColorScheme == .dark ? hintColor.opacity(0.45) : hintColor.opacity(0.25) 
         }
         else if isSelected {
             // Seçili hücre - en koyu ton
-            return colorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.25)
+            return effectiveColorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.25)
         } else if isMatchingValue {
             // Aynı değerli hücreler - DAHA BELİRGİN TON
             // Tüm aynı değerli hücreler için aynı arka plan rengi kullan
-            return colorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.3)
+            return effectiveColorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.3)
         } else if isHighlighted {
             // Aynı satır/sütun - orta ton
-            return colorScheme == .dark ? themeColor.opacity(0.25) : themeColor.opacity(0.15) 
+            return effectiveColorScheme == .dark ? themeColor.opacity(0.25) : themeColor.opacity(0.15) 
         } else {
             // Normal hücreler - çok hafif ton veya beyaz
-            return colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white
+            return effectiveColorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white
         }
     }
     
@@ -129,11 +131,11 @@ struct SudokuCellView: View {
         
         // Hatalı giriş için kırmızı kenarlık
         if isInvalid {
-            return colorScheme == .dark ? errorColor : errorColor
+            return effectiveColorScheme == .dark ? errorColor : errorColor
         }
         // İpucu hedefiyse daha koyu mavi kenarlık (görsellerdeki gibi)
         else if isHintTarget {
-            return colorScheme == .dark ? hintColor.opacity(1.0) : hintColor.opacity(0.8)
+            return effectiveColorScheme == .dark ? hintColor.opacity(1.0) : hintColor.opacity(0.8)
         }
         else if isSelected {
             // Seçili hücre kenarı - tam yoğunluk
@@ -141,13 +143,13 @@ struct SudokuCellView: View {
         } else if isMatchingValue {
             // Aynı değerli hücrelerin kenarları - DAHA BELİRGİN
             // Tüm aynı değerli hücreler için aynı kenar rengi kullan
-            return colorScheme == .dark ? themeColor.opacity(0.9) : themeColor.opacity(0.7)
+            return effectiveColorScheme == .dark ? themeColor.opacity(0.9) : themeColor.opacity(0.7)
         } else if isHighlighted {
             // Aynı satır/sütun kenarı - orta yoğunluk
-            return colorScheme == .dark ? themeColor.opacity(0.6) : themeColor.opacity(0.4)
+            return effectiveColorScheme == .dark ? themeColor.opacity(0.6) : themeColor.opacity(0.4)
         } else {
             // Normal kenarlar - çok hafif
-            return colorScheme == .dark ? themeColor.opacity(0.3) : themeColor.opacity(0.2)
+            return effectiveColorScheme == .dark ? themeColor.opacity(0.3) : themeColor.opacity(0.2)
         }
     }
     
@@ -158,21 +160,21 @@ struct SudokuCellView: View {
         
         // Hatalı giriş için kırmızı metin
         if isInvalid {
-            return colorScheme == .dark ? Color.red : Color.red
+            return effectiveColorScheme == .dark ? Color.red : Color.red
         }
         else if isHintTarget {
             // İpucu hedefi - mavi (görseldeki gibi)
             return Color.blue
         } else if isFixed {
             // Sabit sayılar - standart siyah/beyaz (maksimum okunabilirlik)
-            return colorScheme == .dark ? Color.white : Color.black
+            return effectiveColorScheme == .dark ? Color.white : Color.black
         } else if isUserEntered {
             // Kullanıcı girişleri - daha belirgin tema rengi
             // Daha koyu ve belirgin renkler kullanarak ayrım sağlama
-            return colorScheme == .dark ? Color.cyan : Color.blue
+            return effectiveColorScheme == .dark ? Color.cyan : Color.blue
         } else {
             // Diğer metinler - gri
-            return colorScheme == .dark ? Color.gray : Color.gray
+            return effectiveColorScheme == .dark ? Color.gray : Color.gray
         }
     }
     
@@ -185,19 +187,17 @@ struct SudokuCellView: View {
                 .cornerRadius(4)
                 
             // Hata animasyonu - güç tasarrufu modunda animasyonu kapat
-            if !powerManager.isPowerSavingEnabled {
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(Color.red, lineWidth: 2.5)
-                    .opacity(animateValue ? 0.2 : 0.7)
-                    .animation(
-                        Animation.easeInOut(duration: 0.6)
-                        .repeatForever(autoreverses: true),
-                        value: animateValue
-                    )
-                    .onAppear {
-                        animateValue = true
-                    }
-            }
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(Color.red, lineWidth: 2.5)
+                .opacity(animateValue ? 0.2 : 0.7)
+                .animation(
+                    Animation.easeInOut(duration: 0.6)
+                    .repeatForever(autoreverses: true),
+                    value: animateValue
+                )
+                .onAppear {
+                    animateValue = true
+                }
         }
     }
     

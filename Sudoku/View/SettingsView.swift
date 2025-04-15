@@ -284,6 +284,7 @@ struct SettingsView: View {
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .localizationAware()
+        .preferredColorScheme(themeManager.colorScheme)
         .sheet(isPresented: $showRegisterView) {
             RegisterViewContainer()
         }
@@ -298,6 +299,10 @@ struct SettingsView: View {
         .onChange(of: powerManager.batteryLevel) { _, _ in
             // Pil seviyesi değişince arayüzü güncelle
             updateUIOnBatteryChange()
+        }
+        .onChange(of: themeManager.darkMode) { _, _ in
+            // Tema değişikliği olduğunda anında uygulamak için
+            themeManager.objectWillChange.send()
         }
     }
     
@@ -696,7 +701,7 @@ struct SettingsView: View {
                                 .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
                                 .offset(x: themeManager.darkMode ? 10 : -10)
                         }
-                        .animation(nil, value: themeManager.darkMode)
+                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.darkMode)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }

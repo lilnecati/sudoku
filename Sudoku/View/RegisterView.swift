@@ -210,7 +210,7 @@ struct RegisterView: View {
                                         .foregroundColor(.green)
                                 } else {
                                     Text("Şifreler eşleşmiyor")
-                                        .font(.caption)
+                                    .font(.caption)
                                         .foregroundColor(.red)
                                 }
                             }
@@ -271,16 +271,16 @@ struct RegisterView: View {
             }
             
             // Hata mesajı
-            .alert(isPresented: $showError) {
+        .alert(isPresented: $showError) {
                 Alert(
                     title: Text("Hata"),
                     message: Text(errorMessage),
                     dismissButton: .default(Text("Tamam"))
                 )
-            }
-            .sheet(isPresented: $showStrongPasswordInfo) {
-                passwordInfoSheet
-            }
+        }
+        .sheet(isPresented: $showStrongPasswordInfo) {
+            passwordInfoSheet
+        }
         }
         .animation(nil, value: isLoading) // Animasyonu kaldır
     }

@@ -106,7 +106,7 @@ struct SudokuApp: App {
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var localizationManager = LocalizationManager.shared
     @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
-    @AppStorage("highPerformanceMode") private var highPerformanceMode = false
+    @AppStorage("highPerformanceMode") private var highPerformanceMode = true
     
     // Uygulamanın arka plana alınma zamanını kaydetmek için
     @AppStorage("lastBackgroundTime") private var lastBackgroundTime: Double = 0

@@ -9,7 +9,16 @@ import Combine
 
 struct SudokuBoardView: View {
     @ObservedObject var viewModel: SudokuViewModel
-    @Environment(\.colorScheme) var colorScheme
+    // ThemeManager kullanımı için colorScheme dependency kaldırıldı
+    // @Environment(\.colorScheme) var colorScheme
+    
+    // ThemeManager'a erişim
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Görünümde mevcut tema durumunu yansıtmak için hesaplanmış özellik
+    private var effectiveColorScheme: ColorScheme {
+        return themeManager.colorScheme ?? .light // Varsayılan olarak light, ama ThemeManager'dan gelir
+    }
     
     // Performans için önbellekleme
     @State private var cellSize: CGFloat = 0
@@ -45,7 +54,7 @@ struct SudokuBoardView: View {
                 ZStack {
                     // Tablo arkaplanı
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemBackground))
+                        .fill(effectiveColorScheme == .dark ? Color(.systemGray5) : Color(.systemBackground))
                         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                         .aspectRatio(1, contentMode: .fit)
                     
@@ -107,8 +116,8 @@ struct SudokuBoardView: View {
     // Grid çizgilerini çiz - performans için sadece değişiklik olduğunda yeniden hesapla
     private var gridOverlay: some View {
         // Önbellekten kullan - grid overlay çok sık değişmiyor
-        let gridColor = colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.6)
-        let gridLinesColor = colorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.3)
+        let gridColor = effectiveColorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.6)
+        let gridLinesColor = effectiveColorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.3)
         
         return ZStack {
             // Tüm hücreler için ince çizgiler - tek bir drawingGroup içinde birleştir
@@ -193,12 +202,6 @@ struct SudokuBoardView: View {
         // Kalem işaretlerini al
         let pencilMarks = viewModel.getPencilMarks(at: row, col: column)
         
-        // Güç tasarrufu durumunu kontrol et
-        let isPowerSaving = PowerSavingManager.shared.isPowerSavingEnabled
-        
-        // Hücrenin "aktif" olup olmadığını belirle - Metal hızlandırması seçiciliği için
-        let isActiveCell = isSelected || isInvalid || isHintTarget || (pencilMarks.count > 0)
-        
         let cellView = SudokuCellView(
             row: row,
             column: column,
@@ -216,14 +219,10 @@ struct SudokuBoardView: View {
                 viewModel.selectCell(row: row, column: column)
             }
         )
-        .id("cellView_\(row)_\(column)_\(cellValue ?? 0)_\(pencilMarks.hashValue)")
+        .id("\(row)\(column)\(cellValue ?? 0)\(isSelected)")
         
-        // Metal hızlandırmasını seçici uygula - sadece aktif hücrelere veya güç tasarrufu kapalıysa
-        if isActiveCell && !isPowerSaving {
-            return AnyView(cellView.drawingGroup())
-        } else {
-            return AnyView(cellView)
-        }
+        // Tüm hücrelere Metal hızlandırması uygula - maksimum performans için
+        return AnyView(cellView.drawingGroup())
     }
     
     // Hücre arka plan rengini hesapla - önbelleğe alma için ayrı fonksiyon
@@ -260,7 +259,7 @@ struct SudokuBoardView: View {
     // Metin rengini hesapla - önbelleğe alma için ayrı fonksiyon
     private func getTextColor(isOriginal: Bool, isSelected: Bool, cellValue: Int?) -> Color {
         if isOriginal {
-            return colorScheme == .dark ? .white : .black
+            return effectiveColorScheme == .dark ? .white : .black
         } else if let value = cellValue, let selectedCell = viewModel.selectedCell {
             if viewModel.board.isCorrectValue(row: selectedCell.row, column: selectedCell.column, value: value) {
                 return Color.blue.opacity(0.8)

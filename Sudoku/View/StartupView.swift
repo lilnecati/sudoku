@@ -46,13 +46,15 @@ struct StartupView: View {
     ]
     
     var body: some View {
-        Group {
-            if isReady {
-                // Hazır olduğunda ContentView'u göster
-                ContentView()
-                    .localizationAware()
-            } else {
-                // Açılış ekranı
+        ZStack {
+            // Ana uygulama her zaman yüklü ve hazır olacak (arka planda)
+            ContentView()
+                .localizationAware()
+                .opacity(isReady ? 1 : 0)
+                .animation(.easeIn(duration: 0.3), value: isReady)
+            
+            // Açılış ekranı (isReady olana kadar görünür)
+            if !isReady {
                 ZStack {
                     // Arkaplan gradyant
                     LinearGradient(
@@ -164,18 +166,16 @@ struct StartupView: View {
                     // Belirtilen süre sonra ContentView'a geç
                     print("🚀 StartupView \(displayDuration) saniye sonra ContentView'a geçecek...")
                     DispatchQueue.main.asyncAfter(deadline: .now() + displayDuration) {
-                        // Çıkış animasyonu
-                        withAnimation(.easeInOut(duration: 0.5)) {
+                        // ÖNCE ContentView'u hazırla (arka planda)
+                        print("🚀 StartupView uygulamayı başlatıyor...")
+                        isReady = true
+                        
+                        // SONRA kapanış animasyonunu uygula
+                        withAnimation(.easeInOut(duration: 0.3)) {
                             logoOpacity = 0
                             textOpacity = 0
                             backgroundOpacity = 0
                             gridOpacity = 0
-                        }
-                        
-                        // Animasyon bittikten sonra ContentView'a geç
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            print("🚀 StartupView uygulamaı ContentView ile başlatıyor...")
-                            isReady = true
                         }
                     }
                 }
