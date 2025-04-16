@@ -281,11 +281,11 @@ struct InitializationErrorView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.orange)
             
-            Text("Uygulama Başlatılamadı")
+            Text.localizedSafe("Uygulama Başlatılamadı")
                 .font(.title)
                 .fontWeight(.bold)
             
-            Text("Uygulamayı kapatıp tekrar açmayı deneyin.")
+            Text.localizedSafe("Uygulamayı kapatıp tekrar açmayı deneyin.")
                 .multilineTextAlignment(.center)
             
             Text("Hata: \(error.localizedDescription)")
@@ -294,7 +294,7 @@ struct InitializationErrorView: View {
                 .padding()
             
             Button(action: retryAction) {
-                Text("Tekrar Dene")
+                Text.localizedSafe("Tekrar Dene")
                     .fontWeight(.semibold)
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 10).fill(Color.blue))

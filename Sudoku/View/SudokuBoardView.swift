@@ -59,9 +59,9 @@ struct SudokuBoardView: View {
                         .aspectRatio(1, contentMode: .fit)
                     
                     // 9x9 hücre gridi - sabit boyutlu hücreler
-                    VStack(spacing: 0) {
+                    LazyVStack(spacing: 0) {
                         ForEach(0..<9) { row in
-                            HStack(spacing: 0) {
+                            LazyHStack(spacing: 0) {
                                 ForEach(0..<9) { column in
                                     cellView(row: row, column: column)
                                         .id("cell_\(row)_\(column)")
@@ -74,13 +74,16 @@ struct SudokuBoardView: View {
                     }
                     .frame(width: minDimension, height: minDimension)
                     .clipped() // Taşmaları önle
-                    .drawingGroup(opaque: true) // Metal hızlandırması - performans için opacity: true eklendi
+                    // Her zaman GPU hızlandırma kullan - güç tasarrufu modunda bile
+                    .drawingGroup(opaque: true, colorMode: .linear)
                     
                     // Izgara çizgilerini üst katmanda göster
                     gridOverlay
                         .frame(width: minDimension, height: minDimension)
+                        .drawingGroup(opaque: true) // Izgara çizgilerini de GPU ile render et
                 }
                 .aspectRatio(1, contentMode: .fit) // Kare oranını koru
+                .drawingGroup() // Tüm ZStack'i GPU ile render et
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
             // Görünüm dışında state güncelleme
@@ -98,6 +101,7 @@ struct SudokuBoardView: View {
             // İpucu açıklama ekranı artık GameView'da gösteriliyor
         }
         .aspectRatio(1, contentMode: .fit)
+        .drawingGroup() // Tüm görünümü GPU ile render et
     }
     
     // Boyutları güncelle - sabit bir cell boyutu için optimize edildi
@@ -122,11 +126,11 @@ struct SudokuBoardView: View {
         return ZStack {
             // Tüm hücreler için ince çizgiler - tek bir drawingGroup içinde birleştir
             gridCellLines(gridLinesColor: gridLinesColor)
-                .drawingGroup() // İnce çizgiler için Metal hızlandırması
+                .drawingGroup(opaque: true) // İnce çizgiler için Metal hızlandırması
             
             // 3x3 bölgeleri için kalın çizgiler - tek bir drawingGroup içinde birleştir
             gridBoldLines(gridColor: gridColor)
-                .drawingGroup() // Kalın çizgiler için Metal hızlandırması
+                .drawingGroup(opaque: true) // Kalın çizgiler için Metal hızlandırması
         }
     }
     
@@ -202,6 +206,10 @@ struct SudokuBoardView: View {
         // Kalem işaretlerini al
         let pencilMarks = viewModel.getPencilMarks(at: row, col: column)
         
+        // ID değerini hesapla - değişimler için gerekli değerleri dahil et
+        let cellID = "\(row)\(column)\(cellValue ?? 0)\(isSelected)\(isInvalid)\(pencilMarks.hashValue)"
+        
+        // Her zaman GPU render kullan
         let cellView = SudokuCellView(
             row: row,
             column: column,
@@ -215,14 +223,17 @@ struct SudokuBoardView: View {
             pencilMarks: pencilMarks,
             isHintTarget: isHintTarget,
             onCellTapped: {
-                // PowerSavingManager ile etkileşimleri kontrol et
+                // Performans optimizasyonu: Zaten seçili hücreye tekrar basılırsa işlem yapma
+                if viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column {
+                    return
+                }
                 viewModel.selectCell(row: row, column: column)
             }
         )
-        .id("\(row)\(column)\(cellValue ?? 0)\(isSelected)")
+        .id(cellID)
+        .drawingGroup(opaque: true, colorMode: .linear) // Her zaman GPU ile render et, maksimum performans
         
-        // Tüm hücrelere Metal hızlandırması uygula - maksimum performans için
-        return AnyView(cellView.drawingGroup())
+        return AnyView(cellView)
     }
     
     // Hücre arka plan rengini hesapla - önbelleğe alma için ayrı fonksiyon
@@ -300,5 +311,13 @@ extension SudokuCellView: Equatable {
         lhs.isMatchingValue == rhs.isMatchingValue &&
         lhs.isInvalid == rhs.isInvalid &&
         lhs.isHintTarget == rhs.isHintTarget
+    }
+}
+
+// ConditionalDrawingGroup modifierını güncelliyorum - her zaman GPU render kullansın
+struct ConditionalDrawingGroup: ViewModifier {
+    func body(content: Content) -> some View {
+        // Her zaman Metal hızlandırması kullan, güç tasarrufu durumunu dikkate alma
+        return AnyView(content.drawingGroup(opaque: true, colorMode: .linear))
     }
 }

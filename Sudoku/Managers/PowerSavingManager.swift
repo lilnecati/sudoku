@@ -37,6 +37,17 @@ class PowerSavingManager: ObservableObject {
         }
     }
     
+    // GPU hızlandırma modu - varsayılan olarak aktif ve kapatılamaz
+    @AppStorage("enableGPUAcceleration") var enableGPUAcceleration: Bool = true {
+        didSet {
+            // Her zaman aktif olacak şekilde zorla
+            if !enableGPUAcceleration {
+                enableGPUAcceleration = true
+            }
+            NotificationCenter.default.post(name: NSNotification.Name("GPUAccelerationChanged"), object: nil)
+        }
+    }
+    
     // Pil seviyesi ve şarj durumu
     @Published private(set) var batteryLevel: Float = 1.0
     @Published private(set) var isCharging: Bool = false
@@ -64,6 +75,26 @@ class PowerSavingManager: ObservableObject {
         
         // Başlangıç değerlerini ayarla
         updateBatteryStatus()
+        
+        // Varsayılan olarak güç tasarrufu modunu etkinleştir (CPU kullanımını düşürmek için)
+        if !UserDefaults.standard.bool(forKey: "powerSavingModeInitialized") {
+            powerSavingMode = true
+            powerSavingLevel = .high // Maksimum performans için high seviyeye çıkarıldı
+            autoPowerSaving = true
+            enableGPUAcceleration = true // Varsayılan olarak GPU hızlandırma aktif
+            UserDefaults.standard.set(true, forKey: "powerSavingModeInitialized")
+            UserDefaults.standard.set(true, forKey: "powerSavingMode")
+            UserDefaults.standard.set(true, forKey: "autoPowerSaving")
+            UserDefaults.standard.set(true, forKey: "enableGPUAcceleration")
+        }
+        
+        // CPU kullanımını düşürmek için hali hazırda aktif seviyeyi yükselt
+        if powerSavingMode && powerSavingLevel != .high {
+            powerSavingLevel = .high
+        }
+        
+        // GPU hızlandırmayı her zaman etkinleştir
+        enableGPUAcceleration = true
         
         // Pil durumu değişikliklerini izle
         NotificationCenter.default
@@ -170,6 +201,23 @@ class PowerSavingManager: ObservableObject {
         }
     }
     
+    // GPU hızlandırmayı aç/kapat - daima açık kalacak
+    func toggleGPUAcceleration() {
+        // GPU hızlandırma her zaman açık - değişiklik yapma
+        enableGPUAcceleration = true
+        
+        // Titreşim açıksa titreşimli ses çal
+        if enableHapticFeedback {
+            SoundManager.shared.playNavigationSound()
+        } else {
+            // Titreşim kapalıysa sadece ses çal
+            SoundManager.shared.playNavigationSoundOnly()
+        }
+        
+        // Değişiklik bildir
+        NotificationCenter.default.post(name: NSNotification.Name("GPUAccelerationChanged"), object: nil)
+    }
+    
     // Güç tasarrufu seviyesini manuel olarak ayarla
     func setPowerSavingLevel(_ level: PowerSavingLevel) {
         powerSavingLevel = level
@@ -204,6 +252,12 @@ class PowerSavingManager: ObservableObject {
         set { autoPowerSaving = newValue }
     }
     
+    // GPU hızlandırma durumunu kontrol et - her zaman true döndürür
+    var isGPUAccelerationEnabled: Bool {
+        get { return true }
+        set { /* her zaman açık kalacak - görmezden gel */ }
+    }
+    
     // Animasyon hızı faktörü - seviyeye göre
     var animationSpeedFactor: Double {
         if highPerformanceMode {
@@ -215,9 +269,9 @@ class PowerSavingManager: ObservableObject {
         }
         
         switch powerSavingLevel {
-        case .low: return 0.8
-        case .medium: return 0.6
-        case .high: return 0.4
+        case .low: return 0.7 // 0.8'den daha düşük faktöre değiştirildi
+        case .medium: return 0.5 // 0.6'dan daha düşük faktöre değiştirildi
+        case .high: return 0.3 // 0.4'ten daha düşük faktöre değiştirildi
         case .off: return 1.0
         }
     }
@@ -233,9 +287,9 @@ class PowerSavingManager: ObservableObject {
         }
         
         switch powerSavingLevel {
-        case .low: return 0.7
-        case .medium: return 0.5
-        case .high: return 0.2
+        case .low: return 0.6 // 0.7'den daha düşük faktöre değiştirildi
+        case .medium: return 0.4 // 0.5'ten daha düşük faktöre değiştirildi
+        case .high: return 0.1 // 0.2'den daha düşük faktöre değiştirildi
         case .off: return 1.0
         }
     }
@@ -251,9 +305,9 @@ class PowerSavingManager: ObservableObject {
         }
         
         switch powerSavingLevel {
-        case .low: return 0.8
-        case .medium: return 0.5
-        case .high: return 0.3
+        case .low: return 0.6 // 0.8'den daha düşük faktöre değiştirildi
+        case .medium: return 0.3 // 0.5'ten daha düşük faktöre değiştirildi
+        case .high: return 0.1 // 0.3'ten daha düşük faktöre değiştirildi
         case .off: return 1.0
         }
     }
@@ -263,9 +317,10 @@ class PowerSavingManager: ObservableObject {
         return isPowerSavingEnabled && (powerSavingLevel == .medium || powerSavingLevel == .high)
     }
     
-    // Yüksek kaliteli görseller kullan
+    // Yüksek kaliteli görseller kullan - artık GPU hızlandırma her zaman açık
     var shouldUseHighQualityRendering: Bool {
-        return !isPowerSavingEnabled || powerSavingLevel == .low
+        // Her durumda yüksek kalite rendering kullan
+        return true
     }
     
     // Kullanıcı etkileşimlerini sınırlandır
@@ -277,6 +332,12 @@ class PowerSavingManager: ObservableObject {
     // Etkileşim sınırlanıyor mu kontrol et
     var isUserInteractionThrottled: Bool {
         return isThrottling
+    }
+    
+    // GPU hızlandırması kontrolü - her zaman true döndürür
+    var useMetalRendering: Bool {
+        // Her zaman Metal kullan
+        return true
     }
 }
 
@@ -325,19 +386,14 @@ extension View {
         }
     }
     
-    // Güç tasarrufu moduna göre render kalitesi ve yöntemi
+    // Render kalitesi ve yöntemi - Her zaman GPU kullanır
     func powerSavingAwareRendering(isEnabled: Bool = true) -> some View {
-        let powerManager = PowerSavingManager.shared
-        
-        if !isEnabled || !powerManager.isPowerSavingEnabled || powerManager.powerSavingLevel == .low {
-            // Yüksek kalite render - drawingGroup ile Metal hızlandırması
-            return AnyView(self.drawingGroup())
-        } else if powerManager.powerSavingLevel == .medium {
-            // Orta kalite render - basit optimizasyon
-            return AnyView(self)
-        } else {
-            // Düşük kalite render - animasyonsuz basit görünüm
-            return AnyView(self)
-        }
+        // Her zaman yüksek kalite render - drawingGroup ile Metal hızlandırması
+        return AnyView(self.drawingGroup(opaque: true, colorMode: .linear))
+    }
+    
+    // GPU hızlandırması her zaman açık - standart kullanım için
+    func gpuAcceleratedView() -> some View {
+        return self.drawingGroup(opaque: true, colorMode: .linear)
     }
 }

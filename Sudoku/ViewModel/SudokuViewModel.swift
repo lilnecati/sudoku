@@ -30,6 +30,8 @@ class SudokuViewModel: ObservableObject {
     @Published var gameState: GameState = .playing
     // Kalem modu - not almak için
     @Published var pencilMode: Bool = false
+    // Yükleme durumu
+    @Published var isLoading: Bool = false
     
     // Performans iyileştirmesi: Pencil mark'ları hızlı erişim için önbelleğe al
     private var pencilMarkCache: [String: Set<Int>] = [:]
@@ -152,73 +154,90 @@ class SudokuViewModel: ObservableObject {
     
     // Yeni bir oyun başlat - optimize edildi
     func newGame(difficulty: SudokuBoard.Difficulty? = nil) {
+        // Yükleme durumunu aktifleştir
+        isLoading = true
+        
         // Mevcut kayıt ID'sini sıfırla - böylece yeni bir kayıt oluşacak
         self.currentGameID = nil
         
         // Önceden ayarlanmış zorluk seviyesini veya varsayılanı kullan
         let selectedDifficulty = difficulty ?? board.difficulty
         
-        // Yeni bir tahta oluştur
-        board = SudokuBoard(difficulty: selectedDifficulty)
-        
-        // Tahta durumunu orijinal olarak ayarla
-        originalBoardCells = []
-        for row in 0..<9 {
-            for col in 0..<9 {
-                if board.getValue(row: row, column: col) != nil {
-                    originalBoardCells.append((row, col))
+        // İşlemi arka planda gerçekleştir - UI bloklanmasın
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // 0.5 saniye bekle (yükleme göstergesi görünsün diye)
+            Thread.sleep(forTimeInterval: 0.5)
+            
+            // Yeni bir tahta oluştur
+            let newBoard = SudokuBoard(difficulty: selectedDifficulty)
+            
+            // Tahta hazır olduğunda ana thread'e dön
+            DispatchQueue.main.async {
+                // Tahta verilerini güncelle
+                self.board = newBoard
+                
+                // Tahta durumunu orijinal olarak ayarla
+                self.originalBoardCells = []
+                for row in 0..<9 {
+                    for col in 0..<9 {
+                        if self.board.getValue(row: row, column: col) != nil {
+                            self.originalBoardCells.append((row, col))
+                        }
+                    }
                 }
+                
+                // Kullanıcı tarafından girilen değerleri sıfırla
+                self.userEnteredValues = Array(repeating: Array(repeating: false, count: 9), count: 9)
+                
+                // Tüm state bilgilerini sıfırla
+                self.resetGameState()
+                
+                // Oyun durumunu güncelle
+                self.gameState = .playing
+                
+                // Zamanlayıcıyı başlat
+                self.startTimer()
+                
+                // Kullanılan sayıları güncelle
+                self.updateUsedNumbers()
+                
+                // Önbelleği temizle
+                self.clearCaches()
+                
+                // Otomatik kaydetmeyi etkinleştir - kullanıcı bilinçli olarak yeni oyun başlattı
+                let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+                UserDefaults.standard.set(false, forKey: noAutoSaveKey)
+                print("🔄 Yeni oyun başlatıldı, otomatik kaydetme etkinleştirildi")
+                
+                // Yükleme durumunu kapat
+                self.isLoading = false
             }
         }
-        
-        // Kullanıcı tarafından girilen değerleri sıfırla
-        userEnteredValues = Array(repeating: Array(repeating: false, count: 9), count: 9)
-        
-        // Tüm state bilgilerini sıfırla
-        resetGameState()
-        
-        // Oyun durumunu güncelle
-        gameState = .playing
-        
-        // Zamanlayıcıyı başlat
-        startTimer()
-        
-        // Kullanılan sayıları güncelle
-        updateUsedNumbers()
-        
-        // Önbelleği temizle
-        clearCaches()
-        
-        // Otomatik kaydetmeyi etkinleştir - kullanıcı bilinçli olarak yeni oyun başlattı
-        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
-        UserDefaults.standard.set(false, forKey: noAutoSaveKey)
-        print("🔄 Yeni oyun başlatıldı, otomatik kaydetme etkinleştirildi")
     }
     
     // Hücre seçme - optimize edildi
     func selectCell(row: Int, column: Int) {
-        // Mevcut seçimi temizle
+        // CPU optimizasyonu: Aynı hücre tekrar seçilirse işlem yapma
         if selectedCell?.row == row && selectedCell?.column == column {
-            selectedCell = nil
-            // Haritaları güncelle
-            updateSameValueMap()
-        } else {
-            // Yeni hücreyi seç
-            selectedCell = (row, column)
-            lastSelectedCell = (row, column)
-            
-            // Yeni seçim için haritaları güncelle
-            precalculateHighlightedCells(row: row, column: column)
+            return
         }
         
-        // Dokunsal geri bildirim
-        if enableHapticFeedback && enableCellTapHaptic {
-            // Sistem titreşim API'sini doğrudan kullan
-            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
+        // Seçilen hücre değiştiyse
+        let oldSelection = selectedCell
+        selectedCell = (row: row, column: column)
+        
+        // Vurgulamaları sadece gerektiğinde güncelle
+        if oldSelection?.row != row || oldSelection?.column != column {
+            updateHighlightedCells()
+            updateSameValueCells()
         }
         
-        // Debug log
-        print("Hücre seçildi: (\(row), \(column))")
+        // Ses kontrolü - titreşim açıksa çal
+        if enableHapticFeedback {
+            SoundManager.shared.playNavigationSound()
+        }
     }
     
     // Yeni seçilen hücreyle ilgili önbellekleri oluştur
@@ -292,7 +311,7 @@ class SudokuViewModel: ObservableObject {
         let col = selectedCell.column
         
         // Debug log
-        print("setValueAtSelectedCell: \(value ?? 0) -> (\(row), \(col))")
+        print("setValueAtSelectedCell: \(value ?? 0) -> (\(row), \(col)), pencilMode: \(pencilMode)")
         
         // Eğer orijinal/sabit bir hücre ise, değişime izin verme
         if board.isFixed(at: row, col: col) {
@@ -310,15 +329,35 @@ class SudokuViewModel: ObservableObject {
             return
         }
         
-        // Kalem modu için işlemler aynen kalsın
+        // Kalem modu için işlemler
         if pencilMode {
             // Kalem modu işlemi - notlar için
             if let value = value {
+                // Hücrede halihazırda bir değer varsa, önce onu temizle
+                if currentValue != nil {
+                    // Değeri sil ve sonra not ekle
+                    _ = board.setValue(row: row, column: col, value: nil)
+                    userEnteredValues[row][col] = false
+                }
+                
+                // Not ekle/çıkar
                 togglePencilMark(at: row, col: col, value: value)
+                
+                // Anında UI güncellemesi için
+                objectWillChange.send()
+                
+                // Hızlı feedback için
+                if enableHapticFeedback && enableNumberInputHaptic {
+                    let feedbackGenerator = UIImpactFeedbackGenerator(style: .light)
+                    feedbackGenerator.impactOccurred()
+                }
             } else {
                 // Silme işlemi - tüm pencil markları temizle
                 SoundManager.shared.playEraseSound()
                 clearPencilMarks(at: row, col: col)
+                
+                // Anında UI güncellemesi için
+                objectWillChange.send()
             }
             return
         }
@@ -650,12 +689,12 @@ class SudokuViewModel: ObservableObject {
     
     // İpucu tekniklerini belirten enum
     enum HintTechnique: String {
-        case nakedSingle = "Tek Olasılık (Naked Single)"
-        case hiddenSingle = "Tek Konum (Hidden Single)"
-        case nakedPair = "Açık Çift (Naked Pair)"
-        case hiddenPair = "Gizli Çift (Hidden Pair)"
-        case nakedTriple = "Açık Üçlü (Naked Triple)"
-        case hiddenTriple = "Gizli Üçlü (Hidden Triple)"
+        case nakedSingle = "Tek Olasılık Tespiti"
+        case hiddenSingle = "Tek Konum Tespiti"
+        case nakedPair = "Naked Pair"
+        case hiddenPair = "Hidden Pair"
+        case nakedTriple = "Naked Triple"
+        case hiddenTriple = "Hidden Triple"
         case xWing = "X-Wing"
         case swordfish = "Swordfish"
         case general = "Son Kalan Hücre"
@@ -664,25 +703,25 @@ class SudokuViewModel: ObservableObject {
         var description: String {
             switch self {
             case .nakedSingle:
-                return "Bu hücreye sadece tek bir sayı konabilir"
+                return NSLocalizedString("Bu hücreye sadece tek bir sayı konabilir", comment: "İpucu açıklaması")
             case .hiddenSingle:
-                return "Bu sayı, bu bölgede yalnızca tek bir hücreye konabilir"
+                return NSLocalizedString("Bu sayı, bu bölgede yalnızca tek bir hücreye konabilir", comment: "İpucu açıklaması")
             case .nakedPair:
-                return "Bu iki hücre, aynı iki adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir"
+                return NSLocalizedString("Bu iki hücre, aynı iki adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir", comment: "İpucu açıklaması")
             case .hiddenPair:
-                return "Bu iki aday, yalnızca bu iki hücreye konabilir, dolayısıyla bu hücrelerden diğer adaylar çıkarılabilir"
+                return NSLocalizedString("Bu iki aday, yalnızca bu iki hücreye konabilir, dolayısıyla bu hücrelerden diğer adaylar çıkarılabilir", comment: "İpucu açıklaması")
             case .nakedTriple:
-                return "Bu üç hücre, üç adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir"
+                return NSLocalizedString("Bu üç hücre, üç adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir", comment: "İpucu açıklaması")
             case .hiddenTriple:
-                return "Bu üç aday, yalnızca bu üç hücreye konabilir"
+                return NSLocalizedString("Bu üç aday, yalnızca bu üç hücreye konabilir", comment: "İpucu açıklaması")
             case .xWing:
-                return "X-Wing deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir"
+                return NSLocalizedString("X-Wing deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir", comment: "İpucu açıklaması")
             case .swordfish:
-                return "Swordfish deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir"
+                return NSLocalizedString("Swordfish deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir", comment: "İpucu açıklaması")
             case .general:
-                return "Sudoku kurallarına göre bu hücreye bu değer konabilir"
+                return NSLocalizedString("Sudoku kurallarına göre bu hücreye bu değer konabilir", comment: "İpucu açıklaması")
             case .none:
-                return "Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir."
+                return NSLocalizedString("Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir.", comment: "İpucu bulunamadı")
             }
         }
     }
@@ -768,9 +807,9 @@ class SudokuViewModel: ObservableObject {
         var stepDescription: String {
             // Dizi sınırlarını kontrol et
             guard step < stepDescriptions.count else {
-                return reason
+                return NSLocalizedString(reason, comment: "İpucu varsayılan açıklaması")
             }
-            return stepDescriptions[step]
+            return NSLocalizedString(stepDescriptions[step], comment: "İpucu adım açıklaması")
         }
         
         // Hücre vurgulama (belirli bir türde)
@@ -966,18 +1005,23 @@ class SudokuViewModel: ObservableObject {
     
     // Naked Single ipucu oluştur
     private func createNakedSingleHint(row: Int, col: Int, value: Int) -> HintData {
-        let reason = "Bu hücreye sadece \(value) değeri konabilir, çünkü diğer tüm değerler aynı satır, sütun veya blokta zaten kullanılmış."
+        // Swift string interpolation yerine format kullanarak lokalizasyon
+        let formatString = NSLocalizedString("Bu hücreye sadece %d değeri konabilir çünkü diğer tüm sayılar elendi.", comment: "İpucu açıklaması")
+        let reason = String(format: formatString, value)
         
         let hint = HintData(row: row, column: col, value: value, reason: reason, technique: HintTechnique.nakedSingle)
         
         // Adım 1: İlişkili hücreleri vurgula
-        hint.addStep(title: "Satır, Sütun ve Blok İnceleme", 
-                  description: "Bu hücrenin aynı satır, sütun ve blokta bulunan diğer hücreler incelendi.")
+        hint.addStep(title: NSLocalizedString("Satır, Sütun ve Blok İnceleme", comment: "İpucu başlığı"), 
+                  description: NSLocalizedString("Bu hücrenin aynı satır, sütun ve blokta bulunan diğer hücreler incelendi.", comment: "İpucu açıklaması"))
         hint.highlightRelatedCells(row: row, column: col, type: CellInteractionType.related)
         
         // Adım 2: Tek aday olduğunu göster
-        hint.addStep(title: "Tek Olasılık Tespiti", 
-                  description: "Bu hücreye sadece \(value) değeri konabilir, diğer tüm sayılar elendi.")
+        let stepFormatString = NSLocalizedString("Bu hücreye sadece %d değeri konabilir, diğer tüm sayılar elendi.", comment: "İpucu açıklaması")
+        let stepDescription = String(format: stepFormatString, value)
+        
+        hint.addStep(title: NSLocalizedString("Tek Olasılık Tespiti", comment: "İpucu başlığı"), 
+                  description: stepDescription)
         
         // Aday değerleri göster
         hint.candidateValues = [value]
@@ -1100,25 +1144,35 @@ class SudokuViewModel: ObservableObject {
         
         switch region {
         case .row:
-            regionName = "\(row+1). satırda"
-            description = "\(value) sayısı, \(row+1). satırda sadece bu hücreye konabilir"
+            let rowFormat = NSLocalizedString("%d. satırda", comment: "İpucu bölge adı")
+            regionName = String(format: rowFormat, row+1)
+            let descFormat = NSLocalizedString("%d sayısı, %d. satırda sadece bu hücreye konabilir", comment: "İpucu açıklaması")
+            description = String(format: descFormat, value, row+1)
         case .column:
-            regionName = "\(col+1). sütunda"
-            description = "\(value) sayısı, \(col+1). sütunda sadece bu hücreye konabilir"
+            let colFormat = NSLocalizedString("%d. sütunda", comment: "İpucu bölge adı")
+            regionName = String(format: colFormat, col+1)
+            let descFormat = NSLocalizedString("%d sayısı, %d. sütunda sadece bu hücreye konabilir", comment: "İpucu açıklaması")
+            description = String(format: descFormat, value, col+1)
         case .block:
             let blockRow = (regionIndex / 3) + 1
             let blockCol = (regionIndex % 3) + 1
-            regionName = "\(blockRow). satır, \(blockCol). sütundaki 3x3 blokta"
-            description = "\(value) sayısı, bu 3x3 blokta sadece bu hücreye konabilir"
+            let blockFormat = NSLocalizedString("%d. satır, %d. sütundaki 3x3 blokta", comment: "İpucu bölge adı")
+            regionName = String(format: blockFormat, blockRow, blockCol)
+            let descFormat = NSLocalizedString("%d sayısı, bu 3x3 blokta sadece bu hücreye konabilir", comment: "İpucu açıklaması")
+            description = String(format: descFormat, value)
         }
         
-        let reason = "\(regionName) \(value) sayısı sadece bu hücreye konabilir."
+        let reasonFormat = NSLocalizedString("%@ %d sayısı sadece bu hücreye konabilir.", comment: "İpucu ana açıklaması")
+        let reason = String(format: reasonFormat, regionName, value)
         
         let hint = HintData(row: row, column: col, value: value, reason: reason, technique: HintTechnique.hiddenSingle)
         
         // Adım 1: Bölgeyi vurgula
-        hint.addStep(title: "Bölge İncelemesi", 
-                  description: "\(regionName) tüm hücreler incelendi.")
+        let stepFormat = NSLocalizedString("%@ tüm hücreler incelendi.", comment: "İpucu açıklaması")
+        let stepDescription = String(format: stepFormat, regionName)
+        
+        hint.addStep(title: NSLocalizedString("Bölge İncelemesi", comment: "İpucu başlığı"), 
+                  description: stepDescription)
         
         // Bölgeye göre vurgulama yap
         switch region {
@@ -1152,7 +1206,7 @@ class SudokuViewModel: ObservableObject {
         }
         
         // Adım 2: Tek konumu göster
-        hint.addStep(title: "Tek Konum Tespiti", 
+        hint.addStep(title: NSLocalizedString("Tek Konum Tespiti", comment: "İpucu başlığı"), 
                   description: description)
         
         // Hedef hücreyi vurgula
@@ -1216,20 +1270,20 @@ class SudokuViewModel: ObservableObject {
     
     // Rastgele ipucu oluştur
     private func createRandomHint(row: Int, col: Int, value: Int) -> HintData {
-        let reason = "Sudoku kurallarına göre bu hücreye \(value) değeri konabilir."
+        let reason = NSLocalizedString("Sudoku kurallarına göre bu hücreye \(value) değeri konabilir.", comment: "İpucu açıklaması")
         
         let hint = HintData(row: row, column: col, value: value, reason: reason, technique: HintTechnique.general)
         
         // Adım 1: İlişkili hücreleri vurgula
-        hint.addStep(title: "Boş Hücre Analizi", 
-                  description: "Bu hücre, sudoku tahtasında çözülebilir bir hücre olarak belirlendi.")
+        hint.addStep(title: NSLocalizedString("Boş Hücre Analizi", comment: "İpucu başlığı"), 
+                  description: NSLocalizedString("Bu hücre, sudoku tahtasında çözülebilir bir hücre olarak belirlendi.", comment: "İpucu açıklaması"))
         
         // İlişkili hücreleri vurgula
         hint.highlightRelatedCells(row: row, column: col, type: CellInteractionType.related)
         
         // Adım 2: Değeri göster
-        hint.addStep(title: "Değer Önerisi", 
-                  description: "Bu hücreye \(value) değeri konabilir.")
+        hint.addStep(title: NSLocalizedString("Değer Önerisi", comment: "İpucu başlığı"), 
+                  description: NSLocalizedString("Bu hücreye \(value) değeri konabilir.", comment: "İpucu açıklaması"))
         
         // Hücreyi çöz
         enterValue(value, at: row, col: col)
@@ -1246,7 +1300,7 @@ class SudokuViewModel: ObservableObject {
     // İpucu bulunamıyorsa bildiri göster
     private func showNoHintAvailable() {
         // Boş bir ipucu nesnesi oluştur
-        let hint = HintData(row: 0, column: 0, value: 0, reason: "Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir.", technique: .none)
+        let hint = HintData(row: 0, column: 0, value: 0, reason: NSLocalizedString("Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir.", comment: "İpucu bulunamadı"), technique: .none)
         
         // Görüntüle
         showHintFound(hint)
@@ -1445,6 +1499,15 @@ class SudokuViewModel: ObservableObject {
         // Önbelleği güncelle
         let key = "\(row)_\(col)"
         pencilMarkCache.removeValue(forKey: key)
+        
+        // UI güncellemesi için bildirim gönder
+        objectWillChange.send()
+        
+        // Otomatik kaydet - not değişikliklerini de kaydet
+        autoSaveGame()
+        
+        // Debug log
+        print("Not eklendi/çıkarıldı: \(value) -> (\(row), \(col)), notlar: \(board.getPencilMarks(at: row, col: col))")
     }
     
     // Bir hücredeki tüm kalem işaretlerini temizle
@@ -1454,6 +1517,12 @@ class SudokuViewModel: ObservableObject {
         // Önbelleği güncelle
         let key = "\(row)_\(col)"
         pencilMarkCache.removeValue(forKey: key)
+        
+        // UI güncellemesi için bildirim gönder
+        objectWillChange.send()
+        
+        // Debug log
+        print("Tüm notlar temizlendi: (\(row), \(col))")
     }
     
     // Kalem işareti var mı
@@ -1989,6 +2058,40 @@ class SudokuViewModel: ObservableObject {
         }
         
         // Tahta verilerini çözmeyi dene
+        do {
+            if let json = try JSONSerialization.jsonObject(with: boardData) as? [String: Any],
+               let _ = json["board"] as? String,
+               let fixedCellsString = json["fixedCells"] as? String,
+               let userValuesString = json["userEnteredValues"] as? String {
+                
+                // Sabit hücreleri sayan dizi
+                let fixedCellsData = fixedCellsString.data(using: .utf8)!
+                let fixedCells = try JSONDecoder().decode([[Bool]].self, from: fixedCellsData)
+                
+                // Kullanıcı girdilerini çözelim
+                let userValuesData = userValuesString.data(using: .utf8)!
+                let userValues = try JSONDecoder().decode([[Int?]].self, from: userValuesData)
+                
+                var filledCount = 0
+                let totalCells = 81 // 9x9 sudoku tahtası
+                
+                // Sabit hücreleri ve kullanıcının doğru girdiği değerleri say
+                for row in 0..<9 {
+                    for col in 0..<9 {
+                        if fixedCells[row][col] || userValues[row][col] != nil {
+                            filledCount += 1
+                        }
+                    }
+                }
+                
+                // Sonucu [0.0, 1.0] aralığında döndür
+                return Double(filledCount) / Double(totalCells)
+            }
+        } catch {
+            print("⚠️ Oyunun tamamlanma yüzdesi hesaplanırken hata: \(error)")
+        }
+        
+        // Hata durumunda eski yöntemi dene
         guard let board = SudokuBoard.loadFromSavedState(boardData) else {
             return 0.0
         }
@@ -2080,7 +2183,7 @@ class SudokuViewModel: ObservableObject {
             object: nil
         )
         
-        print("💬 Bildirim gözlemcileri başarıyla kuruldu")
+       // print("💬 Bildirim gözlemcileri başarıyla kuruldu")
     }
     
     // Uygulama arka plana alındığında çağrılır
@@ -2355,21 +2458,23 @@ class SudokuViewModel: ObservableObject {
     
     // Hücrenin seçili hücre ile aynı değere sahip olup olmadığını kontrol et - optimize edildi
     func hasSameValue(row: Int, column: Int) -> Bool {
-        // Seçili hücre veya değer yoksa kontrol etme
         guard let selectedCell = selectedCell,
-              let selectedValue = board.getValue(row: selectedCell.row, column: selectedCell.column),
+              let selectedValue = board.getValue(at: selectedCell.row, col: selectedCell.column),
               selectedValue > 0 else {
             return false
         }
         
-        // Aynı hücre olup olmadığını kontrol et
-        if selectedCell.row == row && selectedCell.column == column {
-            return false // Seçilen hücrenin kendisi aynı değere sahip sayılmaz
+        // Eğer önceden hesaplanmışsa, önbellekten al
+        if !sameValuePositions.isEmpty {
+            return sameValuePositions.contains(Position(row: row, col: column))
         }
         
-        // Hücrenin değerini kontrol et
-        let cellValue = board.getValue(row: row, column: column)
-        return cellValue == selectedValue
+        // Seçilen hücre ile aynı değere sahip mi?
+        if let value = board.getValue(at: row, col: column), value == selectedValue {
+            return true
+        }
+        
+        return false
     }
     
     // Önbellekleri temizleme
@@ -2425,6 +2530,122 @@ class SudokuViewModel: ObservableObject {
         
         // Ses çal
         SoundManager.shared.playGameCompletedSound()
+    }
+    
+    // Hücre vurgulamalarını güncelle
+    private func updateHighlightedCells() {
+        // Performans optimizasyonu: Seçili hücre yoksa güncelleme yapma
+        guard let selectedPosition = selectedCell else {
+            highlightedPositions.removeAll()
+            return
+        }
+        
+        let row = selectedPosition.row
+        let col = selectedPosition.column
+        
+        // Performans optimizasyonu: Önceki vurgulamaları tamamen silmek yerine yeni set oluştur
+        var newHighlights = Set<Position>()
+        
+        // Satır ve sütündaki hücreleri vurgula
+        for i in 0..<9 {
+            newHighlights.insert(Position(row: row, col: i))
+            newHighlights.insert(Position(row: i, col: col))
+        }
+        
+        // 3x3 bloktaki hücreleri vurgula
+        let blockStartRow = (row / 3) * 3
+        let blockStartCol = (col / 3) * 3
+        
+        for r in blockStartRow..<(blockStartRow + 3) {
+            for c in blockStartCol..<(blockStartCol + 3) {
+                newHighlights.insert(Position(row: r, col: c))
+            }
+        }
+        
+        // Sadece değişiklik varsa güncelle
+        if highlightedPositions != newHighlights {
+            highlightedPositions = newHighlights
+        }
+    }
+    
+    // Bir değere sahip tüm hücreleri vurgula
+    private func updateSameValueCells() {
+        // Performans optimizasyonu: Seçili hücre yoksa güncelleme yapma
+        guard let selectedPosition = selectedCell, 
+              let selectedValue = board.getValue(at: selectedPosition.row, col: selectedPosition.column),
+              selectedValue > 0 else {
+            sameValuePositions.removeAll(keepingCapacity: true)
+            return
+        }
+        
+        // Önbelleklenmiş değeri kontrol et - sadece seçili hücre veya değer değiştiyse güncelle
+        let cacheKey = "sameValue_\(selectedPosition.row)_\(selectedPosition.column)_\(selectedValue)"
+        if let cached = sameValueCache[cacheKey] {
+            sameValuePositions = cached
+            return
+        }
+        
+        // Performans optimizasyonu: Önceki vurgulamaları tamamen silmek yerine yeni set oluştur
+        var newPositions = Set<Position>()
+        
+        // Tüm tahtada aynı değere sahip hücreleri bul - optimize edildi
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if let value = board.getValue(at: row, col: col), value == selectedValue {
+                    newPositions.insert(Position(row: row, col: col))
+                }
+            }
+        }
+        
+        // Önbelleğe al
+        sameValueCache[cacheKey] = newPositions
+        
+        // Sadece değişiklik varsa güncelle
+        if sameValuePositions != newPositions {
+            sameValuePositions = newPositions
+        }
+    }
+
+    // Oyuncu hareketini belgeleme ve otomatik kayıt
+    private func recordMove(at row: Int, column: Int, value: Int?) {
+        // Performans optimizasyonu: Sadece değişiklik varsa kaydet
+        let previousValue = board.getValue(at: row, col: column)
+        if previousValue == value {
+            return
+        }
+        
+        // Son hareketler listesini güncelle
+        moveHistory.append(Move(row: row, column: column, newValue: value, previousValue: previousValue))
+        
+        // Otomatik kaydetme sıklığını optimize et
+        movesSinceLastSave += 1
+        
+        // Belirlenen sınırlarla otomatik kaydet
+        if movesSinceLastSave >= 3 { // 5'ten 3'e düşürdüm
+            autoSaveGame()
+            movesSinceLastSave = 0
+        }
+    }
+    
+    // Vurgulanan hücreler için
+    @Published var highlightedPositions = Set<Position>()
+    
+    // Aynı değere sahip hücreler için
+    @Published var sameValuePositions = Set<Position>()
+    
+    // Önbellekler
+    private var sameValueCache = [String: Set<Position>]()
+    
+    // Oyuncu hareketleri
+    private var moveHistory = [Move]()
+    private var movesSinceLastSave: Int = 0
+    
+    // Hareket tipini tanımla
+    struct Move {
+        let row: Int
+        let column: Int
+        let newValue: Int?
+        let previousValue: Int?
     }
 } 
 

@@ -18,6 +18,9 @@ struct StartupView: View {
     // Ana görünüme geçiş için durum
     @State private var isReady = false
     
+    // LocalizationManager ekle
+    @EnvironmentObject var localizationManager: LocalizationManager
+    
     // Animasyon durumları
     @State private var logoScale: CGFloat = 0.3
     @State private var logoOpacity: Double = 0
@@ -98,14 +101,14 @@ struct StartupView: View {
                             .opacity(logoOpacity)
                         
                         // Uygulama adı
-                        Text("SUDOKU")
+                        Text(LocalizationManager.shared.localizedString(for: "SUDOKU"))
                             .font(.system(size: 42, weight: .heavy, design: .rounded))
                             .foregroundColor(.primary)
                             .tracking(5)
                             .opacity(textOpacity)
                         
                         // Alt başlık
-                        Text("Zihninizi Çalıştırın")
+                        Text.localizedSafe("Zihninizi Çalıştırın")
                             .font(.system(size: 18, weight: .medium, design: .rounded))
                             .foregroundColor(.secondary)
                             .padding(.top, -5)
@@ -132,7 +135,7 @@ struct StartupView: View {
                             
                             // Geliştirici adı
                             VStack(alignment: .leading, spacing: 0) {
-                                Text("Geliştirici")
+                                Text.localizedSafe("Geliştirici")
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundColor(.secondary)
                                 
@@ -181,6 +184,7 @@ struct StartupView: View {
                 }
             }
         }
+        .localizationAware()
     }
     
     // Animasyonları başlat

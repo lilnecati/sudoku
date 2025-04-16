@@ -5,20 +5,38 @@
 //
 
 import SwiftUI
+import Combine
 
 struct TutorialView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
-    @State private var currentStep = 0
+    @Environment(\.dismiss) private var dismiss
     
-    // Animasyon durum değişkenleri
-    @State private var animationProgress: Double = 0.5
+    // LocalizationManager'ı EnvironmentObject olarak değiştiriyoruz
+    @EnvironmentObject var localizationManager: LocalizationManager
+    
+    // Dil değişikliğini doğrudan izlemek için AppStorage
+    @AppStorage("app_language") private var appLanguage: String = "tr"
+    
+    // Genel durum değişkenleri
+    @State private var currentStep = 0
+    @State private var showPage = true
+    @State private var refreshTrigger = UUID()
+    
+    // Arayüz metinleri için state'ler
+    @State private var screenTitle: String = ""
+    @State private var backButtonText: String = ""
+    @State private var nextButtonText: String = ""
+    @State private var completeButtonText: String = ""
+    
+    // Bildirim dinleyicileri için Set
+    @State private var cancellables = Set<AnyCancellable>()
+    
+    // Basitleştirilmiş animasyon değişkenleri
     @State private var highlightScale: Bool = false
-    @State private var animateInputValue: Bool = true
-    @State private var inputAnimationValue: Int = 5
-    @State private var animateNote: Bool = false
-    @State private var lastAddedNote: Int = 0
-    @State private var notesSet: Set<Int> = []
+    
+    // Görünümü yenileme için namespace
+    @Namespace private var tutorialNamespace
     
     // Örnek Sudoku verileri
     private let singlePossibilityValues: [[Int]] = [
@@ -34,56 +52,58 @@ struct TutorialView: View {
     ]
     
     // Rehber adımları
-    private let tutorialSteps = [
-        TutorialStep(
-            title: "Sudoku'ya Hoş Geldiniz",
-            description: "Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek.",
-            image: "sudoku.intro",
-            tip: "Ekranı kaydırarak diğer adımlara geçebilirsiniz."
-        ),
-        TutorialStep(
-            title: "Temel Kurallar",
-            description: "Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır.",
-            image: "sudoku.rules",
-            tip: "Başlangıçta verilen sayılar değiştirilemez ve ipucu olarak kullanılır."
-        ),
-        TutorialStep(
-            title: "Sayı Girişi",
-            description: "Boş bir hücreye dokunarak seçin, ardından alt kısımdaki sayı tuşlarını kullanarak değer girin.",
-            image: "sudoku.input",
-            tip: "Bir sayıya uzun basarak o sayıyı not olarak ekleyebilirsiniz."
-        ),
-        TutorialStep(
-            title: "Notlar",
-            description: "Emin olmadığınız hücrelere not alabilirsiniz. Notlar, o hücreye girebileceğiniz olası değerleri hatırlamanıza yardımcı olur.",
-            image: "sudoku.notes",
-            tip: "Notlar, bir hücreye kesin karar vermeden önce olasılıkları takip etmenizi sağlar."
-        ),
-        TutorialStep(
-            title: "Tek Olasılık Stratejisi",
-            description: "Bir hücreye yalnızca bir sayı girilebiliyorsa, o sayıyı girin. Satır, sütun ve 3x3 bölgesindeki diğer sayıları kontrol edin.",
-            image: "sudoku.strategy1",
-            tip: "Bu en temel Sudoku stratejisidir ve çoğu kolay bulmacayı çözmenizi sağlar."
-        ),
-        TutorialStep(
-            title: "Tek Konum Stratejisi",
-            description: "Bir satır, sütun veya 3x3 bölgesinde bir sayı yalnızca bir hücreye yerleştirilebiliyorsa, o sayıyı oraya yerleştirin.",
-            image: "sudoku.strategy2",
-            tip: "Diğer hücrelerdeki notları kontrol ederek bu stratejiyi uygulayabilirsiniz."
-        ),
-        TutorialStep(
-            title: "İpuçları ve Yardım",
-            description: "Zorlandığınızda ipucu alabilir veya hatalı girişlerinizi kontrol edebilirsiniz.",
-            image: "sudoku.help",
-            tip: "Oyun sırasında '?' düğmesine basarak bu rehbere tekrar ulaşabilirsiniz."
-        ),
-        TutorialStep(
-            title: "Hazırsınız!",
-            description: "Artık Sudoku oynamaya hazırsınız. Kolay seviyeden başlayarak deneyim kazanın ve zamanla daha zor seviyelere geçin.",
-            image: "sudoku.ready",
-            tip: "Düzenli pratik yaparak Sudoku becerilerinizi geliştirebilirsiniz. İyi eğlenceler!"
-        )
-    ]
+    private var tutorialSteps: [TutorialStep] {
+        [
+            TutorialStep(
+                titleKey: "tutorial_title_welcome",
+                descriptionKey: "tutorial_desc_welcome",
+                image: "sudoku.intro",
+                tipKey: "tutorial_tip_welcome"
+            ),
+            TutorialStep(
+                titleKey: "tutorial_title_game_rules",
+                descriptionKey: "tutorial_desc_game_rules",
+                image: "sudoku.rules",
+                tipKey: "tutorial_tip_game_rules"
+            ),
+            TutorialStep(
+                titleKey: "tutorial_title_cell_selection",
+                descriptionKey: "tutorial_desc_cell_selection",
+                image: "sudoku.input",
+                tipKey: "tutorial_tip_cell_selection"
+            ),
+            TutorialStep(
+                titleKey: "tutorial_title_notes_mode",
+                descriptionKey: "tutorial_desc_notes_mode",
+                image: "sudoku.notes",
+                tipKey: "tutorial_tip_notes_mode"
+            ),
+            TutorialStep(
+                titleKey: "tutorial_title_basic_strategies",
+                descriptionKey: "tutorial_desc_basic_strategies",
+                image: "sudoku.strategy1",
+                tipKey: "tutorial_tip_basic_strategies"
+            ),
+            TutorialStep(
+                titleKey: "tutorial_title_number_entry",
+                descriptionKey: "tutorial_desc_number_entry",
+                image: "sudoku.strategy2",
+                tipKey: "tutorial_tip_number_entry"
+            ),
+            TutorialStep(
+                titleKey: "tutorial_title_hints",
+                descriptionKey: "tutorial_desc_hints",
+                image: "sudoku.help",
+                tipKey: "tutorial_tip_hints"
+            ),
+            TutorialStep(
+                titleKey: "tutorial_title_completed",
+                descriptionKey: "tutorial_desc_completed",
+                image: "sudoku.ready",
+                tipKey: "tutorial_tip_completed"
+            )
+        ]
+    }
     
     var body: some View {
         ZStack {
@@ -94,16 +114,16 @@ struct TutorialView: View {
             VStack(spacing: 0) {
                 // Başlık ve kapat butonu
                 HStack {
-                    Text("Nasıl Oynanır")
+                    Text(screenTitle)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: true))
                     
                     Spacer()
                     
-                    Button(action: {
+                    Button {
                         SoundManager.shared.executeSound(.tap)
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
+                        dismiss()
+                    } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title)
                             .foregroundColor(.gray)
@@ -118,68 +138,51 @@ struct TutorialView: View {
                         Circle()
                             .fill(currentStep >= index ? ColorManager.primaryBlue : Color.gray.opacity(0.3))
                             .frame(width: 8, height: 8)
-                            .scaleEffect(currentStep == index ? 1.2 : 1.0)
-                            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentStep)
+                            .scaleEffect(currentStep == index ? 1.1 : 1.0)
                     }
                 }
                 .padding(.top, 8)
                 
-                // Rehber içeriği
-                TabView(selection: $currentStep) {
-                    ForEach(0..<tutorialSteps.count, id: \.self) { index in
-                        tutorialStepView(step: tutorialSteps[index], stepNumber: index + 1)
-                            .tag(index)
-                    }
-                }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                .animation(.easeInOut, value: currentStep)
-                .transition(.slide)
+                // Aktif adım içeriği - Basitleştirildi
+                tutorialStepView(step: tutorialSteps[currentStep], stepNumber: currentStep + 1)
+                    .id(refreshTrigger)  // Dil değiştiğinde içeriği zorla güncelle
                 
                 // Alt butonlar
                 HStack(spacing: 20) {
                     // Geri butonu
-                    Button(action: {
+                    Button {
                         SoundManager.shared.executeSound(.tap)
                         if currentStep > 0 {
-                            withAnimation {
-                                currentStep -= 1
-                            }
+                            changePage(to: currentStep - 1)
                         }
-                    }) {
+                    } label: {
                         HStack {
                             Image(systemName: "chevron.left")
-                            Text("Geri")
+                            Text(backButtonText)
                         }
                         .font(.headline)
                         .padding(.vertical, 12)
                         .padding(.horizontal, 20)
                         .foregroundColor(.white)
                         .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [ColorManager.primaryBlue, ColorManager.primaryBlue.opacity(0.8)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            Color.blue
                         )
                         .cornerRadius(12)
-                        .shadow(color: ColorManager.primaryBlue.opacity(0.4), radius: 4, x: 0, y: 3)
                         .opacity(currentStep > 0 ? 1 : 0.5)
                     }
                     .disabled(currentStep == 0)
                     
                     // İleri/Bitir butonu
-                    Button(action: {
+                    Button {
                         SoundManager.shared.executeSound(.tap)
                         if currentStep < tutorialSteps.count - 1 {
-                            withAnimation {
-                                currentStep += 1
-                            }
+                            changePage(to: currentStep + 1)
                         } else {
-                            presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         }
-                    }) {
+                    } label: {
                         HStack {
-                            Text(currentStep == tutorialSteps.count - 1 ? "Tamamla" : "İleri")
+                            Text(currentStep == tutorialSteps.count - 1 ? completeButtonText : nextButtonText)
                             Image(systemName: currentStep == tutorialSteps.count - 1 ? "checkmark" : "chevron.right")
                         }
                         .font(.headline)
@@ -187,17 +190,9 @@ struct TutorialView: View {
                         .padding(.horizontal, 20)
                         .foregroundColor(.white)
                         .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    currentStep == tutorialSteps.count - 1 ? ColorManager.primaryGreen : ColorManager.primaryBlue,
-                                    currentStep == tutorialSteps.count - 1 ? ColorManager.primaryGreen.opacity(0.8) : ColorManager.primaryBlue.opacity(0.8)
-                                ]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            currentStep == tutorialSteps.count - 1 ? Color.green : Color.blue
                         )
                         .cornerRadius(12)
-                        .shadow(color: (currentStep == tutorialSteps.count - 1 ? ColorManager.primaryGreen : ColorManager.primaryBlue).opacity(0.4), radius: 4, x: 0, y: 3)
                     }
                 }
                 .padding(.vertical, 24)
@@ -205,14 +200,94 @@ struct TutorialView: View {
             }
             .padding(.vertical)
         }
+        .onAppear {
+            // İlk yüklemede tüm metinleri ayarla
+            updateAllTexts()
+            // Dil değişikliği için bildirim dinleyicilerini ayarla
+            setupObservers()
+        }
+        .onDisappear {
+            // Bildirim dinleyicilerini temizle
+            cancellables.removeAll()
+        }
+        // AppStorage değişikliklerini izle - bu doğrudan UserDefaults değişikliklerini izler
+        .onChange(of: appLanguage) { _, newLanguage in
+            updateAllTexts()
+            forceRefresh()
+        }
+        .environment(\.locale, Locale(identifier: appLanguage))
+    }
+    
+    // Zorla UI yenileme
+    private func forceRefresh() {
+        refreshTrigger = UUID()
+    }
+    
+    // Tüm metinleri güncelle
+    private func updateAllTexts() {
+        // Başlık ve butonları güncelle - UserDefaults'tan dil kodu kullanarak
+        let path = Bundle.main.path(forResource: appLanguage, ofType: "lproj")
+        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        
+        // Başlık
+        screenTitle = bundle?.localizedString(forKey: "How to Play", value: "How to Play", table: "Localizable") ?? "How to Play"
+        
+        // Buton metinleri
+        backButtonText = bundle?.localizedString(forKey: "Back", value: "Back", table: "Localizable") ?? "Back"
+        nextButtonText = bundle?.localizedString(forKey: "Next", value: "Next", table: "Localizable") ?? "Next"
+        completeButtonText = bundle?.localizedString(forKey: "Complete", value: "Complete", table: "Localizable") ?? "Complete"
+    }
+    
+    // Bildirim dinleyicileri kurulumu
+    private func setupObservers() {
+        // Doğrudan NotificationCenter kullanımı daha güvenilir olabilir
+        NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))
+            .sink { _ in
+                // Dili doğrudan UserDefaults'tan oku
+                if UserDefaults.standard.string(forKey: "app_language") != nil {
+                    DispatchQueue.main.async {
+                        updateAllTexts()
+                        forceRefresh()
+                    }
+                }
+            }
+            .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: Notification.Name("AppLanguageChanged"))
+            .sink { _ in
+                // Dili doğrudan UserDefaults'tan oku
+                if UserDefaults.standard.string(forKey: "app_language") != nil {
+                    DispatchQueue.main.async {
+                        updateAllTexts()
+                        forceRefresh()
+                    }
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    // Sayfa geçişi için özel fonksiyon - basitleştirildi
+    private func changePage(to newStep: Int) {
+        currentStep = newStep
     }
     
     // Rehber adımı görünümü
     private func tutorialStepView(step: TutorialStep, stepNumber: Int) -> some View {
-        ScrollView {
+        // Doğrudan UserDefaults'tan dil kodu kullanarak çeviriyi al
+        let path = Bundle.main.path(forResource: appLanguage, ofType: "lproj")
+        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        
+        let formattedStepText = String(format: bundle?.localizedString(forKey: "Step %d / %d", value: "Step %d / %d", table: "Localizable") ?? "Step %d / %d", stepNumber, tutorialSteps.count)
+        
+        // Metinleri daha güvenilir şekilde al
+        let title = bundle?.localizedString(forKey: step.titleKey, value: step.titleKey, table: "Localizable") ?? step.titleKey
+        let description = bundle?.localizedString(forKey: step.descriptionKey, value: step.descriptionKey, table: "Localizable") ?? step.descriptionKey
+        let tip = bundle?.localizedString(forKey: step.tipKey, value: step.tipKey, table: "Localizable") ?? step.tipKey
+        
+        return ScrollView {
             VStack(spacing: 20) {
                 // Adım numarası
-                Text("Adım \(stepNumber) / \(tutorialSteps.count)")
+                Text(formattedStepText)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
@@ -228,16 +303,14 @@ struct TutorialView: View {
                                 )
                             )
                     )
-                    .transition(.scale.combined(with: .opacity))
                 
                 // Adım başlığı
-                Text(step.title)
+                Text(title)
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: true))
                     .multilineTextAlignment(.center)
                     .padding(.top, 5)
                     .padding(.horizontal)
-                    .transition(.scale.combined(with: .opacity))
                 
                 // Görsel ve örnek icerik
                 ZStack {
@@ -265,54 +338,60 @@ struct TutorialView: View {
                                 )
                         )
                     
-                    if step.title.contains("Tek Olasılık") || step.title.contains("Tek Konum") {
-                        // Strateji örnekleri için mini Sudoku tablosu göster
-                        tutorialExampleView(forStep: stepNumber)
+                    VStack {
+                        if stepNumber == 5 || stepNumber == 6 {
+                            // Strateji örnekleri için mini Sudoku tablosu göster
+                            tutorialExampleView(forStep: stepNumber)
+                                .padding()
+                        } else {
+                            // Standart açıklama görünümü
+                            VStack(spacing: 16) {
+                                // İkon görünümü
+                                getStepIcon(for: title)
+                                    .font(.system(size: 60))
+                                    .foregroundColor(getStepColor(for: title))
+                                    .padding(.top, 10)
+                                
+                                // Açıklama metni
+                                Text(description)
+                                    .font(.body)
+                                    .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: false))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                                    .padding(.bottom, 10)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                             .padding()
-                    } else {
-                        // Standart açıklama görünümü
-                        VStack(spacing: 16) {
-                            // İkon görünümü
-                            getStepIcon(for: step.title)
-                                .font(.system(size: 60))
-                                .foregroundColor(getStepColor(for: step.title))
-                                .padding(.top, 10)
-                            
-                            // Açıklama metni
-                            Text(step.description)
-                                .font(.body)
-                                .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: false))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                                .padding(.bottom, 10)
-                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        .padding()
                     }
                 }
-                .frame(height: 280)
+                .frame(minHeight: 280)
                 .padding(.horizontal)
                 
                 // İpucu bölümü
-                VStack(spacing: 8) {
-                    Text("İPUCU")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(ColorManager.primaryOrange)
-                    
-                    Text(step.tip)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal)
+                if !tip.isEmpty {
+                    VStack(spacing: 8) {
+                        let tipTitle = bundle?.localizedString(forKey: "tutorial_tip_title", value: "TIP", table: "Localizable") ?? "TIP"
+                        
+                        Text(tipTitle)
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(ColorManager.primaryOrange)
+                        
+                        Text(tip)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal)
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.5) : Color(.systemGray6).opacity(0.5))
+                    )
+                    .padding(.horizontal, 20)
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.5) : Color(.systemGray6).opacity(0.5))
-                )
-                .padding(.horizontal, 20)
             }
             .padding(.vertical)
         }
@@ -320,66 +399,58 @@ struct TutorialView: View {
     
     // Rehber adımı için ikon seçimi
     private func getStepIcon(for title: String) -> Image {
-        switch true {
-        case title.contains("Hoş Geldiniz"):
+        if title.contains("Welcome") || title.contains("Bienvenue") || title.contains("Hoş Geldiniz") {
             return Image(systemName: "square.grid.3x3.fill")
-        case title.contains("Temel Kurallar"):
+        } else if title.contains("Game Rules") || title.contains("Règles") || title.contains("Kurallar") {
             return Image(systemName: "list.bullet")
-        case title.contains("Sayı Girişi"):
+        } else if title.contains("Cell") || title.contains("Cellule") || title.contains("Hücre") {
             return Image(systemName: "hand.tap.fill")
-        case title.contains("Notlar"):
+        } else if title.contains("Notes") || title.contains("Not") {
             return Image(systemName: "pencil")
-        case title.contains("İpuçları"):
+        } else if title.contains("Hints") || title.contains("Indices") || title.contains("İpucu") {
             return Image(systemName: "lightbulb.fill")
-        case title.contains("Hazırsınız"):
+        } else if title.contains("Completed") || title.contains("Félicitations") || title.contains("Tebrikler") {
             return Image(systemName: "checkmark.circle.fill")
-        default:
+        } else {
             return Image(systemName: "questionmark.circle.fill")
         }
     }
     
     // Rehber adımı için renk seçimi
     private func getStepColor(for title: String) -> Color {
-        switch true {
-        case title.contains("Hoş Geldiniz"):
+        if title.contains("Welcome") || title.contains("Bienvenue") || title.contains("Hoş Geldiniz") {
             return ColorManager.primaryBlue
-        case title.contains("Temel Kurallar"):
+        } else if title.contains("Game Rules") || title.contains("Règles") || title.contains("Kurallar") {
             return ColorManager.primaryPurple
-        case title.contains("Sayı Girişi"):
+        } else if title.contains("Cell") || title.contains("Cellule") || title.contains("Hücre") {
             return ColorManager.primaryOrange
-        case title.contains("Notlar"):
+        } else if title.contains("Notes") || title.contains("Not") {
             return Color.blue
-        case title.contains("İpuçları"):
+        } else if title.contains("Hints") || title.contains("Indices") || title.contains("İpucu") {
             return Color.yellow
-        case title.contains("Hazırsınız"):
+        } else if title.contains("Completed") || title.contains("Félicitations") || title.contains("Tebrikler") {
             return ColorManager.primaryGreen
-        default:
+        } else {
             return Color.gray
         }
     }
     
-    // Örnek strateji görünümleri
-    func tutorialExampleView(forStep step: Int) -> some View {
-        Group {
-            if step == 5 { // Tek Olasılık Stratejisi
-                singlePossibilityExample
-            } else if step == 6 { // Tek Konum Stratejisi
-                singleLocationExample
-            } else {
-                Text("Örnek Gösterilemiyor")
-            }
-        }
-    }
-    
-    // Tek olasılık stratejisi örneği
+    // Tek olasılık stratejisi örneği - basitleştirildi
     var singlePossibilityExample: some View {
-        VStack(spacing: 12) {
-            Text("Örnek: Bu hücreye sadece 4 girebilir")
+        // Çevirileri doğrudan al
+        let path = Bundle.main.path(forResource: appLanguage, ofType: "lproj")
+        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        
+        let exampleTitle = bundle?.localizedString(forKey: "Example: This cell can only contain 4", value: "Example: This cell can only contain 4", table: "Localizable") ?? "Example: This cell can only contain 4"
+        let exampleDescription = bundle?.localizedString(forKey: "Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell.", value: "Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell.", table: "Localizable") ?? "Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell."
+        
+        return VStack(spacing: 12) {
+            Text(exampleTitle)
                 .font(.caption)
                 .bold()
                 .padding(.bottom, 5)
             
-            // Mini 3x3 sudoku örneği
+            // Mini 3x3 sudoku örneği - basitleştirildi
             VStack(spacing: 2) {
                 ForEach(0..<3) { row in
                     HStack(spacing: 2) {
@@ -411,7 +482,7 @@ struct TutorialView: View {
                 }
             }
             
-            Text("Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir.")
+            Text(exampleDescription)
                 .font(.caption)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
@@ -419,15 +490,22 @@ struct TutorialView: View {
         }
     }
     
-    // Tek konum stratejisi örneği
+    // Tek konum stratejisi örneği - basitleştirildi
     var singleLocationExample: some View {
-        VStack(spacing: 12) {
-            Text("Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir")
+        // Çevirileri doğrudan al
+        let path = Bundle.main.path(forResource: appLanguage, ofType: "lproj")
+        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        
+        let exampleTitle = bundle?.localizedString(forKey: "Example: Number 5 can only be placed in this cell", value: "Example: Number 5 can only be placed in this cell", table: "Localizable") ?? "Example: Number 5 can only be placed in this cell"
+        let exampleDescription = bundle?.localizedString(forKey: "In this region, 5 can only be placed in this cell because there's no room for 5 in other cells.", value: "In this region, 5 can only be placed in this cell because there's no room for 5 in other cells.", table: "Localizable") ?? "In this region, 5 can only be placed in this cell because there's no room for 5 in other cells."
+        
+        return VStack(spacing: 12) {
+            Text(exampleTitle)
                 .font(.caption)
                 .bold()
                 .padding(.bottom, 5)
             
-            // Mini 3x3 sudoku örneği
+            // Mini 3x3 sudoku örneği - basitleştirildi
             VStack(spacing: 2) {
                 ForEach(0..<3) { row in
                     HStack(spacing: 2) {
@@ -441,16 +519,10 @@ struct TutorialView: View {
                                     .border(Color.gray.opacity(0.3), width: 1)
                                 
                                 if isHighlighted {
-                                    // Vurgulanmış hücrede 5 göster ve animasyon ekle
+                                    // Vurgulanmış hücrede 5 göster
                                     Text("5")
                                         .font(.headline)
                                         .foregroundColor(.green)
-                                        .scaleEffect(highlightScale ? 1.2 : 1.0)
-                                        .onAppear {
-                                            withAnimation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                                                highlightScale.toggle()
-                                            }
-                                        }
                                 } else if !cellNotes.isEmpty {
                                     // Not içeriği
                                     VStack(spacing: 1) {
@@ -483,21 +555,39 @@ struct TutorialView: View {
                 }
             }
             
-            Text("Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok.")
+            Text(exampleDescription)
                 .font(.caption)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
                 .padding(.horizontal)
         }
     }
+    
+    // Örnek strateji görünümleri
+    func tutorialExampleView(forStep step: Int) -> some View {
+        // Tek Olasılık Stratejisi adımı 5, Tek Konum Stratejisi adımı 6
+        return Group {
+            if step == 5 {
+                singlePossibilityExample
+            } else if step == 6 {
+                singleLocationExample
+            } else {
+                let noExampleText = Bundle.main.path(forResource: appLanguage, ofType: "lproj").flatMap {
+                    Bundle(path: $0)?.localizedString(forKey: "Example Not Available", value: "Example Not Available", table: "Localizable")
+                } ?? "Example Not Available"
+                
+                Text(noExampleText)
+            }
+        }
+    }
 }
 
 // Rehber adımı modeli
 struct TutorialStep {
-    let title: String
-    let description: String
+    let titleKey: String
+    let descriptionKey: String
     let image: String
-    let tip: String
+    let tipKey: String
 }
 
 // Preview
@@ -506,5 +596,3 @@ struct TutorialView_Previews: PreviewProvider {
         TutorialView()
     }
 }
-
-// Not: scaleInOut uzantısı ViewTransitionExtension.swift dosyasında tanımlandığı için burada kaldırıldı

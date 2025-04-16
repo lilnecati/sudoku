@@ -18,26 +18,21 @@ enum AppPage: Int, CaseIterable, Identifiable {
     var id: Int { self.rawValue }
     
     var title: String {
+        // Dili doğrudan UserDefaults'dan al
+        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+        
+        // Bundle yoluyla çeviri yap
+        let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+        let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+        
         switch self {
         case .home:
-            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
-            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
-            let bundle = path != nil ? Bundle(path: path!) : Bundle.main
             return bundle?.localizedString(forKey: "Ana Sayfa", value: "Ana Sayfa", table: "Localizable") ?? "Ana Sayfa"
         case .scoreboard:
-            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
-            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
-            let bundle = path != nil ? Bundle(path: path!) : Bundle.main
             return bundle?.localizedString(forKey: "Skor Tablosu", value: "Skor Tablosu", table: "Localizable") ?? "Skor Tablosu"
         case .savedGames:
-            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
-            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
-            let bundle = path != nil ? Bundle(path: path!) : Bundle.main
             return bundle?.localizedString(forKey: "Kayıtlı Oyunlar", value: "Kayıtlı Oyunlar", table: "Localizable") ?? "Kayıtlı Oyunlar"
         case .settings:
-            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
-            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
-            let bundle = path != nil ? Bundle(path: path!) : Bundle.main
             return bundle?.localizedString(forKey: "Ayarlar", value: "Ayarlar", table: "Localizable") ?? "Ayarlar"
         }
     }
@@ -680,13 +675,9 @@ struct ContentView: View {
             Button(action: {
                 SoundManager.shared.playNavigationSound()
                 
-                if !hasSeenTutorial {
-                    // Doğrudan eğitimi göster
-                    showTutorial = true
-                } else {
-                    // Eğitimi daha önce görmüşse, sor
-                    showTutorialPrompt = true
-                }
+                // Doğrudan eğitimi göster, onay almadan
+                showTutorial = true
+                
             }) {
                 HStack {
                     Image(systemName: "questionmark.circle.fill")
@@ -725,7 +716,7 @@ struct ContentView: View {
             
             // Yükleme/hata durumları veya ana içerik
             if isLoading {
-                ProgressView("Yükleniyor...")
+                ProgressView(LocalizationManager.shared.localizedString(for: "Yükleniyor..."))
                     .progressViewStyle(CircularProgressViewStyle())
             } else if let error = loadError {
                 VStack {
@@ -816,6 +807,20 @@ struct ContentView: View {
             checkTutorial()
             startWelcomeAnimations()
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))) { _ in
+            // Dil değiştiğinde tüm görünümü yenile
+            print("📢 Dil değişikliği algılandı - ContentView yenileniyor")
+            
+            // Görünümü zorla yenileme
+            withAnimation {
+                // currentPage'i geçici olarak değiştirip geri getirerek zorla yenileme
+                let temp = currentPage
+                currentPage = .home
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    currentPage = temp
+                }
+            }
+        }
         .fullScreenCover(isPresented: $isLoadingSelectedGame) {
             // Oyun yüklenirken gösterilecek yükleme ekranı
             ZStack {
@@ -827,7 +832,7 @@ struct ContentView: View {
                         .progressViewStyle(CircularProgressViewStyle())
                         .scaleEffect(1.5)
                     
-                    Text("Oyun yükleniyor...")
+                    Text(LocalizationManager.shared.localizedString(for: "Oyun yükleniyor..."))
                         .font(.headline)
                         .foregroundColor(.secondary)
                 }

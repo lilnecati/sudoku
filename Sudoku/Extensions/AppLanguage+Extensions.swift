@@ -7,6 +7,7 @@ extension AppLanguage {
         switch code {
         case "en": return "🇬🇧"
         case "tr": return "🇹🇷"
+        case "fr": return "🇫🇷"
         default: return "🏳️"
         }
     }

@@ -57,6 +57,12 @@ struct SettingsView: View {
     // PowerSavingManager'a erişim
     @StateObject private var powerManager = PowerSavingManager.shared
     
+    // Dil yönetimi için gerekli değişkenler
+    @State private var selectedLanguage = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+    
+    // Dil seçimi için sheet state değişkeni
+    @State private var showLanguageSheet = false
+    
     @State private var username = ""
     @State private var password = ""
     @State private var email = ""
@@ -304,6 +310,14 @@ struct SettingsView: View {
             // Tema değişikliği olduğunda anında uygulamak için
             themeManager.objectWillChange.send()
         }
+        .padding(.horizontal)
+        .sheet(isPresented: $showLanguageSheet) {
+            LanguageSelectionSheet(
+                selectedLanguage: $selectedLanguage,
+                localizationManager: localizationManager
+            )
+            .presentationDetents([.medium, .large])
+        }
     }
     
     // Bildirim dinleyicilerini ayarla
@@ -358,26 +372,21 @@ struct SettingsView: View {
             .fill(colorScheme == .dark ? Color(UIColor.tertiarySystemBackground) : Color.white)
     }
     
+    // Section başlığı yardımcı metodu
     private func sectionHeader(title: String, systemImage: String) -> some View {
-        HStack {
-            // Modern ikon tasarımı
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                
-                Image(systemName: systemImage)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.blue)
-            }
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.title2)
+                .foregroundColor(.blue)
             
             Text.localizedSafe(title)
-                .scaledFont(size: 20, weight: .bold)
-                .foregroundColor(.primary)
+                .font(.title2)
+                .bold()
             
             Spacer()
         }
-        .padding(.leading, 8)
+        .padding(.horizontal)
+        .padding(.vertical, 5)
     }
     
     private func gameSettingsView() -> some View {
@@ -714,47 +723,6 @@ struct SettingsView: View {
                 .padding(.horizontal)
             }
             
-            // Dil Seçimi
-            HStack(spacing: 15) {
-                // İkon
-                ZStack {
-                    Circle()
-                        .fill(Color.green.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    
-                    Image(systemName: "globe")
-                        .font(.system(size: 16))
-                        .foregroundColor(.green)
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    // Başlık
-                    Text.localizedSafe("language.selection")
-                        .scaledFont(size: 16, weight: .semibold)
-                        .foregroundColor(.primary)
-                    
-                    // Seçim butonları
-                    HStack(spacing: 12) {
-                        ForEach(AppLanguage.allLanguages) { language in
-                            LanguageButton(
-                                language: language,
-                                isSelected: localizationManager.currentLanguage == language.code,
-                                action: {
-                                    updateLanguagePreference(language)
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
-            .padding(.horizontal)
-            
             // Metin boyutu
             HStack(spacing: 15) {
                 // İkon
@@ -843,23 +811,45 @@ struct SettingsView: View {
         
         var body: some View {
             Button(action: action) {
-                HStack {
+                HStack(spacing: 8) {
                     Text(language.flag)
-                        .font(.system(size: 16))
+                        .font(.system(size: 18))
+                        .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
+                    
                     Text.localizedSafe("language." + language.code)
-                        .scaledFont(size: 14, weight: isSelected ? .semibold : .regular)
+                        .scaledFont(size: 15, weight: isSelected ? .semibold : .regular)
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(isSelected ? Color.green.opacity(0.2) : Color.clear)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(isSelected ? Color.green : Color.gray.opacity(0.3), lineWidth: 1)
-                        )
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(isSelected ? 
+                                  LinearGradient(gradient: Gradient(colors: [Color.green.opacity(0.3), Color.green.opacity(0.15)]), 
+                                                startPoint: .topLeading, 
+                                                endPoint: .bottomTrailing) : 
+                                  LinearGradient(gradient: Gradient(colors: [Color.gray.opacity(0.05), Color.gray.opacity(0.05)]), 
+                                                startPoint: .topLeading, 
+                                                endPoint: .bottomTrailing))
+                            
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        isSelected ? Color.green : Color.gray.opacity(0.4),
+                                        isSelected ? Color.green.opacity(0.7) : Color.gray.opacity(0.2)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: isSelected ? 1.5 : 1
+                            )
+                    }
                 )
+                .shadow(color: isSelected ? Color.green.opacity(0.2) : Color.clear, radius: 3, x: 0, y: 1)
                 .foregroundColor(isSelected ? .green : .primary)
+                .scaleEffect(isSelected ? 1.05 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
             }
         }
     }
@@ -1098,7 +1088,7 @@ struct SettingsView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Geliştrici")
+                        Text.localizedSafe("Geliştirici")
                             .scaledFont(size: 14)
                             .foregroundColor(.secondary)
                         
@@ -1299,11 +1289,11 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     } else {
                         // Giriş yapılmamışsa giriş seçenekleri göster
-                        Text("Giriş Yapmadınız")
+                        Text.localizedSafe("Giriş Yapmadınız")
                             .scaledFont(size: 18, weight: .bold)
                             .foregroundColor(.primary)
                         
-                        Text("Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın")
+                        Text.localizedSafe("Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın")
                             .scaledFont(size: 14)
                             .foregroundColor(.secondary)
                             .lineLimit(2)
@@ -1479,6 +1469,100 @@ struct SettingsView: View {
                 
                 // Profil ve hesap ayarları bölümü
                 profileSettingsView()
+
+                // Dil Seçimi
+                Section {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text.localizedSafe("language.selection")
+                            .font(.headline)
+                            .padding(.bottom, 5)
+                        
+                        // Dil seçimi düğmesi
+                        Button(action: {
+                            showLanguageSheet = true
+                        }) {
+                            HStack {
+                                Label {
+                                    VStack(alignment: .leading) {
+                                        Text.localizedSafe("language.selection")
+                                            .font(.headline)
+                                            .foregroundColor(.primary)
+                                        
+                                        Text(selectedLanguage == "tr" ? "🇹🇷 Türkçe" : 
+                                            selectedLanguage == "en" ? "🇬🇧 English" : 
+                                            selectedLanguage == "fr" ? "🇫🇷 Français" : "🇬🇧 English")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                    }
+                                } icon: {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.green.opacity(0.15))
+                                            .frame(width: 42, height: 42)
+                                        
+                                        Image(systemName: "globe")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(.green)
+                                    }
+                                }
+                                
+                                Spacer()
+                                
+                                HStack(spacing: 3) {
+                                    Text(selectedLanguage == "tr" ? "🇹🇷" : 
+                                         selectedLanguage == "en" ? "🇬🇧" : 
+                                         selectedLanguage == "fr" ? "🇫🇷" : "🇬🇧")
+                                        .font(.system(size: 22))
+                                        .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
+                                        
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.gray)
+                                        .font(.system(size: 14))
+                                }
+                            }
+                            .padding()
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                                    
+                                    // Süsleme çizgisi (sol tarafta renkli çizgi)
+                                    HStack {
+                                        Rectangle()
+                                            .fill(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [.green, .green.opacity(0.7)]),
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
+                                            )
+                                            .frame(width: 4)
+                                        Spacer()
+                                    }
+                                    .mask(
+                                        RoundedRectangle(cornerRadius: 16)
+                                    )
+                                }
+                                .shadow(color: Color.black.opacity(0.07), radius: 5, x: 0, y: 3)
+                            )
+                            .overlay(
+                                // Daha büyük buton hissi için ince kenarlık ekle
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal)
+                    }
+                    .padding(.vertical, 5)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal)
                 
                 // Ayarlar başlığı
                 sectionHeader(title: "Oyun Ayarları", systemImage: "gamecontroller.fill")
@@ -1489,7 +1573,7 @@ struct SettingsView: View {
                 // Görünüm ayarları
                 sectionHeader(title: "Görünüm", systemImage: "paintbrush.fill")
                 
-                // Görünüm ayarları bölümü
+                // Görünüm ayarları bölümü - dil seçimi kaldırıldı
                 appearanceSettingsView()
                 
                 // Güç tasarrufu ayarları (eğer pil yüzdesi 50'den düşükse ön plana çıkar)
@@ -1631,5 +1715,209 @@ struct ToggleSettingRow: View {
         }
         .buttonStyle(PlainButtonStyle())
         .padding(.horizontal)
+    }
+}
+
+// Dil seçimi sayfası
+struct LanguageSelectionSheet: View {
+    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.colorScheme) var colorScheme
+    @Binding var selectedLanguage: String
+    @ObservedObject var localizationManager: LocalizationManager
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Başlık
+            ZStack {
+                HStack {
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.leading)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Text.localizedSafe("settings.done")
+                            .scaledFont(size: 16, weight: .semibold)
+                            .foregroundColor(.blue)
+                    }
+                    .padding()
+                }
+                
+                Text.localizedSafe("language.selection")
+                    .scaledFont(size: 17, weight: .bold)
+                    .padding()
+            }
+            .padding(.top, 8)
+            .background(
+                colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground)
+            )
+            
+            Divider()
+            
+            // Dil listesi
+            ScrollView {
+                VStack(spacing: 15) {
+                    // Aktif diller
+                    LanguageCell(
+                        flag: "🇹🇷",
+                        languageName: "Türkçe",
+                        isSelected: selectedLanguage == "tr",
+                        action: {
+                            localizationManager.setLanguage(AppLanguage(code: "tr", name: "Türkçe"))
+                            selectedLanguage = "tr"
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                presentationMode.wrappedValue.dismiss()
+                            }
+                        }
+                    )
+                    
+                    LanguageCell(
+                        flag: "🇬🇧",
+                        languageName: "English",
+                        isSelected: selectedLanguage == "en",
+                        action: {
+                            localizationManager.setLanguage(AppLanguage(code: "en", name: "English"))
+                            selectedLanguage = "en"
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                presentationMode.wrappedValue.dismiss()
+                            }
+                        }
+                    )
+                    
+                    LanguageCell(
+                        flag: "🇫🇷",
+                        languageName: "Français",
+                        isSelected: selectedLanguage == "fr",
+                        isDisabled: false,
+                        action: {
+                            localizationManager.setLanguage(AppLanguage(code: "fr", name: "Français"))
+                            selectedLanguage = "fr"
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                presentationMode.wrappedValue.dismiss()
+                            }
+                        }
+                    )
+                    
+                    // Yakında eklenecek diller
+                    Group {
+                        Text.localizedSafe("coming.soon.languages")
+                            .scaledFont(size: 12)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal)
+                            .padding(.top, 20)
+                            .padding(.bottom, 10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        LanguageCell(
+                            flag: "🇪🇸",
+                            languageName: "Español",
+                            isSelected: false,
+                            isDisabled: true,
+                            action: {}
+                        )
+                        
+                        LanguageCell(
+                            flag: "🇩🇪",
+                            languageName: "Deutsch",
+                            isSelected: false,
+                            isDisabled: true,
+                            action: {}
+                        )
+                        
+                        LanguageCell(
+                            flag: "🇮🇹",
+                            languageName: "Italiano",
+                            isSelected: false,
+                            isDisabled: true,
+                            action: {}
+                        )
+                    }
+                }
+                .padding(.vertical)
+                .padding(.horizontal, 16)
+            }
+        }
+        .background(colorScheme == .dark ? Color(.systemBackground) : Color(.systemGroupedBackground))
+        .edgesIgnoringSafeArea(.bottom)
+    }
+}
+
+// Dil hücreleri
+struct LanguageCell: View {
+    var flag: String
+    var languageName: String
+    var isSelected: Bool
+    var isDisabled: Bool = false
+    var action: () -> Void
+    
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(flag)
+                    .font(.system(size: 34))
+                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 5)
+                
+                Text(languageName)
+                    .scaledFont(size: 20, weight: isSelected ? .semibold : .regular)
+                    .foregroundColor(isDisabled ? .gray : (isSelected ? .primary : .primary))
+                
+                Spacer()
+                
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.system(size: 22))
+                        .padding(.trailing, 5)
+                }
+                
+                if isDisabled {
+                    Text.localizedSafe("coming.soon")
+                        .scaledFont(size: 12)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color.gray.opacity(0.2))
+                        )
+                }
+            }
+            .contentShape(Rectangle())
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        isSelected ? 
+                        (colorScheme == .dark ? 
+                         Color(.systemGray5).opacity(0.8) : 
+                         Color.green.opacity(0.08)) :
+                        (colorScheme == .dark ? 
+                         Color(.systemGray6) : 
+                         Color.white)
+                    )
+                    .shadow(
+                        color: Color.black.opacity(isSelected ? 0.1 : 0.05),
+                        radius: isSelected ? 4 : 2,
+                        x: 0,
+                        y: isSelected ? 2 : 1
+                    )
+            )
+        }
+        .disabled(isDisabled)
+        .buttonStyle(PlainButtonStyle())
+        .opacity(isDisabled ? 0.6 : 1.0)
     }
 }

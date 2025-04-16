@@ -147,12 +147,8 @@ struct NumberPadView: View {
                             .foregroundColor(.clear)
                             .dynamicTypeSize(.medium)
                         
-                        // İçerik - kalem modu veya kalan sayı
-                        if viewModel.pencilMode {
-                            Image(systemName: "pencil.tip")
-                                .font(.system(size: 10))
-                                .foregroundColor(buttonColor.opacity(0.7))
-                        } else if remaining < 9 {
+                        // İçerik - sadece kalan sayı gösterilecek, kalem modu ipucu kaldırıldı
+                        if remaining < 9 {
                             Text("\(remaining)")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(buttonColor.opacity(0.6))
@@ -233,7 +229,9 @@ struct NumberPadView: View {
                             .foregroundColor(.clear)
                         
                         // Gerçek metin
-                        Text(viewModel.pencilMode ? "Not Aktif" : "Not Modu")
+                        Text(viewModel.pencilMode ? 
+                             NSLocalizedString("Not Aktif", comment: "Pencil mode active") : 
+                             NSLocalizedString("Not Modu", comment: "Pencil mode button"))
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(buttonColor.opacity(0.8))
                     }

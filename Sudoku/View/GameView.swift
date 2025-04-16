@@ -120,16 +120,41 @@ struct GameView: View {
                 
                 // Oyun tahtası
                 if isBoardVisible {
-                    SudokuBoardView(viewModel: viewModel)
-                        .id(boardKey) // Tahtayı zorla yenilemek için id gerek
-                        .aspectRatio(1, contentMode: .fit)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: UIScreen.main.bounds.width * 0.95)
-                        .padding(.horizontal, 4)
-                        .transition(.opacity)
-                        .disabled(viewModel.gameState == .failed || viewModel.gameState == .completed || showDifficultyPicker)
-                        // Metal ile hızlandırılmış render
-                        .drawingGroup()
+                    ZStack {
+                        // Yükleme göstergesi
+                        if viewModel.isLoading {
+                            VStack(spacing: 20) {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                                    .scaleEffect(1.5)
+                                
+                                Text(LocalizationManager.shared.localizedString(for: "Oyun hazırlanıyor..."))
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(UIColor.systemBackground))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                            )
+                            .padding()
+                            .transition(.opacity)
+                        }
+                        
+                        // Sudoku tahtası
+                        SudokuBoardView(viewModel: viewModel)
+                            .id(boardKey) // Tahtayı zorla yenilemek için id gerek
+                            .aspectRatio(1, contentMode: .fit)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: UIScreen.main.bounds.width * 0.95)
+                            .padding(.horizontal, 4)
+                            .transition(.opacity)
+                            .disabled(viewModel.gameState == .failed || viewModel.gameState == .completed || showDifficultyPicker || viewModel.isLoading)
+                            // Metal ile hızlandırılmış render
+                            .drawingGroup()
+                            .opacity(viewModel.isLoading ? 0 : 1) // Yükleme sırasında şeffaf
+                    }
                 }
                 
                 // Kontroller
@@ -277,84 +302,83 @@ struct GameView: View {
     
     // Kontrol alanı - performans için önbelleklenmiş
     private var controlsView: some View {
-        ZStack(alignment: .bottom) {
-            // Ana kontrol konteynerı
-            VStack(spacing: 15) {
-                // Oyun durumu çubuğu
-                HStack {
-                    // Oyun durumu bilgisi
-                    Text(gameStateText)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(gameStateColor)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(gameStateColor.opacity(0.15))
-                        )
-                    
-                    Spacer()
-                    
-                    // İpucu butonu
-                    Button {
-                        if viewModel.remainingHints > 0 {
-                            viewModel.requestHint()
-                        } else {
-                            showNoHintsMessage = true
-                            // Otomatik olarak mesajı 2 saniye sonra gizle
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                showNoHintsMessage = false
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: "lightbulb.fill")
-                            Text("İpucu (\(viewModel.remainingHints))")
-                        }
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(Color.orange)
-                        )
-                    }
-                    .opacity(viewModel.remainingHints <= 0 ? 0.5 : 1.0)
-                    
-                    // Düzenleme butonu (Yeni oyun butonu yerine)
-                    Button {
-                        // Düzenleme işlemi (kalem modunu aktif et/deaktif et)
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            viewModel.pencilMode.toggle()
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: viewModel.pencilMode ? "pencil.circle.fill" : "pencil")
-                            Text(viewModel.pencilMode ? "Not Aktif" : "Not Modu")
-                        }
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(viewModel.pencilMode ? Color.purple : Color.gray)
-                        )
-                    }
-                }
-                .padding(.vertical, 5)
+        VStack(spacing: 15) {
+            // Oyun durumu çubuğu
+            HStack {
+                // Oyun durumu bilgisi
+                Text(gameStateText)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(gameStateColor)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(gameStateColor.opacity(0.15))
+                    )
                 
-                // Numara tuşları
-                NumberPadView(viewModel: viewModel, isEnabled: viewModel.gameState == .playing)
+                Spacer()
+                
+                // İpucu butonu
+                Button {
+                    if viewModel.remainingHints > 0 {
+                        viewModel.requestHint()
+                    } else {
+                        showNoHintsMessage = true
+                        // Otomatik olarak mesajı 2 saniye sonra gizle
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            showNoHintsMessage = false
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "lightbulb.fill")
+                        Text("İpucu (\(viewModel.remainingHints))")
+                    }
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(Color.orange)
+                    )
+                }
+                .opacity(viewModel.remainingHints <= 0 ? 0.5 : 1.0)
+                
+                // Düzenleme butonu (Yeni oyun butonu yerine)
+                Button {
+                    // Düzenleme işlemi (kalem modunu aktif et/deaktif et)
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        viewModel.pencilMode.toggle()
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: viewModel.pencilMode ? "pencil.circle.fill" : "pencil")
+                        Text(viewModel.pencilMode ? NSLocalizedString("Note Active", comment: "Pencil mode active") : NSLocalizedString("Note Mode", comment: "Pencil mode button"))
+                    }
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(viewModel.pencilMode ? Color.purple : Color.gray)
+                    )
+                }
             }
+            .padding(.vertical, 5)
+            
+            // Numara tuşları
+            NumberPadView(viewModel: viewModel, isEnabled: viewModel.gameState == .playing)
             
             // İpucu açıklama paneli - tüm butonların üstünde gösterilecek
-            if viewModel.showHintExplanation {
-                HintExplanationView(viewModel: viewModel)
-                    .transition(.move(edge: .bottom))
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showHintExplanation)
-                    .zIndex(100) // En üst katmanda göster
+            ZStack {
+                if viewModel.showHintExplanation {
+                    HintExplanationView(viewModel: viewModel)
+                        .transition(.move(edge: .bottom))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showHintExplanation)
+                        .zIndex(100) // En üst katmanda göster
+                }
             }
         }
     }
@@ -482,15 +506,17 @@ struct GameView: View {
     private var gameStateText: String {
         switch viewModel.gameState {
         case .ready:
-            return "Hazır"
+            return NSLocalizedString("Ready", comment: "Game state: ready")
         case .playing:
-            return viewModel.pencilMode ? "Kalem Modu" : "Oynanıyor"
+            return viewModel.pencilMode ? 
+                NSLocalizedString("Note Mode", comment: "Game state: pencil mode") : 
+                NSLocalizedString("Playing", comment: "Game state: playing")
         case .paused:
-            return "Duraklatıldı"
+            return NSLocalizedString("Paused", comment: "Game state: paused")
         case .completed:
-            return "Tamamlandı"
+            return NSLocalizedString("Completed", comment: "Game state: completed")
         case .failed:
-            return "Kaybedildi"
+            return NSLocalizedString("Failed", comment: "Game state: failed")
         }
     }
     

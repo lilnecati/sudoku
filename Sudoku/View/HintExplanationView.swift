@@ -45,19 +45,86 @@ struct HintExplanationView: View {
             // Alt panel - görsellerdeki gibi sadece altta, tablo içeriğini kapatmadan
             VStack(spacing: 0) {
                 // Başlık 
-                Text("Son Kalan Hücre")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .padding(.top, 15)
-                    .padding(.bottom, 10)
+                Group {
+                    let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+                    
+                    if languageCode == "en" {
+                        // İngilizce başlık
+                        switch hintData.technique {
+                        case .nakedSingle:
+                            Text("Single Possibility Detection")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .padding(.top, 15)
+                                .padding(.bottom, 10)
+                        case .hiddenSingle:
+                            Text("Single Position Detection")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .padding(.top, 15)
+                                .padding(.bottom, 10)
+                        case .general:
+                            Text("Last Remaining Cell")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .padding(.top, 15)
+                                .padding(.bottom, 10)
+                        default:
+                            Text("Hint")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .padding(.top, 15)
+                                .padding(.bottom, 10)
+                        }
+                    } else {
+                        // Türkçe başlık (varsayılan)
+                        Text(hintData.stepTitle)
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .padding(.top, 15)
+                            .padding(.bottom, 10)
+                    }
+                }
                 
                 // Açıklama - mavi veya yeşil renkli metinler (görsellerdeki gibi)
-                Text(hintData.stepDescription)
-                    .font(.subheadline)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 15)
-                    .foregroundColor(getStepColor(for: viewModel.currentHintStep, hint: hintData))
+                Group {
+                    let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+                    
+                    if languageCode == "en" {
+                        // İngilizce görünüm için açıklamaları manuel olarak çevirelim
+                        if hintData.technique == .nakedSingle {
+                            Text("Only the value \(hintData.value) can be placed in this cell because all other numbers have been eliminated.")
+                                .font(.subheadline)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 15)
+                                .foregroundColor(getStepColor(for: viewModel.currentHintStep, hint: hintData))
+                        } else if hintData.technique == .hiddenSingle {
+                            Text("The number \(hintData.value) can only be placed in this cell in this region.")
+                                .font(.subheadline)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 15)
+                                .foregroundColor(getStepColor(for: viewModel.currentHintStep, hint: hintData))
+                        } else {
+                            // Diğer ipucu teknikleri için
+                            Text("According to Sudoku rules, the value \(hintData.value) can be placed in this cell.")
+                                .font(.subheadline)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 15)
+                                .foregroundColor(getStepColor(for: viewModel.currentHintStep, hint: hintData))
+                        }
+                    } else {
+                        // Türkçe görünüm (varsayılan)
+                        Text(hintData.stepDescription)
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 15)
+                            .foregroundColor(getStepColor(for: viewModel.currentHintStep, hint: hintData))
+                    }
+                }
                 
                 // Adım göstergeleri - görsellerdeki gibi alt kısımda
                 HStack(spacing: 20) {
@@ -91,9 +158,19 @@ struct HintExplanationView: View {
                             dismissHint()
                         }
                     }) {
-                        Text(viewModel.currentHintStep < hintData.totalSteps - 1 ? "İleri" : "Bitti")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.blue)
+                        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+                        
+                        if languageCode == "en" {
+                            // İngilizce buton metni
+                            Text(viewModel.currentHintStep < hintData.totalSteps - 1 ? "Next" : "Finished")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.blue)
+                        } else {
+                            // Türkçe buton metni
+                            Text(viewModel.currentHintStep < hintData.totalSteps - 1 ? "İleri" : "Bitti")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.blue)
+                        }
                     }
                 }
                 .padding(.bottom, 15)

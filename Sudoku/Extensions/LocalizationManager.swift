@@ -5,8 +5,9 @@ import SwiftUI
 struct AppLanguage: Equatable {
     static let english = AppLanguage(code: "en", name: "English")
     static let turkish = AppLanguage(code: "tr", name: "Türkçe")
+    static let french = AppLanguage(code: "fr", name: "Français")
     
-    static let allLanguages = [english, turkish]
+    static let allLanguages = [english, turkish, french]
     
     let code: String
     let name: String
@@ -37,6 +38,17 @@ class LocalizationManager: ObservableObject {
         
         // Yeni dili uygula ve UI'ı güncelle
         NotificationCenter.default.post(name: Notification.Name("LanguageChanged"), object: nil)
+        
+        // App language changed bildirimini gönder (daha geniş kapsamlı)
+        NotificationCenter.default.post(name: Notification.Name("AppLanguageChanged"), object: nil)
+        
+        // Force UI update
+        NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+        
+        // Force refresh EnvironmentObjects
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
     }
     
     func localizedString(for key: String, comment: String = "") -> String {
@@ -70,6 +82,13 @@ struct LocalizationViewModifier: ViewModifier {
                 
                 // View'ı zorla yenile
                 refreshID = UUID()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ForceUIUpdate"))) { _ in
+                // View'ı zorla yenile - özel UI yenileme bildirimi
+                refreshID = UUID()
+                
+                // EnvironmentObject'i güncelle
+                localizationManager.objectWillChange.send()
             }
     }
 }

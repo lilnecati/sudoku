@@ -23,66 +23,70 @@ enum GameTutorialStep: Int, CaseIterable, Identifiable {
     
     // Adım başlığı
     var title: String {
+        let key: String
         switch self {
         case .welcome:
-            return "Sudoku'ya Hoş Geldiniz!"
+            key = "tutorial_title_welcome"
         case .gameRules:
-            return "Oyun Kuralları"
+            key = "tutorial_title_game_rules"
         case .cellSelection:
-            return "Hücre Seçimi"
+            key = "tutorial_title_cell_selection"
         case .numberEntry:
-            return "Sayı Girişi"
+            key = "tutorial_title_number_entry"
         case .conflictDetection:
-            return "Çakışma Tespiti"
+            key = "tutorial_title_conflict_detection"
         case .notesMode:
-            return "Not Alma Modu"
+            key = "tutorial_title_notes_mode"
         case .advancedNotes:
-            return "Gelişmiş Notlar"
+            key = "tutorial_title_advanced_notes"
         case .basicStrategies:
-            return "Temel Stratejiler"
+            key = "tutorial_title_basic_strategies"
         case .hints:
-            return "İpuçları Sistemi"
+            key = "tutorial_title_hints"
         case .savingProgress:
-            return "İlerleme Kaydetme"
+            key = "tutorial_title_saving_progress"
         case .statistics:
-            return "İstatistikler"
+            key = "tutorial_title_statistics"
         case .practice:
-            return "Pratik Yapalım"
+            key = "tutorial_title_practice"
         case .completed:
-            return "Tebrikler!"
+            key = "tutorial_title_completed"
         }
+        return NSLocalizedString(key, comment: "")
     }
     
     // Adım açıklaması - detaylı
     var description: String {
+        let key: String
         switch self {
         case .welcome:
-            return "Bu interaktif rehberde Sudoku'nun temel özelliklerini ve stratejilerini öğreneceksiniz. Her adımda pratik yapma şansınız olacak. İlerlemek için 'İleri' butonuna dokunun."
+            key = "tutorial_desc_welcome"
         case .gameRules:
-            return "Sudoku, 9x9 bir ızgarada oynanır. Amaç, her satır, sütun ve 3x3 bloğun 1'den 9'a kadar rakamları tam olarak bir kez içermesini sağlamaktır. Başlangıçta bazı hücreler doldurulmuştur ve bu ipuçlarını kullanarak tahtayı tamamlarsınız."
+            key = "tutorial_desc_game_rules"
         case .cellSelection:
-            return "Değer girmek istediğiniz boş bir hücreye dokunun. Seçili hücre mavi renkte vurgulanacaktır. Aynı hücreye tekrar dokunarak seçimi kaldırabilirsiniz. Hücreye dokunduğunuzda hafif bir titreşim hissedeceksiniz."
+            key = "tutorial_desc_cell_selection"
         case .numberEntry:
-            return "Seçili hücreye değer girmek için alttaki sayı tuşlarından birine dokunun. Rakamlar sadece boş hücrelere ve ipucu olmayan hücrelere girilebilir. Girdiğiniz sayının tahtadaki kuralları ihlal edip etmediği otomatik olarak kontrol edilir."
+            key = "tutorial_desc_number_entry"
         case .conflictDetection:
-            return "Bir hücreye değer girdiğinizde, bu değer aynı satır, sütun veya 3x3 bloktaki diğer hücrelerle çakışıyorsa, çakışan hücreler kırmızı ile işaretlenir. Geçerli bir hamle yapmak için çakışmaları düzeltmeniz gerekir."
+            key = "tutorial_desc_conflict_detection"
         case .notesMode:
-            return "Emin olmadığınız rakamları not olarak girmek için 'Not Modu' butonunu kullanın. Not modundayken, bir hücreye birden fazla olası değer kaydedebilirsiniz. Bu mod, karmaşık bulmacalarda çok yardımcı olur."
+            key = "tutorial_desc_notes_mode"
         case .advancedNotes:
-            return "Notlar, hücrelere tek tek değer girmeden önce olası değerleri takip etmenize yardımcı olur. 'Notları Güncelle' seçeneği, mevcut tahta durumuna göre tüm notları otomatik olarak günceller ve geçersiz olasılıkları kaldırır."
+            key = "tutorial_desc_advanced_notes"
         case .basicStrategies:
-            return "Tek Olasılık: Bir hücre için sadece bir olası değer varsa, o değeri girin.\nTek Hücre: Bir değer bir satır, sütun veya blokta sadece bir hücreye yerleştirilebiliyorsa, o değeri o hücreye girin.\nKesişim: Bir değer bir satır veya sütunda sadece belirli bir blokta olabiliyorsa, diğer olasılıkları eleyin."
+            key = "tutorial_desc_basic_strategies"
         case .hints:
-            return "Bir ipucu almak için 'İpucu' butonunu kullanabilirsiniz. İpucu sistemi, tahtadaki en mantıklı bir sonraki hamleyi vurgular veya direkt olarak bir hücreyi doldurabilir. Her zorluk seviyesinde sınırlı sayıda ipucu hakkınız vardır."
+            key = "tutorial_desc_hints"
         case .savingProgress:
-            return "Oyun otomatik olarak ilerlemenizi kaydeder. İstediğiniz zaman ara verebilir ve daha sonra kaldığınız yerden devam edebilirsiniz. 'Kaydet ve Çık' butonunu kullanarak mevcut oyunu açıkça kaydedebilirsiniz."
+            key = "tutorial_desc_saving_progress"
         case .statistics:
-            return "Oyun istatistikleriniz her oyundan sonra kaydedilir. En iyi sürelerinizi, çözülen bulmaca sayısını ve ortalama çözüm sürenizi 'İstatistikler' ekranından görebilirsiniz. Bu veriler zorluk seviyesine göre sınıflandırılır."
+            key = "tutorial_desc_statistics"
         case .practice:
-            return "Şimdi öğrendiklerinizi pratik etme zamanı! Bir sonraki adıma geçmeden önce bir boş hücre seçin, bir değer girin ve not alın. Uygulamalı öğrenme en etkili yöntemdir. Hemen deneyin!"
+            key = "tutorial_desc_practice"
         case .completed:
-            return "Tebrikler! Sudoku'nun temel ve ileri özelliklerini öğrendiniz. Artık kendi başınıza oynamaya hazırsınız. Farklı zorluk seviyelerini deneyin ve becerilerinizi geliştirin. İyi oyunlar!"
+            key = "tutorial_desc_completed"
         }
+        return NSLocalizedString(key, comment: "")
     }
     
     // Vurgulanacak hedef bileşen
@@ -335,19 +339,21 @@ class TutorialManager: ObservableObject {
     
     // İpucu metinleri al
     func getTipForStep(_ step: GameTutorialStep) -> String {
+        let key: String
         switch step {
         case .cellSelection:
-            return "İpucu: Tahtayı çift dokunarak tüm benzer değerleri vurgulayabilirsiniz."
+            key = "tutorial_tip_cell_selection"
         case .numberEntry:
-            return "İpucu: Aynı sayıya tekrar dokunarak girdiğiniz değeri silebilirsiniz."
+            key = "tutorial_tip_number_entry"
         case .notesMode:
-            return "İpucu: Kalem işaretleri, olası değerleri takip etmenize yardımcı olur."
+            key = "tutorial_tip_notes_mode"
         case .basicStrategies:
-            return "İpucu: Bir satır, sütun veya bloktaki diğer hücrelere bakarak olasılıkları daraltın."
+            key = "tutorial_tip_basic_strategies"
         case .hints:
-            return "İpucu: İpuçlarını stratejik olarak kullanın, zorlandığınız noktalarda yardımcı olacaktır."
+            key = "tutorial_tip_hints"
         default:
             return ""
         }
+        return NSLocalizedString(key, comment: "")
     }
 }

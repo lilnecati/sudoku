@@ -1,0 +1,1487 @@
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                                Image(systemName: "chevron.forward")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                                Image(systemName: "chevron.forward")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                                Image(systemName: "chevron.forward")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                                Image(systemName: "chevron.forward")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                        .mask(Text("SUDOKU")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Image(systemName: "chevron.right")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Image(systemName: "die.face.5")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Image(systemName: "exclamationmark.triangle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Image(systemName: "play.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Image(systemName: "questionmark.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    name: Notification.Name("ContentViewUpdateAfterTimeout"),
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    print("Kaydedilmiş oyun bulunamadı, yeni oyun başlatılıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    print("Son kaydedilmiş oyun yükleniyor... ID: \(lastGame.value(forKey: "id") ?? "ID yok")")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Text.localizedSafe("Devam Et")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Text.localizedSafe("Kaldığın yerden devam et")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Text.localizedSafe("Nasıl Oynanır?")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Text.localizedSafe("Yeni Oyun")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Text("SUDOKU")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                    Text(LocalizationManager.shared.localizedString(for: "Oyun yükleniyor..."))
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                Image(systemName: "chevron.forward")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                print("🔊 Ana sayfaya yönlendiriliyor (zaman aşımı sonrası)")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                print("Yükleme hatası: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:                ProgressView(LocalizationManager.shared.localizedString(for: "Yükleniyor..."))
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:            forName: Notification.Name("ContentViewUpdateAfterTimeout"),
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:            forName: Notification.Name("ShowMainMenuAfterTimeout"),
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:            name: Notification.Name("ShowMainMenuAfterTimeout"),
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:            print("📢 Dil değişikliği algılandı - ContentView yenileniyor")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:            return bundle?.localizedString(forKey: "Ana Sayfa", value: "Ana Sayfa", table: "Localizable") ?? "Ana Sayfa"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:            return bundle?.localizedString(forKey: "Ayarlar", value: "Ayarlar", table: "Localizable") ?? "Ayarlar"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:            return bundle?.localizedString(forKey: "Kayıtlı Oyunlar", value: "Kayıtlı Oyunlar", table: "Localizable") ?? "Kayıtlı Oyunlar"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:            return bundle?.localizedString(forKey: "Skor Tablosu", value: "Skor Tablosu", table: "Localizable") ?? "Skor Tablosu"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:            Text("SUDOKU")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))) { _ in
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:        case .home: return "house.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:        case .savedGames: return "square.stack.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:        case .scoreboard: return "trophy.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:        case .settings: return "gearshape.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:        default: return "questionmark"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:        let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+/Users/necati/Desktop/Sudoku/Sudoku/ContentView.swift:    @AppStorage("selectedDifficulty") private var selectedDifficulty = 0
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getData(key: "boardState")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getDate(key: "date")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getDate(key: "dateCreated")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getDate(key: "registrationDate")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getDouble(key: "elapsedTime")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getDouble(key: "elapsedTime")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getString(key: "difficulty", defaultValue: "Kolay")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getString(key: "difficulty", defaultValue: "Kolay")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getString(key: "email", defaultValue: "")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getString(key: "name", defaultValue: "İsimsiz")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getString(key: "playerName", defaultValue: "İsimsiz")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return getString(key: "username", defaultValue: "")
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return value(forKey: "id") as? UUID
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:        return value(forKey: "isLoggedIn") as? Bool ?? false
+/Users/necati/Desktop/Sudoku/Sudoku/CoreDataModels/NSManagedObjectExtensions.swift:    func getString(key: String, defaultValue: String = "") -> String {
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/AppLanguage+Extensions.swift:        case "en": return "🇬🇧"
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/AppLanguage+Extensions.swift:        case "fr": return "🇫🇷"
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/AppLanguage+Extensions.swift:        case "tr": return "🇹🇷"
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/AppLanguage+Extensions.swift:        default: return "🏳️"
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let darkBg1 = Color(hex: "121212")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let darkBg2 = Color(hex: "1E1E1E")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let darkBg3 = Color(hex: "242631")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let lightBg1 = Color(hex: "FFFFFF")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let lightBg2 = Color(hex: "F5F5F5")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let lightBg3 = Color(hex: "F0F4FF")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let modernBlue = Color(hex: "1E88E5")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let modernDarkBlue = Color(hex: "1565C0")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let modernDarkGray = Color(hex: "424242")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let modernGray = Color(hex: "9E9E9E")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let modernGreen = Color(hex: "43A047")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let modernLightBlue = Color(hex: "64B5F6")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let modernLightGray = Color(hex: "EEEEEE")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let modernPurple = Color(hex: "673AB7")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let modernRed = Color(hex: "E53935")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let sudokuAccent = Color("SudokuAccent")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let sudokuBackground = Color("SudokuBackground")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let sudokuCell = Color("SudokuCell")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let sudokuSecondary = Color("SudokuSecondary")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/ColorExtension.swift:    static let sudokuText = Color("SudokuText")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ForceUIUpdate"))) { _ in
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))) { _ in
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        guard let path = Bundle.main.path(forResource: languageCode, ofType: "lproj"),
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        guard let path = Bundle.main.path(forResource: languageCode, ofType: "lproj"),
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        let localizedString = NSLocalizedString(key, bundle: bundle, comment: "")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        let localizedString = NSLocalizedString(key, bundle: bundle, comment: "")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        let path = Bundle.main.path(forResource: currentLanguage, ofType: "lproj") 
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        NotificationCenter.default.post(name: Notification.Name("AppLanguageChanged"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        NotificationCenter.default.post(name: Notification.Name("LanguageChanged"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        return ""
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        return bundle?.localizedString(forKey: key, value: nil, table: "Localizable") ?? key
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        UserDefaults.standard.set([language.code], forKey: "AppleLanguages")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:        UserDefaults.standard.set(language.code, forKey: "app_language")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:    @AppStorage("app_language") var currentLanguage: String = "en"
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:    func localizedString(for key: String, comment: String = "") -> String {
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:    static let english = AppLanguage(code: "en", name: "English")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:    static let french = AppLanguage(code: "fr", name: "Français")
+/Users/necati/Desktop/Sudoku/Sudoku/Extensions/LocalizationManager.swift:    static let turkish = AppLanguage(code: "tr", name: "Türkçe")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:            case .high: return "Yüksek"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:            case .low: return "Düşük"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:            case .medium: return "Orta"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:            case .off: return "Kapalı"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:            UserDefaults.standard.set(autoPowerSaving, forKey: "autoPowerSaving")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:            UserDefaults.standard.set(highPerformanceMode, forKey: "highPerformanceMode")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:            UserDefaults.standard.set(powerSavingMode, forKey: "powerSavingMode")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:    @Published var autoPowerSaving: Bool = UserDefaults.standard.bool(forKey: "autoPowerSaving") {
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:    @Published var highPerformanceMode: Bool = UserDefaults.standard.bool(forKey: "highPerformanceMode") {
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/PowerSavingManager.swift:    @Published var powerSavingMode: Bool = UserDefaults.standard.bool(forKey: "powerSavingMode") {
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:            print("❌ String veri dönüşümü başarısız")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:            return ""
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:            return (false, "Kullanıcı adı en az 4 karakter olmalıdır.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:            return (false, "Kullanıcı adı sadece harf, rakam ve alt çizgi içermelidir.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:            return (false, "Şifre en az 8 karakter olmalıdır.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:            return (false, "Şifre en az bir büyük harf içermelidir.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:            return (false, "Şifre en az bir küçük harf içermelidir.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:            return (false, "Şifre en az bir özel karakter içermelidir.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:            return (false, "Şifre en az bir rakam içermelidir.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        if !NSPredicate(format: "SELF MATCHES %@", digitRegex).evaluate(with: password) {
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        if !NSPredicate(format: "SELF MATCHES %@", lowercaseLetterRegex).evaluate(with: password) {
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        if !NSPredicate(format: "SELF MATCHES %@", specialCharRegex).evaluate(with: password) {
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        if !NSPredicate(format: "SELF MATCHES %@", uppercaseLetterRegex).evaluate(with: password) {
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        if !NSPredicate(format: "SELF MATCHES %@", usernameRegex).evaluate(with: username) {
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        let digitRegex = ".*[0-9]+.*"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        let isValid = NSPredicate(format: "SELF MATCHES %@", emailRegex).evaluate(with: email)
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        let lowercaseLetterRegex = ".*[a-z]+.*"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        let specialCharRegex = ".*[!@#$%^&*()\\-_=+{}|?>.<]+.*"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        let uppercaseLetterRegex = ".*[A-Z]+.*"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        let usernameRegex = "^[a-zA-Z0-9_]+$"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        return (isValid, isValid ? "E-posta geçerli." : "Geçerli bir e-posta adresi girin.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        return (true, "Kullanıcı adı geçerli.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        return (true, "Şifre güçlü.")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/SecurityManager.swift:        return hashedData.map { String(format: "%02x", $0) }.joined()
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:              currentStep != .completed else { return "Tamamlandı" }
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_advanced_notes"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_basic_strategies"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_cell_selection"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_completed"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_conflict_detection"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_game_rules"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_hints"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_notes_mode"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_number_entry"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_practice"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_saving_progress"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_statistics"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_desc_welcome"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_tip_basic_strategies"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_tip_cell_selection"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_tip_hints"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_tip_notes_mode"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_tip_number_entry"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_advanced_notes"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_basic_strategies"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_cell_selection"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_completed"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_conflict_detection"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_game_rules"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_hints"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_notes_mode"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_number_entry"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_practice"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_saving_progress"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_statistics"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            key = "tutorial_title_welcome"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:            return ""
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:        return "%\(percentage)"
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:        return NSLocalizedString(key, comment: "")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:        return NSLocalizedString(key, comment: "")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:        return NSLocalizedString(key, comment: "")
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:    @AppStorage("hasSeenTutorial") var hasSeenTutorial: Bool = false
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:    @AppStorage("lastTutorialStep") var lastTutorialStep: Int = 0
+/Users/necati/Desktop/Sudoku/Sudoku/Managers/TutorialManager.swift:    @AppStorage("showTutorialTips") var showTutorialTips: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                        "board": board,
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                        "difficulty": difficulty
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                        print("⚠️ Eski format kullanıcı girişi - güvenlik güncellemesi uygulanıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                        print("✅ Kullanıcı girişi başarılı: \(username)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                        print("❌ Şifre yanlış: \(username)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                    debugPrint("ℹ️ Anonim kullanıcının giriş durumu güncellendi")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                    game.setValue(newID, forKey: "id")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                    print("🔄 Oyun #\(index) için eksik ID oluşturuldu: \(newID)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                "board": board,
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                "difficulty": difficulty
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                anonymousUser.username = "anonymous_\(anonymousID)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                debugPrint("👤 Çıkış yapan kullanıcı: \(user.username ?? "bilinmiyor")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                debugPrint("ℹ️ İşlem sonrası giriş yapmış kullanıcı: \(currentUser.username ?? "bilinmiyor")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                debugPrint("ℹ️ Kaydedilecek değişiklik yok")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                debugPrint("✅ Kullanıcı çıkış bilgileri kaydedildi")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                debugPrint("✅ Mevcut anonim kullanıcı bulundu: \(anonymousUser.username ?? "bilinmiyor")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                debugPrint("✅ Tüm kullanıcılar başarıyla çıkış yaptı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                debugPrint("✅ Yeni anonim kullanıcı oluşturuldu: \(anonymousUser.username ?? "bilinmiyor")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                debugPrint("ℹ️ Yeni anonim kullanıcı oluşturuluyor...")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                if game.value(forKey: "id") == nil {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                print("❌ Bu e-posta zaten kullanılıyor: \(email)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                print("❌ Bu kullanıcı adı zaten kullanılıyor: \(username)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                print("⚠️ Güncellenecek oyun bulunamadı, ID: \(gameID). Yeni oyun olarak kaydediliyor.")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                print("✅ ID'si \(gameID) olan oyun başarıyla silindi")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                print("✅ Oyun zorluk seviyesi güncellendi: \(newDifficulty)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                print("❓ Silinecek oyun bulunamadı, ID: \(gameID)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                print("CoreData kaydetme hatası: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:                print("CoreData yüklenemedi: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            debugPrint("❌ Anonim kullanıcı oluşturulamadı: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            debugPrint("❌ Çıkış hatası: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            debugPrint("👥 Giriş yapmış kullanıcı sayısı: \(users.count)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            debugPrint("👥 Mevcut anonim kullanıcı sayısı: \(anonymousUsers.count)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            fetchRequest.predicate = NSPredicate(format: "user == %@", currentUser)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            game.setValue(currentUser, forKey: "user")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            highScore.playerName = "Misafir Oyuncu"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            highScore.playerName = currentUser.name ?? "Oyuncu"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            highScore.setValue(currentUser, forKey: "user")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            let userPredicate = NSPredicate(format: "user == %@", currentUser)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            let userPredicate = NSPredicate(format: "user == %@", currentUser)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Giriş başarısız: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Kayıtlı oyunlar getirilemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Kayıtlı oyunlar yüklenemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("✅ Kullanıcı başarıyla oluşturuldu: \(username)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Kullanıcı bulunamadı: \(username)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Kullanıcı kaydı başarısız: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Oyun güncellenemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Oyun kaydedilemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Oyun silinemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Oyun zorluk seviyesi güncellenirken hata oluştu: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("📊 Yüklenen oyun sayısı: \(savedGames.count)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Yüksek skor kaydedilemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("❌ Yüksek skorlar getirilemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("Kaydedilmiş oyunlar silinemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("Kullanıcı bilgisi alınamadı: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("Kullanıcı bulunamadı: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("Oyun silinemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            print("Tüm kaydedilmiş oyunlar silindi")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:            request.predicate = NSPredicate(format: "user == %@", currentUser)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        container = NSPersistentContainer(name: "SudokuModel")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        debugPrint("🔄 getOrCreateAnonymousUser çağrıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        debugPrint("🔄 LogoutCurrentUser başladı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        emailCheck.predicate = NSPredicate(format: "email == %@", email)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        fetchRequest.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        game.setValue(gameID, forKey: "id")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        let emailCheck = NSFetchRequest<User>(entityName: "User")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "SavedGame")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        let usernameCheck = NSFetchRequest<User>(entityName: "User")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        request.predicate = NSPredicate(format: "difficulty == %@", difficulty)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        request.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        request.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        request.predicate = NSPredicate(format: "isAnonymous == YES")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        request.predicate = NSPredicate(format: "isLoggedIn == YES")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        request.predicate = NSPredicate(format: "isLoggedIn == YES")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        request.predicate = NSPredicate(format: "username == %@", username)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        request.predicate = NSPredicate(format: "username == %@", username)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/PersistenceController.swift:        usernameCheck.predicate = NSPredicate(format: "username == %@", username)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                    print("✓ Skor doğrulandı: \(id.uuidString)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                    print("✓ Skor doğrulandı: ID yok")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                } else if let time = bestScore.value(forKey: "elapsedTime") as? Double {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                } else if let time = score.value(forKey: "elapsedTime") as? Double {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                if let id = score.value(forKey: "id") as? UUID {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                if let totalScore = bestScore.value(forKey: "totalScore") as? Int, totalScore > 0 {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                if let totalScoreValue = score.value(forKey: "totalScore") as? Int, totalScoreValue > 0 {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                print("❌ HATA: Skor kaydedildi ama veritabanında bulunamadı!")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                print("✓ Toplam Skor: \(score.value(forKey: "totalScore") as? Int ?? 0)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:                print("✓ Zorluk: \(score.value(forKey: "difficulty") as? String ?? "Zorluk yok")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:            NSSortDescriptor(key: "elapsedTime", ascending: true)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:            NSSortDescriptor(key: "totalScore", ascending: false),
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:            print("⚠️ En yüksek skor alınamadı: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:            print("⚠️ Ortalama skor hesaplanamadı: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:            print("✅ Skor başarıyla kaydedildi: ID: \(scoreId), Toplam Puan: \(scoreResults.totalScore)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:            print("❌ Skor kaydedilemedi: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:            print("❌ Skor kontrolü sırasında hata: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        let entity = NSEntityDescription.entity(forEntityName: "HighScore", in: context)!
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        let request = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        let request = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        let request = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        print("📊 Skor kaydediliyor - Zorluk: \(difficulty.rawValue), Süre: \(timeElapsed), Hatalar: \(errorCount), İpuçları: \(hintCount)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        request.predicate = NSPredicate(format: "difficulty == %@", difficulty.rawValue)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        request.predicate = NSPredicate(format: "difficulty == %@", difficulty.rawValue)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        request.predicate = NSPredicate(format: "id == %@", scoreId as CVarArg)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue("Oyuncu", forKey: "playerName")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(Date(), forKey: "date")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(difficulty.rawValue, forKey: "difficulty")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(errorCount, forKey: "errorCount")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(hintCount, forKey: "hintCount")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(moveCount, forKey: "moveCount")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(scoreId, forKey: "id")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(scoreResults.baseScore, forKey: "baseScore")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(scoreResults.timeBonus, forKey: "timeBonus")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(scoreResults.totalScore, forKey: "totalScore")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/ScoreManager.swift:        score.setValue(timeElapsed, forKey: "elapsedTime")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                                log("📊 '\(soundFile)' - Boyut: \(fileSize) bytes")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                                log("🔄 Format: MP3 algılandı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                                log("🔄 Format: WAV (RIFF) algılandı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                                log("✅ Ses oynatıcı başarıyla oluşturuldu: \(path).\(ext)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                                logError("'\(soundFile)' özellikleri okunamadı: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                                logError("AVAudioPlayer oluşturulamadı: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                            } else if hexSignature.hasPrefix("4944") || hexSignature.hasPrefix("FFFA") || hexSignature.hasPrefix("FFFB") {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                            filePath.hasSuffix(".\(ext)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                            let hexSignature = data.prefix(4).map { String(format: "%02X", $0) }.joined()
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                            log("✅ '\(soundName).\(ext)' AVAudioPlayer ile açılabildi - Süre: \(testPlayer.duration) sn")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                            log("✅ Ses dosyası bulundu: \(path).\(ext)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                            logError("'\(soundName).\(ext)' AVAudioPlayer ile açılamadı: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                        log("📊 '\(soundName).\(ext)' - Boyut: \(fileSize) bytes")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                        log("✅ \(path) içinde bulunan ses dosyaları: \(soundFiles)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                        log("⚠️ \(path) içinde ses dosyası bulunamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                        logError("'\(soundName).\(ext)' dosya özellikleri okunamadı: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                        logError("\(path).\(ext) yüklenirken hata: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                     userInfo: [NSLocalizedDescriptionKey: "Ses dosyası bulunamadı veya yüklenemedi: \(name).\(fileExt)"])
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                    log("❌ '\(soundName).\(ext)' bulunamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                    log("✅ '\(soundName).\(ext)' bulundu: \(resourcePath)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                    logError("\(path) içeriği okunamadı: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                erasePlayer = loadSound(named: "tap", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                erasePlayer = loadSound(named: "tap", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                if let player = self.loadSound(named: "tap", ofType: "wav") {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                if let player = self.loadSound(named: "tap", ofType: "wav") {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                log("⚠️ Dizin mevcut değil: \(path)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                log("⚠️ erase.wav yüklenemedi, silme işleminde tap sesi kullanılacak")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                log("❌ number_tap.wav yüklenemedi, alternatif ses çalınamayacak")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                log("❌ tap.wav yüklenemedi, ses çalınamayacak")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                log("❌ tap.wav yüklenemedi, ses çalınamayacak")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                log("✅ Var olan dizin: \(path)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:                logError("tap.wav yüklenemedi, ses çalınamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            bundleURL.appendingPathComponent("Resources").path,
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            bundleURL.appendingPathComponent("Resources/Sounds").path
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            bundleURL.appendingPathComponent("Sounds").path,
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            completionPlayer = loadSound(named: "completion", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            completionPlayer = loadSound(named: "completion", ofType: "wav") ?? loadSound(named: "completion", ofType: "mp3")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            completionPlayer = loadSound(named: "completion", ofType: "wav") ?? loadSound(named: "completion", ofType: "mp3")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            correctPlayer = loadSound(named: "correct", ofType: "mp3") ?? loadSound(named: "correct", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            correctPlayer = loadSound(named: "correct", ofType: "wav") ?? loadSound(named: "correct", ofType: "mp3")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            erasePlayer = loadSound(named: "erase", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            erasePlayer = loadSound(named: "erase", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            errorPlayer = loadSound(named: "error", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            errorPlayer = loadSound(named: "error", ofType: "wav") ?? loadSound(named: "error", ofType: "mp3")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            extensions.append("mp3")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            extensions.append("wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            if let player = loadSound(named: "tap", ofType: "wav") {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            if let player = self.loadSound(named: "correct", ofType: "mp3") ?? self.loadSound(named: "correct", ofType: "wav") {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            if let player = self.loadSound(named: "error", ofType: "wav") {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            if let player = self.loadSound(named: "tap", ofType: "wav") {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            if let tapPlayer = self.loadSound(named: "tap", ofType: "wav") {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("✅ Audio session başarıyla yapılandırıldı (Kategori: playback)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("✅ Audio session başarıyla yapılandırıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🔇 Audio session devre dışı bırakıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("⚠️ Bilinmeyen ses kesintisi durumu")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("❌ Bundle URL bulunamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("❌ Erase player nil olduğu için ses çalınamıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🔍 executeSound(.numberInput) çağrıldı -> playNumberInputSound çağrılıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🔍 executeSound(.tap) çağrıldı -> doğrudan playNavigationSound çağrılıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("❌ Navigation player nil olduğu için ses çalınamıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("❌ Navigation player nil olduğu için ses çalınamıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("⚠️ Navigation player oluşturuluyor - doğrudan tap.wav kullanılacak")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("⚠️ Navigation player oluşturuluyor - doğrudan tap.wav kullanılacak")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("❌ Number input player nil olduğu için ses çalınamıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("❌ Ses ayarları kapalı olduğu için test sesi çalınamıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🔈 Ses cihazı çıkarıldı - hoparlöre geçildi")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🔊 Ses dosyaları önceden yükleniyor...")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("✅ Ses dosyaları yüklendi")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("⚠️ Ses kapalı olduğu için önden yükleme yapılmadı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🔇 Ses kesintisi başladı - ses sistemi duraklatıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🔈 Ses kesintisi sona erdi - ses sistemi yeniden başlatılıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("❌ Ses seviyesi 0 olduğu için test sesi çalınamıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🔊 Ses seviyesi değişikliği için tap sesi çalınıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🔄 Ses yönlendirme değişti: \(reason.rawValue)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("✅ Ses yüklendi: \(name).\(type) - URL: \(result.url?.lastPathComponent ?? "bilinmeyen")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            log("🎧 Yeni ses cihazı bağlandı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            logError("Audio session devre dışı bırakılamadı: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            logError("Audio session yapılandırılamadı: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            logError("Audio session yapılandırma hatası: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            logError("Ses dosyası yüklenirken hata: \(name).\(type) - \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            name: NSNotification.Name("SoundVolumeChangedNotification"),
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            navigationPlayer = loadSound(named: "tap", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            navigationPlayer = loadSound(named: "tap", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            navigationPlayer = loadSound(named: "tap", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            numberInputPlayer = loadSound(named: "number_tap", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:            numberInputPlayer = loadSound(named: "number_tap", ofType: "wav")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        } else if fileExt == "wav" {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        if fileExt == "mp3" {
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        let extensions = ["wav", "mp3"]
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        let testSounds = ["tap", "error", "correct", "completion", "number_tap"]
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔍 Arama yapılacak yollar: \(searchPaths)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔊 loadSound çağrıldı: \(name).\(type)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🎵 playCorrectSound çağrıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔄 playEraseSound çağrıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("✅ playEraseSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🎵 playErrorSound çağrıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🏆 playGameCompletedSound çağrıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🎵 playNavigationSound çağrıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("✅ playNavigationSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🎵 playNavigationSoundOnly çağrıldı - titreşim vermeden")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("✅ playNavigationSoundOnly: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🎵 playNumberInputSound çağrıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("✅ playNumberInputSound: \(player.url?.lastPathComponent ?? "bilinmeyen")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔊 Ses ayarları güncelleniyor: \(enabled ? "Açık" : "Kapalı")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔊 Ses dosyaları yükleniyor...")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔊 Ses seviyesi değişikliği bildirimi alındı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔊 Ses seviyesi güncelleniyor: \(volume)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔊 Ses seviyesi sessizce güncelleniyor: \(volume)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔊 Temel ses testi çalınıyor...")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("✅ Test sesi çalındı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔍 TÜM SES KAYNAKLARI KONTROL EDİLİYOR")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("🔄 Tüm ses oynatıcıları sıfırlanıyor...")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("📱 Uygulama arka plana geçti - ses sistemi devre dışı bırakılıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("📱 Uygulama ön plana geçti - ses sistemi yeniden başlatılıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("\nBundle kaynaklarını doğrudan kontrol ediyorum:")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("Loglama \(enabled ? "açıldı" : "kapatıldı")")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("SoundManager başlatıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        log("SoundManager başlatılıyor...")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        logError("Hiçbir şekilde yüklenemedi: \(name).\(fileExt)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        NotificationCenter.default.post(name: NSNotification.Name("SoundVolumeChangedNotification"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        NotificationCenter.default.post(name: NSNotification.Name("SoundVolumeChangedNotification"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        print("❌ SoundManager Hatası: \(message)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        print("🔊 SoundManager: \(message)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:        throw NSError(domain: "SoundManager", 
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:    @AppStorage("enableSoundEffects") private var enableSoundEffects: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SoundManager.swift:    @AppStorage("isLoggingEnabled") private var isLoggingEnabled: Bool = false
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                    description += "· "
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                    description += "\(value) "
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                    description += "| "
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                    let key = "\(row)_\(col)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                    let key = "\(row)_\(col)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                    let key = "\(row)_\(col)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                    print("HATA: Çözümde nil değer var: [\(row)][\(col)]")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                description += "------+-------+------\n"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                print("Eski format tespit edildi")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                print("Yeni format tespit edildi")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                return "Başlangıç seviyesi, yeni başlayanlar için ideal"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                return "En zorlu seviye, gerçek Sudoku ustaları için"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                return "Orta zorlukta, biraz tecrübe gerektirir"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:                return "Zorlu, stratejik düşünme becerisi gerektirir"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:               let boardArray = boardDict["board"] as? [[Int]],
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:               let difficultyString = boardDict["difficulty"] as? String,
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:            description += "\n"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:            let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "en"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:            let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:            print("⚠️ SudokuBoard.getOriginalValue: Geçersiz indeks: (\(row), \(col))")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:            print("Çözümde nil değerler var, tekrar deneniyor...")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:            print("İstenen sayıda hücre kaldırılamadı. Hedef: \(count), Kaldırılan: \(count - cellsToRemove)")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:            return bundle?.localizedString(forKey: self.rawValue, value: self.rawValue, table: "Localizable") ?? self.rawValue
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        case easy = "Kolay"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        case expert = "Uzman"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        case hard = "Zor"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        case medium = "Orta"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        let cacheKey = "\(row)_\(column)_\(value)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        let key = "\(row)_\(col)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        let key = "\(row)_\(column)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        let key = "\(row)_\(column)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        let key = "\(row)_\(column)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        let key = "\(row)_\(column)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        let key = "\(row)_\(column)"
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        print("Format anlaşılabilir değil, kaydedilmiş verileri siliyor olabilirsiniz")
+/Users/necati/Desktop/Sudoku/Sudoku/Model/SudokuBoard.swift:        var description = "Sudoku Tahtası (Zorluk: \(difficulty.rawValue))\n"
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                                    NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                                    NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                                print("🌐 App language changed")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                                print("✅ Content view appeared successfully")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                                print("🔋 Power saving mode: \(powerManager.isPowerSavingEnabled ? "ON" : "OFF")")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                                print("📱 Text size changed to: \(self.textSizePreference.rawValue)")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                            NotificationCenter.default.addObserver(forName: Notification.Name("AppLanguageChanged"), object: nil, queue: .main) { notification in
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                            NotificationCenter.default.addObserver(forName: Notification.Name("TextSizeChanged"), object: nil, queue: .main) { notification in
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                        NotificationCenter.default.post(name: Notification.Name("AppBecameActive"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                    NotificationCenter.default.post(name: Notification.Name("ResetGameAfterTimeout"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                    print("📱 App became active after \(Int(timeInBackground)) seconds")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                    print("⏰ App was in background for \(Int(timeInBackground)) seconds - resetting game")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                    print("✅ Context saved successfully")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                    print("❌ Failed to save context: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                NotificationCenter.default.post(name: Notification.Name("PauseActiveGame"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                print("📱 App moved to background - pausing active game")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                print("⏰ Background time saved: \(lastBackgroundTime)")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:                Text.localizedSafe("Tekrar Dene")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:            Image(systemName: "exclamationmark.triangle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:            print("👤 Kullanıcı giriş yaptı: \(user.username ?? "N/A")")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:            Text.localizedSafe("Uygulama Başlatılamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:            Text.localizedSafe("Uygulamayı kapatıp tekrar açmayı deneyin.")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:            Text("Hata: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:        NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:        print("📊 Debug mode active")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:        print("👤 Kullanıcı çıkış yaptı")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:        print("🔋 Power Saving Manager initialized")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:        print("📱 Sudoku app initializing...")
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    @AppStorage("darkMode") var darkMode: Bool = false {
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    @AppStorage("highPerformanceMode") private var highPerformanceMode = true
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    @AppStorage("lastBackgroundTime") private var lastBackgroundTime: Double = 0
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    @AppStorage("useSystemAppearance") var useSystemAppearance: Bool = false {
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    case large = "Büyük"
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    case medium = "Orta"
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    case small = "Küçük"
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    NotificationCenter.default.addObserver(forName: Notification.Name("UserLoggedIn"), object: nil, queue: .main) { _ in
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    NotificationCenter.default.addObserver(forName: Notification.Name("UserLoggedOut"), object: nil, queue: .main) { _ in
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    static let primaryBlue = Color("PrimaryBlue", bundle: nil) 
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    static let primaryGreen = Color("PrimaryGreen", bundle: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    static let primaryOrange = Color("PrimaryOrange", bundle: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    static let primaryPurple = Color("PrimaryPurple", bundle: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/SudokuApp.swift:    static let primaryRed = Color("PrimaryRed", bundle: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/AnimatedSudokuLogo.swift:            Text("\(number)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/BackgroundView.swift:        Text("Izgara Arka Plan Örneği")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                        Image(systemName: "play.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                        Text("Yeni Oyun")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                    StatisticRow(icon: "chart.bar.fill", title: "Zorluk", value: difficulty.localizedName)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                    StatisticRow(icon: "clock.fill", title: "Süre", value: formatTime(timeElapsed))
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                    StatisticRow(icon: "lightbulb.fill", title: "İpucu", value: "\(hintCount)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                    StatisticRow(icon: "xmark.circle.fill", title: "Hata", value: "\(errorCount)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                    Text("🎉 Yeni Rekor! 🎉")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                    Text("\(score)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                    Text("Anasayfaya Dön")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                    Text("PUAN")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                Image(systemName: "star.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                Text("Sudoku'yu Tamamladınız")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:                Text("Tebrikler!")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:        return String(format: "%02d:%02d", minutes, seconds)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                            Image(systemName: "lightbulb.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                            Image(systemName: viewModel.pencilMode ? "pencil.circle.fill" : "pencil")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                            Text("İpucu (\(viewModel.remainingHints))")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                            Text(viewModel.pencilMode ? NSLocalizedString("Note Active", comment: "Pencil mode active") : NSLocalizedString("Note Mode", comment: "Pencil mode button"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    icon: "clock",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    icon: "lightbulb.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    icon: "speedometer",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    icon: "xmark.circle.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Image(systemName: "arrow.clockwise.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Image(systemName: "chevron.left")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Image(systemName: "gearshape.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Image(systemName: "house.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Image(systemName: "house.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Image(systemName: "plus.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    systemImage: "speedometer",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    systemImage: "star.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    text: "\(viewModel.errorCount)/3",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    text: "\(viewModel.remainingHints)",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Text("Anasayfaya Dön")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Text("Anasayfaya Dön")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Text("Her oyunda yalnızca 3 ipucu kullanabilirsiniz!")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Text("Yeni Oyun")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    Text("Yeni Oyun")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    title: "Skor",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                    title: "Zorluk",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                icon: "figure.walk",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                icon: "lightbulb.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                icon: "timer",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                icon: "xmark.circle",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                Image(systemName: "chevron.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                NSLocalizedString("Note Mode", comment: "Game state: pencil mode") : 
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                NSLocalizedString("Playing", comment: "Game state: playing")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                Text("İptal")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                Text("Kendinize uygun bir zorluk seviyesi belirleyin")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                Text("Sudoku")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                Text("Zorluk Seviyesi Seçin")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                title: "Kullanılan İpuçları",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                title: "Ortalama Hamle Süresi",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                title: "Toplam Hamle",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                title: "Yapılan Hatalar",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                value: "\(stats.errors)",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                value: "\(stats.hints)",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:                value: "\(stats.moves)",
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            Image(systemName: "trophy.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            Image(systemName: "xmark.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            NotificationCenter.default.post(name: Notification.Name("HideNavigationBar"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return "bolt"
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return "flame"
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return "leaf"
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return "star"
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return NSLocalizedString("Completed", comment: "Game state: completed")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return NSLocalizedString("Failed", comment: "Game state: failed")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return NSLocalizedString("Paused", comment: "Game state: paused")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return NSLocalizedString("Ready", comment: "Game state: ready")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return String(format: "%.0f sn", avgTime)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return String(format: "%.1f dk", avgTime / 60)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            return String(format: "%.1f sn", avgTime)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            Text("3 hata yaptınız ve Sudoku oyununu kaybettiniz.")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            Text("Oyun Bitti!")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            Text("Performans İstatistikleri")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            Text("Sudoku bulmacasını \(timeString(from: viewModel.elapsedTime)) sürede tamamladınız!")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            Text("Süre: \(timeString(from: viewModel.elapsedTime))")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:            Text("Tebrikler!")
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:        guard moves > 0 else { return "0 sn" }
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:        return "\(score)"
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:        return String(format: "%02d:%02d", minutes, remainingSeconds)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:    @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:    @AppStorage("isPremiumUnlocked") private var isPremiumUnlocked: Bool = false
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:    @State private var timeDisplay: String = "00:00"
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                            Text("According to Sudoku rules, the value \(hintData.value) can be placed in this cell.")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                            Text("Hint")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                            Text("Last Remaining Cell")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                            Text("Only the value \(hintData.value) can be placed in this cell because all other numbers have been eliminated.")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                            Text("Single Position Detection")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                            Text("Single Possibility Detection")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                            Text("The number \(hintData.value) can only be placed in this cell in this region.")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                            Text(viewModel.currentHintStep < hintData.totalSteps - 1 ? "İleri" : "Bitti")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                            Text(viewModel.currentHintStep < hintData.totalSteps - 1 ? "Next" : "Finished")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                        if languageCode == "en" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                        Image(systemName: "chevron.left")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                    if languageCode == "en" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                    if languageCode == "en" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                    let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:                    let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:            reason: "Bu hücreye 5 değeri konabilir çünkü aynı satır, sütun ve 3x3 bloktaki diğer sayılarla çakışmaz.",
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:            reason: "Bu hücreye 5 değeri konabilir."
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:        hintData.addStep(title: "Adım 1", description: "İlk adım açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:        hintData.addStep(title: "Adım 2", description: "İkinci adım açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                                NotificationCenter.default.post(name: Notification.Name("ShowRegisterView"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                                Text("Giriş Yap")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                                Text("Kayıt Ol")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                            SecureField("Şifrenizi girin", text: $password)
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                            Text("Hesabınız yok mu?")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                            Text("İptal")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                            Text("Kullanıcı Adı")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                            Text("Şifre")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                            Text("Şifremi Unuttum")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                            TextField("Kullanıcı adınızı girin", text: $username)
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                        Image(systemName: "person.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                        Text("Giriş Yap")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                    dismissButton: .default(Text("Tamam"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                    errorMessage = "Kullanıcı adı veya şifre hatalı."
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                    NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                    title: Text("Hata"),
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                errorMessage = "Bu özellik şu anda yapım aşamasındadır. Lütfen daha sonra tekrar deneyin."
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                Text("Giriş Yap")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                Text("İptal")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:                Text("Talimatları Gönder")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:            errorMessage = "Kullanıcı adı ve şifre gereklidir."
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:            Text("Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz.")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:            Text("Şifremi Unuttum")
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:            TextField("E-posta adresiniz", text: .constant(""))
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:    @State private var errorMessage = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:    @State private var password = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:    @State private var username = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                                    icon: "arrow.clockwise",
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                                    title: "Devam Et",
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                                icon: "gearshape.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                                icon: "play.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                                icon: "trophy.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                                title: "Ayarlar",
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                                title: "Skor Tablosu",
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                                title: "Yeni Oyun",
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                        Image(systemName: "grid.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:                        Text("SUDOKU")
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:            Image(systemName: "chevron.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:            print("Kaydedilmiş oyun kontrolü başarısız: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:            print("Son oyun yüklenemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "dateCreated", ascending: false)]
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "SavedGame")
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:        let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: "SavedGame")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                                .id("remaining_\(number)_\(remaining)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                             NSLocalizedString("Not Aktif", comment: "Pencil mode active") : 
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                             NSLocalizedString("Not Modu", comment: "Pencil mode button"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                            .id("numBtn_\(number)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                            Text("\(remaining)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                        Text("0")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                        Text("Not Modu")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                    Image(systemName: "delete.left")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                    Image(systemName: viewModel.pencilMode ? "pencil.circle.fill" : "pencil")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                    Text("\(number)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:                    Text("Sil")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:        .id("eraseBtn")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:        .id("numberBtn_\(number)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:        .id("pencilBtn")
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:    @AppStorage("enableHapticFeedback") private var enableHapticFeedback = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:    @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/PencilMarksView.swift:                                        Text("\(number)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                        alertMessage = "Bu özellik şu anda geliştirme aşamasındadır."
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                        alertTitle = "Bilgi"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                        Text("Şifre Değiştir")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                        Text(newPassword == confirmPassword ? "Şifreler eşleşiyor" : "Şifreler eşleşmiyor")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                    .destructive(Text("Hesabı Sil")) {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                    Image(systemName: "lock.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                    Image(systemName: showPasswordChange ? "chevron.up" : "chevron.down")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                    SecureField("Mevcut Şifre", text: $currentPassword)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                    SecureField("Yeni Şifre (Tekrar)", text: $confirmPassword)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                    SecureField("Yeni Şifre", text: $newPassword)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                    Text("Şifre Değiştir")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                Button("Kaydet") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                dismissButton: .default(Text("Tamam"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                Image(systemName: "trash.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                message: Text("Bu işlem geri alınamaz. Tüm verileriniz silinecektir."),
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                Text("Ad Soyad")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                Text("E-posta")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                Text("Hesabı Sil")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                Text("Kullanıcı Adı")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                TextField("Adınızı ve soyadınızı girin", text: $name)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                TextField("E-posta adresinizi girin", text: $email)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                TextField("Kullanıcı adınızı girin", text: $username)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:                title: Text("Hesabı Sil"),
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertMessage = "Mevcut şifreniz yanlış."
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertMessage = "Profil bilgileriniz güncellendi."
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertMessage = "Profil güncellenemedi: \(error.localizedDescription)"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertMessage = "Şifre güncellenemedi: \(error.localizedDescription)"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertMessage = "Şifreniz başarıyla değiştirildi."
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertMessage = "Yeni şifreler eşleşmiyor."
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertTitle = "Başarılı"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertTitle = "Başarılı"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertTitle = "Hata"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertTitle = "Hata"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertTitle = "Hata"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertTitle = "Hata"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertTitle = "Hata"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            alertTitle = "Hata"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            confirmPassword = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            currentPassword = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            newPassword = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:            Text("@\(username)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:        .navigationTitle("Profil Düzenle")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:        email = user.email ?? ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:        name = user.name ?? ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:        username = user.username ?? ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:    @State private var alertMessage = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:    @State private var alertTitle = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:    @State private var confirmPassword: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:    @State private var currentPassword: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:    @State private var email: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:    @State private var name: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:    @State private var newPassword: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:    @State private var username: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                                    Image(systemName: "info.circle")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                                    Text("Güçlü şifre nedir?")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                                    Text("Şifreler eşleşiyor")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                                    Text("Şifreler eşleşmiyor")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                                Text("Giriş Yap")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                                Text("Kayıt Ol")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            SecureField("Şifrenizi girin", text: $password)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            SecureField("Şifrenizi tekrar girin", text: $confirmPassword)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            Text("Ad Soyad")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            Text("E-posta")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            Text("İptal")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            Text("Kullanıcı Adı")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            Text("Şifre Onayı")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            Text("Şifre")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            Text("Zaten hesabınız var mı?")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            TextField("Adınızı ve soyadınızı girin", text: $name)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            TextField("E-posta adresinizi girin", text: $email)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                            TextField("En az 4 karakter", text: $username)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                    dismissButton: .default(Text("Tamam"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                    errorMessage = "Bu kullanıcı adı veya e-posta zaten kullanılıyor."
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                    NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                    Text("Yeni Hesap Oluştur")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                    title: Text("Hata"),
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                bulletPoint(text: "En az 8 karakter uzunluğunda olmalı")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                bulletPoint(text: "En az bir büyük harf içermeli (A-Z)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                bulletPoint(text: "En az bir küçük harf içermeli (a-z)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                bulletPoint(text: "En az bir özel karakter içermeli (!, @, #, $, vb.)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                bulletPoint(text: "En az bir rakam içermeli (0-9)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                Text("• G1zl!Sudoku")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                Text("• Oyun_Seviyorum1")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                Text("• Sudoku2024!")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                Text("Anladım")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:                Text("Kayıt Ol")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:            errorMessage = "Şifreler eşleşmiyor."
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:            errorMessage = "Tüm alanları doldurun."
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:            Text("•")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:            Text("Güçlü Şifre Gereksinimleri")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:            Text("Güçlü Şifre Örnekleri:")
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var confirmPassword = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var confirmPasswordValidationMessage = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var email = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var emailValidationMessage = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var errorMessage = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var name = "Necati Yıldırım" 
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var password = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var passwordValidationMessage = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var username = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:    @State private var usernameValidationMessage = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                                            print("Error saving context: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                                        Label("Sil", systemImage: "trash")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                                    Text.localizedSafe("dk")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                                    Text("\(minutes)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                                Text.localizedSafe("sn")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                                Text("\(seconds)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                            Image(systemName: "calendar")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                            Image(systemName: "clock")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                            Image(systemName: "play.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                            print("Error saving context: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                            Text.localizedSafe("Devam Et")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                            Text.localizedSafe("Süre")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                            Text.localizedSafe("Zorluk")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                            Text("Tarih")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                        print("📌 SavedGamesView: Oyun yüklendi, callback çağrılıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                        print("\n📌 SavedGamesView: Oyun yükleniyor ID: \(game.value(forKey: "id") ?? "ID yok")")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                        Text.localizedSafe("Tamamlanma")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                        Text.localizedSafe(difficulty)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                        Text.localizedSafe(shortenedText(for: level))
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                        Text("\(completionPercentage)%")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                let formatKey = "%@ zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır."
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                let localizedFormat = bundle?.localizedString(forKey: formatKey, value: formatKey, table: "Localizable") ?? formatKey
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                message: Text("Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?"),
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                primaryButton: .destructive(Text("Sil")) {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "bolt"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "bolt"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "bolt"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "flame"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "flame"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "flame"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "leaf"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "leaf"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "leaf"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "star"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "star"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                return "star"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                secondaryButton: .cancel(Text("İptal")) {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                Text.localizedSafe("Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın.")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                Text.localizedSafe("Kaydedilmiş Oyunlar")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:                title: Text("Oyunu Sil"),
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Difficile":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Difficile":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Easy":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Easy":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Expert":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Expert":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Expert":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Expert":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Facile":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Facile":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Hard":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Hard":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Kolay":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Kolay":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Kolay":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Medium":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Medium":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Moyen":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Moyen":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Orta":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Orta":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Orta":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Uzman":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Uzman":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Uzman":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Zor":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Zor":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            case "Zor":
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            if selectedDifficulty == "Tümü" || selectedDifficulty == "All" || selectedDifficulty == "Tous" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            Image(systemName: "bookmark.slash.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            return ["All", "Easy", "Medium", "Hard", "Expert"]
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            return ["Tous", "Facile", "Moyen", "Difficile", "Expert"]
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            return ["Tümü", "Kolay", "Orta", "Zor", "Uzman"]
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:            Text.localizedSafe("Kaydedilmiş oyun bulunamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        } else if languageCode == "fr" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        } else if languageCode == "fr" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        } else if languageCode == "fr" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        dateFormatter.dateFormat = "d MMM yyyy HH:mm"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        dateFormatter.locale = Locale(identifier: "tr_TR")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        if languageCode == "en" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        if languageCode == "en" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        if languageCode == "en" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        if selectedDifficulty == "Tümü" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        let difficulty = game.difficulty ?? "Bilinmeyen"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:        let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:    @State private var selectedDifficulty: String = "Tümü"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                                Image(systemName: "calendar")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                                Image(systemName: "calendar")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                                Text.localizedSafe(difficultyString)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                                Text.localizedSafe(difficultyString)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                            Text("\(bestScore)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        if let date = score.value(forKey: "date") as? Date {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        if let date = score.value(forKey: "date") as? Date {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        if let difficultyString = score.value(forKey: "difficulty") as? String {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        if let difficultyString = score.value(forKey: "difficulty") as? String {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Image(systemName: "lightbulb.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Image(systemName: "lightbulb.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Image(systemName: "xmark.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Image(systemName: "xmark.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Text.localizedSafe("puan")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Text("\(calculateScore())")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Text("\(errorCount)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Text("\(errorCount)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Text("\(hintCount)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Text("\(hintCount)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Text("#\(rank)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                        Text("puan")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    icon: "bolt.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    icon: "chart.line.uptrend.xyaxis",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    icon: "checkmark.circle.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    icon: "clock.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    icon: "star.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    if let time = score.value(forKey: "elapsedTime") as? Double {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    Image(systemName: "clock.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    Image(systemName: "clock.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    Image(systemName: "gamecontroller")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    let date = firstScore.value(forKey: "date") as? Date
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    let elapsedTime = firstScore.value(forKey: "elapsedTime") as? Double ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    let id = firstScore.value(forKey: "id") as? UUID
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    let totalScore = firstScore.value(forKey: "totalScore") as? Int ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    print("📋 İlk skor - ID: \(id?.uuidString ?? "ID yok"), Tarih: \(date?.description ?? "Tarih yok"), Puan: \(totalScore), Süre: \(elapsedTime)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    tabButton(title: "Genel", tag: 0)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    tabButton(title: "Zorluk", tag: 1)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    Text.localizedSafe("puan")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    Text("\(minutes):\(String(format: "%02d", seconds))")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    Text("\(minutes):\(String(format: "%02d", seconds))")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    Text("\(scoreValue)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    Text("Henüz tamamlanmış oyun yok")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    title: "En Hızlı Oyun",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    title: "En Yüksek Skor",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    title: "Ortalama Skor",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    title: "Ortalama Süre",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    title: "Toplam Oyunlar",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    value: "\(statistics.bestScore)",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    value: "\(statistics.difficultyGames)",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    value: "\(statistics.totalGames)",
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                    value: String(format: "%.0f", statistics.averageScore),
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                if let scoreValue = score.value(forKey: "totalScore") as? Int, scoreValue > 0 {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                if let time = score.value(forKey: "elapsedTime") as? Double {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Image(systemName: "chart.bar.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Image(systemName: "chart.bar.xaxis")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Image(systemName: "clock.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Image(systemName: "gamecontroller.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                print("⚠️ Bu zorluk seviyesi için kayıtlı skor bulunamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Text.localizedSafe("Oyun İstatistikleri")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Text.localizedSafe("Performans İstatistikleri")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Text.localizedSafe("Skor Tablosu")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Text.localizedSafe("Son Oyunlar")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Text.localizedSafe(title)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:                Text("Zorluk Seviyesi Karşılaştırma")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            if let difficultyString = score.value(forKey: "difficulty") as? String,
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            if let difficultyString = score.value(forKey: "difficulty") as? String,
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            if let errorCount = score.value(forKey: "errorCount") as? Int {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            if let errorCount = score.value(forKey: "errorCount") as? Int {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            if let hintCount = score.value(forKey: "hintCount") as? Int {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            if let hintCount = score.value(forKey: "hintCount") as? Int {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            let elapsedTime = score.value(forKey: "elapsedTime") as? Double ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            let errorCount = score.value(forKey: "errorCount") as? Int ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            let errorCount = score.value(forKey: "errorCount") as? Int ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            let hintCount = score.value(forKey: "hintCount") as? Int ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            let hintCount = score.value(forKey: "hintCount") as? Int ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            print("📝 \(selectedDifficulty.rawValue) zorluk seviyesi için \(difficultyGames) skor bulundu")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            print("❌ Oyun istatistikleri alınamadı: \(error.localizedDescription)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            print("📝 Tüm zorluk seviyeleri için toplam \(totalGames) skor bulundu")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "bolt.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "bolt.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "bolt.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "flame.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "flame.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "flame.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "Kolay Oyunları"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "leaf.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "leaf.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "leaf.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "Orta Oyunları"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "questionmark"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "questionmark"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "star.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "star.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "star.fill"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "Uzman Oyunları"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            return "Zor Oyunları"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:            Text.localizedSafe(title)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        case "Kolay":
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        case "Kolay":
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        case "Orta":
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        case "Orta":
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        case "Uzman":
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        case "Uzman":
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        case "Zor":
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        case "Zor":
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        formatter.dateFormat = "d MMM HH:mm"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        formatter.dateFormat = "d MMM HH:mm"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        formatter.locale = Locale(identifier: "tr_TR")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        formatter.locale = Locale(identifier: "tr_TR")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        guard let difficultyString = score.value(forKey: "difficulty") as? String,
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        guard let difficultyString = score.value(forKey: "difficulty") as? String,
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        if let totalScore = score.value(forKey: "totalScore") as? Int, totalScore > 0 {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        if let totalScore = score.value(forKey: "totalScore") as? Int, totalScore > 0 {
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        let request = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        let totalGamesRequest = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        print("📊 Skor tablosu yükleniyor - Zorluk seviyesi: \(selectedDifficulty.rawValue)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        request.predicate = NSPredicate(format: "difficulty == %@", selectedDifficulty.rawValue)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:        totalGamesRequest.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:    return String(format: "%02d:%02d", minutes, seconds)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                                            selectedLanguage == "en" ? "🇬🇧 English" : 
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                                            selectedLanguage == "fr" ? "🇫🇷 Français" : "🇬🇧 English")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                                        Image(systemName: "globe")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                                        Text.localizedSafe("language.selection")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                                        Text(selectedLanguage == "tr" ? "🇹🇷 Türkçe" : 
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                                Image(systemName: "chevron.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                                Image(systemName: "play.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                                Text("Sesi Test Et")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            flag: "🇩🇪",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            flag: "🇪🇸",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            flag: "🇮🇹",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Image(systemName: "arrow.right.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Image(systemName: "pencil.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Image(systemName: "person.badge.plus")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Image(systemName: "person.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Image(systemName: "speaker.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Image(systemName: "speaker.wave.3.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            languageName: "Deutsch",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            languageName: "Español",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            languageName: "Italiano",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            localizationManager.setLanguage(AppLanguage(code: "en", name: "English"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            localizationManager.setLanguage(AppLanguage(code: "fr", name: "Français"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            localizationManager.setLanguage(AppLanguage(code: "tr", name: "Türkçe"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            selectedLanguage = "en"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            selectedLanguage = "fr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            selectedLanguage = "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Text.localizedSafe("Çıkış Yap")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Text.localizedSafe("Giriş Yap")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Text.localizedSafe("profile.edit")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Text.localizedSafe("Yeni Hesap Oluştur")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Text("%\(Int(soundVolume * 100))")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Text("Ses Seviyesi")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            Text(String(user.name?.prefix(1) ?? "U"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            title: "text.size.large", 
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            title: "text.size.medium", 
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                            title: "text.size.small",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        flag: "🇫🇷",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        flag: "🇬🇧",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        flag: "🇹🇷",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Image(systemName: "battery.25")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Image(systemName: "bolt.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Image(systemName: "chevron.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Image(systemName: "chevron.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Image(systemName: "chevron.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Image(systemName: "moon.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Image(systemName: "person.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Image(systemName: "person.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Image(systemName: "speaker.wave.3.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        isSelected: selectedLanguage == "en",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        isSelected: selectedLanguage == "fr",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        isSelected: selectedLanguage == "tr",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        languageName: "English",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        languageName: "Français",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        languageName: "Türkçe",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text.localizedSafe("coming.soon.languages")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text.localizedSafe("Geliştirici")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text.localizedSafe("Giriş Yapmadınız")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text.localizedSafe("language.selection")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text.localizedSafe("Profil")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text.localizedSafe("Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("@\(user.username ?? "")")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("\(Int(powerManager.batteryLevel * 100))%")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("Düşük Pil")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("Karanlık Mod")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("Karanlık tema aktif eder")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("Navigasyon sorunu giderilene kadar")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("Necati Yıldırım")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("Otomatik Güç Tasarrufu")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("Pil Durumu")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("Tamam")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text("Yüksek Performans Modu")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text(user.email ?? "")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                        Text(user.name ?? "İsimsiz Kullanıcı")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    debugPrint("Çıkış işlemi başlatılıyor, mevcut kullanıcı: \(String(describing: PersistenceController.shared.getCurrentUser()?.username))")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    debugPrint("Çıkış işlemi tamamlandı, mevcut kullanıcı: \(String(describing: PersistenceController.shared.getCurrentUser()?.username))")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Image(systemName: "arrow.counterclockwise.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Image(systemName: "battery.0")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Image(systemName: "checkmark")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Image(systemName: "chevron.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Image(systemName: "gearshape.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Image(systemName: "iphone.radiowaves.left.and.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Image(systemName: "person.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Image(systemName: "speaker.wave.2.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Image(systemName: "textformat.size")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text.localizedSafe("coming.soon")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text.localizedSafe("language." + language.code)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text.localizedSafe("text.size")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Cihazın görünüm ayarını kullan (açık/koyu)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Geliştirici: Necati Yıldırım")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir.")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Oyun içi ses efektlerini aç/kapa")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Oyun içi titreşim efektlerini aç/kapa")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("S")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Ses Efektleri")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Sistem Görünümünü Kullan")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Sürüm 1.0")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Titreşim Geri Bildirimi")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Tüm Ayarları Sıfırla")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                    Text("Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır.")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                .navigationBarTitle(Text.localized("settings.title"), displayMode: .large)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                description: "Bu Sudoku uygulaması, klasik Sudoku oyununu modern bir arayüzle sunmak için tasarlanmıştır. Dört farklı zorluk seviyesi, not alma özellikleri, ve daha fazlasıyla dolu bir oyun deneyimi sunar.",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                iconName: "info.circle.fill",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Image(systemName: "arrow.up.right.square")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Image(systemName: "globe")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Image(systemName: "person.badge.plus")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Image(systemName: "person.fill.badge.plus")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Image(systemName: "rectangle.portrait.and.arrow.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                sectionHeader(title: "Görünüm", systemImage: "paintbrush.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                sectionHeader(title: "Oyun Ayarları", systemImage: "gamecontroller.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                sectionHeader(title: "Profil", systemImage: "person.crop.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Text.localizedSafe("language.selection")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Text.localizedSafe(title)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Text("Çıkış Yap")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Text("Giriş Yap")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Text("Güç tasarrufu modu, cihazınızın pil ömrünü uzatır.")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Text("Kayıt Ol")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Text("Performans")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Text("Sudoku")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                Text("Sürüm 1.0")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:                title: "Uygulama Hakkında",
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            batteryLevel = "battery.0"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            batteryLevel = "battery.100"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            batteryLevel = "battery.25"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            batteryLevel = "battery.50"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            batteryLevel = "battery.75"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            forName: Notification.Name("ShowRegisterView"),
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            if title == "Titreşim Geri Bildirimi" {
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            name: Notification.Name("ShowRegisterView"),
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            Text.localizedSafe(title)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            Text("© 2024 Necati Yıldırım")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:            Text("Tamam")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:        NotificationCenter.default.post(name: Notification.Name("TextSizeChanged"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:        print("🌐 Dil değiştirildi: \(previousLanguageName) -> \(newValue.name)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:        print("📱 Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:        return isCharging ? batteryLevel + ".charge" : batteryLevel
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("autoPowerSaving") private var autoPowerSaving: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("defaultDifficulty") private var defaultDifficulty: String = SudokuBoard.Difficulty.easy.rawValue
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("enableCellTapHaptic") private var enableCellTapHaptic: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("enableSoundEffects") private var enableSoundEffects: Bool = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("highPerformanceMode") private var highPerformanceMode: Bool = false
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("powerSavingMode") private var powerSavingMode: Bool = false
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("prefersDarkMode") private var prefersDarkMode: Bool = false
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("soundVolume") private var soundVolume: Double = 0.7
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @AppStorage("textSizePreference") private var textSizeString: String = TextSizePreference.medium.rawValue
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @State private var email = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @State private var errorMessage = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @State private var name = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @State private var password = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @State private var selectedLanguage = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:    @State private var username = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:                                Text.localizedSafe("Geliştirici")
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:                                Text("N")
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:                                Text("Necati Yıldırım")
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:                            Text("\(numbers[index])")
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:                        print("🚀 StartupView uygulamayı başlatıyor...")
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:                        Text.localizedSafe("Zihninizi Çalıştırın")
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:                        Text(LocalizationManager.shared.localizedString(for: "SUDOKU"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:                    print("🚀 StartupView \(displayDuration) saniye sonra ContentView'a geçecek...")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuBoardView.swift:                                        .id("cell_\(row)_\(column)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuBoardView.swift:        .id("\(row)\(column)\(cellValue ?? 0)\(isSelected)\(pencilMarks.hashValue)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuCellView.swift:                    Text("\(mark)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuCellView.swift:                Text("\(value)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuCellView.swift:    @AppStorage("enableCellTapHaptic") private var enableCellTapHaptic = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuCellView.swift:    @AppStorage("enableHapticFeedback") private var enableHapticFeedback = true
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:                    Text("\((row + col) % 9 + 1)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:                Text("Oyunu Başlat")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:                Text("Ses Efektleri")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:                Text("SUDOKU")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:            case "Kolay":
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:            case "Orta":
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:            case "Uzman":
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:            case "Zor":
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:            Text("Zorluk Seviyesi")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:    @State private var selectedDifficulty: String = "Kolay"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:    let difficulties = ["Kolay", "Orta", "Zor", "Uzman"]
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:                                Image(systemName: "arrow.left")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:                                Image(systemName: "arrow.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:                                Text("Geri")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:                            Text(currentStep == .completed ? "Tamam" : "İleri")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:                Image(systemName: "questionmark.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:                Text("Rehber")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:        case "board":
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:        case "hintButton":
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:        case "notesButton":
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:        case "numberPad":
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                                                        Text("\(note)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                                    Text("?")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                                    Text("\(value)")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                                    Text("5")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                            Image(systemName: "chevron.left")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                            Image(systemName: currentStep == tutorialSteps.count - 1 ? "checkmark" : "chevron.right")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                        Image(systemName: "xmark.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                        let tipTitle = bundle?.localizedString(forKey: "tutorial_tip_title", value: "TIP", table: "Localizable") ?? "TIP"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                    Bundle(path: $0)?.localizedString(forKey: "Example Not Available", value: "Example Not Available", table: "Localizable")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                } ?? "Example Not Available"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                descriptionKey: "tutorial_desc_basic_strategies",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                descriptionKey: "tutorial_desc_cell_selection",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                descriptionKey: "tutorial_desc_completed",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                descriptionKey: "tutorial_desc_game_rules",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                descriptionKey: "tutorial_desc_hints",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                descriptionKey: "tutorial_desc_notes_mode",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                descriptionKey: "tutorial_desc_number_entry",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                descriptionKey: "tutorial_desc_welcome",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                if UserDefaults.standard.string(forKey: "app_language") != nil {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                if UserDefaults.standard.string(forKey: "app_language") != nil {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                image: "sudoku.help",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                image: "sudoku.input",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                image: "sudoku.intro",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                image: "sudoku.notes",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                image: "sudoku.ready",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                image: "sudoku.rules",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                image: "sudoku.strategy1",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                image: "sudoku.strategy2",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                let noExampleText = Bundle.main.path(forResource: appLanguage, ofType: "lproj").flatMap {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                tipKey: "tutorial_tip_basic_strategies"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                tipKey: "tutorial_tip_cell_selection"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                tipKey: "tutorial_tip_completed"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                tipKey: "tutorial_tip_game_rules"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                tipKey: "tutorial_tip_hints"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                tipKey: "tutorial_tip_notes_mode"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                tipKey: "tutorial_tip_number_entry"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                tipKey: "tutorial_tip_welcome"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                titleKey: "tutorial_title_basic_strategies",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                titleKey: "tutorial_title_cell_selection",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                titleKey: "tutorial_title_completed",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                titleKey: "tutorial_title_game_rules",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                titleKey: "tutorial_title_hints",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                titleKey: "tutorial_title_notes_mode",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                titleKey: "tutorial_title_number_entry",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:                titleKey: "tutorial_title_welcome",
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:            return Image(systemName: "checkmark.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:            return Image(systemName: "hand.tap.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:            return Image(systemName: "lightbulb.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:            return Image(systemName: "list.bullet")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:            return Image(systemName: "pencil")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:            return Image(systemName: "questionmark.circle.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:            return Image(systemName: "square.grid.3x3.fill")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Cell") || title.contains("Cellule") || title.contains("Hücre") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Cell") || title.contains("Cellule") || title.contains("Hücre") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Completed") || title.contains("Félicitations") || title.contains("Tebrikler") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Completed") || title.contains("Félicitations") || title.contains("Tebrikler") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Game Rules") || title.contains("Règles") || title.contains("Kurallar") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Game Rules") || title.contains("Règles") || title.contains("Kurallar") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Hints") || title.contains("Indices") || title.contains("İpucu") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Hints") || title.contains("Indices") || title.contains("İpucu") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Notes") || title.contains("Not") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        } else if title.contains("Notes") || title.contains("Not") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        backButtonText = bundle?.localizedString(forKey: "Back", value: "Back", table: "Localizable") ?? "Back"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        completeButtonText = bundle?.localizedString(forKey: "Complete", value: "Complete", table: "Localizable") ?? "Complete"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        if title.contains("Welcome") || title.contains("Bienvenue") || title.contains("Hoş Geldiniz") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        if title.contains("Welcome") || title.contains("Bienvenue") || title.contains("Hoş Geldiniz") {
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let description = bundle?.localizedString(forKey: step.descriptionKey, value: step.descriptionKey, table: "Localizable") ?? step.descriptionKey
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let exampleDescription = bundle?.localizedString(forKey: "Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell.", value: "Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell.", table: "Localizable") ?? "Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell."
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let exampleDescription = bundle?.localizedString(forKey: "In this region, 5 can only be placed in this cell because there's no room for 5 in other cells.", value: "In this region, 5 can only be placed in this cell because there's no room for 5 in other cells.", table: "Localizable") ?? "In this region, 5 can only be placed in this cell because there's no room for 5 in other cells."
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let exampleTitle = bundle?.localizedString(forKey: "Example: Number 5 can only be placed in this cell", value: "Example: Number 5 can only be placed in this cell", table: "Localizable") ?? "Example: Number 5 can only be placed in this cell"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let exampleTitle = bundle?.localizedString(forKey: "Example: This cell can only contain 4", value: "Example: This cell can only contain 4", table: "Localizable") ?? "Example: This cell can only contain 4"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let formattedStepText = String(format: bundle?.localizedString(forKey: "Step %d / %d", value: "Step %d / %d", table: "Localizable") ?? "Step %d / %d", stepNumber, tutorialSteps.count)
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let path = Bundle.main.path(forResource: appLanguage, ofType: "lproj")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let path = Bundle.main.path(forResource: appLanguage, ofType: "lproj")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let path = Bundle.main.path(forResource: appLanguage, ofType: "lproj")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let path = Bundle.main.path(forResource: appLanguage, ofType: "lproj")
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let tip = bundle?.localizedString(forKey: step.tipKey, value: step.tipKey, table: "Localizable") ?? step.tipKey
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        let title = bundle?.localizedString(forKey: step.titleKey, value: step.titleKey, table: "Localizable") ?? step.titleKey
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        nextButtonText = bundle?.localizedString(forKey: "Next", value: "Next", table: "Localizable") ?? "Next"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        NotificationCenter.default.publisher(for: Notification.Name("AppLanguageChanged"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:        screenTitle = bundle?.localizedString(forKey: "How to Play", value: "How to Play", table: "Localizable") ?? "How to Play"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:    @AppStorage("app_language") private var appLanguage: String = "tr"
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:    @State private var backButtonText: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:    @State private var completeButtonText: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:    @State private var nextButtonText: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:    @State private var screenTitle: String = ""
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                        errorCount = stats["errorCount"] as? Int ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                        hintCount = stats["hintCount"] as? Int ?? 0 
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                        moveCount = stats["moveCount"] as? Int ?? 0
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                        print("✅ İstatistikler başarıyla yüklendi")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                        remainingHints = stats["remainingHints"] as? Int ?? 3
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                    if let errorVal = stats["errorCount"] as? Int {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                    if let hintVal = stats["hintCount"] as? Int {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                    if let moveVal = stats["moveCount"] as? Int {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                    if let remainingVal = stats["remainingHints"] as? Int {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                    if let stats = json["stats"] as? [String: Any] {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                    print("✅ Oyun istatistikleri güncellendi")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                    print("❌ Oyun kaybedildi! Kayıtlı oyun silindi.")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                  description: NSLocalizedString("Bu hücre, sudoku tahtasında çözülebilir bir hücre olarak belirlendi.", comment: "İpucu açıklaması"))
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                  description: NSLocalizedString("Bu hücrenin aynı satır, sütun ve blokta bulunan diğer hücreler incelendi.", comment: "İpucu açıklaması"))
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                  description: NSLocalizedString("Bu hücreye \(value) değeri konabilir.", comment: "İpucu açıklaması"))
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                if let stats = jsonObject["stats"] as? [String: Any] {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                let blockKey = "\(r)_\(c)"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("⏭️ Arka plana geçişte kaydetme atlandı (yeterli oynama yok)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("⚠️ Çözüm verisi bulunamadı, önce orijinal tahtayı kurtarmayı deniyorum")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("✅ FixedCells verisi bulundu")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("⚠️ İstatistikler yüklenemedi: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("❌ JSON veri biçimi geçersiz")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("✅ JSON'dan çözüm dizisi başarıyla yüklendi")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("✅ JSON'dan sabit hücreler başarıyla yüklendi")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("✅ JSON'dan solutionBoard başarıyla yüklendi")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("✅ Kayıtlı oyun için tahmini çözüm oluşturuluyor")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("✅ OriginalBoard verisi bulundu")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("⏭️ Otomatik kaydetme atlandı (oyun çok yeni başladı veya hamle yapılmadı)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("✅ Oyun başarıyla güncellendi, ID: \(gameID)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("❌ Oyun verileri eksik: Board veya zorluk seviyesi bulunamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("⚠️ Sabit hücreler belirtilmemiş, tahmin edilecek")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("✅ Sudoku tamamlandı! Skor kaydedilecek.")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("ℹ️ userEnteredValues zaten loadBoardFromData fonksiyonundan alındı - tekrar yüklemeye gerek yok")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("✅ Yeni oyun başarıyla kaydedildi, ID: \(newGameID)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("Mevcut oyun güncelleniyor, ID: \(gameID)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                print("Yeni oyun kaydediliyor")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("Bu hücreye sadece tek bir sayı konabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("Bu iki aday, yalnızca bu iki hücreye konabilir, dolayısıyla bu hücrelerden diğer adaylar çıkarılabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("Bu iki hücre, aynı iki adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("Bu sayı, bu bölgede yalnızca tek bir hücreye konabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("Bu üç aday, yalnızca bu üç hücreye konabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("Bu üç hücre, üç adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("Sudoku kurallarına göre bu hücreye bu değer konabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("Swordfish deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir.", comment: "İpucu bulunamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString("X-Wing deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return NSLocalizedString(reason, comment: "İpucu varsayılan açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:                return step == 0 ? technique.rawValue : "Adım \(step + 1)"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:               let gameID = game.value(forKey: "id") as? UUID,
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "difficulty": board.difficulty.rawValue,
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "difficulty": board.difficulty.rawValue,
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "difficulty": board.difficulty.rawValue,
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "errors": errorCount,
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "hints": hintCount
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "moves": moveCount,
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "score": calculatePerformanceScore(),
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "score": calculatePerformanceScore(),
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "time": elapsedTime
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "time": elapsedTime
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            "time": Int(elapsedTime),
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            } else if let board = jsonDict["board"] as? [[Int]] {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            } else if let boardString = jsonDict["boardState"] as? String,
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            } else if let diff = jsonDict["difficultyLevel"] as? String {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            } else if let fixedCells = jsonDict["fixedCells"] as? [[Bool]] {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            } else if let solution = jsonDict["solutionBoard"] as? [[Int]] {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            case "Kolay": difficultyValue5 = .easy
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            case "Orta": difficultyValue5 = .medium
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            case "Uzman": difficultyValue5 = .expert
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            case "Zor": difficultyValue5 = .hard
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            if let board = jsonDict["boardState"] as? [[Int]] {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            if let diff = jsonDict["difficulty"] as? String {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            if let fixed = jsonDict["fixedCells"] as? [[Bool]] {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            if let gameDifficulty = game.value(forKey: "difficulty") as? String,
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            if let originalBoard = jsonDict["originalBoard"] as? [[Int]] {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            if let solution = jsonDict["solution"] as? [[Int]] {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            let blockFormat = NSLocalizedString("%d. satır, %d. sütundaki 3x3 blokta", comment: "İpucu bölge adı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            let colFormat = NSLocalizedString("%d. sütunda", comment: "İpucu bölge adı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            let colKey = "\(row)_\(r)"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            let descFormat = NSLocalizedString("%d sayısı, %d. satırda sadece bu hücreye konabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            let descFormat = NSLocalizedString("%d sayısı, %d. sütunda sadece bu hücreye konabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            let descFormat = NSLocalizedString("%d sayısı, bu 3x3 blokta sadece bu hücreye konabilir", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            let rowFormat = NSLocalizedString("%d. satırda", comment: "İpucu bölge adı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            let rowKey = "\(r)_\(col)"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            let userEntered = jsonDict["userEnteredValues"] as? [[Bool]] ?? Array(repeating: Array(repeating: false, count: 9), count: 9)
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("🆕 İlk çalıştırma, otomatik kaydetme devre dışı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("⚠️ İstatistikleri yüklerken hata: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("❌ JSON işleme hatası: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("❌ JSON oluşturma veya kaydetme hatası: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("❌ JSON oluşturulamadı: \(error)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("✅ Kaydedilmiş verilerden board ve userEnteredValues başarıyla oluşturuldu")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("💾 Otomatik kaydetme başladı...")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("⏭️ Otomatik kaydetme devre dışı, işlem atlanıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("✅ Otomatik kaydetme tamamlandı.")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("ℹ️ Oyun \(gameState) durumunda olduğu için otomatik kaydedilmedi.")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("🔊 Oyun otomatik olarak duraklatıldı (arka plan)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("❌ Oyun tahta verisi yüklenemedi")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("❌ Oyun verisi bulunamadı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("⚠️ Oyun zaten tamamlanmış veya farklı bir durumda, işlem yapılmadı.")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("✅ Sabit hücreler: \(fixed.flatMap { $0.filter { $0 } }.count) adet")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("🗑️ Süre aşımı nedeniyle mevcut oyun siliniyor, ID: \(gameID)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("✅ Tamamlanan oyun kayıtlardan silindi")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("⚠️ Tekrarlanan bildirim engellendi (son bildirimden \(String(format: "%.2f", currentTime - SudokuViewModel.lastActiveNotificationTime)) saniye geçti)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("⚠️ userEnteredValues boş, tahta üzerinden hesaplanıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("✅ Yüklenen tahta: \(boardValues.flatMap { $0.compactMap { $0 } }.count) dolu hücre")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("✅ Zorluk seviyesi: \(difficulty)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("Hücre seçili değil!")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("Hücre zaten doğru değere sahip: \(currentValue!)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("JSON veri boyutu: \(jsonData.count) byte")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("Kaydedilmiş oyun için yeni ID oluşturuldu: \(self.currentGameID!)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("Kaydedilmiş oyun ID'si (string'den) ayarlandı: \(gameID)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("Kaydedilmiş oyun ID'si ayarlandı: \(gameID)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("Kaydetme işlemi tamamlandı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("Oyun tamamlandığı veya başarısız olduğu için kaydedilmiyor")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            print("Sabit hücre değiştirilemez: (\(row), \(col))")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            reasons.append("\(col+1). sütunda başka \(value) olmadığı için")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            reasons.append("\(row+1). satırda başka \(value) olmadığı için")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            reasons.append("Bu 3x3 blokta başka \(value) olmadığı için")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            return "Sudoku kurallarına göre bu hücreye \(value) gelmelidir."
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:            return NSLocalizedString(stepDescriptions[step], comment: "İpucu adım açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        } else if let gameIDString = savedGame.value(forKey: "id") as? String, 
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case general = "Son Kalan Hücre"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case hiddenPair = "Hidden Pair"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case hiddenSingle = "Tek Konum Tespiti"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case hiddenTriple = "Hidden Triple"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case nakedPair = "Naked Pair"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case nakedSingle = "Tek Olasılık Tespiti"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case nakedTriple = "Naked Triple"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case none = "Tespit Edilebilen İpucu Yok"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case swordfish = "Swordfish"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        case xWing = "X-Wing"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        guard let boardData = savedGame.getData(key: "boardState") else {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        guard let boardData = savedGame.value(forKey: "boardState") as? Data else {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        hint.addStep(title: NSLocalizedString("Bölge İncelemesi", comment: "İpucu başlığı"), 
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        hint.addStep(title: NSLocalizedString("Boş Hücre Analizi", comment: "İpucu başlığı"), 
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        hint.addStep(title: NSLocalizedString("Değer Önerisi", comment: "İpucu başlığı"), 
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        hint.addStep(title: NSLocalizedString("Satır, Sütun ve Blok İnceleme", comment: "İpucu başlığı"), 
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        hint.addStep(title: NSLocalizedString("Tek Konum Tespiti", comment: "İpucu başlığı"), 
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        hint.addStep(title: NSLocalizedString("Tek Olasılık Tespiti", comment: "İpucu başlığı"), 
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        if let boardData = savedGame.value(forKey: "boardState") as? Data {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        if let gameID = savedGame.value(forKey: "id") as? UUID {
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["board"] = boardArray
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["board"] = boardArray
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["difficulty"] = currentBoard.difficulty.rawValue
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["difficulty"] = currentBoard.difficulty.rawValue
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["fixedCells"] = fixedCells
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["fixedCells"] = fixedCells
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["solution"] = solutionArray
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["solution"] = solutionArray
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["stats"] = stats
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["stats"] = stats
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["userEnteredValues"] = cleanUserEnteredValues
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        jsonDict["userEnteredValues"] = userEnteredValues
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let appBecameActiveName = Notification.Name("AppBecameActive")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let difficultyString = savedGame.value(forKey: "difficulty") as? String ?? "Kolay"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let formatString = NSLocalizedString("Bu hücreye sadece %d değeri konabilir çünkü diğer tüm sayılar elendi.", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let hint = HintData(row: 0, column: 0, value: 0, reason: NSLocalizedString("Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir.", comment: "İpucu bulunamadı"), technique: .none)
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let isFirstLaunchKey = "SudokuViewModel.isFirstLaunch"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let key = "\(row)_\(col)"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let key = "\(row)_\(col)"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let key = "\(row)_\(col)"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let key = "\(row)_\(col)"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let noAutoSaveKey = "SudokuViewModel.noAutoSave"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let pauseGameName = Notification.Name("PauseActiveGame")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let reason = NSLocalizedString("Sudoku kurallarına göre bu hücreye \(value) değeri konabilir.", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let reasonFormat = NSLocalizedString("%@ %d sayısı sadece bu hücreye konabilir.", comment: "İpucu ana açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let resetGameName = Notification.Name("ResetGameAfterTimeout")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let stepFormat = NSLocalizedString("%@ tüm hücreler incelendi.", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        let stepFormatString = NSLocalizedString("Bu hücreye sadece %d değeri konabilir, diğer tüm sayılar elendi.", comment: "İpucu açıklaması")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        NotificationCenter.default.post(name: Notification.Name("ShowMainMenuAfterTimeout"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        NotificationCenter.default.post(name: NSNotification.Name("GameCompleted"), object: nil, userInfo: [
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        NotificationCenter.default.post(name: NSNotification.Name("GameCompleted"), object: nil, userInfo: [
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        NotificationCenter.default.removeObserver(self, name: Notification.Name("AppBecameActive"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        NotificationCenter.default.removeObserver(self, name: Notification.Name("PauseActiveGame"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        NotificationCenter.default.removeObserver(self, name: Notification.Name("ResetGameAfterTimeout"), object: nil)
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("🔄 Kayıtlı oyun yükleniyor, otomatik kaydetme etkinleştirildi")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("✅ Kullanıcı tarafından girilen değerler yüklendi: \(self.userEnteredValues.flatMap { $0.filter { $0 } }.count) değer")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("🔒 Otomatik kaydetme devre dışı bırakıldı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("🎮 Oyun başarıyla tamamlandı! İstatistikler: Hamle: \(moveCount), Hata: \(errorCount), İpucu: \(3 - remainingHints), Süre: \(Int(elapsedTime)) saniye")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("✅ Oyun başarıyla yüklendi, ID: \(currentGameID?.uuidString ?? "ID yok")")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("✅ Oyun tamamlama işlemi tamamlandı ve skor kaydedildi.")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("✅ Oyun tamamlama işlemi tamamlandı ve skor kaydedildi.")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("📱 Oyun tamamlandı!")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("⏰ Oyun zaman aşımına uğradı - sıfırlanıyor")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("📊 Skor kaydediliyor... Zorluk: \(board.difficulty.rawValue), Süre: \(elapsedTime), Hatalar: \(errorCount), İpuçları: \(hintUsed)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("📊 Skor kaydediliyor... Zorluk: \(board.difficulty.rawValue), Süre: \(elapsedTime), Hatalar: \(errorCount), İpuçları: \(hintUsed)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("🔊 Uygulama tekrar aktif oldu - oyun devam ediyor")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("🔄 Yeni oyun başlatıldı, otomatik kaydetme etkinleştirildi")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("\n\n💻 KAYDEDILMIŞ OYUN YÜKLEME BAŞLADI 💻")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("Değer giriliyor: \(value ?? 0) -> (\(row), \(col))")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("Hücre seçildi: (\(row), \(column))")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("Kayıtlı oyun yükleniyor, zorluk seviyesi: \(difficultyString)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("Kayıtlı oyun yükleniyor: \(savedGame)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("Not eklendi/çıkarıldı: \(value) -> (\(row), \(col)), notlar: \(board.getPencilMarks(at: row, col: col))")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("saveGame fonksiyonu çalıştı")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("setValue sonucu: \(success)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("setValueAtSelectedCell: \(value ?? 0) -> (\(row), \(col)), pencilMode: \(pencilMode)")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("Tüm notlar temizlendi: (\(row), \(col))")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        print("Veri boyutu: \(data.count) byte")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        return highScore.getDate(key: "date")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        return highScore.getString(key: "playerName", defaultValue: "İsimsiz")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        return reasons.joined(separator: ", ")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        return savedGame.getDate(key: "dateCreated")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        return savedGame.getDouble(key: "elapsedTime")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        return savedGame.getString(key: "difficulty", defaultValue: "Kolay")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        return value(forKey: "date") as? Date ?? Date()
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        return value(forKey: "difficulty") as? String ?? "Kolay"
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        return value(forKey: "elapsedTime") as? Double ?? 0.0
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        self.elapsedTime = savedGame.getDouble(key: "elapsedTime")
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        stats["errorCount"] = errorCount
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        stats["errorCount"] = errorCount
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        stats["hintCount"] = hintCount
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        stats["hintCount"] = hintCount
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        stats["moveCount"] = moveCount
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        stats["moveCount"] = moveCount
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        stats["remainingHints"] = remainingHints
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        stats["remainingHints"] = remainingHints
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        var description = ""
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        var reasons: [String] = ["Sudoku kurallarına göre bu hücreye \(value) değeri en uygun değerdir."]
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:        var regionName = ""
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:    @AppStorage("enableCellTapHaptic") private var enableCellTapHaptic = true
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:    @AppStorage("enableHapticFeedback") private var enableHapticFeedback = true
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:    @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic = true
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:    @AppStorage("enableSounds") private var enableSounds = true
+/Users/necati/Desktop/Sudoku/Sudoku/ViewModel/SudokuViewModel.swift:    @AppStorage("playerName") private var playerName = "Oyuncu"

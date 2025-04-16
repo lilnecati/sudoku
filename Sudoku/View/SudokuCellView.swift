@@ -266,24 +266,31 @@ struct PencilMarksViewOptimized: View {
             
             // Tek bir ZStack içinde tüm rakamları çiz
             ZStack(alignment: .topLeading) {
-                ForEach(Array(pencilMarks), id: \.self) { mark in
+                // Arka plan çerçevesi - pencil marks olduğunu belirtmek için
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                    .background(Color.blue.opacity(0.05))
+                    .cornerRadius(4)
+                
+                ForEach(Array(pencilMarks).sorted(), id: \.self) { mark in
                     // Hücre içinde doğru konumlandırmak için indeks hesapla
                     let index = mark - 1
                     let row = index / 3
                     let col = index % 3
                     
                     Text("\(mark)")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.primary)
                         .frame(width: cellWidth, height: cellHeight)
+                        .background(Color.clear)
                         .position(
                             x: cellWidth * CGFloat(col) + cellWidth / 2,
                             y: cellHeight * CGFloat(row) + cellHeight / 2
                         )
                 }
             }
-            // Metal hızlandırması
-            .drawingGroup(opaque: true, colorMode: .linear)
+            // Metal hızlandırması (canlılık için opaque false)
+            .drawingGroup(opaque: false, colorMode: .linear)
         }
     }
 }

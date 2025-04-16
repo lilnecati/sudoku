@@ -1,0 +1,485 @@
+"According to Sudoku rules, the value %lld can be placed in this cell.
+"Ad Soyad
+"Adım %@ / %@
+"Adım %lld / %lld
+"Adınızı ve soyadınızı girin
+"Ana Sayfa
+"Anasayfaya Dön
+"Anladım
+"Ayarlar
+"Back
+"Bitti
+"Bölge İncelemesi
+"Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok.
+"Boş Hücre Analizi
+"Bu hücre, sudoku tahtasında çözülebilir bir hücre olarak belirlendi.
+"Bu hücrenin aynı satır, sütun ve blokta bulunan diğer hücreler incelendi.
+"Bu hücreye \\(value) değeri konabilir.
+"Bu hücreye sadece \\(value) değeri konabilir çünkü diğer tüm sayılar elendi.
+"Bu hücreye sadece %d değeri konabilir çünkü diğer tüm sayılar elendi.
+"Bu hücreye sadece %d değeri konabilir, diğer tüm sayılar elendi.
+"Bu hücreye sadece tek bir sayı konabilir
+"Bu iki aday, yalnızca bu iki hücreye konabilir, dolayısıyla bu hücrelerden diğer adaylar çıkarılabilir
+"Bu iki hücre, aynı iki adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir
+"Bu işlem geri alınamaz. Tüm verileriniz silinecektir.
+"Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?
+"Bu özellik yakında eklenecek
+"Bu sayı, bu bölgede yalnızca tek bir hücreye konabilir
+"Bu üç aday, yalnızca bu üç hücreye konabilir
+"Bu üç hücre, üç adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir
+"Cihazın görünüm ayarını kullan (açık/koyu)
+"Çıkış Yap
+"coming.soon
+"coming.soon.languages
+"Complete
+"Completed
+"Değer Önerisi
+"Devam Et
+"dk
+"Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell.
+"Düşük Pil
+"E-posta
+"E-posta adresiniz
+"E-posta adresinizi girin
+"Ekranı kaydırarak diğer adımlara geçebilirsiniz.
+"En az 4 karakter
+"En Hızlı Oyun
+"En Yüksek Skor
+"Example Not Available
+"Example: Number 5 can only be placed in this cell
+"Example: This cell can only contain 4
+"Failed
+"Finished
+"Geliştirici
+"Geliştirici: Necati Yıldırım
+"Geliştrici
+"Genel
+"Geri
+"Giriş Yap
+"Giriş Yapmadınız
+"Görünüm
+"Göster
+"Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir.
+"Güç tasarrufu modu, cihazınızın pil ömrünü uzatır.
+"Güç Yönetimi
+"Güçlü Şifre Gereksinimleri
+"Güçlü şifre nedir?
+"Güçlü Şifre Örnekleri:
+"Hata
+"Hata: %@
+"Hazırsınız!
+"Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın.
+"Henüz tamamlanmış oyun yok
+"Her oyunda yalnızca 3 ipucu kullanabilirsiniz!
+"Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır.
+"Hesabı Sil
+"Hesabınız yok mu?
+"Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz.
+"Hint
+"Hint (%d)
+"Hint (%d)"
+"Hoş Geldiniz
+"How to Play
+"İleri
+"In this region, 5 can only be placed in this cell because there's no room for 5 in other cells.
+"İptal
+"İpuçları ve Yardım
+"İPUCU
+"İpucu (%lld)
+"Kaldığın yerden devam et
+"Karanlık Mod
+"Karanlık tema aktif eder
+"Kaydedilmiş oyun bulunamadı
+"Kaydedilmiş Oyunlar
+"Kaydet
+"Kayıt Ol
+"Kayıtlı Oyunlar
+"Kendinize uygun bir zorluk seviyesi belirleyin
+"Kolay
+"Kolay Oyunları
+"Kullanıcı Adı
+"Kullanıcı adınızı girin
+"language.en
+"language.es
+"language.fr
+"language.selection
+"language.tr
+"Last Remaining Cell
+"Mevcut Şifre
+"N
+"Nasıl Oynanır
+"Nasıl Oynanır?
+"Navigasyon sorunu giderilene kadar
+"Necati Yıldırım
+"Next
+"Not Aktif
+"Not Modu
+"Note Active
+"Note Mode
+"Notlar
+"Only the value %lld can be placed in this cell because all other numbers have been eliminated.
+"Örnek Gösterilemiyor
+"Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir
+"Örnek: Bu hücreye sadece 4 girebilir
+"Orta
+"Orta Oyunları
+"Ortalama Skor
+"Ortalama Süre
+"Otomatik Güç Tasarrufu
+"Oyun Ayarları
+"Oyun Bitti!
+"Oyun içi ses efektlerini aç/kapa
+"Oyun içi titreşim efektlerini aç/kapa
+"Oyun İstatistikleri
+"Oyun yüklenemedi
+"Oyun yükleniyor...
+"Oyunları
+"Oyunu Başlat
+"Oyunu Sil
+"Paused
+"Performans
+"Performans İstatistikleri
+"Pil Durumu
+"Playing
+"Profil
+"Profil Devre Dışı
+"Profil Düzenle
+"profile.edit
+"puan
+"PUAN
+"Ready
+"Rehber
+"S
+"Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir.
+"Satır, Sütun ve Blok İnceleme
+"Sayı Girişi
+"Ses Efektleri
+"Ses Seviyesi
+"Sesi Test Et
+"settings.title
+"Şifre
+"Şifre Değiştir
+"Şifre Onayı
+"Şifre Sıfırla
+"Şifreler eşleşiyor
+"Şifreler eşleşmiyor
+"Şifremi Unuttum
+"Şifrenizi girin
+"Şifrenizi tekrar girin
+"Sil
+"Single Position Detection
+"Single Possibility Detection
+"Sistem Görünümünü Kullan
+"Skor Tablosu
+"Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın
+"sn
+"Son Kalan Hücre
+"Son Oyunlar
+"Step %d / %d
+"Sudoku
+"SUDOKU
+"Sudoku bulmacasını %@ sürede tamamladınız!
+"Sudoku kurallarına göre bu hücreye \\(value) değeri konabilir.
+"Sudoku kurallarına göre bu hücreye bu değer konabilir
+"Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim.
+"Sudoku Rehberi
+"Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek.
+"Sudoku'ya Hoş Geldiniz
+"Sudoku'yu Tamamladınız
+"Süre
+"Süre: %@
+"Sürüm 1.0
+"Swordfish deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir
+"Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir.
+"Talimatları Gönder
+"Tamam
+"Tamamla
+"Tamamlanma
+"Tarih
+"Tebrikler!
+"Tek Konum Stratejisi
+"Tek Konum Tespiti
+"Tek Olasılık Stratejisi
+"Tek Olasılık Tespiti
+"Tekli Olasılık Tespiti
+"Tekli Pozisyon Tespiti
+"Tekrar Dene
+"Temel Kurallar
+"text.size
+"text.size.large
+"text.size.medium
+"text.size.small
+"The number %lld can only be placed in this cell in this region.
+"Titreşim Geri Bildirimi
+"Toplam Oyunlar
+"Tüm Ayarları Sıfırla
+"Tümü
+"tutorial_desc_advanced_notes
+"tutorial_desc_basic_strategies
+"tutorial_desc_cell_selection
+"tutorial_desc_completed
+"tutorial_desc_conflict_detection
+"tutorial_desc_game_rules
+"tutorial_desc_hints
+"tutorial_desc_notes_mode
+"tutorial_desc_number_entry
+"tutorial_desc_practice
+"tutorial_desc_saving_progress
+"tutorial_desc_statistics
+"tutorial_desc_welcome
+"tutorial_tip_basic_strategies
+"tutorial_tip_cell_selection
+"tutorial_tip_completed
+"tutorial_tip_game_rules
+"tutorial_tip_hints
+"tutorial_tip_notes_mode
+"tutorial_tip_number_entry
+"tutorial_tip_title
+"tutorial_tip_welcome
+"tutorial_title_advanced_notes
+"tutorial_title_basic_strategies
+"tutorial_title_cell_selection
+"tutorial_title_completed
+"tutorial_title_conflict_detection
+"tutorial_title_game_rules
+"tutorial_title_hints
+"tutorial_title_notes_mode
+"tutorial_title_number_entry
+"tutorial_title_practice
+"tutorial_title_saving_progress
+"tutorial_title_statistics
+"tutorial_title_welcome
+"Uygulama Başlatılamadı
+"Uygulamayı kapatıp tekrar açmayı deneyin.
+"Uzman
+"Uzman Oyunları
+"X-Wing deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir
+"Yeni Hesap Oluştur
+"Yeni Oyun
+"Yeni Şifre
+"Yeni Şifre (Tekrar)
+"Yükleniyor...
+"Yüksek Performans Modu
+"Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır.
+"Zaten hesabınız var mı?
+"Zihninizi Çalıştırın
+"Zor
+"Zor Oyunları
+"Zorluk
+"Zorluk Seviyesi
+"Zorluk Seviyesi Karşılaştırma
+"Zorluk Seviyesi Seçin
+3 hata yaptınız ve Sudoku oyununu kaybettiniz.
+Ad
+Ad Soyad
+Adım %@ / %@
+Adınızı ve soyadınızı girin
+Ana Sayfa
+Anasayfaya Dön
+Artık Sudoku oynamaya hazırsınız. Kolay seviyeden başlayarak deneyim kazanın ve zamanla daha zor seviyelere geçin.
+Ayarlar
+AYARLAR EKRANI:
+Back
+Başlangıçta verilen sayılar değiştirilemez ve ipucu olarak kullanılır.
+Bir hücreye yalnızca bir sayı girilebiliyorsa, o sayıyı girin. Satır, sütun ve 3x3 bölgesindeki diğer sayıları kontrol edin.
+Bir satır, sütun veya 3x3 bölgesinde bir sayı yalnızca bir hücreye yerleştirilebiliyorsa, o sayıyı oraya yerleştirin.
+Bir sayıya uzun basarak o sayıyı not olarak ekleyebilirsiniz.
+Bitti
+Bölgede %@ sayısı sadece bu hücreye konabilir.
+Boş bir hücreye dokunarak seçin, ardından alt kısımdaki sayı tuşlarını kullanarak değer girin.
+Bu en temel Sudoku stratejisidir ve çoğu kolay bulmacayı çözmenizi sağlar.
+Bu hücreye sadece %@ değeri konabilir çünkü diğer tüm sayılar elendi.
+Bu özellik yakında eklenecek
+Cihazın görünüm ayarını kullan (açık/koyu)
+Çıkış Yap
+coming.soon
+coming.soon.languages
+Complete
+Devam Et
+Diğer hücrelerdeki notları kontrol ederek bu stratejiyi uygulayabilirsiniz.
+DİL AYARLARI:
+dk
+Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell.
+Duraklatıldı
+Düşük Pil
+Düzenli pratik yaparak Sudoku becerilerinizi geliştirebilirsiniz. İyi eğlenceler!
+E-posta
+E-posta adresiniz
+E-posta adresinizi girin
+Ekranı kaydırarak diğer adımlara geçebilirsiniz.
+Emin olmadığınız hücrelere not alabilirsiniz. Notlar, o hücreye girebileceğiniz olası değerleri hatırlamanıza yardımcı olur.
+En az 4 karakter
+En Hızlı Oyun
+En İyi Süre
+En Yüksek Skor
+Example Not Available
+Example: Number 5 can only be placed in this cell
+Example: This cell can only contain 4
+Geliştirici
+Geliştirici: Necati Yıldırım
+GENEL MESAJLAR:
+Geri
+Giriş
+GİRİŞ EKRANI:
+Giriş Yap
+Giriş Yapmadınız
+Görünüm
+Göster
+Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir.
+Güç tasarrufu modu, cihazınızın pil ömrünü uzatır.
+Güç Yönetimi
+Güçlü şifre nedir?
+Hata
+Hazır
+Hazırsınız!
+Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın.
+Henüz tamamlanmış oyun yok
+Her oyunda yalnızca 3 ipucu kullanabilirsiniz!
+Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır.
+Hesabı Sil
+Hesabınız yok mu?
+Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz.
+How to Play
+İleri
+In this region, 5 can only be placed in this cell because there's no room for 5 in other cells.
+İptal
+İpuçları ve Yardım
+İpucu
+İpucu (%lld)
+İPUCU EKRANI:
+Kaldığın yerden devam et
+Kalem Modu
+Karanlık Mod
+Karanlık tema aktif eder
+Kaybedildi
+Kaydedilmiş oyun bulunamadı
+Kaydedilmiş Oyunlar
+Kaydet
+KAYIT EKRANI:
+KAYITLI OYUNLAR EKRANI:
+Kayıt
+Kayıt Ol
+Kayıtlı Oyunlar
+Kolay
+Kolay Oyunları
+Kolay zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır.
+Kullanıcı Adı
+Kullanıcı adınızı girin
+language.en
+language.fr
+language.selection
+language.tr
+Nasıl Oynanır
+Nasıl Oynanır?
+Next
+Not Aktif
+Not Modu
+Note Active
+Note Mode
+Notlar
+Notlar, bir hücreye kesin karar vermeden önce olasılıkları takip etmenizi sağlar.
+Orta
+Orta Oyunları
+Orta zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır.
+Ortalama Skor
+Ortalama Süre
+Otomatik Güç Tasarrufu
+Oynanıyor
+OYUN ARAYÜZÜ:
+Oyun Ayarları
+Oyun Bitti!
+Oyun içi ses efektlerini aç/kapa
+Oyun içi titreşim efektlerini aç/kapa
+Oyun İstatistikleri
+Oyun sırasında '?' düğmesine basarak bu rehbere tekrar ulaşabilirsiniz.
+Oyun yüklenemedi
+Oyun yükleniyor...
+Performans İstatistikleri
+Pil Durumu
+Profil
+Profil Düzenle
+PROFİL EKRANI:
+Sayı Girişi
+Ses Efektleri
+Ses Seviyesi
+Sesi Test Et
+Şifre
+Şifre Onayı
+ŞİFRE SIFIRLAMA EKRANI:
+Şifre Sıfırla
+Şifremi Unuttum
+Şifrenizi girin
+Şifrenizi tekrar girin
+Sistem Görünümünü Kullan
+Skor Tablosu
+SKOR TABLOSU:
+Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın
+sn
+Son Kalan Hücre
+Son Oyunlar
+Soyad
+Step %d / %d
+Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim.
+Sudoku Rehberi
+Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek.
+Sudoku'ya Hoş Geldiniz
+Süre:
+Sürüm 1.0
+Talimatları Gönder
+Tamam
+Tamamla
+Tamamlandı
+Tek Konum Stratejisi
+Tek Olasılık Stratejisi
+Tekli Olasılık Tespiti
+Tekli Pozisyon Tespiti
+Temel Kurallar
+text.size
+text.size.large
+text.size.medium
+text.size.small
+Titreşim Geri Bildirimi
+Toplam Oyunlar
+Tüm Ayarları Sıfırla
+Tümü
+tutorial_desc_basic_strategies
+tutorial_desc_cell_selection
+tutorial_desc_completed
+tutorial_desc_game_rules
+tutorial_desc_hints
+tutorial_desc_notes_mode
+tutorial_desc_number_entry
+tutorial_desc_welcome
+tutorial_tip_basic_strategies
+tutorial_tip_cell_selection
+tutorial_tip_completed
+tutorial_tip_game_rules
+tutorial_tip_hints
+tutorial_tip_notes_mode
+tutorial_tip_number_entry
+tutorial_tip_title
+tutorial_tip_welcome
+tutorial_title_basic_strategies
+tutorial_title_cell_selection
+tutorial_title_completed
+tutorial_title_game_rules
+tutorial_title_hints
+tutorial_title_notes_mode
+tutorial_title_number_entry
+tutorial_title_welcome
+Uygulamayı kapatıp tekrar açmayı deneyin.
+Uzman
+Uzman Oyunları
+Uzman zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır.
+Yeni Hesap Oluştur
+Yeni Oyun
+Yükleniyor...
+Yüksek Performans Modu
+Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır.
+Zaten hesabınız var mı?
+Zihninizi Çalıştırın
+Zor
+Zor Oyunları
+Zor zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır.
+Zorlandığınızda ipucu alabilir veya hatalı girişlerinizi kontrol edebilirsiniz.
+Zorluk

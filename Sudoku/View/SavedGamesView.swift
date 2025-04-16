@@ -33,6 +33,8 @@ struct SavedGamesView: View {
         
         if languageCode == "en" {
             return ["All", "Easy", "Medium", "Hard", "Expert"]
+        } else if languageCode == "fr" {
+            return ["Tous", "Facile", "Moyen", "Difficile", "Expert"]
         } else {
             return ["Tümü", "Kolay", "Orta", "Zor", "Uzman"]
         }
@@ -53,17 +55,36 @@ struct SavedGamesView: View {
                 .font(.system(size: 70))
                 .foregroundColor(Color.blue.opacity(0.5))
             
-            Text("Kaydedilmiş oyun bulunamadı")
+            Text.localizedSafe("Kaydedilmiş oyun bulunamadı")
                 .font(.title2.bold())
-                .foregroundColor(.primary)
+                .foregroundColor(Color.textColor(for: colorScheme))
             
-            Text(selectedDifficulty == "Tümü" ? 
-                 "Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın." : 
-                 "\(selectedDifficulty) zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+            if selectedDifficulty == "Tümü" || selectedDifficulty == "All" || selectedDifficulty == "Tous" {
+                Text.localizedSafe("Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            } else {
+                // Format string'i doğru şekilde kullan
+                let difficultyText = selectedDifficulty
+                let formatKey = "%@ zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır."
+                
+                // Önce yerelleştirilmiş formatı al, sonra formatla
+                let languageCode = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+                let path = Bundle.main.path(forResource: languageCode, ofType: "lproj")
+                let bundle = path != nil ? Bundle(path: path!) : Bundle.main
+                let localizedFormat = bundle?.localizedString(forKey: formatKey, value: formatKey, table: "Localizable") ?? formatKey
+                
+                // Formatı uygula
+                let formattedText = String(format: localizedFormat, difficultyText)
+                
+                Text(formattedText)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
         }
         .padding(30)
         .background(
@@ -166,7 +187,7 @@ struct SavedGamesView: View {
                             .padding(.top, 2)
                         
                         // Kısaltılmış yazı
-                        Text(shortenedText(for: level))
+                        Text.localizedSafe(shortenedText(for: level))
                             .font(.system(size: 10, weight: .medium))
                             .lineLimit(1)
                             .padding(.bottom, 2)
@@ -228,6 +249,19 @@ struct SavedGamesView: View {
             default:
                 return .purple // All için mor renk
             }
+        } else if languageCode == "fr" {
+            switch level {
+            case "Facile":
+                return .green
+            case "Moyen":
+                return .blue
+            case "Difficile":
+                return .orange
+            case "Expert":
+                return .red
+            default:
+                return .purple // Tous için mor renk
+            }
         } else {
             switch level {
             case "Kolay":
@@ -270,8 +304,7 @@ struct SavedGamesView: View {
         }()
         
         // Tamamlanma yüzdesi - gerçek oyun verisi temelinde 
-        // (Bu değer gerçek veri olmadığından varsayılan olarak 30% ile 90% arası rastgele bir değer)
-        let completionPercentage = min(max(30, Int(game.elapsedTime) % 60), 90)
+        let completionPercentage = calculateCompletionPercentage(for: game)
         
         return ZStack {
             // Geliştirilmiş arka plan - subtle gradient
@@ -315,7 +348,7 @@ struct SavedGamesView: View {
                             Image(systemName: "calendar")
                                 .font(.system(size: 12))
                                 .foregroundColor(.gray)
-                            Text("Tarih")
+                            Text.localizedSafe("Tarih")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
@@ -400,6 +433,7 @@ struct SavedGamesView: View {
                                 )
                             )
                             .frame(width: CGFloat(completionPercentage) / 100 * UIScreen.main.bounds.width * 0.75, height: 6)
+                            .animation(nil, value: completionPercentage)
                     }
                 }
                 .padding(.top, 4)
@@ -536,6 +570,19 @@ struct SavedGamesView: View {
             default:
                 return "square.grid.2x2" // All için grid ikonu
             }
+        } else if languageCode == "fr" {
+            switch difficulty {
+            case "Facile":
+                return "leaf"
+            case "Moyen":
+                return "flame"
+            case "Difficile":
+                return "bolt"
+            case "Expert":
+                return "star"
+            default:
+                return "square.grid.2x2" // Tous için grid ikonu
+            }
         } else {
             switch difficulty {
             case "Kolay":
@@ -550,5 +597,32 @@ struct SavedGamesView: View {
                 return "square.grid.2x2" // Tümü için grid ikonu
             }
         }
+    }
+    
+    // Kaydedilmiş oyunlar için tamamlanma yüzdesi hesaplama
+    private func calculateCompletionPercentage(for game: SavedGame) -> Int {
+        guard game.boardState != nil else {
+            return 0 // Veri yoksa 0% göster
+        }
+        
+        // Kaydedilmiş değer yoksa veya hesaplama gerekliyse hesapla
+        let cachedKey = "completion_percentage_\(game.objectID.uriRepresentation().absoluteString)"
+        if let cachedPercentage = UserDefaults.standard.object(forKey: cachedKey) as? Int {
+            return cachedPercentage
+        }
+        
+        // SudokuViewModel üzerinden tamamlanma yüzdesini al
+        let percentage = viewModel.getCompletionPercentage(for: game)
+        
+        // 0-100 arasında bir değere dönüştür
+        let result = Int(percentage * 100)
+        
+        // Minimum %5 değerini garantile (UI olarak tamamen boş görünmemesi için)
+        let finalResult = max(5, min(result, 100))
+        
+        // Değeri önbelleğe al (oyundan çıkılana kadar geçerli olacak)
+        UserDefaults.standard.set(finalResult, forKey: cachedKey)
+        
+        return finalResult
     }
 }

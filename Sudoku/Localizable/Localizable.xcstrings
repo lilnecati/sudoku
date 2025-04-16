@@ -7,21 +7,172 @@
     "@%@" : {
 
     },
+    "\\(blockRow). satır, \\(blockCol). sütundaki 3x3 blokta" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in the 3x3 block at row \\(blockRow), column \\(blockCol)"
+          }
+        }
+      }
+    },
+    "\\(col+1). sütunda" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in column \\(col+1)"
+          }
+        }
+      }
+    },
+    "\\(regionName) \\(value) sayısı sadece bu hücreye konabilir." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In \\(regionName), the number \\(value) can only be placed in this cell."
+          }
+        }
+      }
+    },
+    "\\(regionName) tüm hücreler incelendi." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All cells in \\(regionName) have been examined."
+          }
+        }
+      }
+    },
+    "\\(row+1). satırda" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in row \\(row+1)"
+          }
+        }
+      }
+    },
+    "\\(value) sayısı, \\(col+1). sütunda sadece bu hücreye konabilir" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The number \\(value) can only be placed in this cell in column \\(col+1)"
+          }
+        }
+      }
+    },
+    "\\(value) sayısı, \\(row+1). satırda sadece bu hücreye konabilir" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The number \\(value) can only be placed in this cell in row \\(row+1)"
+          }
+        }
+      }
+    },
+    "\\(value) sayısı, bu 3x3 blokta sadece bu hücreye konabilir" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The number \\(value) can only be placed in this cell in this 3x3 block"
+          }
+        }
+      }
+    },
     "#%lld" : {
 
     },
+    "%@ %d sayısı sadece bu hücreye konabilir." : {
+      "comment" : "İpucu ana açıklaması",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$d sayısı sadece bu hücreye konabilir."
+          }
+        }
+      }
+    },
+    "%@ tüm hücreler incelendi." : {
+      "comment" : "İpucu açıklaması"
+    },
     "%@ zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "No saved games found for %@ difficulty level."
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune partie sauvegardée trouvée au niveau de difficulté %@."
+          }
         }
       }
     },
     "%%%lld" : {
 
+    },
+    "%d sayısı, %d. satırda sadece bu hücreye konabilir" : {
+      "comment" : "İpucu açıklaması",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$d sayısı, %2$d. satırda sadece bu hücreye konabilir"
+          }
+        }
+      }
+    },
+    "%d sayısı, %d. sütunda sadece bu hücreye konabilir" : {
+      "comment" : "İpucu açıklaması",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$d sayısı, %2$d. sütunda sadece bu hücreye konabilir"
+          }
+        }
+      }
+    },
+    "%d sayısı, bu 3x3 blokta sadece bu hücreye konabilir" : {
+      "comment" : "İpucu açıklaması"
+    },
+    "%d. satır, %d. sütundaki 3x3 blokta" : {
+      "comment" : "İpucu bölge adı",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$d. satır, %2$d. sütundaki 3x3 blokta"
+          }
+        }
+      }
+    },
+    "%d. satırda" : {
+      "comment" : "İpucu bölge adı"
+    },
+    "%d. sütunda" : {
+      "comment" : "İpucu bölge adı"
     },
     "%lld" : {
 
@@ -54,6 +205,24 @@
     "© 2024 Necati Yıldırım" : {
 
     },
+    "🇫🇷" : {
+
+    },
+    "🇫🇷 Français" : {
+
+    },
+    "🇬🇧" : {
+
+    },
+    "🇬🇧 English" : {
+
+    },
+    "🇹🇷" : {
+
+    },
+    "🇹🇷 Türkçe" : {
+
+    },
     "🎉 Yeni Rekor! 🎉" : {
 
     },
@@ -67,10 +236,19 @@
             "state" : "translated",
             "value" : "You made 3 mistakes and lost the Sudoku game."
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez fait 3 erreurs et perdu la partie de Sudoku."
+          }
         }
       }
     },
     "5" : {
+
+    },
+    "According to Sudoku rules, the value %lld can be placed in this cell." : {
 
     },
     "Ad Soyad" : {
@@ -80,10 +258,46 @@
             "state" : "translated",
             "value" : "Full Name"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom et prénom"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ad Soyad"
+          }
+        }
+      }
+    },
+    "Adım %@ / %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Step %@ / %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape %@ / %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adım %@ / %@"
+          }
         }
       }
     },
     "Adım %lld / %lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -100,6 +314,18 @@
             "state" : "translated",
             "value" : "Enter your full name"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrez votre nom et prénom"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adınızı ve soyadınızı girin"
+          }
         }
       }
     },
@@ -112,6 +338,12 @@
             "value" : "Home"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accueil"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -121,7 +353,20 @@
       }
     },
     "Anasayfaya Dön" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Return to Homepage"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retourner à l'accueil"
+          }
+        }
+      }
     },
     "Anladım" : {
       "localizations" : {
@@ -141,28 +386,164 @@
             "state" : "translated",
             "value" : "Settings"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paramètres"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayarlar"
+          }
         }
       }
     },
-    "Bitti" : {
+    "Back" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Finished"
+            "value" : "Back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geri"
+          }
+        }
+      }
+    },
+    "Bitti" : {
+      "comment" : "İpucu bitirme butonu",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminé"
+          }
+        }
+      }
+    },
+    "Bölge İncelemesi" : {
+      "comment" : "İpucu başlığı",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Region Analysis"
           }
         }
       }
     },
     "Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Only this cell can contain 5 in this region because there's no place for 5 in other cells."
+            "value" : "Only 5 can be placed in this cell in the region because there is no space for 5 in other cells."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seul le 5 peut être placé dans cette cellule de la région car il n'y a pas de place pour 5 dans les autres cellules."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok."
           }
         }
       }
+    },
+    "Boş Hücre Analizi" : {
+      "comment" : "İpucu başlığı",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empty Cell Analysis"
+          }
+        }
+      }
+    },
+    "Bu hücre, sudoku tahtasında çözülebilir bir hücre olarak belirlendi." : {
+      "comment" : "İpucu açıklaması",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This cell has been identified as a solvable cell on the Sudoku board."
+          }
+        }
+      }
+    },
+    "Bu hücrenin aynı satır, sütun ve blokta bulunan diğer hücreler incelendi." : {
+      "comment" : "İpucu açıklaması",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The other cells in the same row, column, and block as this cell have been examined."
+          }
+        }
+      }
+    },
+    "Bu hücreye \\(value) değeri konabilir." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The value \\(value) can be placed in this cell."
+          }
+        }
+      }
+    },
+    "Bu hücreye sadece \\(value) değeri konabilir çünkü diğer tüm sayılar elendi." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the value \\(value) can be placed in this cell because all other numbers have been eliminated."
+          }
+        }
+      }
+    },
+    "Bu hücreye sadece %d değeri konabilir çünkü diğer tüm sayılar elendi." : {
+      "comment" : "İpucu açıklaması"
+    },
+    "Bu hücreye sadece %d değeri konabilir, diğer tüm sayılar elendi." : {
+      "comment" : "İpucu açıklaması"
+    },
+    "Bu hücreye sadece tek bir sayı konabilir" : {
+      "comment" : "İpucu açıklaması"
+    },
+    "Bu iki aday, yalnızca bu iki hücreye konabilir, dolayısıyla bu hücrelerden diğer adaylar çıkarılabilir" : {
+      "comment" : "İpucu açıklaması"
+    },
+    "Bu iki hücre, aynı iki adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir" : {
+      "comment" : "İpucu açıklaması"
     },
     "Bu işlem geri alınamaz. Tüm verileriniz silinecektir." : {
       "localizations" : {
@@ -184,12 +565,44 @@
         }
       }
     },
+    "Bu özellik yakında eklenecek" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This feature will be added soon"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette fonctionnalité sera bientôt disponible"
+          }
+        }
+      }
+    },
+    "Bu sayı, bu bölgede yalnızca tek bir hücreye konabilir" : {
+      "comment" : "İpucu açıklaması"
+    },
+    "Bu üç aday, yalnızca bu üç hücreye konabilir" : {
+      "comment" : "İpucu açıklaması"
+    },
+    "Bu üç hücre, üç adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir" : {
+      "comment" : "İpucu açıklaması"
+    },
     "Cihazın görünüm ayarını kullan (açık/koyu)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Use device appearance setting (light/dark)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser le thème du système (clair/sombre)"
           }
         }
       }
@@ -199,13 +612,122 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Logout"
+            "value" : "Log Out"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnexion"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Çıkış Yap"
+          }
+        }
+      }
+    },
+    "coming.soon" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coming soon"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bientôt disponible"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yakında"
+          }
+        }
+      }
+    },
+    "coming.soon.languages" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coming Soon"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langues à venir"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yakında Eklenecek Diller"
+          }
+        }
+      }
+    },
+    "Complete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamamla"
+          }
+        }
+      }
+    },
+    "Completed" : {
+      "comment" : "Game state: completed",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminé"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamamlandı"
+          }
+        }
+      }
+    },
+    "Değer Önerisi" : {
+      "comment" : "İpucu başlığı",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Value Suggestion"
           }
         }
       }
@@ -218,6 +740,12 @@
             "state" : "translated",
             "value" : "Continue"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
+          }
         }
       }
     },
@@ -229,6 +757,35 @@
             "state" : "translated",
             "value" : "min"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "min"
+          }
+        }
+      }
+    },
+    "Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En raison des autres chiffres dans la ligne, la colonne et le bloc 3x3, seul 4 peut être placé dans cette cellule."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir."
+          }
         }
       }
     },
@@ -238,6 +795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Low Battery"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Batterie faible"
           }
         }
       }
@@ -249,6 +812,18 @@
             "state" : "translated",
             "value" : "Email"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-mail"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-posta"
+          }
         }
       }
     },
@@ -258,6 +833,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your email address"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrez votre adresse e-mail"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-posta adresinizi girin"
           }
         }
       }
@@ -269,6 +856,41 @@
             "state" : "translated",
             "value" : "Enter your email address"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrez votre adresse e-mail"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-posta adresinizi girin"
+          }
+        }
+      }
+    },
+    "Ekranı kaydırarak diğer adımlara geçebilirsiniz." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can swipe the screen to move to other steps."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pouvez glisser l'écran pour passer aux étapes suivantes."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekranı kaydırarak diğer adımlara geçebilirsiniz."
+          }
         }
       }
     },
@@ -278,6 +900,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "At least 4 characters"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au moins 4 caractères"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En az 4 karakter"
           }
         }
       }
@@ -290,6 +924,12 @@
             "state" : "translated",
             "value" : "Fastest Game"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partie la plus rapide"
+          }
         }
       }
     },
@@ -301,15 +941,129 @@
             "state" : "translated",
             "value" : "Best Score"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meilleur score"
+          }
         }
       }
     },
+    "Example Not Available" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Example Not Available"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemple Non Disponible"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Örnek Gösterilemiyor"
+          }
+        }
+      }
+    },
+    "Example: Number 5 can only be placed in this cell" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Example: Number 5 can only be placed in this cell"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemple : Le chiffre 5 ne peut être placé que dans cette cellule"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir"
+          }
+        }
+      }
+    },
+    "Example: This cell can only contain 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Example: This cell can only contain 4"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemple : Cette cellule ne peut contenir que 4"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Örnek: Bu hücreye sadece 4 girebilir"
+          }
+        }
+      }
+    },
+    "Failed" : {
+      "comment" : "Game state: failed",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échoué"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaybedildi"
+          }
+        }
+      }
+    },
+    "Finished" : {
+
+    },
     "Geliştirici" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Developer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développeur"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geliştirici"
           }
         }
       }
@@ -321,10 +1075,17 @@
             "state" : "translated",
             "value" : "Developer: Necati Yıldırım"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développeur: Necati Yıldırım"
+          }
         }
       }
     },
     "Geliştrici" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -341,6 +1102,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "General"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Général"
           }
         }
       }
@@ -360,7 +1127,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Login"
+            "value" : "Log In"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion"
           }
         },
         "tr" : {
@@ -372,11 +1145,24 @@
       }
     },
     "Giriş Yapmadınız" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Not Logged In"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non connecté"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giriş Yapmadınız"
           }
         }
       }
@@ -388,6 +1174,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Appearance"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apparence"
+          }
+        }
+      }
+    },
+    "Göster" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Göster"
           }
         }
       }
@@ -409,6 +1224,12 @@
             "state" : "translated",
             "value" : "Power saving mode extends your device's battery life."
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le mode économie d'énergie prolonge la durée de vie de la batterie de votre appareil."
+          }
         }
       }
     },
@@ -419,6 +1240,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Power Management"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestion d'énergie"
           }
         }
       }
@@ -440,6 +1267,18 @@
             "state" : "translated",
             "value" : "What is a strong password?"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qu'est-ce qu'un mot de passe fort?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Güçlü şifre nedir?"
+          }
         }
       }
     },
@@ -460,6 +1299,12 @@
             "state" : "translated",
             "value" : "Error"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur"
+          }
         }
       }
     },
@@ -473,12 +1318,42 @@
         }
       }
     },
+    "Hazırsınız!" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're Ready!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous êtes prêt !"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hazırsınız!"
+          }
+        }
+      }
+    },
     "Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "No saved games found. To save a game, use the 'Save' button in the game screen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune partie sauvegardée trouvée. Pour sauvegarder une partie, utilisez le bouton 'Sauvegarder' dans l'écran de jeu."
           }
         }
       }
@@ -489,6 +1364,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No completed games yet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore de partie terminée"
           }
         }
       }
@@ -503,12 +1384,41 @@
         }
       }
     },
+    "Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each row, each column, and each 3x3 region must contain the numbers 1 through 9. No number should be repeated."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque ligne, chaque colonne et chaque région 3x3 doit contenir les chiffres de 1 à 9. Aucun chiffre ne doit être répété."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır."
+          }
+        }
+      }
+    },
     "Hesabı Sil" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete Account"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le compte"
           }
         }
       }
@@ -520,6 +1430,18 @@
             "state" : "translated",
             "value" : "Don't have an account?"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous n'avez pas de compte?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hesabınız yok mu?"
+          }
         }
       }
     },
@@ -530,15 +1452,142 @@
             "state" : "translated",
             "value" : "Enter your account email address, we'll send password reset instructions."
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrez l'adresse e-mail associée à votre compte, nous vous enverrons les instructions de réinitialisation du mot de passe."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz."
+          }
+        }
+      }
+    },
+    "Hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hint"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indice"
+          }
+        }
+      }
+    },
+    "Hint (%d)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hint (%d)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indice (%d)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpucu (%d)"
+          }
+        }
+      }
+    },
+    "Hoş Geldiniz" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bienvenue"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoş Geldiniz"
+          }
+        }
+      }
+    },
+    "How to Play" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How to Play"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment Jouer"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nasıl Oynanır"
+          }
         }
       }
     },
     "İleri" : {
+      "comment" : "İpucu sonraki adım butonu",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Next"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suivant"
+          }
+        }
+      }
+    },
+    "In this region, 5 can only be placed in this cell because there's no room for 5 in other cells." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In this region, 5 can only be placed in this cell because there's no room for 5 in other cells."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans cette région, 5 ne peut être placé que dans cette cellule car il n'y a pas de place pour 5 dans les autres cellules."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok."
           }
         }
       }
@@ -550,15 +1599,57 @@
             "state" : "translated",
             "value" : "Cancel"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
         }
       }
     },
-    "İPUCU" : {
+    "İpuçları ve Yardım" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "HINT"
+            "value" : "Tips and Help"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Astuces et Aide"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpuçları ve Yardım"
+          }
+        }
+      }
+    },
+    "İPUCU" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HİNT"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CONSEIL"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İPUCU"
           }
         }
       }
@@ -570,6 +1661,12 @@
             "state" : "translated",
             "value" : "Hint (%lld)"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indice (%lld)"
+          }
         }
       }
     },
@@ -579,7 +1676,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Continue where you left off"
+            "value" : "Continue from where you left off"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer où vous vous êtes arrêté"
           }
         }
       }
@@ -591,6 +1694,18 @@
             "state" : "translated",
             "value" : "Dark Mode"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode sombre"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karanlık Mod"
+          }
         }
       }
     },
@@ -601,15 +1716,28 @@
             "state" : "translated",
             "value" : "Activates dark theme"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active le thème sombre"
+          }
         }
       }
     },
     "Kaydedilmiş oyun bulunamadı" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "No saved games found"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune partie sauvegardée"
           }
         }
       }
@@ -622,6 +1750,18 @@
             "state" : "translated",
             "value" : "Saved Games"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parties sauvegardées"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kayıtlı Oyunlar"
+          }
         }
       }
     },
@@ -631,6 +1771,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Save"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegarder"
           }
         }
       }
@@ -642,6 +1788,18 @@
             "state" : "translated",
             "value" : "Register"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S'inscrire"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kayıt Ol"
+          }
         }
       }
     },
@@ -652,6 +1810,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Saved Games"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parties sauvegardées"
           }
         },
         "tr" : {
@@ -681,6 +1845,12 @@
             "value" : "Easy"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facile"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -697,6 +1867,12 @@
             "state" : "translated",
             "value" : "Easy Games"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parties faciles"
+          }
         }
       }
     },
@@ -707,6 +1883,18 @@
             "state" : "translated",
             "value" : "Username"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom d'utilisateur"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kullanıcı Adı"
+          }
         }
       }
     },
@@ -716,6 +1904,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter your username"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrez votre nom d'utilisateur"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kullanıcı adınızı girin"
           }
         }
       }
@@ -729,10 +1929,56 @@
             "value" : "English"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anglais"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "İngilizce"
+          }
+        }
+      }
+    },
+    "language.es" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spanish"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İspanyolca"
+          }
+        }
+      }
+    },
+    "language.fr" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "French"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Français"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fransızca"
           }
         }
       }
@@ -743,13 +1989,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Language Selection"
+            "value" : "Language"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langue"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dil Seçimi"
+            "value" : "Dil"
           }
         }
       }
@@ -763,6 +2015,12 @@
             "value" : "Turkish"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turc"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -770,6 +2028,9 @@
           }
         }
       }
+    },
+    "Last Remaining Cell" : {
+
     },
     "Mevcut Şifre" : {
       "localizations" : {
@@ -792,11 +2053,24 @@
       }
     },
     "Nasıl Oynanır" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "How to Play"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment jouer"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nasıl Oynanır"
           }
         }
       }
@@ -808,6 +2082,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "How to Play?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment jouer?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nasıl Oynanır?"
           }
         }
       }
@@ -823,16 +2109,33 @@
       }
     },
     "Necati Yıldırım" : {
+
+    },
+    "Next" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Necati Yıldırım"
+            "value" : "Next"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suivant"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İleri"
           }
         }
       }
     },
     "Not Aktif" : {
+      "comment" : "Pencil mode active",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -843,6 +2146,7 @@
       }
     },
     "Not Modu" : {
+      "comment" : "Pencil mode button",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -852,32 +2156,143 @@
         }
       }
     },
+    "Note Active" : {
+      "comment" : "Pencil mode active",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note Active"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note Active"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not Aktif"
+          }
+        }
+      }
+    },
+    "Note Mode" : {
+      "comment" : "Game state: pencil mode\nPencil mode button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note Mode"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode Note"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not Modu"
+          }
+        }
+      }
+    },
+    "Notlar" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notlar"
+          }
+        }
+      }
+    },
+    "Only the value %lld can be placed in this cell because all other numbers have been eliminated." : {
+
+    },
     "Örnek Gösterilemiyor" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Example Cannot Be Shown"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemple non disponible"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Örnek Gösterilemiyor"
+          }
         }
       }
     },
     "Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Example: Number 5 can only be placed in this cell"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemple: Le chiffre 5 ne peut être placé que dans cette cellule"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir"
+          }
         }
       }
     },
     "Örnek: Bu hücreye sadece 4 girebilir" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Example: Only 4 can be entered in this cell"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemple: Seul le chiffre 4 peut être saisi dans cette cellule"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Örnek: Bu hücreye sadece 4 girebilir"
           }
         }
       }
@@ -889,6 +2304,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Medium"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moyen"
           }
         },
         "tr" : {
@@ -907,6 +2328,12 @@
             "state" : "translated",
             "value" : "Medium Games"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parties moyennes"
+          }
         }
       }
     },
@@ -917,6 +2344,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Average Score"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score moyen"
           }
         }
       }
@@ -929,6 +2362,12 @@
             "state" : "translated",
             "value" : "Average Time"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temps moyen"
+          }
         }
       }
     },
@@ -938,6 +2377,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatic Power Saving"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Économie d'énergie automatique"
           }
         }
       }
@@ -950,6 +2395,18 @@
             "state" : "translated",
             "value" : "Game Settings"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paramètres du jeu"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oyun Ayarları"
+          }
         }
       }
     },
@@ -959,6 +2416,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Game Over!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partie Terminée!"
           }
         }
       }
@@ -970,6 +2433,12 @@
             "state" : "translated",
             "value" : "Toggle in-game sound effects"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer/désactiver les effets sonores du jeu"
+          }
         }
       }
     },
@@ -978,7 +2447,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toggle in-game haptic feedback"
+            "value" : "Toggle in-game haptic effects"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer/désactiver le retour haptique du jeu"
           }
         }
       }
@@ -991,15 +2466,45 @@
             "state" : "translated",
             "value" : "Game Statistics"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statistiques de jeu"
+          }
+        }
+      }
+    },
+    "Oyun yüklenemedi" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game could not be loaded"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger la partie"
+          }
         }
       }
     },
     "Oyun yükleniyor..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Loading game..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement du jeu..."
           }
         }
       }
@@ -1035,6 +2540,29 @@
         }
       }
     },
+    "Paused" : {
+      "comment" : "Game state: paused",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pause"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duraklatıldı"
+          }
+        }
+      }
+    },
     "Performans" : {
       "localizations" : {
         "en" : {
@@ -1052,6 +2580,12 @@
             "state" : "translated",
             "value" : "Performance Statistics"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statistiques de performance"
+          }
         }
       }
     },
@@ -1061,6 +2595,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Battery Status"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "État de la batterie"
+          }
+        }
+      }
+    },
+    "Playing" : {
+      "comment" : "Game state: playing",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playing"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En cours"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oynanıyor"
           }
         }
       }
@@ -1072,6 +2635,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
           }
         }
       }
@@ -1093,6 +2668,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit Profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le profil"
           }
         }
       }
@@ -1134,6 +2715,29 @@
         }
       }
     },
+    "Ready" : {
+      "comment" : "Game state: ready",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prêt"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hazır"
+          }
+        }
+      }
+    },
     "Rehber" : {
       "localizations" : {
         "en" : {
@@ -1155,11 +2759,58 @@
       }
     },
     "Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Due to other numbers in the row, column, and 3x3 region, only 4 can be placed in this cell."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En raison des autres chiffres dans la ligne, la colonne et la région 3x3, seul le 4 peut être placé dans cette cellule."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir."
+          }
+        }
+      }
+    },
+    "Satır, Sütun ve Blok İnceleme" : {
+      "comment" : "İpucu başlığı",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Row, Column and Block Analysis"
+          }
+        }
+      }
+    },
+    "Sayı Girişi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Number Entry"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisie des Chiffres"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sayı Girişi"
           }
         }
       }
@@ -1171,6 +2822,18 @@
             "state" : "translated",
             "value" : "Sound Effects"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effets sonores"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses Efektleri"
+          }
         }
       }
     },
@@ -1180,6 +2843,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Volume"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses Seviyesi"
           }
         }
       }
@@ -1191,6 +2866,18 @@
             "state" : "translated",
             "value" : "Test Sound"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tester le son"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesi Test Et"
+          }
         }
       }
     },
@@ -1201,6 +2888,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paramètres"
           }
         },
         "tr" : {
@@ -1217,6 +2910,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Password"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mot de passe"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şifre"
           }
         }
       }
@@ -1237,6 +2942,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Password Confirmation"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmation du mot de passe"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şifre Onayı"
+          }
+        }
+      }
+    },
+    "Şifre Sıfırla" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Password"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser le mot de passe"
           }
         }
       }
@@ -1268,6 +3002,18 @@
             "state" : "translated",
             "value" : "Forgot Password"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mot de passe oublié"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şifremi Unuttum"
+          }
         }
       }
     },
@@ -1277,6 +3023,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter your password"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrez votre mot de passe"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şifrenizi girin"
           }
         }
       }
@@ -1288,6 +3046,18 @@
             "state" : "translated",
             "value" : "Re-enter your password"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmer votre mot de passe"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şifrenizi tekrar girin"
+          }
         }
       }
     },
@@ -1298,8 +3068,20 @@
             "state" : "translated",
             "value" : "Delete"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer"
+          }
         }
       }
+    },
+    "Single Position Detection" : {
+
+    },
+    "Single Possibility Detection" : {
+
     },
     "Sistem Görünümünü Kullan" : {
       "localizations" : {
@@ -1307,6 +3089,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Use System Appearance"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser l'apparence du système"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistem Görünümünü Kullan"
           }
         }
       }
@@ -1319,10 +3113,17 @@
             "state" : "translated",
             "value" : "Scoreboard"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tableau des scores"
+          }
         }
       }
     },
     "Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1340,15 +3141,28 @@
             "state" : "translated",
             "value" : "sec"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sec"
+          }
         }
       }
     },
     "Son Kalan Hücre" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Last Remaining Cell"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière cellule restante"
           }
         }
       }
@@ -1360,6 +3174,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recent Games"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parties récentes"
+          }
+        }
+      }
+    },
+    "Step %d / %d" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Step %1$d / %2$d"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape %1$d / %2$d"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adım %1$d / %2$d"
           }
         }
       }
@@ -1394,6 +3237,112 @@
         }
       }
     },
+    "Sudoku kurallarına göre bu hücreye \\(value) değeri konabilir." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "According to Sudoku rules, the value \\(value) can be placed in this cell."
+          }
+        }
+      }
+    },
+    "Sudoku kurallarına göre bu hücreye bu değer konabilir" : {
+      "comment" : "İpucu açıklaması"
+    },
+    "Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Would you like to learn how to play Sudoku? We will guide you step by step."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voulez-vous apprendre à jouer au Sudoku? Nous vous guiderons étape par étape."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim."
+          }
+        }
+      }
+    },
+    "Sudoku Rehberi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku Guide"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guide de Sudoku"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku Rehberi"
+          }
+        }
+      }
+    },
+    "Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku is a puzzle game where you place numbers in a 9x9 grid. This guide will teach you the basic rules and strategies."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Sudoku est un jeu de puzzle où vous placez des chiffres dans une grille de 9x9. Ce guide vous enseignera les règles de base et les stratégies."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek."
+          }
+        }
+      }
+    },
+    "Sudoku'ya Hoş Geldiniz" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome to Sudoku"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bienvenue au Sudoku"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku'ya Hoş Geldiniz"
+          }
+        }
+      }
+    },
     "Sudoku'yu Tamamladınız" : {
       "localizations" : {
         "en" : {
@@ -1411,6 +3360,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Time"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temps"
           }
         }
       }
@@ -1432,6 +3387,26 @@
             "state" : "translated",
             "value" : "Version 1.0"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version 1.0"
+          }
+        }
+      }
+    },
+    "Swordfish deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir" : {
+      "comment" : "İpucu açıklaması"
+    },
+    "Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir." : {
+      "comment" : "İpucu bulunamadı",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hint could be detected on the board. More complex strategies may be needed."
+          }
         }
       }
     },
@@ -1441,6 +3416,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Send Instructions"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer les instructions"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Talimatları Gönder"
           }
         }
       }
@@ -1452,15 +3439,34 @@
             "state" : "translated",
             "value" : "OK"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
         }
       }
     },
     "Tamamla" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Complete"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamamla"
           }
         }
       }
@@ -1473,12 +3479,25 @@
             "state" : "translated",
             "value" : "Completion"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progression"
+          }
         }
       }
     },
     "Tarih" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Date"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Date"
@@ -1493,15 +3512,147 @@
             "state" : "translated",
             "value" : "Congratulations!"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Félicitations!"
+          }
+        }
+      }
+    },
+    "Tek Konum Stratejisi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Single Position Strategy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stratégie d'Emplacement Unique"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek Konum Stratejisi"
+          }
+        }
+      }
+    },
+    "Tek Konum Tespiti" : {
+      "comment" : "İpucu başlığı",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Single Position Detection"
+          }
+        }
+      }
+    },
+    "Tek Olasılık Stratejisi" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Single Possibility Strategy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stratégie de Possibilité Unique"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek Olasılık Stratejisi"
+          }
+        }
+      }
+    },
+    "Tek Olasılık Tespiti" : {
+      "comment" : "İpucu başlığı",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Single Possibility Detection"
+          }
+        }
+      }
+    },
+    "Tekli Olasılık Tespiti" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Single Possibility Detection"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection des possibilités uniques"
+          }
+        }
+      }
+    },
+    "Tekli Pozisyon Tespiti" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Single Position Detection"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection des positions uniques"
+          }
         }
       }
     },
     "Tekrar Dene" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Try Again"
+          }
+        }
+      }
+    },
+    "Temel Kurallar" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basic Rules"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règles Fondamentales"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temel Kurallar"
           }
         }
       }
@@ -1515,10 +3666,16 @@
             "value" : "Text Size"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taille du texte"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Metin Boyutu"
+            "value" : "Yazı Boyutu"
           }
         }
       }
@@ -1530,6 +3687,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Large"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grand"
           }
         },
         "tr" : {
@@ -1549,6 +3712,12 @@
             "value" : "Medium"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moyen"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1566,6 +3735,12 @@
             "value" : "Small"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Petit"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1574,12 +3749,21 @@
         }
       }
     },
+    "The number %lld can only be placed in this cell in this region." : {
+
+    },
     "Titreşim Geri Bildirimi" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Haptic Feedback"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour haptique"
           }
         }
       }
@@ -1591,6 +3775,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Total Games"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total des parties"
           }
         }
       }
@@ -1613,10 +3803,822 @@
             "state" : "translated",
             "value" : "All"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous"
+          }
+        }
+      }
+    },
+    "tutorial_desc_advanced_notes" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes help you track possible values before committing to entering values into cells. The 'Update Notes' option automatically updates all notes based on the current board state and removes invalid possibilities."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les notes vous aident à suivre les valeurs possibles avant de vous engager à entrer des valeurs dans les cellules. L'option 'Mettre à jour les notes' met automatiquement à jour toutes les notes en fonction de l'état actuel du plateau et supprime les possibilités invalides."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notlar, hücrelere tek tek değer girmeden önce olası değerleri takip etmenize yardımcı olur. 'Notları Güncelle' seçeneği, mevcut tahta durumuna göre tüm notları otomatik olarak günceller ve geçersiz olasılıkları kaldırır."
+          }
+        }
+      }
+    },
+    "tutorial_desc_basic_strategies" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Single Possibility: If there's only one possible value for a cell, enter that value.\nSingle Cell: If a value can only be placed in one cell in a row, column, or block, place that value in that cell.\nIntersection: If a value in a row or column can only be in a certain block, eliminate other possibilities."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Possibilité unique : S'il n'y a qu'une seule valeur possible pour une cellule, entrez cette valeur.\nCellule unique : Si une valeur ne peut être placée que dans une seule cellule d'une ligne, colonne ou bloc, placez cette valeur dans cette cellule.\nIntersection : Si une valeur dans une ligne ou une colonne ne peut être que dans un certain bloc, éliminez les autres possibilités."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek Olasılık: Bir hücre için sadece bir olası değer varsa, o değeri girin.\nTek Hücre: Bir değer bir satır, sütun veya blokta sadece bir hücreye yerleştirilebiliyorsa, o değeri o hücreye girin.\nKesişim: Bir değer bir satır veya sütunda sadece belirli bir blokta olabiliyorsa, diğer olasılıkları eleyin."
+          }
+        }
+      }
+    },
+    "tutorial_desc_cell_selection" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap on an empty cell you want to enter a value into. The selected cell will be highlighted in blue. You can deselect by tapping the same cell again. You'll feel a slight vibration when you tap on a cell."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur une cellule vide dans laquelle vous souhaitez saisir une valeur. La cellule sélectionnée sera surlignée en bleu. Vous pouvez désélectionner en appuyant à nouveau sur la même cellule. Vous ressentirez une légère vibration lorsque vous appuyez sur une cellule."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Değer girmek istediğiniz boş bir hücreye dokunun. Seçili hücre mavi renkte vurgulanacaktır. Aynı hücreye tekrar dokunarak seçimi kaldırabilirsiniz. Hücreye dokunduğunuzda hafif bir titreşim hissedeceksiniz."
+          }
+        }
+      }
+    },
+    "tutorial_desc_completed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Congratulations! You've learned the basic and advanced features of Sudoku. You're now ready to play on your own. Try different difficulty levels and improve your skills. Enjoy the game!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Félicitations ! Vous avez appris les fonctionnalités de base et avancées du Sudoku. Vous êtes maintenant prêt à jouer par vous-même. Essayez différents niveaux de difficulté et améliorez vos compétences. Bon jeu !"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tebrikler! Sudoku'nun temel ve ileri özelliklerini öğrendiniz. Artık kendi başınıza oynamaya hazırsınız. Farklı zorluk seviyelerini deneyin ve becerilerinizi geliştirin. İyi oyunlar!"
+          }
+        }
+      }
+    },
+    "tutorial_desc_conflict_detection" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When you enter a value into a cell, if that value conflicts with other cells in the same row, column, or 3x3 block, the conflicting cells will be highlighted in red. You need to correct the conflicts to make a valid move."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsque vous entrez une valeur dans une cellule, si cette valeur est en conflit avec d'autres cellules dans la même ligne, colonne ou bloc 3x3, les cellules en conflit seront surlignées en rouge. Vous devez corriger les conflits pour effectuer un mouvement valide."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir hücreye değer girdiğinizde, bu değer aynı satır, sütun veya 3x3 bloktaki diğer hücrelerle çakışıyorsa, çakışan hücreler kırmızı ile işaretlenir. Geçerli bir hamle yapmak için çakışmaları düzeltmeniz gerekir."
+          }
+        }
+      }
+    },
+    "tutorial_desc_game_rules" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku is played on a 9x9 grid. The goal is to ensure that each row, column, and 3x3 block contains the numbers 1 through 9 exactly once. Some cells are initially filled in, and you use these clues to complete the board."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Sudoku se joue sur une grille 9x9. L'objectif est de s'assurer que chaque ligne, colonne et bloc 3x3 contienne les chiffres de 1 à 9 exactement une fois. Certaines cellules sont initialement remplies, et vous utilisez ces indices pour compléter la grille."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku, 9x9 bir ızgarada oynanır. Amaç, her satır, sütun ve 3x3 bloğun 1'den 9'a kadar rakamları tam olarak bir kez içermesini sağlamaktır. Başlangıçta bazı hücreler doldurulmuştur ve bu ipuçlarını kullanarak tahtayı tamamlarsınız."
+          }
+        }
+      }
+    },
+    "tutorial_desc_hints" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can use the 'Hint' button to get a hint. The hint system will highlight the most logical next move on the board or directly fill in a cell. You have a limited number of hints available for each difficulty level."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pouvez utiliser le bouton 'Indice' pour obtenir un indice. Le système d'indices mettra en évidence le prochain mouvement le plus logique sur le plateau ou remplira directement une cellule. Vous disposez d'un nombre limité d'indices disponibles pour chaque niveau de difficulté."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir ipucu almak için 'İpucu' butonunu kullanabilirsiniz. İpucu sistemi, tahtadaki en mantıklı bir sonraki hamleyi vurgular veya direkt olarak bir hücreyi doldurabilir. Her zorluk seviyesinde sınırlı sayıda ipucu hakkınız vardır."
+          }
+        }
+      }
+    },
+    "tutorial_desc_notes_mode" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use the 'Notes Mode' button to enter numbers you're not sure about as notes. While in notes mode, you can record multiple possible values for a cell. This mode is very helpful in complex puzzles."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez le bouton 'Mode Notes' pour entrer des nombres dont vous n'êtes pas sûr en tant que notes. En mode notes, vous pouvez enregistrer plusieurs valeurs possibles pour une cellule. Ce mode est très utile dans les puzzles complexes."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emin olmadığınız rakamları not olarak girmek için 'Not Modu' butonunu kullanın. Not modundayken, bir hücreye birden fazla olası değer kaydedebilirsiniz. Bu mod, karmaşık bulmacalarda çok yardımcı olur."
+          }
+        }
+      }
+    },
+    "tutorial_desc_number_entry" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To enter a value into the selected cell, tap one of the number keys at the bottom. Numbers can only be entered into empty cells and cells that are not clues. When you enter a number, it will automatically check if the entry violates the rules on the board."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour saisir une valeur dans la cellule sélectionnée, appuyez sur l'une des touches numériques en bas. Les nombres ne peuvent être saisis que dans des cellules vides et des cellules qui ne sont pas des indices. Lorsque vous entrez un nombre, le système vérifiera automatiquement si l'entrée viole les règles du jeu."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seçili hücreye değer girmek için alttaki sayı tuşlarından birine dokunun. Rakamlar sadece boş hücrelere ve ipucu olmayan hücrelere girilebilir. Girdiğiniz sayının tahtadaki kuralları ihlal edip etmediği otomatik olarak kontrol edilir."
+          }
+        }
+      }
+    },
+    "tutorial_desc_practice" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Now it's time to practice what you've learned! Before proceeding to the next step, select an empty cell, enter a value, and make a note. Hands-on learning is the most effective method. Try it now!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il est maintenant temps de mettre en pratique ce que vous avez appris ! Avant de passer à l'étape suivante, sélectionnez une cellule vide, entrez une valeur et prenez une note. L'apprentissage pratique est la méthode la plus efficace. Essayez-le maintenant !"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şimdi öğrendiklerinizi pratik etme zamanı! Bir sonraki adıma geçmeden önce bir boş hücre seçin, bir değer girin ve not alın. Uygulamalı öğrenme en etkili yöntemdir. Hemen deneyin!"
+          }
+        }
+      }
+    },
+    "tutorial_desc_saving_progress" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The game automatically saves your progress. You can take a break anytime and continue later from where you left off. You can use the 'Save and Exit' button to explicitly save the current game."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le jeu sauvegarde automatiquement votre progression. Vous pouvez faire une pause à tout moment et continuer plus tard à partir de là où vous vous êtes arrêté. Vous pouvez utiliser le bouton 'Sauvegarder et Quitter' pour sauvegarder explicitement la partie en cours."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oyun otomatik olarak ilerlemenizi kaydeder. İstediğiniz zaman ara verebilir ve daha sonra kaldığınız yerden devam edebilirsiniz. 'Kaydet ve Çık' butonunu kullanarak mevcut oyunu açıkça kaydedebilirsiniz."
+          }
+        }
+      }
+    },
+    "tutorial_desc_statistics" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your game statistics are saved after each game. You can see your best times, number of puzzles solved, and average solution time in the 'Statistics' screen. This data is categorized by difficulty level."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos statistiques de jeu sont enregistrées après chaque partie. Vous pouvez voir vos meilleurs temps, le nombre de puzzles résolus et le temps de solution moyen dans l'écran 'Statistiques'. Ces données sont classées par niveau de difficulté."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oyun istatistikleriniz her oyundan sonra kaydedilir. En iyi sürelerinizi, çözülen bulmaca sayısını ve ortalama çözüm sürenizi 'İstatistikler' ekranından görebilirsiniz. Bu veriler zorluk seviyesine göre sınıflandırılır."
+          }
+        }
+      }
+    },
+    "tutorial_desc_welcome" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In this interactive guide, you will learn the basic features and strategies of Sudoku. You'll have a chance to practice at each step. Tap the 'Next' button to proceed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans ce guide interactif, vous apprendrez les fonctionnalités et stratégies de base du Sudoku. Vous aurez l'occasion de vous exercer à chaque étape. Appuyez sur le bouton 'Suivant' pour continuer."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu interaktif rehberde Sudoku'nun temel özelliklerini ve stratejilerini öğreneceksiniz. Her adımda pratik yapma şansınız olacak. İlerlemek için 'İleri' butonuna dokunun."
+          }
+        }
+      }
+    },
+    "tutorial_tip_basic_strategies" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: Narrow down possibilities by looking at other cells in the row, column, or block."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Astuce : Réduisez les possibilités en examinant les autres cellules de la ligne, de la colonne ou du bloc."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpucu: Bir satır, sütun veya bloktaki diğer hücrelere bakarak olasılıkları daraltın."
+          }
+        }
+      }
+    },
+    "tutorial_tip_cell_selection" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: You can double-tap the board to highlight all similar values."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Astuce : Vous pouvez double-taper le plateau pour mettre en évidence toutes les valeurs similaires."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpucu: Tahtayı çift dokunarak tüm benzer değerleri vurgulayabilirsiniz."
+          }
+        }
+      }
+    },
+    "tutorial_tip_completed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: Regular practice will help you improve your Sudoku skills. Have fun!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Astuce : Une pratique régulière vous aidera à améliorer vos compétences en Sudoku. Amusez-vous bien !"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpucu: Düzenli pratik yaparak Sudoku becerilerinizi geliştirebilirsiniz. İyi eğlenceler!"
+          }
+        }
+      }
+    },
+    "tutorial_tip_game_rules" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: Initial numbers cannot be changed and serve as clues."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Astuce : Les nombres initiaux ne peuvent pas être modifiés et servent d'indices."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpucu: Başlangıçta verilen sayılar değiştirilemez ve ipucu olarak kullanılır."
+          }
+        }
+      }
+    },
+    "tutorial_tip_hints" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: Use hints strategically, they will help you in difficult spots."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Astuce : Utilisez les indices de manière stratégique, ils vous aideront dans les moments difficiles."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpucu: İpuçlarını stratejik olarak kullanın, zorlandığınız noktalarda yardımcı olacaktır."
+          }
+        }
+      }
+    },
+    "tutorial_tip_notes_mode" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: Pencil marks help you keep track of possible values."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Astuce : Les marques au crayon vous aident à suivre les valeurs possibles."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpucu: Kalem işaretleri, olası değerleri takip etmenize yardımcı olur."
+          }
+        }
+      }
+    },
+    "tutorial_tip_number_entry" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: You can delete the value you entered by tapping the same number again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Astuce : Vous pouvez supprimer la valeur que vous avez entrée en appuyant à nouveau sur le même nombre."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpucu: Aynı sayıya tekrar dokunarak girdiğiniz değeri silebilirsiniz."
+          }
+        }
+      }
+    },
+    "tutorial_tip_title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TIP"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ASTUCE"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İPUCU"
+          }
+        }
+      }
+    },
+    "tutorial_tip_welcome" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: You can swipe the screen to navigate between steps."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Astuce : Vous pouvez glisser l'écran pour naviguer entre les étapes."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpucu: Adımlar arasında geçiş yapmak için ekranı kaydırabilirsiniz."
+          }
+        }
+      }
+    },
+    "tutorial_title_advanced_notes" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Advanced Notes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes Avancées"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gelişmiş Notlar"
+          }
+        }
+      }
+    },
+    "tutorial_title_basic_strategies" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basic Strategies"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stratégies de Base"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temel Stratejiler"
+          }
+        }
+      }
+    },
+    "tutorial_title_cell_selection" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cell Selection"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélection de Cellule"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hücre Seçimi"
+          }
+        }
+      }
+    },
+    "tutorial_title_completed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Congratulations!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Félicitations !"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tebrikler!"
+          }
+        }
+      }
+    },
+    "tutorial_title_conflict_detection" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conflict Detection"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection de Conflit"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çakışma Tespiti"
+          }
+        }
+      }
+    },
+    "tutorial_title_game_rules" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Game Rules"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règles du Jeu"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oyun Kuralları"
+          }
+        }
+      }
+    },
+    "tutorial_title_hints" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hints System"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Système d'Indices"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İpuçları Sistemi"
+          }
+        }
+      }
+    },
+    "tutorial_title_notes_mode" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes Mode"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode Notes"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not Alma Modu"
+          }
+        }
+      }
+    },
+    "tutorial_title_number_entry" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Number Entry"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisie de Nombre"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sayı Girişi"
+          }
+        }
+      }
+    },
+    "tutorial_title_practice" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let's Practice"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettons en Pratique"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratik Yapalım"
+          }
+        }
+      }
+    },
+    "tutorial_title_saving_progress" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saving Progress"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegarde de Progression"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlerleme Kaydetme"
+          }
+        }
+      }
+    },
+    "tutorial_title_statistics" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statistics"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statistiques"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İstatistikler"
+          }
+        }
+      }
+    },
+    "tutorial_title_welcome" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome to Sudoku!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bienvenue à Sudoku !"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sudoku'ya Hoş Geldiniz!"
+          }
         }
       }
     },
     "Uygulama Başlatılamadı" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1627,6 +4629,7 @@
       }
     },
     "Uygulamayı kapatıp tekrar açmayı deneyin." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1640,6 +4643,12 @@
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expert"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expert"
@@ -1661,8 +4670,17 @@
             "state" : "translated",
             "value" : "Expert Games"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parties expert"
+          }
         }
       }
+    },
+    "X-Wing deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir" : {
+      "comment" : "İpucu açıklaması"
     },
     "Yeni Hesap Oluştur" : {
       "localizations" : {
@@ -1670,6 +4688,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Create New Account"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créer un compte"
           }
         },
         "tr" : {
@@ -1686,6 +4710,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "New Game"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle partie"
           }
         }
       }
@@ -1711,11 +4741,18 @@
       }
     },
     "Yükleniyor..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Loading..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement..."
           }
         }
       }
@@ -1727,6 +4764,12 @@
             "state" : "translated",
             "value" : "High Performance Mode"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode haute performance"
+          }
         }
       }
     },
@@ -1736,6 +4779,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "High performance mode provides smoother animations and visual effects but increases battery usage."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le mode haute performance offre des animations et des effets visuels plus fluides, mais augmente la consommation de batterie."
           }
         }
       }
@@ -1747,15 +4796,40 @@
             "state" : "translated",
             "value" : "Already have an account?"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez déjà un compte?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaten hesabınız var mı?"
+          }
         }
       }
     },
     "Zihninizi Çalıştırın" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exercise Your Mind"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercez Votre Esprit"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zihninizi Çalıştırın"
           }
         }
       }
@@ -1767,6 +4841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hard"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difficile"
           }
         },
         "tr" : {
@@ -1785,6 +4865,12 @@
             "state" : "translated",
             "value" : "Hard Games"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parties difficiles"
+          }
         }
       }
     },
@@ -1795,6 +4881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Difficulty"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difficulté"
           }
         }
       }

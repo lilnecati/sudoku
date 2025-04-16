@@ -1,0 +1,8 @@
+// SON EKLENEN ÇEVİRİLER
+"Sil" = "Supprimer";
+"Tebrikler!" = "Félicitations!";
+"Tarih" = "Date";
+"Tamamlanma" = "Progression";
+"Süre" = "Temps";
+"dk" = "min";
+"sn" = "sec";

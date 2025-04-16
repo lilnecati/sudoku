@@ -18,6 +18,9 @@ Bu uygulama, SwiftUI kullanılarak iOS platformu için geliştirilmiş kapsamlı
 - Pil tasarrufu modu ve performans optimizasyonları
 - Animasyonlu kullanıcı arayüzü elemanları
 - Tutarlı tema ve görsel dil
+- **Yeni:** Çoklu dil desteği (İngilizce, Türkçe, Fransızca)
+- **Yeni:** Gelişmiş öğretici ve rehberlik sistemi
+- **Yeni:** Performans optimizasyonları ve hızlandırılmış tahta oluşturma
 
 ## 🏗️ Mimari Yapı
 
@@ -133,6 +136,7 @@ Uygulama MVVM (Model-View-ViewModel) mimarisi kullanılarak geliştirilmiştir:
     - Pointing Pairs/Triples
     - Box-Line Reduction
     - X-Wing ve Swordfish teknikleri
+  - **Yeni:** Hızlandırılmış çözüm algoritmaları
 
 - **ScoreManager.swift**: Yüksek skorları kaydetme, yükleme ve sıralama işlemlerini yürütür. CoreData ile entegre çalışır.
 
@@ -149,6 +153,10 @@ Uygulama MVVM (Model-View-ViewModel) mimarisi kullanılarak geliştirilmiştir:
 
 - **TutorialManager.swift**: Öğretici içerikleri ve yardım ipuçlarını yöneten sınıf. Adım adım rehberlik ve kullanıcı ilerlemesini takip eder.
 
+- **LocalizationManager.swift**: **Yeni** Çoklu dil desteği ve dinamik dil değişimi
+   - Uygulamanın farklı bölümlerinde yerelleştirilmiş içerik sağlama
+   - Kullanıcı dil tercihlerinin saklanması ve uygulanması
+
 ### Extensions
 - **ColorExtension.swift**: Renk teması ve özelleştirmeleri için renk uzantıları. Arayüzde kullanılan özel renkleri tanımlar.
 
@@ -157,6 +165,11 @@ Uygulama MVVM (Model-View-ViewModel) mimarisi kullanılarak geliştirilmiştir:
 - **DateExtension.swift**: Tarih formatlaması ve skor ekranlarında kullanılan zaman gösterimi için uzantılar.
 
 - **NSManagedObjectExtensions.swift**: CoreData entity'leri için yardımcı metotlar içeren uzantılar.
+
+- **AppLanguage+Extensions.swift**: **Yeni** Dil yapısı için ek özellikler ve yardımcı metotlar ekler.
+
+### Localizable Resources
+- **Localizable.xcstrings**: **Yeni** Uygulama içindeki tüm metinlerin çoklu dil desteği için anahtar-değer çiftlerini içerir.
 
 ### CoreDataModels
 - **SudokuModel.xcdatamodeld**: Uygulama veritabanı şemasını tanımlayan CoreData modeli. SavedGame ve HighScore entity'lerini içerir.
@@ -191,6 +204,11 @@ Uygulama MVVM (Model-View-ViewModel) mimarisi kullanılarak geliştirilmiştir:
    - @State, @Binding, @Published, @ObservedObject kullanımı
    - Reaktif arayüz güncellemeleri ve veri akışı
 
+5. **LocalizationManager**: **Yeni**
+   - Çoklu dil desteği ve dinamik dil değişimi
+   - Uygulamanın farklı bölümlerinde yerelleştirilmiş içerik sağlama
+   - Kullanıcı dil tercihlerinin saklanması ve uygulanması
+
 ### Tahta Oluşturma Algoritması
 1. Temel bir 9x9 desen oluşturma
 2. Değerleri, satırları ve sütunları karıştırarak benzersiz tahtalar üretme
@@ -201,6 +219,10 @@ Uygulama MVVM (Model-View-ViewModel) mimarisi kullanılarak geliştirilmiştir:
    - Orta: Hidden Singles ve Naked Pairs gerektirir
    - Zor: Hidden Pairs ve Pointing Pairs gerektirir
    - Uzman: X-Wing ve ileri teknikler gerektirir
+6. **Yeni:** Optimizasyon teknikleri:
+   - Backtracking ile hızlı çözüm kontrolü
+   - Çözüm kontrol frekansının azaltılması
+   - Daha verimli tahta doğrulama algoritmaları
 
 ### Kalem İşaretleri (Pencil Marks)
 - Oyuncuların bir hücreye yerleştirebilecekleri olası değerleri not etmelerini sağlar
@@ -220,6 +242,13 @@ Uygulama MVVM (Model-View-ViewModel) mimarisi kullanılarak geliştirilmiştir:
 - NSPersistentContainer ve context yönetimi
 - Background thread ve main thread senkronizasyonu
 
+### Çoklu Dil Desteği (Yeni)
+- Dinamik dil değişimi ve kullanıcı tercihlerinin saklanması
+- Localizable.xcstrings ile merkezi çeviri yönetimi
+- Desteklenen diller: İngilizce, Türkçe, Fransızca
+- Yakında eklenecek: İspanyolca, Almanca, İtalyanca
+- NSLocalizedString ve SwiftUI Text uzantıları ile kullanım
+
 ### UI/UX Tasarım Prensipleri
 - Tutarlı gradient arka planlar ve renk paletleri
 - Modern kartlar ve konteynerler için gölge ve kenar tasarımları
@@ -227,17 +256,28 @@ Uygulama MVVM (Model-View-ViewModel) mimarisi kullanılarak geliştirilmiştir:
 - Animasyonlu geçişler ve etkileşimler
 - Erişilebilirlik için ayarlanabilir metin boyutları
 - Karanlık/Aydınlık tema desteği
+- **Yeni:** Kültürel uyarlama ve lokalizasyon desteği (adaptive layout)
 
 ## 🚀 Planlanan İyileştirmeler
 
 1. Daha akıcı sayfa geçişleri
 2. Hücre seçimi ve değer girişi için hoş animasyonlar
-3. Yeni başlayanlar için adım adım rehberlik
-4. Arka plan işlemlerini optimize etme
+3. ✅ Yeni başlayanlar için adım adım rehberlik
+4. ✅ Arka plan işlemlerini optimize etme
 5. Gelişmiş pil tasarrufu modu
 6. Çevrimiçi liderlik tablosu ve kullanıcı profilleri
 7. İstatistik grafikleri ve detaylı oyun analizi
-8. Daha fazla dil desteği
+8. ✅ Daha fazla dil desteği
+9. Yapay zeka destekli ipucu sistemi
+10. Daha fazla oyun modu ve özel zorluk seviyeleri
+
+## 🧩 Tamamlanan İyileştirmeler
+
+- ✅ **Çoklu dil desteği**: İngilizce, Türkçe ve Fransızca dil desteği eklendi
+- ✅ **Performans optimizasyonları**: Tahta oluşturma ve çözüm algoritmaları hızlandırıldı
+- ✅ **Gelişmiş öğretici**: Sudoku kuralları ve stratejileri için adım adım rehberlik sistemi eklendi
+- ✅ **Hata ayıklama iyileştirmeleri**: Debug çıktıları temizlendi ve performans arttırıldı
+- ✅ **Kullanıcı arayüzü tutarlılığı**: Tüm ekranlarda tutarlı renk ve stillerin kullanımı sağlandı
 
 ## 🐛 Bilinen Sorunlar ve Çözümleri
 
@@ -247,3 +287,5 @@ Uygulama MVVM (Model-View-ViewModel) mimarisi kullanılarak geliştirilmiştir:
 - NSManagedObject extension'larında getName(), getUsername() ve getEmail() metodları genel extension'a eklendi
 - Yüksek CPU kullanımına neden olan animasyon döngüleri optimize edildi
 - Bellek sızıntılarına neden olan capture list sorunları çözüldü
+- **Yeni:** Bazı iPhone modellerde görülen dil seçimi sorunu düzeltildi
+- **Yeni:** Çeviri eksiklikleri tamamlandı ve tutarlı hale getirildi

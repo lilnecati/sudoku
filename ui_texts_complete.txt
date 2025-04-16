@@ -1,0 +1,1102 @@
+"According to Sudoku rules, the value %lld can be placed in this cell. = According to Sudoku rules, the value %lld can be placed in this cell."
+"Ad Soyad = Ad Soyad"
+"Adım %@ / %@ = Adım %@ / %@"
+"Adım %lld / %lld = Step %1$lld / %2$lld"
+"Adınızı ve soyadınızı girin = Adınızı ve soyadınızı girin"
+"Ana Sayfa = Ana Sayfa"
+"Anasayfaya Dön = Return to Homepage"
+"Anladım = I Understand"
+"Ayarlar = Ayarlar"
+"Back = Geri"
+"Bitti = Done"
+"Bölge İncelemesi = Region Analysis"
+"Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok. = Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok."
+"Boş Hücre Analizi = Empty Cell Analysis"
+"Bu hücre, sudoku tahtasında çözülebilir bir hücre olarak belirlendi. = This cell has been identified as a solvable cell on the Sudoku board."
+"Bu hücrenin aynı satır, sütun ve blokta bulunan diğer hücreler incelendi. = The other cells in the same row, column, and block as this cell have been examined."
+"Bu hücreye \\(value) değeri konabilir. = The value \\(value) can be placed in this cell."
+"Bu hücreye sadece \\(value) değeri konabilir çünkü diğer tüm sayılar elendi. = Only the value \\(value) can be placed in this cell because all other numbers have been eliminated."
+"Bu hücreye sadece %d değeri konabilir çünkü diğer tüm sayılar elendi. = Bu hücreye sadece %d değeri konabilir çünkü diğer tüm sayılar elendi."
+"Bu hücreye sadece %d değeri konabilir, diğer tüm sayılar elendi. = Bu hücreye sadece %d değeri konabilir, diğer tüm sayılar elendi."
+"Bu hücreye sadece tek bir sayı konabilir = Bu hücreye sadece tek bir sayı konabilir"
+"Bu iki aday, yalnızca bu iki hücreye konabilir, dolayısıyla bu hücrelerden diğer adaylar çıkarılabilir = Bu iki aday, yalnızca bu iki hücreye konabilir, dolayısıyla bu hücrelerden diğer adaylar çıkarılabilir"
+"Bu iki hücre, aynı iki adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir = Bu iki hücre, aynı iki adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir"
+"Bu işlem geri alınamaz. Tüm verileriniz silinecektir. = This action cannot be undone. All your data will be deleted."
+"Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz? = Are you sure you want to delete this saved game?"
+"Bu özellik yakında eklenecek = This feature will be added soon"
+"Bu sayı, bu bölgede yalnızca tek bir hücreye konabilir = Bu sayı, bu bölgede yalnızca tek bir hücreye konabilir"
+"Bu üç aday, yalnızca bu üç hücreye konabilir = Bu üç aday, yalnızca bu üç hücreye konabilir"
+"Bu üç hücre, üç adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir = Bu üç hücre, üç adayı paylaşıyor, dolayısıyla diğer hücrelerden bu adaylar çıkarılabilir"
+"Cihazın görünüm ayarını kullan (açık/koyu) = Use device appearance setting (light/dark)"
+"Çıkış Yap = Çıkış Yap"
+"coming.soon = Yakında"
+"coming.soon.languages = Yakında Eklenecek Diller"
+"Complete = Tamamla"
+"Completed = Tamamlandı"
+"Değer Önerisi = Value Suggestion"
+"Devam Et = Continue"
+"dk = min"
+"Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell. = Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir."
+"Düşük Pil = Low Battery"
+"E-posta = E-posta"
+"E-posta adresiniz = E-posta adresinizi girin"
+"E-posta adresinizi girin = E-posta adresinizi girin"
+"Ekranı kaydırarak diğer adımlara geçebilirsiniz. = Ekranı kaydırarak diğer adımlara geçebilirsiniz."
+"En az 4 karakter = En az 4 karakter"
+"En Hızlı Oyun = Fastest Game"
+"En Yüksek Skor = Best Score"
+"Example Not Available = Örnek Gösterilemiyor"
+"Example: Number 5 can only be placed in this cell = Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir"
+"Example: This cell can only contain 4 = Örnek: Bu hücreye sadece 4 girebilir"
+"Failed = Kaybedildi"
+"Finished = Finished"
+"Geliştirici = Geliştirici"
+"Geliştirici: Necati Yıldırım = Developer: Necati Yıldırım"
+"Geliştrici = Developer"
+"Genel = General"
+"Geri = Back"
+"Giriş Yap = Giriş Yap"
+"Giriş Yapmadınız = Giriş Yapmadınız"
+"Görünüm = Appearance"
+"Göster = Göster"
+"Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir. = Power saving mode disables or simplifies some visual effects and animations."
+"Güç tasarrufu modu, cihazınızın pil ömrünü uzatır. = Power saving mode extends your device's battery life."
+"Güç Yönetimi = Power Management"
+"Güçlü Şifre Gereksinimleri = Strong Password Requirements"
+"Güçlü şifre nedir? = Güçlü şifre nedir?"
+"Güçlü Şifre Örnekleri: = Strong Password Examples:"
+"Hata = Error"
+"Hata: %@ = Error: %@"
+"Hazırsınız! = Hazırsınız!"
+"Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın. = No saved games found. To save a game, use the 'Save' button in the game screen."
+"Henüz tamamlanmış oyun yok = No completed games yet"
+"Her oyunda yalnızca 3 ipucu kullanabilirsiniz! = You can use only 3 hints in each game!"
+"Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır. = Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır."
+"Hesabı Sil = Delete Account"
+"Hesabınız yok mu? = Hesabınız yok mu?"
+"Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz. = Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz."
+"Hint (%d) = İpucu (%d)"
+"Hint (%d)" = "Indice (%d)"; 
+"Hint = Hint"
+"Hoş Geldiniz = Hoş Geldiniz"
+"How to Play = Nasıl Oynanır"
+"İleri = Next"
+"In this region, 5 can only be placed in this cell because there's no room for 5 in other cells. = Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok."
+"İptal = Cancel"
+"İpuçları ve Yardım = İpuçları ve Yardım"
+"İpucu (%lld) = Hint (%lld)"
+"İPUCU = İPUCU"
+"Kaldığın yerden devam et = Continue from where you left off"
+"Karanlık Mod = Karanlık Mod"
+"Karanlık tema aktif eder = Activates dark theme"
+"Kaydedilmiş oyun bulunamadı = No saved games found"
+"Kaydedilmiş Oyunlar = Kayıtlı Oyunlar"
+"Kaydet = Save"
+"Kayıt Ol = Kayıt Ol"
+"Kayıtlı Oyunlar = Kayıtlı Oyunlar"
+"Kendinize uygun bir zorluk seviyesi belirleyin = Set a difficulty level suitable for you"
+"Kolay = Kolay"
+"Kolay Oyunları = Easy Games"
+"Kullanıcı Adı = Kullanıcı Adı"
+"Kullanıcı adınızı girin = Kullanıcı adınızı girin"
+"language.en = İngilizce"
+"language.es = İspanyolca"
+"language.fr = Fransızca"
+"language.selection = Dil"
+"language.tr = Türkçe"
+"Last Remaining Cell = Last Remaining Cell"
+"Mevcut Şifre = Current Password"
+"N = N"
+"Nasıl Oynanır = Nasıl Oynanır"
+"Nasıl Oynanır? = Nasıl Oynanır?"
+"Navigasyon sorunu giderilene kadar = Until navigation issue is fixed"
+"Necati Yıldırım = Necati Yıldırım"
+"Next = İleri"
+"Not Aktif = Note Active"
+"Not Modu = Note Mode"
+"Note Active = Not Aktif"
+"Note Mode = Not Modu"
+"Notlar = Notlar"
+"Only the value %lld can be placed in this cell because all other numbers have been eliminated. = Only the value %lld can be placed in this cell because all other numbers have been eliminated."
+"Örnek Gösterilemiyor = Örnek Gösterilemiyor"
+"Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir = Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir"
+"Örnek: Bu hücreye sadece 4 girebilir = Örnek: Bu hücreye sadece 4 girebilir"
+"Orta = Orta"
+"Orta Oyunları = Medium Games"
+"Ortalama Skor = Average Score"
+"Ortalama Süre = Average Time"
+"Otomatik Güç Tasarrufu = Automatic Power Saving"
+"Oyun Ayarları = Oyun Ayarları"
+"Oyun Bitti! = Game Over!"
+"Oyun içi ses efektlerini aç/kapa = Toggle in-game sound effects"
+"Oyun içi titreşim efektlerini aç/kapa = Toggle in-game haptic effects"
+"Oyun İstatistikleri = Game Statistics"
+"Oyun yüklenemedi = Game could not be loaded"
+"Oyun yükleniyor... = Loading game..."
+"Oyunları = Games"
+"Oyunu Başlat = Start Game"
+"Oyunu Sil = Delete Game"
+"Paused = Duraklatıldı"
+"Performans = Performance"
+"Performans İstatistikleri = Performance Statistics"
+"Pil Durumu = Battery Status"
+"Playing = Oynanıyor"
+"Profil = Profil"
+"Profil Devre Dışı = Profile Disabled"
+"Profil Düzenle = Edit Profile"
+"profile.edit = Profili Düzenle"
+"puan = points"
+"PUAN = POINTS"
+"Ready = Hazır"
+"Rehber = Guide"
+"S = S"
+"Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir. = Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir."
+"Satır, Sütun ve Blok İnceleme = Row, Column and Block Analysis"
+"Sayı Girişi = Sayı Girişi"
+"Ses Efektleri = Ses Efektleri"
+"Ses Seviyesi = Ses Seviyesi"
+"Sesi Test Et = Sesi Test Et"
+"settings.title = Ayarlar"
+"Şifre = Şifre"
+"Şifre Değiştir = Change Password"
+"Şifre Onayı = Şifre Onayı"
+"Şifre Sıfırla = Reset Password"
+"Şifreler eşleşiyor = Passwords match"
+"Şifreler eşleşmiyor = Passwords don't match"
+"Şifremi Unuttum = Şifremi Unuttum"
+"Şifrenizi girin = Şifrenizi girin"
+"Şifrenizi tekrar girin = Şifrenizi tekrar girin"
+"Sil = Delete"
+"Single Position Detection = Single Position Detection"
+"Single Possibility Detection = Single Possibility Detection"
+"Sistem Görünümünü Kullan = Sistem Görünümünü Kullan"
+"Skor Tablosu = Scoreboard"
+"Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın = Login to save your scores and synchronize across devices"
+"sn = sec"
+"Son Kalan Hücre = Last Remaining Cell"
+"Son Oyunlar = Recent Games"
+"Step %d / %d = Adım %1$d / %2$d"
+"Sudoku = Sudoku"
+"SUDOKU = SUDOKU"
+"Sudoku bulmacasını %@ sürede tamamladınız! = You completed the Sudoku puzzle in %@!"
+"Sudoku kurallarına göre bu hücreye \\(value) değeri konabilir. = According to Sudoku rules, the value \\(value) can be placed in this cell."
+"Sudoku kurallarına göre bu hücreye bu değer konabilir = Sudoku kurallarına göre bu hücreye bu değer konabilir"
+"Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim. = Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim."
+"Sudoku Rehberi = Sudoku Rehberi"
+"Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek. = Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek."
+"Sudoku'ya Hoş Geldiniz = Sudoku'ya Hoş Geldiniz"
+"Sudoku'yu Tamamladınız = You Completed the Sudoku"
+"Süre = Time"
+"Süre: %@ = Time: %@"
+"Sürüm 1.0 = Version 1.0"
+"Swordfish deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir = Swordfish deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir"
+"Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir. = No hint could be detected on the board. More complex strategies may be needed."
+"Talimatları Gönder = Talimatları Gönder"
+"Tamam = OK"
+"Tamamla = Tamamla"
+"Tamamlanma = Completion"
+"Tarih = Date"
+"Tebrikler! = Congratulations!"
+"Tek Konum Stratejisi = Tek Konum Stratejisi"
+"Tek Konum Tespiti = Single Position Detection"
+"Tek Olasılık Stratejisi = Tek Olasılık Stratejisi"
+"Tek Olasılık Tespiti = Single Possibility Detection"
+"Tekli Olasılık Tespiti = Single Possibility Detection"
+"Tekli Pozisyon Tespiti = Single Position Detection"
+"Tekrar Dene = Try Again"
+"Temel Kurallar = Temel Kurallar"
+"text.size = Yazı Boyutu"
+"text.size.large = Büyük"
+"text.size.medium = Orta"
+"text.size.small = Küçük"
+"The number %lld can only be placed in this cell in this region. = The number %lld can only be placed in this cell in this region."
+"Titreşim Geri Bildirimi = Haptic Feedback"
+"Toplam Oyunlar = Total Games"
+"Tüm Ayarları Sıfırla = Reset All Settings"
+"Tümü = All"
+"tutorial_desc_advanced_notes = Notlar, hücrelere tek tek değer girmeden önce olası değerleri takip etmenize yardımcı olur. 'Notları Güncelle' seçeneği, mevcut tahta durumuna göre tüm notları otomatik olarak günceller ve geçersiz olasılıkları kaldırır."
+"tutorial_desc_basic_strategies = Tek Olasılık: Bir hücre için sadece bir olası değer varsa, o değeri girin.\nTek Hücre: Bir değer bir satır, sütun veya blokta sadece bir hücreye yerleştirilebiliyorsa, o değeri o hücreye girin.\nKesişim: Bir değer bir satır veya sütunda sadece belirli bir blokta olabiliyorsa, diğer olasılıkları eleyin."
+"tutorial_desc_cell_selection = Değer girmek istediğiniz boş bir hücreye dokunun. Seçili hücre mavi renkte vurgulanacaktır. Aynı hücreye tekrar dokunarak seçimi kaldırabilirsiniz. Hücreye dokunduğunuzda hafif bir titreşim hissedeceksiniz."
+"tutorial_desc_completed = Tebrikler! Sudoku'nun temel ve ileri özelliklerini öğrendiniz. Artık kendi başınıza oynamaya hazırsınız. Farklı zorluk seviyelerini deneyin ve becerilerinizi geliştirin. İyi oyunlar!"
+"tutorial_desc_conflict_detection = Bir hücreye değer girdiğinizde, bu değer aynı satır, sütun veya 3x3 bloktaki diğer hücrelerle çakışıyorsa, çakışan hücreler kırmızı ile işaretlenir. Geçerli bir hamle yapmak için çakışmaları düzeltmeniz gerekir."
+"tutorial_desc_game_rules = Sudoku, 9x9 bir ızgarada oynanır. Amaç, her satır, sütun ve 3x3 bloğun 1'den 9'a kadar rakamları tam olarak bir kez içermesini sağlamaktır. Başlangıçta bazı hücreler doldurulmuştur ve bu ipuçlarını kullanarak tahtayı tamamlarsınız."
+"tutorial_desc_hints = Bir ipucu almak için 'İpucu' butonunu kullanabilirsiniz. İpucu sistemi, tahtadaki en mantıklı bir sonraki hamleyi vurgular veya direkt olarak bir hücreyi doldurabilir. Her zorluk seviyesinde sınırlı sayıda ipucu hakkınız vardır."
+"tutorial_desc_notes_mode = Emin olmadığınız rakamları not olarak girmek için 'Not Modu' butonunu kullanın. Not modundayken, bir hücreye birden fazla olası değer kaydedebilirsiniz. Bu mod, karmaşık bulmacalarda çok yardımcı olur."
+"tutorial_desc_number_entry = Seçili hücreye değer girmek için alttaki sayı tuşlarından birine dokunun. Rakamlar sadece boş hücrelere ve ipucu olmayan hücrelere girilebilir. Girdiğiniz sayının tahtadaki kuralları ihlal edip etmediği otomatik olarak kontrol edilir."
+"tutorial_desc_practice = Şimdi öğrendiklerinizi pratik etme zamanı! Bir sonraki adıma geçmeden önce bir boş hücre seçin, bir değer girin ve not alın. Uygulamalı öğrenme en etkili yöntemdir. Hemen deneyin!"
+"tutorial_desc_saving_progress = Oyun otomatik olarak ilerlemenizi kaydeder. İstediğiniz zaman ara verebilir ve daha sonra kaldığınız yerden devam edebilirsiniz. 'Kaydet ve Çık' butonunu kullanarak mevcut oyunu açıkça kaydedebilirsiniz."
+"tutorial_desc_statistics = Oyun istatistikleriniz her oyundan sonra kaydedilir. En iyi sürelerinizi, çözülen bulmaca sayısını ve ortalama çözüm sürenizi 'İstatistikler' ekranından görebilirsiniz. Bu veriler zorluk seviyesine göre sınıflandırılır."
+"tutorial_desc_welcome = Bu interaktif rehberde Sudoku'nun temel özelliklerini ve stratejilerini öğreneceksiniz. Her adımda pratik yapma şansınız olacak. İlerlemek için 'İleri' butonuna dokunun."
+"tutorial_tip_basic_strategies = İpucu: Bir satır, sütun veya bloktaki diğer hücrelere bakarak olasılıkları daraltın."
+"tutorial_tip_cell_selection = İpucu: Tahtayı çift dokunarak tüm benzer değerleri vurgulayabilirsiniz."
+"tutorial_tip_completed = İpucu: Düzenli pratik yaparak Sudoku becerilerinizi geliştirebilirsiniz. İyi eğlenceler!"
+"tutorial_tip_game_rules = İpucu: Başlangıçta verilen sayılar değiştirilemez ve ipucu olarak kullanılır."
+"tutorial_tip_hints = İpucu: İpuçlarını stratejik olarak kullanın, zorlandığınız noktalarda yardımcı olacaktır."
+"tutorial_tip_notes_mode = İpucu: Kalem işaretleri, olası değerleri takip etmenize yardımcı olur."
+"tutorial_tip_number_entry = İpucu: Aynı sayıya tekrar dokunarak girdiğiniz değeri silebilirsiniz."
+"tutorial_tip_title = İPUCU"
+"tutorial_tip_welcome = İpucu: Adımlar arasında geçiş yapmak için ekranı kaydırabilirsiniz."
+"tutorial_title_advanced_notes = Gelişmiş Notlar"
+"tutorial_title_basic_strategies = Temel Stratejiler"
+"tutorial_title_cell_selection = Hücre Seçimi"
+"tutorial_title_completed = Tebrikler!"
+"tutorial_title_conflict_detection = Çakışma Tespiti"
+"tutorial_title_game_rules = Oyun Kuralları"
+"tutorial_title_hints = İpuçları Sistemi"
+"tutorial_title_notes_mode = Not Alma Modu"
+"tutorial_title_number_entry = Sayı Girişi"
+"tutorial_title_practice = Pratik Yapalım"
+"tutorial_title_saving_progress = İlerleme Kaydetme"
+"tutorial_title_statistics = İstatistikler"
+"tutorial_title_welcome = Sudoku'ya Hoş Geldiniz!"
+"Uygulama Başlatılamadı = App Could Not Be Started"
+"Uygulamayı kapatıp tekrar açmayı deneyin. = Try closing and reopening the app."
+"Uzman = Uzman"
+"Uzman Oyunları = Expert Games"
+"X-Wing deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir = X-Wing deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir"
+"Yeni Hesap Oluştur = Yeni Hesap Oluştur"
+"Yeni Oyun = New Game"
+"Yeni Şifre (Tekrar) = New Password (Again)"
+"Yeni Şifre = New Password"
+"Yükleniyor... = Loading..."
+"Yüksek Performans Modu = High Performance Mode"
+"Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır. = High performance mode provides smoother animations and visual effects but increases battery usage."
+"Zaten hesabınız var mı? = Zaten hesabınız var mı?"
+"Zihninizi Çalıştırın = Zihninizi Çalıştırın"
+"Zor = Zor"
+"Zor Oyunları = Hard Games"
+"Zorluk = Difficulty"
+"Zorluk Seviyesi = Difficulty Level"
+"Zorluk Seviyesi Karşılaştırma = Difficulty Level Comparison"
+"Zorluk Seviyesi Seçin = Select Difficulty Level"
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:difficulty == %@
+3 hata yaptınız ve Sudoku oyununu kaybettiniz. = Vous avez fait 3 erreurs et perdu la partie de Sudoku.
+Ad = Prénom
+Ad Soyad = Nom et prénom
+Adım %@ / %@ = Étape %@ / %@
+Adınızı ve soyadınızı girin = Entrez votre nom et prénom
+Ana Sayfa = Accueil
+Anasayfaya Dön = Retourner à l'accueil
+Artık Sudoku oynamaya hazırsınız. Kolay seviyeden başlayarak deneyim kazanın ve zamanla daha zor seviyelere geçin. = Vous êtes maintenant prêt à jouer au Sudoku. Commencez par le niveau facile pour acquérir de l'expérience et passez progressivement à des niveaux plus difficiles.
+Ayarlar = Paramètres
+Back = Retour
+Başlangıçta verilen sayılar değiştirilemez ve ipucu olarak kullanılır. = Les chiffres initialement fournis ne peuvent pas être modifiés et servent d'indices.
+Bir hücreye yalnızca bir sayı girilebiliyorsa, o sayıyı girin. Satır, sütun ve 3x3 bölgesindeki diğer sayıları kontrol edin. = Si un seul chiffre peut être placé dans une cellule, placez-le. Vérifiez les autres chiffres dans la ligne, la colonne et la région 3x3.
+Bir satır, sütun veya 3x3 bölgesinde bir sayı yalnızca bir hücreye yerleştirilebiliyorsa, o sayıyı oraya yerleştirin. = Si un chiffre ne peut être placé que dans une seule cellule d'une ligne, d'une colonne ou d'une région 3x3, placez-le là.
+Bir sayıya uzun basarak o sayıyı not olarak ekleyebilirsiniz. = Vous pouvez appuyer longuement sur un chiffre pour l'ajouter comme note.
+Bitti = Terminé
+Bölgede %@ sayısı sadece bu hücreye konabilir. = Dans cette région, le nombre %@ ne peut être placé que dans cette cellule.
+Boş bir hücreye dokunarak seçin, ardından alt kısımdaki sayı tuşlarını kullanarak değer girin. = Sélectionnez une cellule vide en y touchant, puis utilisez les touches numériques en bas pour saisir une valeur.
+Bu en temel Sudoku stratejisidir ve çoğu kolay bulmacayı çözmenizi sağlar. = C'est la stratégie Sudoku la plus fondamentale qui vous permet de résoudre la plupart des puzzles faciles.
+Bu hücreye sadece %@ değeri konabilir çünkü diğer tüm sayılar elendi. = Seule la valeur %@ peut être placée dans cette cellule car tous les autres chiffres ont été éliminés.
+Bu özellik yakında eklenecek = Cette fonctionnalité sera bientôt disponible
+Cihazın görünüm ayarını kullan (açık/koyu) = Utiliser le thème du système (clair/sombre)
+Çıkış Yap = Déconnexion
+coming.soon = Bientôt disponible
+coming.soon.languages = Langues à venir
+Complete = Terminer
+Devam Et = Continuer
+Diğer hücrelerdeki notları kontrol ederek bu stratejiyi uygulayabilirsiniz. = Vous pouvez appliquer cette stratégie en vérifiant les notes dans les autres cellules.
+dk = min
+Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell. = En raison des autres chiffres dans la ligne, la colonne et le bloc 3x3, seul 4 peut être placé dans cette cellule.
+Duraklatıldı = En pause
+Düşük Pil = Batterie faible
+Düzenli pratik yaparak Sudoku becerilerinizi geliştirebilirsiniz. İyi eğlenceler! = Vous pouvez améliorer vos compétences Sudoku en pratiquant régulièrement. Amusez-vous bien !
+E-posta = E-mail
+E-posta adresiniz = Votre adresse e-mail
+E-posta adresinizi girin = Entrez votre adresse e-mail
+Ekranı kaydırarak diğer adımlara geçebilirsiniz. = Vous pouvez glisser l'écran pour passer aux étapes suivantes.
+Emin olmadığınız hücrelere not alabilirsiniz. Notlar, o hücreye girebileceğiniz olası değerleri hatırlamanıza yardımcı olur. = Vous pouvez prendre des notes pour les cellules dont vous n'êtes pas sûr. Les notes vous aident à vous souvenir des valeurs possibles.
+En az 4 karakter = Au moins 4 caractères
+En Hızlı Oyun = Partie la plus rapide
+En İyi Süre = Meilleur temps
+En Yüksek Skor = Meilleur score
+Example Not Available = Exemple non disponible
+Example: Number 5 can only be placed in this cell = Exemple: Le chiffre 5 ne peut être placé que dans cette cellule
+Example: This cell can only contain 4 = Exemple: Cette cellule ne peut contenir que 4
+Geliştirici = Développeur
+Geliştirici: Necati Yıldırım = Développeur: Necati Yıldırım
+Geri = Retour
+Giriş = Connexion
+Giriş Yap = Connexion
+Giriş Yapmadınız = Non connecté
+Görünüm = Apparence
+Göster = Afficher
+Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir. = Le mode économie d'énergie désactive ou simplifie certains effets visuels et animations.
+Güç tasarrufu modu, cihazınızın pil ömrünü uzatır. = Le mode économie d'énergie prolonge la durée de vie de la batterie de votre appareil.
+Güç Yönetimi = Gestion d'énergie
+Güçlü şifre nedir? = Qu'est-ce qu'un mot de passe fort?
+Hata = Erreur
+Hazır = Prêt
+Hazırsınız! = Vous êtes prêt !
+Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın. = Aucune partie sauvegardée trouvée. Pour sauvegarder une partie, utilisez le bouton 'Sauvegarder' dans l'écran de jeu.
+Henüz tamamlanmış oyun yok = Pas encore de partie terminée
+Her oyunda yalnızca 3 ipucu kullanabilirsiniz! = Vous ne pouvez utiliser que 3 indices par partie !
+Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır. = Chaque ligne, chaque colonne et chaque région 3x3 doit contenir les chiffres de 1 à 9. Aucun chiffre ne doit être répété.
+Hesabı Sil = Supprimer le compte
+Hesabınız yok mu? = Vous n'avez pas de compte?
+Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz. = Entrez l'adresse e-mail associée à votre compte, nous vous enverrons les instructions de réinitialisation du mot de passe.
+How to Play = Comment jouer
+İleri = Suivant
+In this region, 5 can only be placed in this cell because there's no room for 5 in other cells. = Dans cette région, 5 ne peut être placé que dans cette cellule car il n'y a pas de place pour 5 dans les autres cellules.
+İptal = Annuler
+İpuçları ve Yardım = Astuces et Aide
+İpucu (%lld) = Indice (%lld)
+İpucu = Indice
+Kaldığın yerden devam et = Continuer où vous vous êtes arrêté
+Kalem Modu = Mode Crayon
+Karanlık Mod = Mode sombre
+Karanlık tema aktif eder = Active le thème sombre
+Kaybedildi = Échoué
+Kaydedilmiş oyun bulunamadı = Aucune partie sauvegardée
+Kaydedilmiş Oyunlar = Parties sauvegardées
+Kaydet = Sauvegarder
+Kayıt = Inscription
+Kayıt Ol = S'inscrire
+Kayıtlı Oyunlar = Parties sauvegardées
+Kolay = Facile
+Kolay Oyunları = Parties faciles
+Kolay zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır. = Aucune partie sauvegardée trouvée au niveau de difficulté Facile.
+Kullanıcı Adı = Nom d'utilisateur
+Kullanıcı adınızı girin = Entrez votre nom d'utilisateur
+language.en = Anglais
+language.fr = Français
+language.selection = Langue
+language.tr = Turc
+Nasıl Oynanır = Comment jouer
+Nasıl Oynanır? = Comment jouer?
+Next = Suivant
+Not Aktif = Note Active
+Not Modu = Mode Note
+Note Active = Note Active
+Note Mode = Mode Note
+Notlar = Notes
+Notlar, bir hücreye kesin karar vermeden önce olasılıkları takip etmenizi sağlar. = Les notes vous permettent de suivre les possibilités avant de prendre une décision définitive.
+Orta = Moyen
+Orta Oyunları = Parties moyennes
+Orta zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır. = Aucune partie sauvegardée trouvée au niveau de difficulté Moyen.
+Ortalama Skor = Score moyen
+Ortalama Süre = Temps moyen
+Otomatik Güç Tasarrufu = Économie d'énergie automatique
+Oynanıyor = En cours
+Oyun Ayarları = Paramètres du jeu
+Oyun Bitti! = Partie Terminée!
+Oyun içi ses efektlerini aç/kapa = Activer/désactiver les effets sonores du jeu
+Oyun içi titreşim efektlerini aç/kapa = Activer/désactiver le retour haptique du jeu
+Oyun İstatistikleri = Statistiques de jeu
+Oyun sırasında '?' düğmesine basarak bu rehbere tekrar ulaşabilirsiniz. = Vous pouvez accéder à ce guide à nouveau en appuyant sur le bouton '?' pendant le jeu.
+Oyun yüklenemedi = Impossible de charger la partie
+Oyun yükleniyor... = Chargement du jeu...
+Performans İstatistikleri = Statistiques de performance
+Pil Durumu = État de la batterie
+Profil = Profil
+Profil Düzenle = Modifier le profil
+Sayı Girişi = Saisie des Chiffres
+Ses Efektleri = Effets sonores
+Ses Seviyesi = Volume
+Sesi Test Et = Tester le son
+Şifre = Mot de passe
+Şifre Onayı = Confirmation du mot de passe
+Şifre Sıfırla = Réinitialiser le mot de passe
+Şifremi Unuttum = Mot de passe oublié
+Şifrenizi girin = Entrez votre mot de passe
+Şifrenizi tekrar girin = Confirmer votre mot de passe
+Sistem Görünümünü Kullan = Utiliser l'apparence du système
+Skor Tablosu = Tableau des scores
+Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın = Connectez-vous pour enregistrer vos scores et synchroniser entre appareils
+sn = sec
+Son Kalan Hücre = Dernière cellule restante
+Son Oyunlar = Parties récentes
+Soyad = Nom
+Step %d / %d = Étape %d / %d
+Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim. = Voulez-vous apprendre à jouer au Sudoku? Nous vous guiderons étape par étape.
+Sudoku Rehberi = Guide de Sudoku
+Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek. = Le Sudoku est un jeu de puzzle où vous placez des chiffres dans une grille de 9x9. Ce guide vous enseignera les règles de base et les stratégies.
+Sudoku'ya Hoş Geldiniz = Bienvenue au Sudoku
+Süre: = Durée:
+Sürüm 1.0 = Version 1.0
+Talimatları Gönder = Envoyer les instructions
+Tamam = OK
+Tamamla = Terminer
+Tamamlandı = Terminé
+Tek Konum Stratejisi = Stratégie d'Emplacement Unique
+Tek Olasılık Stratejisi = Stratégie de Possibilité Unique
+Tekli Olasılık Tespiti = Détection des possibilités uniques
+Tekli Pozisyon Tespiti = Détection des positions uniques
+Temel Kurallar = Règles Fondamentales
+text.size = Taille du texte
+text.size.large = Grand
+text.size.medium = Moyen
+text.size.small = Petit
+Titreşim Geri Bildirimi = Retour haptique
+Toplam Oyunlar = Total des parties
+Tüm Ayarları Sıfırla = Réinitialiser tous les paramètres
+Tümü = Tous
+tutorial_desc_basic_strategies = Si un seul chiffre peut être placé dans une cellule, placez-le. Vérifiez les autres chiffres dans la ligne, la colonne et la région 3x3.
+tutorial_desc_cell_selection = Sélectionnez une cellule vide en y touchant, puis utilisez les touches numériques en bas pour saisir une valeur.
+tutorial_desc_completed = Vous êtes maintenant prêt à jouer au Sudoku. Commencez par le niveau facile pour acquérir de l'expérience et passez progressivement à des niveaux plus difficiles.
+tutorial_desc_game_rules = Chaque ligne, chaque colonne et chaque région 3x3 doit contenir les chiffres de 1 à 9. Aucun chiffre ne doit être répété.
+tutorial_desc_hints = Vous pouvez obtenir des indices ou vérifier vos erreurs lorsque vous êtes bloqué.
+tutorial_desc_notes_mode = Vous pouvez prendre des notes pour les cellules dont vous n'êtes pas sûr. Les notes vous aident à vous souvenir des valeurs possibles.
+tutorial_desc_number_entry = Si un chiffre ne peut être placé que dans une seule cellule d'une ligne, d'une colonne ou d'une région 3x3, placez-le là.
+tutorial_desc_welcome = Le Sudoku est un jeu de puzzle où vous placez des chiffres dans une grille de 9x9. Ce guide vous enseignera les règles de base et les stratégies.
+tutorial_tip_basic_strategies = C'est la stratégie Sudoku la plus fondamentale qui vous permet de résoudre la plupart des puzzles faciles.
+tutorial_tip_cell_selection = Vous pouvez appuyer longuement sur un chiffre pour l'ajouter comme note.
+tutorial_tip_completed = Vous pouvez améliorer vos compétences Sudoku en pratiquant régulièrement. Amusez-vous bien !
+tutorial_tip_game_rules = Les chiffres initialement fournis ne peuvent pas être modifiés et servent d'indices.
+tutorial_tip_hints = Vous pouvez accéder à ce guide à nouveau en appuyant sur le bouton '?' pendant le jeu.
+tutorial_tip_notes_mode = Les notes vous permettent de suivre les possibilités avant de prendre une décision définitive.
+tutorial_tip_number_entry = Vous pouvez appliquer cette stratégie en vérifiant les notes dans les autres cellules.
+tutorial_tip_title = ASTUCE
+tutorial_tip_welcome = Vous pouvez glisser l'écran pour passer aux étapes suivantes.
+tutorial_title_basic_strategies = Stratégies de Base
+tutorial_title_cell_selection = Sélection de Cellule
+tutorial_title_completed = Félicitations !
+tutorial_title_game_rules = Règles Fondamentales
+tutorial_title_hints = Indices et Aide
+tutorial_title_notes_mode = Mode Notes
+tutorial_title_number_entry = Saisie des Chiffres
+tutorial_title_welcome = Bienvenue à Sudoku !
+Uygulamayı kapatıp tekrar açmayı deneyin. = Essayez de fermer et de rouvrir l'application.
+Uzman = Expert
+Uzman Oyunları = Parties expert
+Uzman zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır. = Aucune partie sauvegardée trouvée au niveau de difficulté Expert.
+Yeni Hesap Oluştur = Créer un compte
+Yeni Oyun = Nouvelle partie
+Yükleniyor... = Chargement...
+Yüksek Performans Modu = Mode haute performance
+Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır. = Le mode haute performance offre des animations et des effets visuels plus fluides, mais augmente la consommation de batterie.
+Zaten hesabınız var mı? = Vous avez déjà un compte?
+Zihninizi Çalıştırın = Exercez Votre Esprit
+Zor = Difficile
+Zor Oyunları = Parties difficiles
+Zor zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır. = Aucune partie sauvegardée trouvée au niveau de difficulté Difficile.
+Zorlandığınızda ipucu alabilir veya hatalı girişlerinizi kontrol edebilirsiniz. = Vous pouvez obtenir des indices ou vérifier vos erreurs lorsque vous êtes bloqué.
+Zorluk = Difficulté
+
+/Users/necati/Desktop/Sudoku/Sudoku/View/AnimatedSudokuLogo.swift:\(number)
+/Users/necati/Desktop/Sudoku/Sudoku/View/BackgroundView.swift:Izgara Arka Plan Örneği
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:🎉 Yeni Rekor! 🎉
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:\(errorCount)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:\(hintCount)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:\(score)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:%02d:%02d
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:Anasayfaya Dön
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:chart.bar.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:clock.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:Hata
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:İpucu
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:lightbulb.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:play.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:PUAN
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:star.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:Sudoku'yu Tamamladınız
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:Süre
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:Tebrikler!
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:xmark.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:Yeni Oyun
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameCompletionView.swift:Zorluk
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:\(score)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:\(stats.errors)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:\(stats.hints)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:\(stats.moves)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:\(viewModel.errorCount)/3
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:\(viewModel.remainingHints)
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:%.0f sn
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:%.1f dk
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:%.1f sn
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:%02d:%02d
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:0 sn
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:00:00
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:3 hata yaptınız ve Sudoku oyununu kaybettiniz.
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Anasayfaya Dön
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:arrow.clockwise.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:bolt
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:chevron.left
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:chevron.right
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:clock
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Completed
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:enableHapticFeedback
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:enableNumberInputHaptic
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Failed
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:figure.walk
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:flame
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Game state: completed
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Game state: failed
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Game state: paused
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Game state: pencil mode
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Game state: playing
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Game state: ready
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:gearshape.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Her oyunda yalnızca 3 ipucu kullanabilirsiniz!
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:HideNavigationBar
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:house.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:İptal
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:İpucu (\(viewModel.remainingHints))
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:isPremiumUnlocked
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Kendinize uygun bir zorluk seviyesi belirleyin
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Kullanılan İpuçları
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:leaf
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:lightbulb.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Note Active
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Note Mode
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Ortalama Hamle Süresi
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Oyun Bitti!
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Paused
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:pencil
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Pencil mode active
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Pencil mode button
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:pencil.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Performans İstatistikleri
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Playing
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:plus.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Ready
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Skor
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:speedometer
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:star
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:star.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Sudoku
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Sudoku bulmacasını \(timeString(from: viewModel.elapsedTime)) sürede tamamladınız!
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Süre: \(timeString(from: viewModel.elapsedTime))
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Tebrikler!
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:timer
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Toplam Hamle
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:trophy.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:xmark.circle
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:xmark.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Yapılan Hatalar
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Yeni Oyun
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Zorluk
+/Users/necati/Desktop/Sudoku/Sudoku/View/GameView.swift:Zorluk Seviyesi Seçin
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:According to Sudoku rules, the value \(hintData.value) can be placed in this cell.
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Adım 1
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Adım 2
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:app_language
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Bitti
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Bu hücreye 5 değeri konabilir çünkü aynı satır, sütun ve 3x3 bloktaki diğer sayılarla çakışmaz.
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Bu hücreye 5 değeri konabilir.
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:chevron.left
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:en
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Finished
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Hint
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:İkinci adım açıklaması
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:İleri
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:İlk adım açıklaması
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Last Remaining Cell
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Next
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Only the value \(hintData.value) can be placed in this cell because all other numbers have been eliminated.
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Single Position Detection
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:Single Possibility Detection
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:The number \(hintData.value) can only be placed in this cell in this region.
+/Users/necati/Desktop/Sudoku/Sudoku/View/HintExplanationView.swift:tr
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Bu özellik şu anda yapım aşamasındadır. Lütfen daha sonra tekrar deneyin.
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:E-posta adresiniz
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Giriş Yap
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Hata
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Hesabınız yok mu?
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz.
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:İptal
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Kayıt Ol
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Kullanıcı Adı
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Kullanıcı adı ve şifre gereklidir.
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Kullanıcı adı veya şifre hatalı.
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Kullanıcı adınızı girin
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:person.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:ShowRegisterView
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Şifre
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Şifremi Unuttum
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Şifrenizi girin
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Talimatları Gönder
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:Tamam
+/Users/necati/Desktop/Sudoku/Sudoku/View/LoginView.swift:UserLoggedIn
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:arrow.clockwise
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:Ayarlar
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:chevron.right
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:dateCreated
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:Devam Et
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:gearshape.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:grid.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:Kaydedilmiş oyun kontrolü başarısız: \(error)
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:play.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:SavedGame
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:Skor Tablosu
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:Son oyun yüklenemedi: \(error)
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:SUDOKU
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:trophy.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/MainMenuView.swift:Yeni Oyun
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:\(number)
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:\(remaining)
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:0
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:delete.left
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:enableHapticFeedback
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:enableNumberInputHaptic
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:eraseBtn
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:Not Aktif
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:Not Modu
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:numberBtn_\(number)
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:numBtn_\(number)
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:pencil
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:Pencil mode active
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:Pencil mode button
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:pencil.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:pencilBtn
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:remaining_\(number)_\(remaining)
+/Users/necati/Desktop/Sudoku/Sudoku/View/NumberPadView.swift:Sil
+/Users/necati/Desktop/Sudoku/Sudoku/View/PencilMarksView.swift:\(number)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:@\(username)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Ad Soyad
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Adınızı ve soyadınızı girin
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Başarılı
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Bilgi
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Bu işlem geri alınamaz. Tüm verileriniz silinecektir.
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Bu özellik şu anda geliştirme aşamasındadır.
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:chevron.down
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:chevron.up
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:E-posta
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:E-posta adresinizi girin
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Hata
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Hesabı Sil
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Kaydet
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Kullanıcı Adı
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Kullanıcı adınızı girin
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:lock.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Mevcut Şifre
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Mevcut şifreniz yanlış.
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Profil bilgileriniz güncellendi.
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Profil Düzenle
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Profil güncellenemedi: \(error.localizedDescription)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Şifre Değiştir
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Şifre güncellenemedi: \(error.localizedDescription)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Şifreler eşleşiyor
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Şifreler eşleşmiyor
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Şifreniz başarıyla değiştirildi.
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Tamam
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:trash.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Yeni Şifre
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Yeni Şifre (Tekrar)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ProfileEditView.swift:Yeni şifreler eşleşmiyor.
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:•
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:• G1zl!Sudoku
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:• Oyun_Seviyorum1
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:• Sudoku2024!
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Ad Soyad
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Adınızı ve soyadınızı girin
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Anladım
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Bu kullanıcı adı veya e-posta zaten kullanılıyor.
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:E-posta
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:E-posta adresinizi girin
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:En az 4 karakter
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:En az 8 karakter uzunluğunda olmalı
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:En az bir büyük harf içermeli (A-Z)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:En az bir küçük harf içermeli (a-z)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:En az bir özel karakter içermeli (!, @, #, $, vb.)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:En az bir rakam içermeli (0-9)
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Giriş Yap
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Güçlü Şifre Gereksinimleri
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Güçlü şifre nedir?
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Güçlü Şifre Örnekleri:
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Hata
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:info.circle
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:İptal
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Kayıt Ol
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Kullanıcı Adı
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Necati Yıldırım
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Şifre
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Şifre Onayı
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Şifreler eşleşiyor
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Şifreler eşleşmiyor
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Şifreler eşleşmiyor.
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Şifrenizi girin
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Şifrenizi tekrar girin
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Tamam
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Tüm alanları doldurun.
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:UserLoggedIn
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Yeni Hesap Oluştur
+/Users/necati/Desktop/Sudoku/Sudoku/View/RegisterView.swift:Zaten hesabınız var mı?
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:📌 SavedGamesView: Oyun yüklendi, callback çağrılıyor
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:) ?? 
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:\(completionPercentage)%
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:\(minutes)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:\(seconds)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:\n📌 SavedGamesView: Oyun yükleniyor ID: \(game.value(forKey: 
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:%@ zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır.
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:All
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:app_language
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Bilinmeyen
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:bolt
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:bookmark.slash.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:calendar
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:clock
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:d MMM yyyy HH:mm
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Devam Et
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Difficile
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:dk
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Easy
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:en
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Error saving context: \(error)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Expert
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Facile
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:flame
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:fr
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Hard
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın.
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:İptal
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Kaydedilmiş oyun bulunamadı
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Kaydedilmiş Oyunlar
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Kolay
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:leaf
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Localizable
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:lproj
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Medium
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Moyen
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Orta
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Oyunu Sil
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:play.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Sil
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:sn
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:square.grid.2x2
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:star
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Süre
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Tamamlanma
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Tarih
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Tous
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:tr
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:tr_TR
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:trash
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Tümü
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Uzman
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Zor
+/Users/necati/Desktop/Sudoku/Sudoku/View/SavedGamesView.swift:Zorluk
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:📝 \(selectedDifficulty.rawValue) zorluk seviyesi için \(difficultyGames) skor bulundu
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:⚠️ Bu zorluk seviyesi için kayıtlı skor bulunamadı
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:📋 İlk skor - ID: \(id?.uuidString ?? 
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:❌ Oyun istatistikleri alınamadı: \(error.localizedDescription)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:📊 Skor tablosu yükleniyor - Zorluk seviyesi: \(selectedDifficulty.rawValue)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:📝 Tüm zorluk seviyeleri için toplam \(totalGames) skor bulundu
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:, seconds))
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:), Puan: \(totalScore), Süre: \(elapsedTime)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:), Tarih: \(date?.description ?? 
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:\(bestScore)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:\(calculateScore())
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:\(errorCount)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:\(hintCount)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:\(minutes):\(String(format: 
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:\(scoreValue)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:\(statistics.bestScore)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:\(statistics.difficultyGames)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:\(statistics.totalGames)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:#\(rank)
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:%.0f
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:%02d:%02d
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:bolt.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:calendar
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:chart.bar.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:chart.bar.xaxis
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:chart.line.uptrend.xyaxis
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:checkmark.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:clock.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:d MMM HH:mm
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:date
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:difficulty
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:elapsedTime
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:En Hızlı Oyun
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:En Yüksek Skor
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:errorCount
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:flame.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:gamecontroller
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:gamecontroller.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Genel
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Henüz tamamlanmış oyun yok
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:HighScore
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:hintCount
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:id
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Kolay
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Kolay Oyunları
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:leaf.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:lightbulb.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Orta
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Orta Oyunları
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Ortalama Skor
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Ortalama Süre
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Oyun İstatistikleri
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Oyunları
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Performans İstatistikleri
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:puan
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:questionmark
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Skor Tablosu
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Son Oyunlar
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:star.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Toplam Oyunlar
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:totalScore
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:tr_TR
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Uzman
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Uzman Oyunları
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:xmark.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Zor
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Zor Oyunları
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Zorluk
+/Users/necati/Desktop/Sudoku/Sudoku/View/ScoreboardView.swift:Zorluk Seviyesi Karşılaştırma
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🇩🇪
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🇪🇸
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🇫🇷
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🇬🇧
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🇮🇹
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🇹🇷
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:© 2024 Necati Yıldırım
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🌐 Dil değiştirildi: \(previousLanguageName) -> \(newValue.name)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🇬🇧 English
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🇫🇷 Français
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:📱 Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:🇹🇷 Türkçe
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:.charge
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:@\(user.username ?? 
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:\(Int(powerManager.batteryLevel * 100))%
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:%\(Int(soundVolume * 100))
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:app_language
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:arrow.counterclockwise.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:arrow.right.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:arrow.up.right.square
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:autoPowerSaving
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:battery.0
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:battery.100
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:battery.25
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:battery.50
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:battery.75
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:bolt.circle
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:bolt.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:bolt.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Bu Sudoku uygulaması, klasik Sudoku oyununu modern bir arayüzle sunmak için tasarlanmıştır. Dört farklı zorluk seviyesi, not alma özellikleri, ve daha fazlasıyla dolu bir oyun deneyimi sunar.
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:checkmark
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:chevron.right
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Cihazın görünüm ayarını kullan (açık/koyu)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Çıkış işlemi başlatılıyor, mevcut kullanıcı: \(String(describing: PersistenceController.shared.getCurrentUser()?.username))
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Çıkış işlemi tamamlandı, mevcut kullanıcı: \(String(describing: PersistenceController.shared.getCurrentUser()?.username))
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Çıkış Yap
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:coming.soon
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:coming.soon.languages
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:defaultDifficulty
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Deutsch
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Düşük Pil
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:en
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:enableCellTapHaptic
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:enableHapticFeedback
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:enableNumberInputHaptic
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:enableSoundEffects
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:English
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Español
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:ForceUIUpdate
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:fr
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Français
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:gamecontroller.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:gearshape.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Geliştirici
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Geliştirici: Necati Yıldırım
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Giriş Yap
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Giriş Yapmadınız
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:globe
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Görünüm
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir.
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Güç tasarrufu modu, cihazınızın pil ömrünü uzatır.
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Güç Yönetimi
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:highPerformanceMode
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:info.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:iphone.radiowaves.left.and.right
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:İsimsiz Kullanıcı
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Italiano
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Karanlık Mod
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Karanlık tema aktif eder
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Kayıt Ol
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:language.
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:language.selection
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:moon.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Navigasyon sorunu giderilene kadar
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Necati Yıldırım
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Otomatik Güç Tasarrufu
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Oyun Ayarları
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Oyun içi ses efektlerini aç/kapa
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Oyun içi titreşim efektlerini aç/kapa
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:paintbrush.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:pencil.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Performans
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:person.badge.plus
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:person.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:person.crop.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:person.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:person.fill.badge.plus
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Pil Durumu
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:play.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:powerSavingMode
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:prefersDarkMode
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Profil
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:profile.edit
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:rectangle.portrait.and.arrow.right
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:S
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Ses Efektleri
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Ses Seviyesi
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Sesi Test Et
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:settings.title
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:ShowRegisterView
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Sistem Görünümünü Kullan
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:soundVolume
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:speaker.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:speaker.wave.2.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:speaker.wave.3.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Sudoku
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Sürüm 1.0
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Tamam
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:text.size
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:text.size.large
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:text.size.medium
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:text.size.small
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:textformat.size
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:TextSizeChanged
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:textSizePreference
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Titreşim Geri Bildirimi
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:tr
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Tüm Ayarları Sıfırla
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Türkçe
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:U
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:UserLoggedOut
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Uygulama Hakkında
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Yeni Hesap Oluştur
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Yüksek Performans Modu
+/Users/necati/Desktop/Sudoku/Sudoku/View/SettingsView.swift:Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır.
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:🚀 StartupView \(displayDuration) saniye sonra ContentView'a geçecek...
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:🚀 StartupView uygulamayı başlatıyor...
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:\(numbers[index])
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:Geliştirici
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:N
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:Necati Yıldırım
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:SUDOKU
+/Users/necati/Desktop/Sudoku/Sudoku/View/StartupView.swift:Zihninizi Çalıştırın
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuBoardView.swift:\(row)\(column)\(cellValue ?? 0)\(isSelected)\(pencilMarks.hashValue)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuBoardView.swift:cell_\(row)_\(column)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuCellView.swift:\(mark)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuCellView.swift:\(value)
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuCellView.swift:enableCellTapHaptic
+/Users/necati/Desktop/Sudoku/Sudoku/View/SudokuCellView.swift:enableHapticFeedback
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:\((row + col) % 9 + 1)
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:Kolay
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:Orta
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:Oyunu Başlat
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:Ses Efektleri
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:SUDOKU
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:Uzman
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:Zor
+/Users/necati/Desktop/Sudoku/Sudoku/View/TestView.swift:Zorluk Seviyesi
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:arrow.left
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:arrow.right
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:board
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:desc_\(currentStep.rawValue)
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:Geri
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:hintButton
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:İleri
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:notesButton
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:numberPad
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:questionmark.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:Rehber
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:Tamam
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialOverlayView.swift:title_\(currentStep.rawValue)
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:?
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:\(note)
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:\(value)
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:4
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:5
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:app_language
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:AppLanguageChanged
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Back
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Bienvenue
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Cell
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Cellule
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:checkmark
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:checkmark.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:chevron.left
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:chevron.right
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Complete
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Completed
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell.
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Example Not Available
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Example: Number 5 can only be placed in this cell
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Example: This cell can only contain 4
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Félicitations
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Game Rules
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:hand.tap.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Hints
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Hoş Geldiniz
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:How to Play
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Hücre
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:In this region, 5 can only be placed in this cell because there's no room for 5 in other cells.
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Indices
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:İpucu
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Kurallar
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:LanguageChanged
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:lightbulb.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:list.bullet
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Localizable
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:lproj
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Next
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Not
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Notes
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:pencil
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:questionmark.circle.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Règles
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:square.grid.3x3.fill
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Step %d / %d
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:sudoku.help
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:sudoku.input
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:sudoku.intro
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:sudoku.notes
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:sudoku.ready
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:sudoku.rules
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:sudoku.strategy1
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:sudoku.strategy2
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Tebrikler
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:TIP
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tr
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_desc_basic_strategies
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_desc_cell_selection
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_desc_completed
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_desc_game_rules
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_desc_hints
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_desc_notes_mode
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_desc_number_entry
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_desc_welcome
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_tip_basic_strategies
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_tip_cell_selection
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_tip_completed
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_tip_game_rules
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_tip_hints
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_tip_notes_mode
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_tip_number_entry
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_tip_title
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_tip_welcome
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_title_basic_strategies
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_title_cell_selection
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_title_completed
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_title_game_rules
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_title_hints
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_title_notes_mode
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_title_number_entry
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:tutorial_title_welcome
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:Welcome
+/Users/necati/Desktop/Sudoku/Sudoku/View/TutorialView.swift:xmark.circle.fill
+AYARLAR EKRANI:
+DİL AYARLARI:
+GENEL MESAJLAR:
+GİRİŞ EKRANI:
+İPUCU EKRANI:
+KAYIT EKRANI:
+KAYITLI OYUNLAR EKRANI:
+OYUN ARAYÜZÜ:
+PROFİL EKRANI:
+ŞİFRE SIFIRLAMA EKRANI:
+SKOR TABLOSU:

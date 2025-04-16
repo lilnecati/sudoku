@@ -38,10 +38,10 @@ class SudokuBoard: ObservableObject, Codable {
         // Her zorluk seviyesi için bırakılacak ipucu sayısı aralığı
         var clueRange: ClosedRange<Int> {
             switch self {
-            case .easy: return 42...47   // Kolay: Daha fazla ipucu (36...42 -> 42...47)
-            case .medium: return 36...40 // Orta: Daha fazla ipucu (30...34 -> 36...40)
-            case .hard: return 30...34   // Zor: Artırıldı (25...28 -> 30...34)
-            case .expert: return 26...29 // Uzman: Daha fazla ipucu (22...25 -> 26...29)
+            case .easy: return 40...45   // Kolay: Azaltıldı (42...47 -> 40...45)
+            case .medium: return 34...38 // Orta: Azaltıldı (36...40 -> 34...38)
+            case .hard: return 28...32   // Zor: Azaltıldı (30...34 -> 28...32)
+            case .expert: return 24...27 // Uzman: Azaltıldı (26...29 -> 24...27)
             }
         }
     }
@@ -451,7 +451,7 @@ class SudokuBoard: ObservableObject, Codable {
     
     // Sudoku tahtası oluştur
     private func generateBoard() {
-        print("Tahta oluşturuluyor...")
+        // Debug mesajını kaldırıyoruz
         
         // Mevcut değerleri temizle
         for row in 0..<9 {
@@ -464,7 +464,7 @@ class SudokuBoard: ObservableObject, Codable {
         
         // Çözüm içeren bir tahta oluştur
         generateSolution()
-        print("Çözüm oluşturuldu")
+        // Debug mesajını kaldırıyoruz
         
         // Çözüm geçerli mi kontrol et
         var solutionHasNils = false
@@ -485,7 +485,7 @@ class SudokuBoard: ObservableObject, Codable {
         
         // Gösterilecek ipucu sayısını belirle
         let cluesToShow = getCluesToShow()
-        print("Gösterilecek ipucu sayısı: \(cluesToShow)")
+        // Debug mesajını kaldırıyoruz
         
         // Önce çözümü tahtaya kopyala
         for row in 0..<9 {
@@ -515,7 +515,7 @@ class SudokuBoard: ObservableObject, Codable {
                 }
             }
         }
-        print("Oluşturulan ipucu sayısı: \(clueCount)")
+        // Debug mesajını kaldırıyoruz
         
         // Sabit hücreleri işaretle
         markFixedCells()
@@ -734,7 +734,7 @@ class SudokuBoard: ObservableObject, Codable {
     // Çözümü oluştur
     private func generateSolution() {
         // Doğrudan hızlı ve garantili yöntemi kullan
-        print("Hızlı çözüm yöntemi kullanılıyor...")
+        // Debug mesajını kaldırıyoruz
         generateSimpleSolution()
     }
     
@@ -1156,176 +1156,57 @@ class SudokuBoard: ObservableObject, Codable {
     }
     
     // Tahtayı çöz (geri izleme algoritması)
-    private func solveSudoku() -> Bool {
+    private func solveBoard(_ board: inout [[Int?]]) -> Bool {
+        // Performans optimizasyonu: Önce tüm boş hücreleri bul ve sırala
+        var emptyCells = [(row: Int, col: Int)]()
+        
         for row in 0..<9 {
             for col in 0..<9 {
                 if board[row][col] == nil {
-                    // Rastgele sıralanmış değerleri dene
-                    let values = Array(1...9).shuffled()
-                    
-                    for value in values {
-                        if isValidPlacement(row: row, column: col, value: value) {
-                            board[row][col] = value
-                            
-                            if solveSudoku() {
-                                return true
-                            }
-                            
-                            board[row][col] = nil
-                        }
-                    }
-                    
-                    return false
+                    emptyCells.append((row, col))
                 }
             }
         }
         
-        return true
-    }
-    
-    // Rastgele hücreleri kaldır
-    private func removeRandomCells(count: Int) {
-        var cellsToRemove = count
-        var attempts = 0
-        let maxAttempts = 100 // Optimizasyon için 500'den 100'e düşürüldü
-        
-        // Tüm hücrelerin indekslerini oluştur
-        var allCells = [(Int, Int)]()
-        for row in 0..<9 {
-            for col in 0..<9 {
-                allCells.append((row, col))
-            }
+        // Boş hücre yoksa tahta çözülmüş demektir
+        if emptyCells.isEmpty {
+            return true
         }
         
-        // İndeksleri karıştır
-        allCells.shuffle()
-        
-        // Önce orjinal tahtayı kopyala
-        for row in 0..<9 {
-            for col in 0..<9 {
-                originalBoard[row][col] = board[row][col]
-            }
+        // Performans optimizasyonu: Boş hücreleri olası değer sayısına göre sırala (en az olasılıklı önce)
+        emptyCells.sort { (cell1, cell2) -> Bool in
+            let values1 = possibleValues(for: cell1.row, col: cell1.col, in: board)
+            let values2 = possibleValues(for: cell2.row, col: cell2.col, in: board)
+            return values1.count < values2.count
         }
         
-        // Her blok, satır ve sütun için kalan ipucu sayısını takip et
-        var cluesInBlock = Array(repeating: Array(repeating: 9, count: 3), count: 3)
-        var cluesInRow = Array(repeating: 9, count: 9)
-        var cluesInCol = Array(repeating: 9, count: 9)
+        // İlk hücreyi al (en az olasılığa sahip)
+        let (row, col) = emptyCells[0]
         
-        // Dengeli dağılım için minimum ipucu sayıları
-        let minCluesPerBlock: Int
-        let minCluesPerRowCol: Int
+        // Bu hücre için olası değerleri bul ve dene
+        let possibleVals = possibleValues(for: row, col: col, in: board)
         
-        switch difficulty {
-        case .easy:
-            minCluesPerBlock = 4  // 5'ten 4'e düşürüldü
-            minCluesPerRowCol = 3  // 4'ten 3'e düşürüldü
-        case .medium:
-            minCluesPerBlock = 3  // 4'ten 3'e düşürüldü
-            minCluesPerRowCol = 2  // 3'ten 2'ye düşürüldü
-        case .hard, .expert:
-            minCluesPerBlock = 2  // 3'ten 2'ye düşürüldü
-            minCluesPerRowCol = 2  // 3'ten 2'ye düşürüldü
+        // Hücre için olası değer yoksa çözümü başarısız
+        if possibleVals.isEmpty {
+            return false
         }
         
-        // Daha dengeli bir yaklaşım için blok, satır ve sütun listesini oluştur ve karıştır
-        var blocks = [(Int, Int)]()
-        for blockRow in 0..<3 {
-            for blockCol in 0..<3 {
-                blocks.append((blockRow, blockCol))
-            }
-        }
-        blocks.shuffle()
-        
-        // İlk geçiş: Her blok, satır ve sütun için en az ipucu garantile
-        for (blockRow, blockCol) in blocks {
-            var cellsInBlock = [(Int, Int)]()
-            for r in 0..<3 {
-                for c in 0..<3 {
-                    let row = blockRow * 3 + r
-                    let col = blockCol * 3 + c
-                    cellsInBlock.append((row, col))
-                }
-            }
-            cellsInBlock.shuffle()
+        // Tüm olası değerleri dene
+        for value in possibleVals {
+            // Değeri yerleştir
+            board[row][col] = value
             
-            // Önce her bloğa birkaç ipucu garanti et (minimum)
-            var cluesPlaced = 0
-            for (row, col) in cellsInBlock {
-                if cluesPlaced >= minCluesPerBlock {
-                    break
-                }
-                
-                // İpucu bırak (kaldırma)
-                let blockRow = row / 3
-                let blockCol = col / 3
-                        cluesInBlock[blockRow][blockCol] -= 1
-                        cluesInRow[row] -= 1
-                        cluesInCol[col] -= 1
-                        
-                cluesPlaced += 1
-                            cellsToRemove -= 1
+            // Geriye kalan tahtayı tekrar çözmeyi dene
+            if solveBoard(&board) {
+                return true
             }
-        }
-        
-        // Geriye kalan hücreleri kaldır ve çözülebilirliği kontrol et
-        if cellsToRemove > 0 {
-            // Sırayla hücreleri kaldır ve çözülebilirliği kontrol et
-            for (row, col) in allCells {
-                if board[row][col] != nil && cellsToRemove > 0 {
-            let blockRow = row / 3
-            let blockCol = col / 3
             
-                    // Bu hücreyi kaldırmak minimum ipucu kısıtlamalarını ihlal eder mi?
-                    if cluesInBlock[blockRow][blockCol] - 1 < minCluesPerBlock ||
-                       cluesInRow[row] - 1 < minCluesPerRowCol ||
-                       cluesInCol[col] - 1 < minCluesPerRowCol {
-                        continue // Bu hücreyi kaldıramayız, sonraki hücreye geç
-                    }
-                    
-                    let originalValue = board[row][col]
-                    board[row][col] = nil
-                    
-                    // Sayaçları güncelle
-                    cluesInBlock[blockRow][blockCol] -= 1
-                    cluesInRow[row] -= 1
-                    cluesInCol[col] -= 1
-                    
-                    // Hala mantıksal olarak çözülebilir mi?
-                    var stillSolvable = true
-                    
-                    // Hızlı çözülebilirlik kontrolü - her 5 hücrede bir yapılır
-                    if cellsToRemove % 5 == 0 {
-                        stillSolvable = testLogicalSolvability()
-                    }
-                    
-                    // İpuçları dengeli mi?
-                    let balanced = validateIpucuDagilimi()
-                    
-                    if stillSolvable && balanced {
-                        cellsToRemove -= 1
-                    } else {
-                        // Çözülemez oldu, değeri geri al
-                        board[row][col] = originalValue
-                        
-                        // Sayaçları da geri al
-                        cluesInBlock[blockRow][blockCol] += 1
-                        cluesInRow[row] += 1
-                        cluesInCol[col] += 1
-                    }
-                    
-                    attempts += 1
-                    if attempts >= maxAttempts || cellsToRemove <= 0 {
-                        break
-                    }
-                }
-            }
+            // Çözüm başarısız olduysa geri al ve başka değer dene
+            board[row][col] = nil
         }
         
-        // İstenilen sayıda hücre kaldırılamadıysa bilgi ver
-        if cellsToRemove > 0 {
-            print("İstenen sayıda hücre kaldırılamadı. Hedef: \(count), Kaldırılan: \(count - cellsToRemove)")
-        }
+        // Hiçbir değer işe yaramadıysa çözülemez
+        return false
     }
     
     // Zorluk derecesine göre gösterilecek ipucu sayısını belirle

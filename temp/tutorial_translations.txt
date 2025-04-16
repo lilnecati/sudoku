@@ -1,0 +1,202 @@
+// TUTORIAL VIEW ÇEVİRİLERİ
+// tr = Türkçe, en = İngilizce, fr = Fransızca
+
+// TutorialView Başlık
+"Nasıl Oynanır" = {
+  "en": "How to Play",
+  "fr": "Comment jouer"
+};
+
+// İlerleme göstergesi formatı
+"Adım %@ / %@" = {
+  "en": "Step %@ / %@",
+  "fr": "Étape %@ / %@"
+};
+
+// Butonlar
+"Geri" = {
+  "en": "Back",
+  "fr": "Retour"
+};
+
+"İleri" = {
+  "en": "Next",
+  "fr": "Suivant"
+};
+
+"Tamamla" = {
+  "en": "Complete",
+  "fr": "Terminer"
+};
+
+// TutorialStep 1
+"Sudoku'ya Hoş Geldiniz" = {
+  "en": "Welcome to Sudoku",
+  "fr": "Bienvenue au Sudoku"
+};
+
+"Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek." = {
+  "en": "Sudoku is a puzzle game where you place numbers in a 9x9 grid. This guide will teach you the basic rules and strategies.",
+  "fr": "Le Sudoku est un jeu de puzzle où vous placez des chiffres dans une grille de 9x9. Ce guide vous enseignera les règles de base et les stratégies."
+};
+
+"Ekranı kaydırarak diğer adımlara geçebilirsiniz." = {
+  "en": "You can swipe the screen to move to other steps.",
+  "fr": "Vous pouvez glisser l'écran pour passer aux étapes suivantes."
+};
+
+// TutorialStep 2
+"Temel Kurallar" = {
+  "en": "Basic Rules",
+  "fr": "Règles Fondamentales"
+};
+
+"Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır." = {
+  "en": "Each row, each column, and each 3x3 region must contain the numbers 1 through 9. No number should be repeated.",
+  "fr": "Chaque ligne, chaque colonne et chaque région 3x3 doit contenir les chiffres de 1 à 9. Aucun chiffre ne doit être répété."
+};
+
+"Başlangıçta verilen sayılar değiştirilemez ve ipucu olarak kullanılır." = {
+  "en": "The numbers given at the start cannot be changed and are used as clues.",
+  "fr": "Les chiffres initialement fournis ne peuvent pas être modifiés et servent d'indices."
+};
+
+// TutorialStep 3
+"Sayı Girişi" = {
+  "en": "Number Entry",
+  "fr": "Saisie des Chiffres"
+};
+
+"Boş bir hücreye dokunarak seçin, ardından alt kısımdaki sayı tuşlarını kullanarak değer girin." = {
+  "en": "Select an empty cell by touching it, then use the number keys at the bottom to enter a value.",
+  "fr": "Sélectionnez une cellule vide en y touchant, puis utilisez les touches numériques en bas pour saisir une valeur."
+};
+
+"Bir sayıya uzun basarak o sayıyı not olarak ekleyebilirsiniz." = {
+  "en": "You can long press a number to add it as a note.",
+  "fr": "Vous pouvez appuyer longuement sur un chiffre pour l'ajouter comme note."
+};
+
+// TutorialStep 4
+"Notlar" = {
+  "en": "Notes",
+  "fr": "Notes"
+};
+
+"Emin olmadığınız hücrelere not alabilirsiniz. Notlar, o hücreye girebileceğiniz olası değerleri hatırlamanıza yardımcı olur." = {
+  "en": "You can take notes for cells you're not sure about. Notes help you remember possible values for that cell.",
+  "fr": "Vous pouvez prendre des notes pour les cellules dont vous n'êtes pas sûr. Les notes vous aident à vous souvenir des valeurs possibles."
+};
+
+"Notlar, bir hücreye kesin karar vermeden önce olasılıkları takip etmenizi sağlar." = {
+  "en": "Notes allow you to track possibilities before making a definite decision on a cell.",
+  "fr": "Les notes vous permettent de suivre les possibilités avant de prendre une décision définitive."
+};
+
+// TutorialStep 5
+"Tek Olasılık Stratejisi" = {
+  "en": "Single Possibility Strategy",
+  "fr": "Stratégie de Possibilité Unique"
+};
+
+"Bir hücreye yalnızca bir sayı girilebiliyorsa, o sayıyı girin. Satır, sütun ve 3x3 bölgesindeki diğer sayıları kontrol edin." = {
+  "en": "If only one number can be placed in a cell, enter that number. Check the other numbers in the row, column, and 3x3 region.",
+  "fr": "Si un seul chiffre peut être placé dans une cellule, placez-le. Vérifiez les autres chiffres dans la ligne, la colonne et la région 3x3."
+};
+
+"Bu en temel Sudoku stratejisidir ve çoğu kolay bulmacayı çözmenizi sağlar." = {
+  "en": "This is the most basic Sudoku strategy and allows you to solve most easy puzzles.",
+  "fr": "C'est la stratégie Sudoku la plus fondamentale qui vous permet de résoudre la plupart des puzzles faciles."
+};
+
+// Strateji örnek açıklamaları
+"Örnek: Bu hücreye sadece 4 girebilir" = {
+  "en": "Example: Only 4 can be placed in this cell",
+  "fr": "Exemple: Seul le 4 peut être placé dans cette cellule"
+};
+
+"Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir." = {
+  "en": "Due to other numbers in the row, column, and 3x3 region, only 4 can be placed in this cell.",
+  "fr": "En raison des autres chiffres dans la ligne, la colonne et la région 3x3, seul le 4 peut être placé dans cette cellule."
+};
+
+// TutorialStep 6
+"Tek Konum Stratejisi" = {
+  "en": "Single Position Strategy",
+  "fr": "Stratégie d'Emplacement Unique"
+};
+
+"Bir satır, sütun veya 3x3 bölgesinde bir sayı yalnızca bir hücreye yerleştirilebiliyorsa, o sayıyı oraya yerleştirin." = {
+  "en": "If a number can only be placed in one cell in a row, column, or 3x3 region, place it there.",
+  "fr": "Si un chiffre ne peut être placé que dans une seule cellule d'une ligne, d'une colonne ou d'une région 3x3, placez-le là."
+};
+
+"Diğer hücrelerdeki notları kontrol ederek bu stratejiyi uygulayabilirsiniz." = {
+  "en": "You can apply this strategy by checking the notes in other cells.",
+  "fr": "Vous pouvez appliquer cette stratégie en vérifiant les notes dans les autres cellules."
+};
+
+// Strateji örnek açıklamaları
+"Örnek: 5 sayısı sadece bu hücreye yerleştirilebilir" = {
+  "en": "Example: 5 can only be placed in this cell",
+  "fr": "Exemple: Le 5 ne peut être placé que dans cette cellule"
+};
+
+"Bölgede sadece bu hücreye 5 yerleştirilebilir çünkü diğer hücrelerde 5 için yer yok." = {
+  "en": "Only 5 can be placed in this cell in the region because there is no space for 5 in other cells.",
+  "fr": "Seul le 5 peut être placé dans cette cellule de la région car il n'y a pas de place pour 5 dans les autres cellules."
+};
+
+// TutorialStep 7
+"İpuçları ve Yardım" = {
+  "en": "Tips and Help",
+  "fr": "Astuces et Aide"
+};
+
+"Zorlandığınızda ipucu alabilir veya hatalı girişlerinizi kontrol edebilirsiniz." = {
+  "en": "You can get hints or check your incorrect entries when you get stuck.",
+  "fr": "Vous pouvez obtenir des indices ou vérifier vos erreurs lorsque vous êtes bloqué."
+};
+
+"Oyun sırasında '?' düğmesine basarak bu rehbere tekrar ulaşabilirsiniz." = {
+  "en": "You can access this guide again by pressing the '?' button during the game.",
+  "fr": "Vous pouvez accéder à ce guide à nouveau en appuyant sur le bouton '?' pendant le jeu."
+};
+
+// TutorialStep 8
+"Hazırsınız!" = {
+  "en": "You're Ready!",
+  "fr": "Vous êtes prêt !"
+};
+
+"Artık Sudoku oynamaya hazırsınız. Kolay seviyeden başlayarak deneyim kazanın ve zamanla daha zor seviyelere geçin." = {
+  "en": "You are now ready to play Sudoku. Start with the easy level to gain experience and move on to more difficult levels over time.",
+  "fr": "Vous êtes maintenant prêt à jouer au Sudoku. Commencez par le niveau facile pour acquérir de l'expérience et passez progressivement à des niveaux plus difficiles."
+};
+
+"Düzenli pratik yaparak Sudoku becerilerinizi geliştirebilirsiniz. İyi eğlenceler!" = {
+  "en": "You can improve your Sudoku skills by practicing regularly. Have fun!",
+  "fr": "Vous pouvez améliorer vos compétences Sudoku en pratiquant régulièrement. Amusez-vous bien !"
+};
+
+// İpucu etiketleri
+"İPUCU" = {
+  "en": "HINT",
+  "fr": "CONSEIL"
+};
+
+// Diğer genel metinler
+"Sudoku Rehberi" = {
+  "en": "Sudoku Guide",
+  "fr": "Guide de Sudoku"
+};
+
+"Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim." = {
+  "en": "Would you like to learn how to play Sudoku? We will guide you step by step.",
+  "fr": "Voulez-vous apprendre à jouer au Sudoku? Nous vous guiderons étape par étape."
+};
+
+"Göster" = {
+  "en": "Show",
+  "fr": "Afficher"
+}; 

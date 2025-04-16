@@ -1,0 +1,273 @@
+OYUN ARAYÜZÜ:
+"Pil Durumu" = "État de la batterie";
+"Düşük Pil" = "Batterie faible";
+"Güç Yönetimi" = "Gestion d'énergie";
+"Yüksek Performans Modu" = "Mode haute performance";
+"Otomatik Güç Tasarrufu" = "Économie d'énergie automatique";
+"Oyun içi ses efektlerini aç/kapa" = "Activer/désactiver les effets sonores du jeu";
+"Oyun içi titreşim efektlerini aç/kapa" = "Activer/désactiver le retour haptique du jeu";
+"Cihazın görünüm ayarını kullan (açık/koyu)" = "Utiliser le thème du système (clair/sombre)";
+"Karanlık tema aktif eder" = "Active le thème sombre";
+"Yeni Oyun" = "Nouvelle partie";
+"Devam Et" = "Continuer";
+"Kaydet" = "Sauvegarder";
+"Kaydedilmiş Oyunlar" = "Parties sauvegardées";
+"Kaydedilmiş oyun bulunamadı" = "Aucune partie sauvegardée";
+"Tamamlandı" = "Terminé";
+"İptal" = "Annuler";
+"Hata" = "Erreur";
+"Tamam" = "OK";
+"Tümü" = "Tous";
+"Ana Sayfa" = "Accueil";
+"Kayıtlı Oyunlar" = "Parties sauvegardées";
+"Ayarlar" = "Paramètres";
+
+// OYUN BİTTİ EKRANI
+"Oyun Bitti!" = "Partie Terminée!";
+"3 hata yaptınız ve Sudoku oyununu kaybettiniz." = "Vous avez fait 3 erreurs et perdu la partie de Sudoku.";
+"Anasayfaya Dön" = "Retourner à l'accueil";
+"Süre:" = "Durée:";
+
+GİRİŞ EKRANI:
+"Giriş" = "Connexion";
+"Giriş Yap" = "Connexion";
+"Kullanıcı Adı" = "Nom d'utilisateur";
+"Şifre" = "Mot de passe";
+"Şifremi Unuttum" = "Mot de passe oublié";
+"Hesabınız yok mu?" = "Vous n'avez pas de compte?";
+"Kullanıcı adınızı girin" = "Entrez votre nom d'utilisateur";
+"Şifrenizi girin" = "Entrez votre mot de passe";
+
+KAYIT EKRANI:
+"Kayıt" = "Inscription";
+"Kayıt Ol" = "S'inscrire";
+"Yeni Hesap Oluştur" = "Créer un compte";
+"Ad Soyad" = "Nom et prénom";
+"E-posta" = "E-mail";
+"Kullanıcı Adı" = "Nom d'utilisateur";
+"Şifre" = "Mot de passe";
+"Şifre Onayı" = "Confirmation du mot de passe";
+"Güçlü şifre nedir?" = "Qu'est-ce qu'un mot de passe fort?";
+"En az 4 karakter" = "Au moins 4 caractères";
+"Zaten hesabınız var mı?" = "Vous avez déjà un compte?";
+"Adınızı ve soyadınızı girin" = "Entrez votre nom et prénom";
+"E-posta adresinizi girin" = "Entrez votre adresse e-mail";
+"Kullanıcı adınızı girin" = "Entrez votre nom d'utilisateur";
+"Şifrenizi girin" = "Entrez votre mot de passe";
+"Şifrenizi tekrar girin" = "Confirmer votre mot de passe";
+
+ŞİFRE SIFIRLAMA EKRANI:
+"Şifre Sıfırla" = "Réinitialiser le mot de passe";
+"Şifremi Unuttum" = "Mot de passe oublié";
+"Hesabınıza bağlı e-posta adresinizi girin, şifre sıfırlama talimatlarını göndereceğiz." = "Entrez l'adresse e-mail associée à votre compte, nous vous enverrons les instructions de réinitialisation du mot de passe.";
+"E-posta adresiniz" = "Votre adresse e-mail";
+"E-posta adresinizi girin" = "Entrez votre adresse e-mail";
+"Talimatları Gönder" = "Envoyer les instructions";
+
+PROFİL EKRANI:
+"Profil" = "Profil";
+"Profil Düzenle" = "Modifier le profil";
+"Hesabı Sil" = "Supprimer le compte";
+"Ad" = "Prénom";
+"Soyad" = "Nom";
+"Giriş Yapmadınız" = "Non connecté";
+"Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın" = "Connectez-vous pour enregistrer vos scores et synchroniser entre appareils";
+"Çıkış Yap" = "Déconnexion";
+
+SKOR TABLOSU:
+"Skor Tablosu" = "Tableau des scores";
+"Toplam Oyunlar" = "Total des parties";
+"En İyi Süre" = "Meilleur temps";
+"Zorluk" = "Difficulté";
+"Performans İstatistikleri" = "Statistiques de performance";
+"En Yüksek Skor" = "Meilleur score";
+"Ortalama Skor" = "Score moyen";
+"Oyun İstatistikleri" = "Statistiques de jeu";
+"En Hızlı Oyun" = "Partie la plus rapide";
+"Son Oyunlar" = "Parties récentes";
+"Ortalama Süre" = "Temps moyen";
+"Henüz tamamlanmış oyun yok" = "Pas encore de partie terminée";
+"dk" = "min";
+"sn" = "sec";
+
+KAYITLI OYUNLAR EKRANI:
+"Kolay" = "Facile";
+"Orta" = "Moyen";
+"Zor" = "Difficile";
+"Uzman" = "Expert";
+"Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın." = "Aucune partie sauvegardée trouvée. Pour sauvegarder une partie, utilisez le bouton 'Sauvegarder' dans l'écran de jeu.";
+"Kolay Oyunları" = "Parties faciles";
+"Orta Oyunları" = "Parties moyennes";
+"Zor Oyunları" = "Parties difficiles";
+"Uzman Oyunları" = "Parties expert";
+"Kolay zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır." = "Aucune partie sauvegardée trouvée au niveau de difficulté Facile.";
+"Orta zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır." = "Aucune partie sauvegardée trouvée au niveau de difficulté Moyen.";
+"Zor zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır." = "Aucune partie sauvegardée trouvée au niveau de difficulté Difficile.";
+"Uzman zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır." = "Aucune partie sauvegardée trouvée au niveau de difficulté Expert.";
+"Oyun yüklenemedi" = "Impossible de charger la partie";
+
+AYARLAR EKRANI:
+"Görünüm" = "Apparence";
+"Sistem Görünümünü Kullan" = "Utiliser l'apparence du système";
+"Karanlık Mod" = "Mode sombre";
+"Ses Efektleri" = "Effets sonores";
+"Ses Seviyesi" = "Volume";
+"Sesi Test Et" = "Tester le son";
+"Titreşim Geri Bildirimi" = "Retour haptique";
+"Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir." = "Le mode économie d'énergie désactive ou simplifie certains effets visuels et animations.";
+"Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır." = "Le mode haute performance offre des animations et des effets visuels plus fluides, mais augmente la consommation de batterie.";
+"Güç tasarrufu modu, cihazınızın pil ömrünü uzatır." = "Le mode économie d'énergie prolonge la durée de vie de la batterie de votre appareil.";
+"Oyun Ayarları" = "Paramètres du jeu";
+"Tüm Ayarları Sıfırla" = "Réinitialiser tous les paramètres";
+"Geliştirici: Necati Yıldırım" = "Développeur: Necati Yıldırım";
+"Sürüm 1.0" = "Version 1.0";
+
+İPUCU EKRANI:
+"İpucu" = "Indice";
+"İpucu (%lld)" = "Indice (%lld)";
+"İleri" = "Suivant";
+"Bitti" = "Terminé";
+"Son Kalan Hücre" = "Dernière cellule restante";
+"Tekli Olasılık Tespiti" = "Détection des possibilités uniques";
+"Tekli Pozisyon Tespiti" = "Détection des positions uniques";
+"Bu hücreye sadece %@ değeri konabilir çünkü diğer tüm sayılar elendi." = "Seule la valeur %@ peut être placée dans cette cellule car tous les autres chiffres ont été éliminés.";
+"Bölgede %@ sayısı sadece bu hücreye konabilir." = "Dans cette région, le nombre %@ ne peut être placé que dans cette cellule.";
+"Her oyunda yalnızca 3 ipucu kullanabilirsiniz!" = "Vous ne pouvez utiliser que 3 indices par partie !";
+
+DİL AYARLARI:
+"language.selection" = "Langue";
+"language.en" = "Anglais";
+"language.fr" = "Français";
+"language.tr" = "Turc";
+"coming.soon" = "Bientôt disponible";
+"coming.soon.languages" = "Langues à venir";
+"text.size" = "Taille du texte";
+"text.size.small" = "Petit";
+"text.size.medium" = "Moyen";
+"text.size.large" = "Grand";
+
+GENEL MESAJLAR:
+"Bu özellik yakında eklenecek" = "Cette fonctionnalité sera bientôt disponible";
+"Uygulamayı kapatıp tekrar açmayı deneyin." = "Essayez de fermer et de rouvrir l'application.";
+"Kaldığın yerden devam et" = "Continuer où vous vous êtes arrêté";
+"Yükleniyor..." = "Chargement...";
+"Oyun yükleniyor..." = "Chargement du jeu...";
+"Zihninizi Çalıştırın" = "Exercez Votre Esprit";
+"Geliştirici" = "Développeur";
+"Nasıl Oynanır?" = "Comment jouer?";
+"Sudoku Rehberi" = "Guide de Sudoku";
+"Sudoku oynamayı öğrenmek ister misiniz? Size adım adım rehberlik edelim." = "Voulez-vous apprendre à jouer au Sudoku? Nous vous guiderons étape par étape.";
+"İptal" = "Annuler";
+"Göster" = "Afficher";
+
+// TUTORIAL - NASIL OYNANIR SAYFASI
+"Nasıl Oynanır" = "Comment jouer";
+"Adım %@ / %@" = "Étape %@ / %@";
+"Geri" = "Retour";
+"İleri" = "Suivant";
+"Tamamla" = "Terminer";
+
+// Rehber adımları
+"Sudoku'ya Hoş Geldiniz" = "Bienvenue au Sudoku";
+"Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek." = "Le Sudoku est un jeu de puzzle où vous placez des chiffres dans une grille de 9x9. Ce guide vous enseignera les règles de base et les stratégies.";
+"Ekranı kaydırarak diğer adımlara geçebilirsiniz." = "Vous pouvez glisser l'écran pour passer aux étapes suivantes.";
+
+"Temel Kurallar" = "Règles Fondamentales";
+"Her satır, her sütun ve her 3x3'lük bölge 1'den 9'a kadar olan sayıları içermelidir. Hiçbir sayı tekrarlanmamalıdır." = "Chaque ligne, chaque colonne et chaque région 3x3 doit contenir les chiffres de 1 à 9. Aucun chiffre ne doit être répété.";
+"Başlangıçta verilen sayılar değiştirilemez ve ipucu olarak kullanılır." = "Les chiffres initialement fournis ne peuvent pas être modifiés et servent d'indices.";
+
+"Sayı Girişi" = "Saisie des Chiffres";
+"Boş bir hücreye dokunarak seçin, ardından alt kısımdaki sayı tuşlarını kullanarak değer girin." = "Sélectionnez une cellule vide en y touchant, puis utilisez les touches numériques en bas pour saisir une valeur.";
+"Bir sayıya uzun basarak o sayıyı not olarak ekleyebilirsiniz." = "Vous pouvez appuyer longuement sur un chiffre pour l'ajouter comme note.";
+
+"Notlar" = "Notes";
+"Emin olmadığınız hücrelere not alabilirsiniz. Notlar, o hücreye girebileceğiniz olası değerleri hatırlamanıza yardımcı olur." = "Vous pouvez prendre des notes pour les cellules dont vous n'êtes pas sûr. Les notes vous aident à vous souvenir des valeurs possibles.";
+"Notlar, bir hücreye kesin karar vermeden önce olasılıkları takip etmenizi sağlar." = "Les notes vous permettent de suivre les possibilités avant de prendre une décision définitive.";
+
+"Tek Olasılık Stratejisi" = "Stratégie de Possibilité Unique";
+"Bir hücreye yalnızca bir sayı girilebiliyorsa, o sayıyı girin. Satır, sütun ve 3x3 bölgesindeki diğer sayıları kontrol edin." = "Si un seul chiffre peut être placé dans une cellule, placez-le. Vérifiez les autres chiffres dans la ligne, la colonne et la région 3x3.";
+"Bu en temel Sudoku stratejisidir ve çoğu kolay bulmacayı çözmenizi sağlar." = "C'est la stratégie Sudoku la plus fondamentale qui vous permet de résoudre la plupart des puzzles faciles.";
+
+"Tek Konum Stratejisi" = "Stratégie d'Emplacement Unique";
+"Bir satır, sütun veya 3x3 bölgesinde bir sayı yalnızca bir hücreye yerleştirilebiliyorsa, o sayıyı oraya yerleştirin." = "Si un chiffre ne peut être placé que dans une seule cellule d'une ligne, d'une colonne ou d'une région 3x3, placez-le là.";
+"Diğer hücrelerdeki notları kontrol ederek bu stratejiyi uygulayabilirsiniz." = "Vous pouvez appliquer cette stratégie en vérifiant les notes dans les autres cellules.";
+
+"İpuçları ve Yardım" = "Astuces et Aide";
+"Zorlandığınızda ipucu alabilir veya hatalı girişlerinizi kontrol edebilirsiniz." = "Vous pouvez obtenir des indices ou vérifier vos erreurs lorsque vous êtes bloqué.";
+"Oyun sırasında '?' düğmesine basarak bu rehbere tekrar ulaşabilirsiniz." = "Vous pouvez accéder à ce guide à nouveau en appuyant sur le bouton '?' pendant le jeu.";
+
+"Hazırsınız!" = "Vous êtes prêt !";
+"Artık Sudoku oynamaya hazırsınız. Kolay seviyeden başlayarak deneyim kazanın ve zamanla daha zor seviyelere geçin." = "Vous êtes maintenant prêt à jouer au Sudoku. Commencez par le niveau facile pour acquérir de l'expérience et passez progressivement à des niveaux plus difficiles.";
+"Düzenli pratik yaparak Sudoku becerilerinizi geliştirebilirsiniz. İyi eğlenceler!" = "Vous pouvez améliorer vos compétences Sudoku en pratiquant régulièrement. Amusez-vous bien !";
+
+// TUTORİAL - NASIL OYNANIR UYGULAMASI
+"tutorial_title_welcome" = "Bienvenue à Sudoku !";
+"tutorial_desc_welcome" = "Le Sudoku est un jeu de puzzle où vous placez des chiffres dans une grille de 9x9. Ce guide vous enseignera les règles de base et les stratégies.";
+"tutorial_tip_welcome" = "Vous pouvez glisser l'écran pour passer aux étapes suivantes.";
+
+"tutorial_title_game_rules" = "Règles Fondamentales";
+"tutorial_desc_game_rules" = "Chaque ligne, chaque colonne et chaque région 3x3 doit contenir les chiffres de 1 à 9. Aucun chiffre ne doit être répété.";
+"tutorial_tip_game_rules" = "Les chiffres initialement fournis ne peuvent pas être modifiés et servent d'indices.";
+
+"tutorial_title_cell_selection" = "Sélection de Cellule";
+"tutorial_desc_cell_selection" = "Sélectionnez une cellule vide en y touchant, puis utilisez les touches numériques en bas pour saisir une valeur.";
+"tutorial_tip_cell_selection" = "Vous pouvez appuyer longuement sur un chiffre pour l'ajouter comme note.";
+
+"tutorial_title_notes_mode" = "Mode Notes";
+"tutorial_desc_notes_mode" = "Vous pouvez prendre des notes pour les cellules dont vous n'êtes pas sûr. Les notes vous aident à vous souvenir des valeurs possibles.";
+"tutorial_tip_notes_mode" = "Les notes vous permettent de suivre les possibilités avant de prendre une décision définitive.";
+
+"tutorial_title_basic_strategies" = "Stratégies de Base";
+"tutorial_desc_basic_strategies" = "Si un seul chiffre peut être placé dans une cellule, placez-le. Vérifiez les autres chiffres dans la ligne, la colonne et la région 3x3.";
+"tutorial_tip_basic_strategies" = "C'est la stratégie Sudoku la plus fondamentale qui vous permet de résoudre la plupart des puzzles faciles.";
+
+"tutorial_title_number_entry" = "Saisie des Chiffres";
+"tutorial_desc_number_entry" = "Si un chiffre ne peut être placé que dans une seule cellule d'une ligne, d'une colonne ou d'une région 3x3, placez-le là.";
+"tutorial_tip_number_entry" = "Vous pouvez appliquer cette stratégie en vérifiant les notes dans les autres cellules.";
+
+"tutorial_title_hints" = "Indices et Aide";
+"tutorial_desc_hints" = "Vous pouvez obtenir des indices ou vérifier vos erreurs lorsque vous êtes bloqué.";
+"tutorial_tip_hints" = "Vous pouvez accéder à ce guide à nouveau en appuyant sur le bouton '?' pendant le jeu.";
+
+"tutorial_title_completed" = "Félicitations !";
+"tutorial_desc_completed" = "Vous êtes maintenant prêt à jouer au Sudoku. Commencez par le niveau facile pour acquérir de l'expérience et passez progressivement à des niveaux plus difficiles.";
+"tutorial_tip_completed" = "Vous pouvez améliorer vos compétences Sudoku en pratiquant régulièrement. Amusez-vous bien !";
+
+"tutorial_tip_title" = "ASTUCE";
+"Step %d / %d" = "Étape %d / %d";
+"How to Play" = "Comment jouer";
+"Back" = "Retour";
+"Next" = "Suivant";
+"Complete" = "Terminer";
+
+"Example: This cell can only contain 4" = "Exemple: Cette cellule ne peut contenir que 4";
+"Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell." = "En raison des autres chiffres dans la ligne, la colonne et le bloc 3x3, seul 4 peut être placé dans cette cellule.";
+
+"Example: Number 5 can only be placed in this cell" = "Exemple: Le chiffre 5 ne peut être placé que dans cette cellule";
+"In this region, 5 can only be placed in this cell because there's no room for 5 in other cells." = "Dans cette région, 5 ne peut être placé que dans cette cellule car il n'y a pas de place pour 5 dans les autres cellules.";
+
+"Example Not Available" = "Exemple non disponible";
+
+// OYUN DURUMU METİNLERİ
+"Kalem Modu" = "Mode Crayon";
+"Oynanıyor" = "En cours";
+"Hazır" = "Prêt";
+"Duraklatıldı" = "En pause";
+"Tamamlandı" = "Terminé";
+"Kaybedildi" = "Échoué";
+
+// NOT (KALEM) MODU
+"Not Modu" = "Mode Note";
+"Not Aktif" = "Note Active";
+"Note Mode" = "Mode Note";
+"Note Active" = "Note Active";
+
+// İPUCU BUTONU
+"Hint (%d)" = "Indice (%d)"; // SON EKLENEN ÇEVİRİLER
+"Sil" = "Supprimer";
+"Tebrikler!" = "Félicitations!";
+"Tarih" = "Date";
+"Tamamlanma" = "Progression";
+"Süre" = "Temps";
+"dk" = "min";
+"sn" = "sec";
