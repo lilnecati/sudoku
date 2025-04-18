@@ -132,6 +132,40 @@ struct ContentView: View {
         // eski bildirim dinleyicisine gerek yok
     }
     
+    // Ana menüye dönüş bildirimini ayarla
+    private func setupReturnToMainMenuNotification() {
+        // Önce mevcut gözlemciyi kaldır (tekrarları önlemek için)
+        NotificationCenter.default.removeObserver(
+            self,
+            name: Notification.Name("ReturnToMainMenu"),
+            object: nil
+        )
+        
+        // Ana menüye dönüş bildirimini dinle
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("ReturnToMainMenu"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            print("📱 ReturnToMainMenu bildirimi alındı - Ana sayfaya dönülüyor")
+            
+            // Ana sayfaya dön ve oyun ekranlarını kapat
+            DispatchQueue.main.async {
+                withAnimation {
+                    // Tüm aktif ekranları kapat
+                    self.showGame = false
+                    self.showTutorial = false
+                    
+                    // Tab değiştir
+                    self.currentPage = .home
+                    
+                    // Aktif oyunu temizle/sıfırla
+                    self.viewModel.resetGameState()
+                }
+            }
+        }
+    }
+    
     // Bildirim işleme için singleton sınıf
     private class ContentViewTimeoutManager {
         static let shared = ContentViewTimeoutManager()
@@ -754,58 +788,93 @@ struct ContentView: View {
     
     // MARK: - Body
     var body: some View {
-        TabView(selection: $currentPage) {
-            // Tab 1: Ana Sayfa
-            homePage
-                .tabItem {
-                    Label(AppPage.home.title, systemImage: AppPage.home.icon)
-                }
-                .tag(AppPage.home)
-            
-            // Tab 2: Skor Tablosu
-            ScoreboardView()
-                .tabItem {
-                    Label(AppPage.scoreboard.title, systemImage: AppPage.scoreboard.icon)
-                }
-                .tag(AppPage.scoreboard)
-            
-            // Tab 3: Kayıtlı Oyunlar
-            SavedGamesView(viewModel: viewModel, gameSelected: { game in
-                // Oyun yüklenirken yükleme ekranını göster
-                // isLoadingSelectedGame = true
+        ZStack {
+            TabView(selection: $currentPage) {
+                // Ana sayfa
+                homePage
+                    .tabItem {
+                        Label(currentPage == .home ? currentPage.title : "", 
+                              systemImage: currentPage == .home ? currentPage.icon : "")
+                    }
+                    .environmentObject(themeManager)
+                    .tag(AppPage.home)
                 
-                // Kaydedilmiş oyunu yükle
-                viewModel.loadGame(from: game)
+                // Skor tablosu
+                ScoreboardView()
+                    .tabItem {
+                        Label(currentPage == .scoreboard ? currentPage.title : "", 
+                              systemImage: currentPage == .scoreboard ? currentPage.icon : "")
+                    }
+                    .tag(AppPage.scoreboard)
                 
-                // Direkt olarak oyunu göster, yükleme ekranı kullanma
-                showGame = true
-            })
-            .tabItem {
-                Label(AppPage.savedGames.title, systemImage: AppPage.savedGames.icon)
+                // Kayıtlı oyunlar
+                SavedGamesView(showGame: $showGame, 
+                             viewModel: viewModel, 
+                             isLoading: $isLoadingSelectedGame)
+                    .tabItem {
+                        Label(currentPage == .savedGames ? currentPage.title : "", 
+                              systemImage: currentPage == .savedGames ? currentPage.icon : "")
+                    }
+                    .tag(AppPage.savedGames)
+                
+                // Ayarlar
+                SettingsView()
+                    .tabItem {
+                        Label(currentPage == .settings ? currentPage.title : "", 
+                              systemImage: currentPage == .settings ? currentPage.icon : "")
+                    }
+                    .tag(AppPage.settings)
             }
-            .tag(AppPage.savedGames)
+            .blur(radius: showGame || showTutorial ? 20 : 0)
+            .animation(.easeInOut(duration: 0.3), value: showGame)
+            .animation(.easeInOut(duration: 0.3), value: showTutorial)
             
-            // Tab 4: Ayarlar
-            SettingsView()
-                .environmentObject(themeManager)
-                .tabItem {
-                    Label(AppPage.settings.title, systemImage: AppPage.settings.icon)
+            // Oyun ekranı
+            if showGame {
+                GameView(viewModel: viewModel, showGame: $showGame)
+                    .environmentObject(themeManager)
+                    .transition(.move(edge: .bottom))
+                    .animation(.easeInOut, value: showGame)
+                    .zIndex(1)
+            }
+            
+            // Rehber
+            if showTutorial {
+                TutorialView()
+                    .environmentObject(themeManager)
+                    .transition(.opacity)
+                    .animation(.easeInOut, value: showTutorial)
+                    .zIndex(2)
+            }
+            
+            // Genel yükleniyor göstergesi
+            if isLoading {
+                Color.black.opacity(0.6)
+                    .edgesIgnoringSafeArea(.all)
+                
+                VStack {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    
+                    Text.localizedSafe("Yükleniyor...")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                        .padding(.top, 20)
                 }
-                .tag(AppPage.settings)
-        }
-        .animation(nil, value: currentPage) // Tab geçişlerini animasyonsuz yap
-        .onChange(of: currentPage) { oldPage, newPage in
-            // Her tab değişiminde çalışacak
-            if previousPage != newPage {
-                previousPage = newPage
-                SoundManager.shared.playNavigationSound()
+                .zIndex(3)
             }
         }
         .onAppear {
-            setupSavedGameNotification()
+            // Bildirim işleyicilerini ayarla
             setupTimeoutNotification()
-            checkTutorial()
-            startWelcomeAnimations()
+            setupReturnToMainMenuNotification()
+            
+            // PowerSaving Manager'ı başlat
+            _ = PowerSavingManager.shared
+            
+            // Cihaz bilgilerini göster
+            print("📱 ContentView onAppear - Device: \(UIDevice.current.model), \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)")
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))) { _ in
             // Dil değiştiğinde tüm görünümü yenile

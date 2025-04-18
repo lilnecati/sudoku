@@ -183,6 +183,13 @@ struct GameView: View {
         .onAppear {
             setupInitialAnimations()
             setupTimerUpdater()
+            
+            // Ekranın kapanmasını engelle - bildirim gönder
+            NotificationCenter.default.post(name: Notification.Name("GameScreenOpened"), object: nil)
+        }
+        .onDisappear {
+            // Ekranın kapanması engelini kaldır - bildirim gönder
+            NotificationCenter.default.post(name: Notification.Name("GameScreenClosed"), object: nil)
         }
         .onChange(of: viewModel.gameState) { oldValue, newValue in
             if newValue == .completed && oldValue != .completed {

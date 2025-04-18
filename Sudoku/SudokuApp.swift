@@ -113,12 +113,18 @@ struct SudokuApp: App {
     // Oyunun sıfırlanması için gereken süre (2 dakika = 120 saniye)
     private let gameResetTimeInterval: TimeInterval = 120
     
+    // Uygulama yeniden açılırken splash ekranını gösterecek durum
+    @State private var showSplashOnResume = false
+    
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.scenePhase) var scenePhase
     
     // State to track if initialization succeeded
     @State private var initializationError: Error? = nil
     @State private var isInitialized = false
+    
+    // Ekran kararmasını önlemek için durum değişkeni
+    @State private var preventScreenDimming = false
     
     private var textSizePreference: TextSizePreference {
         return TextSizePreference(rawValue: textSizeString) ?? .medium
@@ -159,7 +165,7 @@ struct SudokuApp: App {
                     }
                 } else {
                     // Özel StartupView ile ContentView'u sarmalayarak, her açılışta ana sayfadan başlamayı garanti ediyoruz
-                    StartupView()
+                    StartupView(forceShowSplash: showSplashOnResume)
                         .environment(\.managedObjectContext, viewContext)
                         .environmentObject(themeManager)
                         .environmentObject(localizationManager)
@@ -178,6 +184,13 @@ struct SudokuApp: App {
                                 
                                 // StartupView ile başlangıç sorununu çözdük
                             }
+                            
+                            // PowerSaving Manager'ı başlat
+                            let powerManager = PowerSavingManager.shared
+                            print("🔋 Power saving mode: \(powerManager.isPowerSavingEnabled ? "ON" : "OFF")")
+                            
+                            // Oyun ekranının açılıp kapanmasını izlemek için bildirim dinleyiciler ekle
+                            setupGameScreenObservers()
                             
                             // Metin boyutu değişim bildirimini dinle
                             NotificationCenter.default.addObserver(forName: Notification.Name("TextSizeChanged"), object: nil, queue: .main) { notification in
@@ -218,6 +231,9 @@ struct SudokuApp: App {
                 lastBackgroundTime = Date().timeIntervalSince1970
                 print("⏰ Background time saved: \(lastBackgroundTime)")
                 
+                // Ekran kararmasını tekrar etkinleştir
+                UIApplication.shared.isIdleTimerDisabled = false
+                
                 // CoreData bağlamını kaydet
                 do {
                     try viewContext.save()
@@ -230,10 +246,34 @@ struct SudokuApp: App {
                 let currentTime = Date().timeIntervalSince1970
                 let timeInBackground = currentTime - lastBackgroundTime
                 
+                // Aktif oyun varsa ekran kararmasını engelle
+                if preventScreenDimming {
+                    UIApplication.shared.isIdleTimerDisabled = true
+                    print("🔆 Ekran kararması engellendi")
+                }
+                
                 if timeInBackground > gameResetTimeInterval {
-                    // 2 dakikadan fazla arka planda kaldıysa, oyunu sıfırla
-                    print("⏰ App was in background for \(Int(timeInBackground)) seconds - resetting game")
+                    // 2 dakikadan fazla arka planda kaldıysa, uygulamayı tamamen sıfırla
+                    print("⏰ App was in background for \(Int(timeInBackground)) seconds - resetting whole app")
+                    
+                    // Splash ekranını zorunlu göster
+                    showSplashOnResume = true
+                    
+                    // Ana sayfaya dönüş bildirimini gönder
+                    NotificationCenter.default.post(name: Notification.Name("ReturnToMainMenu"), object: nil)
+                    
+                    // Oyunu sıfırla 
                     NotificationCenter.default.post(name: Notification.Name("ResetGameAfterTimeout"), object: nil)
+                    
+                    // Uygulama değişimini bildirim olarak gönder (UI'nin güncellemesini sağlar)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+                        
+                        // Kısa süre sonra splash ekranı modunu kapat
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                            self.showSplashOnResume = false
+                        }
+                    }
                 } else {
                     // Normal aktif olma bildirimi
                     print("📱 App became active after \(Int(timeInBackground)) seconds")
@@ -302,5 +342,28 @@ struct InitializationErrorView: View {
             }
         }
         .padding()
+    }
+}
+
+// MARK: - Game Screen Observers
+private func setupGameScreenObservers() {
+    // Oyun ekranı açıldığında ekran kararmasını engelle
+    NotificationCenter.default.addObserver(
+        forName: Notification.Name("GameScreenOpened"),
+        object: nil,
+        queue: .main
+    ) { _ in
+        UIApplication.shared.isIdleTimerDisabled = true
+        print("🔆 Oyun ekranı açıldı - Ekran kararması engellendi")
+    }
+    
+    // Oyun ekranı kapandığında ekran kararmasını tekrar etkinleştir
+    NotificationCenter.default.addObserver(
+        forName: Notification.Name("GameScreenClosed"),
+        object: nil,
+        queue: .main
+    ) { _ in
+        UIApplication.shared.isIdleTimerDisabled = false
+        print("🔅 Oyun ekranı kapandı - Ekran kararması etkinleştirildi")
     }
 }

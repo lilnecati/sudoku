@@ -14,6 +14,9 @@ struct ScoreboardView: View {
     @State private var recentScores: [NSManagedObject] = []
     @State private var selectedTab = 0
     
+    // Detaylı istatistik sayfasına geçiş için state
+    @State private var showDetailedStatistics = false
+    
     var body: some View {
         ZStack {
             // Izgara arka planı
@@ -22,10 +25,30 @@ struct ScoreboardView: View {
             
             VStack(spacing: 16) {
                 // Başlık
-                Text.localizedSafe("Skor Tablosu")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(Color.textColor(for: colorScheme))
-                    .padding(.top)
+                HStack {
+                    Text.localizedSafe("Skor Tablosu")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(Color.textColor(for: colorScheme))
+                    
+                    Spacer()
+                    
+                    // Detaylı istatistik butonu
+                    Button {
+                        showDetailedStatistics = true
+                    } label: {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 20))
+                            .foregroundColor(getDifficultyColor(selectedDifficulty))
+                            .padding(8)
+                            .background(
+                                Circle()
+                                    .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+                            )
+                    }
+                }
+                .padding(.top)
+                .padding(.horizontal)
                 
                 // Sekme kontrolü - Picker yerine butonlar kullanalım
                 HStack(spacing: 0) {
@@ -83,6 +106,11 @@ struct ScoreboardView: View {
         }
         .onAppear {
             loadData()
+        }
+        // Detaylı istatistik sayfasına geçiş
+        .fullScreenCover(isPresented: $showDetailedStatistics) {
+            DetailedStatisticsView()
+                .environmentObject(LocalizationManager.shared)
         }
     }
     

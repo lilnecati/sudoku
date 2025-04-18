@@ -18,6 +18,9 @@ struct StartupView: View {
     // Ana görünüme geçiş için durum
     @State private var isReady = false
     
+    // Uygulama arka plandan geliyorsa splash'i zorla göster
+    var forceShowSplash: Bool = false
+    
     // LocalizationManager ekle
     @EnvironmentObject var localizationManager: LocalizationManager
     
@@ -56,8 +59,8 @@ struct StartupView: View {
                 .opacity(isReady ? 1 : 0)
                 .animation(.easeIn(duration: 0.3), value: isReady)
             
-            // Açılış ekranı (isReady olana kadar görünür)
-            if !isReady {
+            // Açılış ekranı (isReady olana kadar veya forceShowSplash=true iken görünür)
+            if !isReady || forceShowSplash {
                 ZStack {
                     // Arkaplan gradyant
                     LinearGradient(
@@ -166,19 +169,44 @@ struct StartupView: View {
                     // Rastgele sayılar oluştur
                     generateRandomNumbers()
                     
-                    // Belirtilen süre sonra ContentView'a geç
-                    print("🚀 StartupView \(displayDuration) saniye sonra ContentView'a geçecek...")
-                    DispatchQueue.main.asyncAfter(deadline: .now() + displayDuration) {
-                        // ÖNCE ContentView'u hazırla (arka planda)
-                        print("🚀 StartupView uygulamayı başlatıyor...")
-                        isReady = true
+                    // Yeniden açılma durumu mu, yoksa ilk açılış mı kontrol et
+                    if forceShowSplash {
+                        print("🔄 Uygulama uzun süre arka planda kaldıktan sonra yeniden açılıyor")
                         
-                        // SONRA kapanış animasyonunu uygula
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            logoOpacity = 0
-                            textOpacity = 0
-                            backgroundOpacity = 0
-                            gridOpacity = 0
+                        // Ana ekrana dön bildirimi gönder (ContentView'un doğru sayfaya gitmesi için)
+                        NotificationCenter.default.post(name: Notification.Name("ReturnToMainMenu"), object: nil)
+                        
+                        // Ana sayfaya dönmek için biraz daha uzun beklet
+                        let resetDuration: Double = 4.0 // 4 saniye göster
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + resetDuration) {
+                            print("🔄 Splash ekranını kapatıp ana sayfaya dönülüyor")
+                            // ContentView'u hazırla (arka planda)
+                            isReady = true
+                            
+                            // Kapanış animasyonunu uygula
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                logoOpacity = 0
+                                textOpacity = 0
+                                backgroundOpacity = 0
+                                gridOpacity = 0
+                            }
+                        }
+                    } else {
+                        // Normal açılış - belirtilen süre sonra ContentView'a geç
+                        print("🚀 StartupView \(displayDuration) saniye sonra ContentView'a geçecek...")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + displayDuration) {
+                            // ÖNCE ContentView'u hazırla (arka planda)
+                            print("🚀 StartupView uygulamayı başlatıyor...")
+                            isReady = true
+                            
+                            // SONRA kapanış animasyonunu uygula
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                logoOpacity = 0
+                                textOpacity = 0
+                                backgroundOpacity = 0
+                                gridOpacity = 0
+                            }
                         }
                     }
                 }
