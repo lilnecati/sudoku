@@ -199,13 +199,7 @@ class PersistenceController {
         let context = container.viewContext
         let fetchRequest: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
         
-        // Eğer oturum açmış bir kullanıcı varsa, sadece onun oyunlarını getir
-        if let currentUser = getCurrentUser() {
-            fetchRequest.predicate = NSPredicate(format: "user == %@", currentUser)
-        } else {
-            // Kullanıcı yoksa boş liste döndür
-            return []
-        }
+        // Kullanıcı kontrolünü kaldırdık - tüm kayıtlı oyunları getir
         
         do {
             let savedGames = try context.fetch(fetchRequest)
@@ -240,10 +234,7 @@ class PersistenceController {
         game.elapsedTime = elapsedTime
         game.dateCreated = Date()
         
-        // Eğer oturum açmış bir kullanıcı varsa, oyunu onunla ilişkilendir
-        if let currentUser = getCurrentUser() {
-            game.setValue(currentUser, forKey: "user")
-        }
+        // Kullanıcı ilişkilendirme kısmını kaldırdık, tüm oyunlar görülebilsin
         
         do {
             try context.save()
@@ -261,15 +252,7 @@ class PersistenceController {
         let request: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
         
-        // Eğer oturum açmış bir kullanıcı varsa, sadece onun oyunlarını güncelle
-        if let currentUser = getCurrentUser() {
-            let userPredicate = NSPredicate(format: "user == %@", currentUser)
-            let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-                request.predicate!,
-                userPredicate
-            ])
-            request.predicate = compoundPredicate
-        }
+        // Kullanıcı kontrolünü kaldırdık - tüm oyunlar erişilebilir
         
         do {
             let games = try context.fetch(request)
@@ -306,13 +289,7 @@ class PersistenceController {
         let context = container.viewContext
         let request: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
         
-        // Eğer oturum açmış bir kullanıcı varsa, sadece onun oyunlarını yükleyin
-        if let currentUser = getCurrentUser() {
-            request.predicate = NSPredicate(format: "user == %@", currentUser)
-        } else {
-            // Kullanıcı yoksa boş liste döndür
-            return []
-        }
+        // Kullanıcı kontrolünü kaldırdık - tüm kayıtlı oyunları getir
         
         request.sortDescriptors = [NSSortDescriptor(keyPath: \SavedGame.dateCreated, ascending: false)]
         

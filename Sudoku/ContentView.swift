@@ -793,8 +793,7 @@ struct ContentView: View {
                 // Ana sayfa
                 homePage
                     .tabItem {
-                        Label(currentPage == .home ? currentPage.title : "", 
-                              systemImage: currentPage == .home ? currentPage.icon : "")
+                        Label(AppPage.home.title, systemImage: AppPage.home.icon)
                     }
                     .environmentObject(themeManager)
                     .tag(AppPage.home)
@@ -802,26 +801,27 @@ struct ContentView: View {
                 // Skor tablosu
                 ScoreboardView()
                     .tabItem {
-                        Label(currentPage == .scoreboard ? currentPage.title : "", 
-                              systemImage: currentPage == .scoreboard ? currentPage.icon : "")
+                        Label(AppPage.scoreboard.title, systemImage: AppPage.scoreboard.icon)
                     }
                     .tag(AppPage.scoreboard)
                 
                 // Kayıtlı oyunlar
-                SavedGamesView(showGame: $showGame, 
-                             viewModel: viewModel, 
-                             isLoading: $isLoadingSelectedGame)
+                SavedGamesView(viewModel: viewModel,
+                             gameSelected: { game in
+                                 // Seçilen oyunu yükle
+                                 viewModel.loadGame(from: game as! SavedGame)
+                                 // Oyun görünümünü göster
+                                 showGame = true
+                             })
                     .tabItem {
-                        Label(currentPage == .savedGames ? currentPage.title : "", 
-                              systemImage: currentPage == .savedGames ? currentPage.icon : "")
+                        Label(AppPage.savedGames.title, systemImage: AppPage.savedGames.icon)
                     }
                     .tag(AppPage.savedGames)
                 
                 // Ayarlar
                 SettingsView()
                     .tabItem {
-                        Label(currentPage == .settings ? currentPage.title : "", 
-                              systemImage: currentPage == .settings ? currentPage.icon : "")
+                        Label(AppPage.settings.title, systemImage: AppPage.settings.icon)
                     }
                     .tag(AppPage.settings)
             }
@@ -831,7 +831,7 @@ struct ContentView: View {
             
             // Oyun ekranı
             if showGame {
-                GameView(viewModel: viewModel, showGame: $showGame)
+                GameView(existingViewModel: viewModel)
                     .environmentObject(themeManager)
                     .transition(.move(edge: .bottom))
                     .animation(.easeInOut, value: showGame)

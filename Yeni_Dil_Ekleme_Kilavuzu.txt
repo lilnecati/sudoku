@@ -1,0 +1,321 @@
+# SUDOKU UYGULAMASINA YENİ BİR DİL EKLEME KILAVUZU
+
+Bu belge, Sudoku uygulamasına yeni bir dil eklemek için adım adım yapılması gereken işlemleri içermektedir. İtalyanca dil desteği eklemek için bir örnek olarak kullanılabilir.
+
+## 1. GENEL BAKIŞ
+
+Uygulama şu anda aşağıdaki dilleri desteklemektedir:
+- Türkçe (tr) - Varsayılan dil
+- İngilizce (en)
+- Fransızca (fr)
+
+Yeni bir dil eklemek için aşağıdaki bileşenleri güncellememiz gerekecek:
+- `LocalizationManager.swift` - Dil yönetiminden sorumlu sınıf
+- `Localizable.xcstrings` - Tüm metinlerin yerelleştirme dosyası
+- `SettingsView.swift` - Dil seçenekleri için kullanıcı arayüzü
+- `Resources` klasöründe yeni dil için lproj klasörü
+
+## 2. ADIM ADIM YENİ DİL EKLEME İŞLEMİ
+
+### 2.1. Xcode Projesi Hazırlığı
+
+1. Xcode'da projeyi açın.
+2. Proje ayarlarına gidin (ana projeye tıklayın).
+3. "Info" sekmesinde "Localizations" bölümünü bulun.
+4. "+" butonuna tıklayarak yeni dil ekleyin (örn: İtalyanca - "it").
+5. Xcode'un yerelleştirme için oluşturduğu yapıyı kabul edin, bu işlem otomatik olarak gerekli lproj klasörlerini oluşturacaktır.
+
+### 2.2. LocalizationManager.swift Güncelleme
+
+`Sudoku/Extensions/LocalizationManager.swift` dosyasını açın ve aşağıdaki değişiklikleri yapın:
+
+```swift
+// MEVCUT KOD
+struct AppLanguage: Equatable {
+    static let english = AppLanguage(code: "en", name: "English")
+    static let turkish = AppLanguage(code: "tr", name: "Türkçe")
+    static let french = AppLanguage(code: "fr", name: "Français")
+    
+    static let allLanguages = [english, turkish, french]
+    
+    let code: String
+    let name: String
+}
+
+// YENİ KOD - İtalyanca ekleme örneği
+struct AppLanguage: Equatable {
+    static let english = AppLanguage(code: "en", name: "English")
+    static let turkish = AppLanguage(code: "tr", name: "Türkçe")
+    static let french = AppLanguage(code: "fr", name: "Français")
+    static let italian = AppLanguage(code: "it", name: "Italiano") // Yeni eklenen dil
+    
+    static let allLanguages = [english, turkish, french, italian] // Dil listesine ekleme
+    
+    let code: String
+    let name: String
+}
+```
+
+### 2.3. Localizable.xcstrings Dosyasını Güncelleme
+
+1. `Sudoku/Localizable/Localizable.xcstrings` dosyasını açın.
+2. Bu JSON dosyasında her metin için yeni dil çevirisi ekleyin:
+
+```json
+"Ana Sayfa" : {
+  "extractionState" : "stale",
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Home"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Accueil"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Ana Sayfa"
+      }
+    },
+    "it" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Home Page" // İtalyanca çevirisi
+      }
+    }
+  }
+}
+```
+
+Not: Bu işlemi tüm yerelleştirilmiş metinler için tekrarlamanız gerekecektir. Toplam 1000'den fazla yerelleştirilmiş metin vardır. Tüm metinleri çevirmek için dil uzmanı desteği almanız önerilir.
+
+### 2.4. Dil Bayrak Emojisi ve İsim Tanımlama
+
+Localizable.xcstrings dosyasında, dil seçim ekranında kullanılacak dil adı ve bayrak emoji tanımlamalarını ekleyin:
+
+```json
+"language.it" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Italian"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Italien"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "İtalyanca"
+      }
+    },
+    "it" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Italiano"
+      }
+    }
+  }
+}
+```
+
+Ayrıca, İtalya bayrağı emoji'sini de tanımlayın:
+
+```json
+"🇮🇹" : {
+
+}
+
+"🇮🇹 Italiano" : {
+
+}
+```
+
+### 2.5. Dil Seçim Ekranını Güncelleme (SettingsView.swift)
+
+`Sudoku/View/SettingsView.swift` dosyasında dil seçim arayüzünü düzenlemeniz gerekecek. Bu dosyada, dil seçimi için özel bir bileşen bulunmaktadır. `LanguageSelectionSheet` adlı bu bileşeni güncellemeniz gerekir:
+
+```swift
+// LanguageSelectionSheet.swift içinde veya SettingsView.swift içinde (eğer ayrı bir dosya değilse)
+
+struct LanguageSelectionSheet: View {
+    @Binding var selectedLanguage: String
+    @ObservedObject var localizationManager: LocalizationManager
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 12) {
+                // Başlık ve açıklama
+                Text.localizedSafe("language.selection")
+                    .font(.title2)
+                    .bold()
+                    .padding(.top)
+                
+                // Dil seçenekleri
+                ScrollView {
+                    VStack(spacing: 10) {
+                        // Mevcut diller
+                        LanguageButton(
+                            language: AppLanguage.english,
+                            isSelected: selectedLanguage == AppLanguage.english.code,
+                            action: { selectLanguage(AppLanguage.english) }
+                        )
+                        
+                        LanguageButton(
+                            language: AppLanguage.turkish,
+                            isSelected: selectedLanguage == AppLanguage.turkish.code,
+                            action: { selectLanguage(AppLanguage.turkish) }
+                        )
+                        
+                        LanguageButton(
+                            language: AppLanguage.french,
+                            isSelected: selectedLanguage == AppLanguage.french.code,
+                            action: { selectLanguage(AppLanguage.french) }
+                        )
+                        
+                        // YENİ DİL BUTONU EKLE
+                        LanguageButton(
+                            language: AppLanguage.italian, // Yeni eklenen dil
+                            isSelected: selectedLanguage == AppLanguage.italian.code,
+                            action: { selectLanguage(AppLanguage.italian) }
+                        )
+                        
+                        // Yakında eklenecek dil mesajı
+                        Text.localizedSafe("coming.soon.languages")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 20)
+                            .padding(.bottom, 10)
+                        
+                        // Yakında eklenecek diğer diller
+                        HStack {
+                            Text("🇪🇸")
+                                .font(.largeTitle)
+                            Text.localizedSafe("language.es")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.gray.opacity(0.1))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                        
+                        Spacer()
+                    }
+                    .padding()
+                }
+                
+                // Kapat butonu
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Text("Bitti")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                }
+                .padding(.horizontal)
+                .padding(.bottom)
+            }
+            .navigationBarTitle("", displayMode: .inline)
+            .navigationBarItems(trailing: Button(action: {
+                presentationMode.wrappedValue.dismiss()
+            }) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(.gray)
+            })
+        }
+    }
+    
+    private func selectLanguage(_ language: AppLanguage) {
+        // Dil seçimi yapılınca gerçekleşecek işlemler
+        selectedLanguage = language.code
+        localizationManager.setLanguage(language)
+        
+        // Sekmeyi kapat
+        presentationMode.wrappedValue.dismiss()
+    }
+}
+
+// LanguageButton yapısının uygulamada zaten tanımlı olduğundan emin olun
+// Eğer değişiklik gerekiyorsa, İtalya bayrağını doğru emoji ile güncelleyin
+```
+
+### 2.6. lproj Klasörlerini ve Dosyalarını Oluşturma
+
+1. `Sudoku/Resources/it.lproj` klasörünü oluşturun (muhtemelen Xcode projeye dil eklediğinizde otomatik olarak oluşturulmuştur).
+2. Eğer Xcode bunu otomatik oluşturmadıysa, klasörü manuel olarak oluşturun:
+
+```
+$ mkdir -p Sudoku/Resources/it.lproj
+```
+
+### 2.7. Tüm Metinleri Çevirme
+
+Uygulamada bulunan tüm metinleri yeni dile çevirmeniz gerekecektir. Bu işlem için:
+
+1. `ui_texts_complete.txt` dosyasında tüm metinlerin listesini görebilirsiniz.
+2. Bu dosyadaki her metni, yeni dilinize çevirin.
+3. Çevirileri `Localizable.xcstrings` dosyasına ekleyin.
+
+İhtiyaç duyarsanız, bir tercüman veya çeviri servisi kullanarak tüm metinlerin doğru çevirisini elde edebilirsiniz.
+
+### 2.8. Test Etme
+
+1. Tüm değişiklikleri yaptıktan sonra, uygulamayı derleyin.
+2. Uygulamayı bir simülatörde veya gerçek bir cihazda çalıştırın.
+3. `Ayarlar > Dil` bölümüne gidin ve yeni eklediğiniz dili seçin.
+4. Uygulama arayüzünün yeni dile göre güncellendiğinden emin olun.
+5. Tüm ekranları kontrol ederek çeviri eksikliği veya hataları olup olmadığını kontrol edin.
+
+## 3. ÖNEMLİ NOTLAR
+
+1. **JSON Formatı**: `Localizable.xcstrings` dosyasını düzenlerken, geçerli JSON formatını koruduğunuzdan emin olun. Bir virgül veya parantez hatası, tüm dosyanın geçersiz olmasına neden olabilir.
+
+2. **Çeviri Tutarlılığı**: Çevirilerin tutarlı olduğundan emin olun. Aynı terimler için her zaman aynı çevirileri kullanın.
+
+3. **Yer Tutucular**: `%@`, `%d`, `%lld` gibi yer tutucuları değiştirmeyin. Bunlar uygulama çalışırken dinamik olarak değiştirilecek değerlerdir.
+
+4. **Uzunluk Kısıtlamaları**: Bazı arayüz elementleri, belirli bir uzunlukta metni destekleyebilir. Çeviriler çok uzunsa, ekranda kesilmiş görünebilir.
+
+5. **Kaynak Yönetimi**: Yeni dil ekledikten sonra, uygulamanın boyutu biraz artacaktır. Bu nedenle, gereksiz kaynaklardan kaçınmak için optimize edilmiş çeviriler kullanmaya özen gösterin.
+
+## 4. SORUN GİDERME
+
+Yaygın Sorunlar ve Çözümleri:
+
+1. **Dil Görünmüyor**: Eğer eklediğiniz dil, dil seçim ekranında görünmüyorsa, `LocalizationManager.swift` dosyasında `allLanguages` dizisinde olduğundan emin olun.
+
+2. **Çeviriler Görünmüyor**: Eğer dili seçtikten sonra çeviriler görünmüyorsa, `Localizable.xcstrings` dosyasındaki format ve yapıyı kontrol edin.
+
+3. **Uygulama Çöküyor**: Dil değiştirme sırasında uygulama çöküyorsa, `Localizable.xcstrings` dosyasında JSON formatı hatası olabilir.
+
+4. **Yer Tutucular Çalışmıyor**: Yer tutucuları doğru şekilde kullandığınızdan emin olun. Bazı dillerde cümle yapısı farklı olabilir, ancak yer tutucuların sırası ve sayısı korunmalıdır.
+
+## 5. İLAVE KAYNAKLAR
+
+- Xcode Localization Guide: https://developer.apple.com/documentation/xcode/localization
+- String Catalog Format: https://developer.apple.com/documentation/xcode/string-catalogs
+- iOS Localization Best Practices: https://developer.apple.com/localization/
+
+Bu belge, Sudoku uygulamasına yeni bir dil eklemek için detaylı bir kılavuz sunmaktadır. Eklediğiniz dilin kalitesini artırmak için, o dili anadili olarak konuşan birinden yardım almanızı öneririz. 

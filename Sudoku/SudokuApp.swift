@@ -353,8 +353,11 @@ private func setupGameScreenObservers() {
         object: nil,
         queue: .main
     ) { _ in
-        UIApplication.shared.isIdleTimerDisabled = true
-        print("🔆 Oyun ekranı açıldı - Ekran kararması engellendi")
+        // Ana iş parçacığında ekran kararmasını engelle
+        DispatchQueue.main.async {
+            UIApplication.shared.isIdleTimerDisabled = true
+            print("🔆 GameScreenOpened bildirim alındı - Ekran kararması engellendi")
+        }
     }
     
     // Oyun ekranı kapandığında ekran kararmasını tekrar etkinleştir
@@ -363,7 +366,10 @@ private func setupGameScreenObservers() {
         object: nil,
         queue: .main
     ) { _ in
-        UIApplication.shared.isIdleTimerDisabled = false
-        print("🔅 Oyun ekranı kapandı - Ekran kararması etkinleştirildi")
+        // Ana iş parçacığında ekran kararmasını tekrar etkinleştir
+        DispatchQueue.main.async {
+            UIApplication.shared.isIdleTimerDisabled = false
+            print("🔅 GameScreenClosed bildirim alındı - Ekran kararması etkinleştirildi")
+        }
     }
 }
