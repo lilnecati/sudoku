@@ -1350,7 +1350,7 @@ struct SettingsView: View {
                 .disabled(!isLoggedIn)
                 
                 if !isLoggedIn {
-                    Text("Firebase hesabı gereklidir")
+                    Text("Hesap Gereklidir !")
                         .font(.caption)
                         .foregroundColor(.red)
                         .padding(.leading, 8)
