@@ -370,22 +370,20 @@ struct RegisterView: View {
             return
         }
         
-        // Kayıt işlemi
-        DispatchQueue.global().async {
-            let success = PersistenceController.shared.registerUser(
-                username: username,
-                password: password,
-                email: email,
-                name: name
-            )
-            
+        // Firebase ile kayıt işlemi
+        PersistenceController.shared.registerUserWithFirebase(
+            username: username,
+            password: password,
+            email: email,
+            name: name
+        ) { success, error in
             DispatchQueue.main.async {
-                isLoading = false
+                self.isLoading = false
                 
                 if success {
                     // Başarılı kayıt
-                    currentUser = PersistenceController.shared.fetchUser(username: username)
-                    isPresented = false
+                    self.currentUser = PersistenceController.shared.fetchUser(username: self.username)
+                    self.isPresented = false
                     
                     // Kullanıcı giriş bildirimini gönder
                     NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
@@ -396,8 +394,12 @@ struct RegisterView: View {
                     impactFeedback.impactOccurred()
                 } else {
                     // Başarısız kayıt
-                    errorMessage = "Bu kullanıcı adı veya e-posta zaten kullanılıyor."
-                    showError = true
+                    if let error = error {
+                        self.errorMessage = "Kayıt hatası: \(error.localizedDescription)"
+                    } else {
+                        self.errorMessage = "Bu kullanıcı adı veya e-posta zaten kullanılıyor."
+                    }
+                    self.showError = true
                 }
             }
         }

@@ -11,15 +11,18 @@ struct AnimatedSudokuLogo: View {
     var isStartupScreen: Bool = false
     var continuousRotation: Bool = false
     
-    // Animasyon durumları
+    @AppStorage("lastSelectedPattern") private var savedPattern: Int = 0
+    @AppStorage("lastBorderColorIndex") private var savedBorderColorIndex: Int = 0
+    
     @State private var glowIntensity: CGFloat = 0.5
     @State private var highlightedCell: Int? = nil
     @State private var scale: CGFloat = 1.0
     @State private var rotation: Double = 0
     @State private var continuousRotationAngle: Double = 0
-    @State private var selectedPattern: Int = 0
+    @State private var selectedPattern: Int
     @State private var colorOffset: Int = 0
-    @State private var borderColorIndex: Int = 0
+    @State private var borderColorIndex: Int
+    @State private var isAnimating = true
     
     // Zamanlayıcılar
     let highlightTimer = Timer.publish(every: 1.2, on: .main, in: .common).autoconnect()
@@ -64,6 +67,15 @@ struct AnimatedSudokuLogo: View {
         [0, 3, 6],                              // Sol sütun
         [2, 5, 8]                               // Sağ sütun
     ]
+    
+    // Scene phase'i dinle
+    @Environment(\.scenePhase) private var scenePhase
+    
+    // Başlangıç değerlerini kayıtlı değerlerden al
+    init() {
+        _selectedPattern = State(initialValue: UserDefaults.standard.integer(forKey: "lastSelectedPattern"))
+        _borderColorIndex = State(initialValue: UserDefaults.standard.integer(forKey: "lastBorderColorIndex"))
+    }
     
     // Sayı için renk alma
     private func colorForNumber(at index: Int) -> Color {
@@ -145,81 +157,65 @@ struct AnimatedSudokuLogo: View {
             }
         }
         .onAppear {
-            // Başlangıç animasyonu - giriş ekranında değilse
-            if !isStartupScreen {
-                withAnimation(.easeInOut(duration: 2.0)) {
-                    rotation = 360
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                        rotation = 0
-                    }
-                }
-            }
-            
-            // Sürekli nefes alma animasyonu
-            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-                scale = 1.05
-            }
-            
-            // Sürekli döndürme animasyonu
-            if continuousRotation {
-                withAnimation(.linear(duration: 15).repeatForever(autoreverses: false)) {
-                    continuousRotationAngle = 360
-                }
-            }
-            
-            // İlk desen seçimi
-            selectedPattern = Int.random(in: 0..<patterns.count)
+            startAnimation()
         }
-        .onReceive(highlightTimer) { _ in
-            // Rastgele bir hücreyi vurgula
-            withAnimation {
-                if highlightedCell == nil {
-                    highlightedCell = patterns[selectedPattern].randomElement()
-                } else {
-                    highlightedCell = nil
-                }
-                
-                // Parlama efekti
-                withAnimation(.easeInOut(duration: 0.8)) {
-                    glowIntensity = 1.0
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                        withAnimation(.easeInOut(duration: 0.8)) {
-                            glowIntensity = 0.5
-                        }
-                    }
-                }
+        .onChange(of: scenePhase) { newPhase in
+            switch newPhase {
+            case .active:
+                startAnimation()
+            case .background:
+                stopAnimation()
+                // Durumu kaydet
+                UserDefaults.standard.set(selectedPattern, forKey: "lastSelectedPattern")
+                UserDefaults.standard.set(borderColorIndex, forKey: "lastBorderColorIndex")
+            case .inactive:
+                stopAnimation()
+            @unknown default:
+                break
             }
         }
-        .onReceive(patternTimer) { _ in
-            // Desen değiştir
-            withAnimation(.easeInOut(duration: 1.0)) {
-                let newPattern = Int.random(in: 0..<patterns.count)
-                if newPattern != selectedPattern {
-                    selectedPattern = newPattern
-                } else {
-                    selectedPattern = (selectedPattern + 1) % patterns.count
-                }
-                
-                // Küçük bir dönüş animasyonu
-                withAnimation(.easeInOut(duration: 1.0)) {
-                    rotation = 5
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        withAnimation(.easeInOut(duration: 1.0)) {
-                            rotation = 0
-                        }
-                    }
-                }
+    }
+    
+    private func startAnimation() {
+        guard !isAnimating else { return }
+        isAnimating = true
+        animatePattern()
+        animateColors()
+    }
+    
+    private func stopAnimation() {
+        isAnimating = false
+    }
+    
+    private func animatePattern() {
+        guard isAnimating else { return }
+        
+        // Rastgele bir hücreyi vurgula
+        highlightedCell = Int.random(in: 0..<9)
+        
+        // Pattern'i değiştir
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            guard isAnimating else { return }
+            selectedPattern = (selectedPattern + 1) % patterns.count
+            UserDefaults.standard.set(selectedPattern, forKey: "lastSelectedPattern")
+            
+            // Recursive olarak devam et
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                guard isAnimating else { return }
+                highlightedCell = nil
+                animatePattern()
             }
         }
-        .onReceive(colorTimer) { _ in
-            // Renk değiştir - her sayı için farklı renk
-            withAnimation(.easeInOut(duration: 0.5)) {
-                colorOffset = (colorOffset + 1) % colors.count
-                borderColorIndex = (borderColorIndex + 1) % colors.count
-            }
+    }
+    
+    private func animateColors() {
+        guard isAnimating else { return }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            guard isAnimating else { return }
+            borderColorIndex = (borderColorIndex + 1) % colors.count
+            UserDefaults.standard.set(borderColorIndex, forKey: "lastBorderColorIndex")
+            animateColors()
         }
     }
 }

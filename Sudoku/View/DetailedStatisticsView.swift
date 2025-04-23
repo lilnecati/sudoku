@@ -1,6 +1,8 @@
 import SwiftUI
 import CoreData
 import Combine
+import FirebaseAuth
+import FirebaseFirestore
 
 struct DetailedStatisticsView: View {
     // MARK: - Çeviri Desteği
@@ -102,80 +104,105 @@ struct DetailedStatisticsView: View {
     
     // MARK: - Body
     var body: some View {
-        ZStack {
-            // Arka plan
-            GridBackgroundView()
-                .edgesIgnoringSafeArea(.all)
-            
-            // Ana içerik
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Başlık ve Kapat Butonu
-                    HStack {
-                        Text(pageTitle)
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
+        NavigationView {
+            ZStack {
+                // Arka plan
+                GridBackgroundView()
+                    .edgesIgnoringSafeArea(.all)
+                
+                // Ana içerik
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Başlık ve Kapat Butonu
+                        HStack {
+                            Text(pageTitle)
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            // Kapat butonu
+                            Button(action: {
+                                dismiss()
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.gray)
+                                    .padding(8)
+                                    .background(
+                                        Circle()
+                                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                                            .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
+                                    )
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top)
                         
-                        Spacer()
+                        // Filtreler
+                        HStack(spacing: 16) {
+                            // Zaman aralığı seçici
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(LocalizationManager.shared.localizedString(for: "Time Range"))
+                                    .font(.callout)
+                                    .foregroundColor(.secondary)
+                                
+                                timeRangePicker
+                            }
+                            
+                            // Zorluk seviyesi seçici
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(LocalizationManager.shared.localizedString(for: "Difficulty Level"))
+                                    .font(.callout)
+                                    .foregroundColor(.secondary)
+                                
+                                difficultyPicker
+                            }
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+                        )
+                        .padding(.horizontal)
                         
-                        // Kapat butonu
+                        // Özet kart
+                        statisticsSummaryCard
+                        
+                        // Tamamlama oranı grafiği
+                        completionRateChart
+                        
+                        // Performans grafiği
+                        performanceChart
+                        
+                        // Tümünü Sil butonu
                         Button(action: {
-                            dismiss()
+                            print("📌 SIL BUTONUNA BASILDI")
+                            deleteAllCompletedGames()
                         }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.gray)
-                                .padding(8)
-                                .background(
-                                    Circle()
-                                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                                        .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
-                                )
+                            HStack {
+                                Image(systemName: "trash.fill")
+                                Text(LocalizationManager.shared.localizedString(for: "Tüm İstatistikleri Sil"))
+                            }
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.red)
+                            )
                         }
+                        .padding(.horizontal)
+                        .padding(.top, 20)
+                        .padding(.bottom, 40)
                     }
-                    .padding(.horizontal)
-                    .padding(.top)
-                    
-                    // Filtreler
-                    HStack(spacing: 16) {
-                        // Zaman aralığı seçici
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(LocalizationManager.shared.localizedString(for: "Time Range"))
-                                .font(.callout)
-                                .foregroundColor(.secondary)
-                            
-                            timeRangePicker
-                        }
-                        
-                        // Zorluk seviyesi seçici
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(LocalizationManager.shared.localizedString(for: "Difficulty Level"))
-                                .font(.callout)
-                                .foregroundColor(.secondary)
-                            
-                            difficultyPicker
-                        }
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
-                    )
-                    .padding(.horizontal)
-                    
-                    // Özet kart
-                    statisticsSummaryCard
-                    
-                    // Tamamlama oranı grafiği
-                    completionRateChart
-                    
-                    // Performans grafiği
-                    performanceChart
+                    .padding(.bottom, 30)
+                    .id(refreshTrigger) // Dil değiştiğinde içeriği zorla güncelle
                 }
-                .padding(.bottom, 30)
-                .id(refreshTrigger) // Dil değiştiğinde içeriği zorla güncelle
             }
+            .navigationTitle(pageTitle)
+            .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear {
             // @MainActor içinde async olmayan kodu çağıralım
@@ -183,13 +210,17 @@ struct DetailedStatisticsView: View {
                 // await kullanmadan düz çağrı
                 setupLocalization()
             }
+            print("📱 DetailedStatisticsView görünümü açıldı")
+            // Gerçek veri yükle
             loadData()
             setupLanguageChangeListener()
         }
         .onChange(of: selectedTimeRange) { _, _ in
+            print("🔄 Zaman aralığı değişti: \(selectedTimeRange.rawValue)")
             loadData()
         }
         .onChange(of: selectedDifficulty) { _, _ in
+            print("🔄 Zorluk seviyesi değişti: \(selectedDifficulty.rawValue)")
             loadData()
         }
     }
@@ -716,89 +747,434 @@ struct DetailedStatisticsView: View {
     
     // Gerçek veriler yerine örnek verileri kullanalım
     private func loadData() {
-        // Örnek veriler oluştur
-        var dummyCompletionData: [CompletionDataPoint] = []
-        var dummyPerformanceData: [PerformanceDataPoint] = []
+        // İstatistik modelini sıfırla
+        statistics = StatisticsData.placeholder
+        completionData = []
+        performanceData = []
         
-        // Son 7 gün için veri oluştur
+        // Refresh ettiğimizi bildir
+        print("📊 İSTATİSTİK YÜKLEME BAŞLADI 📊")
+        print("📝 Zorluk Seviyesi: \(selectedDifficulty.rawValue), Zaman Aralığı: \(selectedTimeRange.rawValue)")
+        
+        // Kullanıcı giriş yapmış mı kontrol et
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("⚠️ İstatistikler yüklenemedi: Kullanıcı giriş yapmamış")
+            
+            // Kullanıcı giriş yapmamışsa varsayılan dummy verileri kullan
+            print("🔄 Demo verileri yükleniyor (kullanıcı girişi yok)")
+            loadDummyData()
+            return
+        }
+        
+        print("👤 Kullanıcı ID: \(userID) - Gerçek veriler yükleniyor")
+        
+        // Firestore'dan tamamlanmış oyunları çek
+        let db = Firestore.firestore()
+        var query = db.collection("games")
+            .whereField("userID", isEqualTo: userID)
+            .whereField("isCompleted", isEqualTo: true)
+            .whereField("difficulty", isEqualTo: selectedDifficulty.rawValue)
+            
+        // Zaman aralığına göre filtreleme
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
+        var fromDate: Date
         
-        let numberOfDays: Int
         switch selectedTimeRange {
         case .week:
-            numberOfDays = 7
+            fromDate = calendar.date(byAdding: .day, value: -7, to: today)!
         case .month:
-            numberOfDays = 30
+            fromDate = calendar.date(byAdding: .month, value: -1, to: today)!
         case .year:
-            numberOfDays = 12 // Sadece aylar gösterilecek
+            fromDate = calendar.date(byAdding: .year, value: -1, to: today)!
         case .allTime:
-            numberOfDays = 12 // Sadece son 12 ay
+            fromDate = calendar.date(byAdding: .year, value: -10, to: today)! // Pratik olarak "tüm zamanlar"
         }
         
-        for i in 0..<numberOfDays {
-            let date: Date
-            if selectedTimeRange == .year || selectedTimeRange == .allTime {
-                // Yıllık veriler için aylar göster
-                date = calendar.date(byAdding: .month, value: -i, to: today)!
-            } else {
-                // Haftalık/aylık veriler için günler göster
-                date = calendar.date(byAdding: .day, value: -i, to: today)!
+        print("📅 Tarih filtresi: \(fromDate) - \(today)")
+        
+        // Tarih filtresini ekle
+        query = query.whereField("timestamp", isGreaterThan: fromDate)
+        
+        // Sorgulama yapılıyor bilgisi
+        print("🔍 Firestore sorgusu yapılıyor: games koleksiyonu")
+        
+        // Verileri çek
+        query.getDocuments { snapshot, error in
+            if let error = error {
+                print("⚠️ Firestore'dan veriler alınamadı: \(error.localizedDescription)")
+                print("🔄 Firebase hatası nedeniyle demo veriler yükleniyor")
+                self.loadDummyData()
+                return
             }
             
-            // Rastgele tamamlama durumu
-            let completed = Bool.random()
-            dummyCompletionData.append(CompletionDataPoint(date: date, completed: completed))
+            print("✅ Firestore sorgusu tamamlandı")
             
-            // Rastgele performans verisi
-            let time = TimeInterval.random(in: 120...600) // 2-10 dakika arası
-            let errors = Int.random(in: 0...3)
-            dummyPerformanceData.append(PerformanceDataPoint(date: date, time: time, errors: errors))
+            guard let documents = snapshot?.documents else {
+                print("⚠️ Dökümanlar bulunamadı veya boş")
+                print("🔄 Döküman bulunamadığı için demo veriler yükleniyor")
+                self.loadDummyData()
+                return
+            }
+            
+            if documents.isEmpty {
+                print("ℹ️ Bu filtreye uygun tamamlanmış oyun bulunamadı")
+                // Veri bulunamadıysa boş bırak
+                DispatchQueue.main.async {
+                    print("📊 Veri olmadığı için boş istatistikler gösteriliyor")
+                    self.statistics = StatisticsData.placeholder
+                    self.completionData = []
+                    self.performanceData = []
+                }
+                return
+            }
+            
+            print("📊 \(documents.count) tamamlanmış oyun bulundu")
+            
+            // İstatistik verileri için geçici diziler
+            var tempCompletionData: [CompletionDataPoint] = []
+            var tempPerformanceData: [PerformanceDataPoint] = []
+            
+            // Toplam süre ve hata sayıları
+            var totalTime: TimeInterval = 0
+            var totalErrors = 0
+            var bestTime: TimeInterval = Double.infinity
+            
+            // Her oyunu işle
+            for (index, document) in documents.enumerated() {
+                let data = document.data()
+                
+                // Doküman ID
+                let docID = document.documentID
+                print("📄 Oyun \(index+1)/\(documents.count) işleniyor - ID: \(docID)")
+                
+                // Timestamp'i tarih olarak al
+                if let timestamp = data["timestamp"] as? Timestamp {
+                    let date = timestamp.dateValue()
+                    print("   📅 Tarih: \(date)")
+                } else {
+                    print("   ⚠️ Timestamp bulunamadı")
+                }
+                
+                // Oyun tamamlanmış mı?
+                if let isCompleted = data["isCompleted"] as? Bool {
+                    print("   ✓ Tamamlanma: \(isCompleted ? "Evet" : "Hayır")")
+                } else {
+                    print("   ⚠️ isCompleted alanı bulunamadı")
+                }
+                
+                // Süre
+                if let elapsedTime = data["elapsedTime"] as? TimeInterval {
+                    print("   ⏱️ Süre: \(elapsedTime) saniye")
+                } else {
+                    print("   ⚠️ elapsedTime alanı bulunamadı")
+                }
+                
+                // Hatalar
+                if let errorCount = data["errorCount"] as? Int {
+                    print("   ❌ Hata sayısı: \(errorCount)")
+                } else {
+                    print("   ⚠️ errorCount alanı bulunamadı")
+                }
+                
+                // Verileri al
+                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let isCompleted = data["isCompleted"] as? Bool ?? false
+                let elapsedTime = data["elapsedTime"] as? TimeInterval ?? 0
+                let errorCount = data["errorCount"] as? Int ?? 0
+                
+                // Tamamlama verisi ekle
+                tempCompletionData.append(CompletionDataPoint(
+                    date: timestamp,
+                    completed: isCompleted
+                ))
+                
+                // Performans verisi ekle
+                tempPerformanceData.append(PerformanceDataPoint(
+                    date: timestamp,
+                    time: elapsedTime,
+                    errors: errorCount
+                ))
+                
+                // Toplam değerleri güncelle
+                totalTime += elapsedTime
+                totalErrors += errorCount
+                
+                // En iyi süreyi güncelle
+                if isCompleted && elapsedTime > 0 && elapsedTime < bestTime {
+                    bestTime = elapsedTime
+                }
+            }
+            
+            // Eğer hiç en iyi süre bulunamadıysa sıfırla
+            if bestTime == Double.infinity {
+                bestTime = 0
+            }
+            
+            print("✅ Veri işleme tamamlandı")
+            print("📈 Toplam süre: \(totalTime), Toplam hata: \(totalErrors)")
+            print("🏆 En iyi süre: \(bestTime)")
+            
+            // Verileri zaman sırasına göre sırala
+            tempCompletionData.sort { $0.date < $1.date }
+            tempPerformanceData.sort { $0.date < $1.date }
+            
+            // Trend hesaplama için verileri ikiye böl
+            let performanceCount = tempPerformanceData.count
+            let firstHalf = Array(tempPerformanceData.prefix(max(1, performanceCount/2)))
+            let secondHalf = Array(tempPerformanceData.suffix(max(1, performanceCount/2)))
+            
+            let firstHalfAvg = firstHalf.map { $0.time }.reduce(0, +) / Double(max(1, firstHalf.count))
+            let secondHalfAvg = secondHalf.map { $0.time }.reduce(0, +) / Double(max(1, secondHalf.count))
+            
+            let trendDirection: StatisticsData.TrendDirection
+            let trendDiff = secondHalfAvg - firstHalfAvg
+            if abs(trendDiff) < 30 { // 30 saniyelik fark anlamsız kabul edilir
+                trendDirection = .stable
+            } else if trendDiff < 0 { // Daha hızlı çözdüyse (süre azaldıysa) iyileşme var
+                trendDirection = .up
+            } else { // Daha yavaş çözdüyse kötüleşme var
+                trendDirection = .down
+            }
+            
+            print("📊 İstatistikler hesaplandı - Trend: \(trendDirection)")
+            
+            // Ana thread'de UI güncellemelerini yap
+            DispatchQueue.main.async {
+                print("🔄 UI güncellemesi başladı")
+                
+                // Sonuçları uygula
+                self.completionData = tempCompletionData
+                self.performanceData = tempPerformanceData
+                
+                // İstatistik özetini oluştur
+                self.statistics = StatisticsData(
+                    totalGames: documents.count,
+                    completedGames: documents.count, // Tüm oyunlar tamamlanmış (filter ile çektik)
+                    averageTime: totalTime / Double(max(1, documents.count)),
+                    bestTime: bestTime,
+                    averageErrors: Double(totalErrors) / Double(max(1, documents.count)),
+                    successRate: 1.0, // Tamamlanma oranı %100 (filter ile tamamlanmış oyunları çektik)
+                    trendDirection: trendDirection
+                )
+                
+                print("✅ UI güncellendi: \(documents.count) oyun gösteriliyor")
+                print("📊 İSTATİSTİK YÜKLEME TAMAMLANDI 📊")
+            }
+        }
+    }
+    
+    // Örnek veriler oluştur (gerçek veri yoksa)
+    private func loadDummyData() {
+        print("ℹ️ İstatistik verisi yok! Grafikleri boş gösteriyorum")
+        
+        // Verileri sıfırla
+        statistics = StatisticsData.placeholder
+        completionData = []
+        performanceData = []
+        
+        print("✅ İstatistikler sıfırlandı - boş gösterilecek")
+    }
+    
+    // Tüm tamamlanmış oyunları silme fonksiyonu
+    private func deleteAllCompletedGames() {
+        print("🔍 deleteAllCompletedGames fonksiyonu çağrıldı")
+        
+        // Kullanıcı giriş yapmış mı kontrol et
+        if Auth.auth().currentUser == nil {
+            print("⚠️ Kullanıcı giriş yapmamış - uyarı gösterilecek")
+            // Kullanıcı giriş yapmamışsa uyarı göster
+            let alertTitle = LocalizationManager.shared.localizedString(for: "Giriş Gerekli")
+            let alertMessage = LocalizationManager.shared.localizedString(for: "Bu özelliği kullanmak için lütfen oturum açın.")
+            
+            let alert = UIAlertController(title: alertTitle, message: alertMessage, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: LocalizationManager.shared.localizedString(for: "Tamam"), style: .default))
+            
+            // Uyarıyı göster
+            getTopViewController()?.present(alert, animated: true)
+            return
         }
         
-        // Verileri zaman sırasına göre sırala
-        dummyCompletionData.sort { $0.date < $1.date }
-        dummyPerformanceData.sort { $0.date < $1.date }
+        print("👤 Kullanıcı giriş yapmış: \(Auth.auth().currentUser?.uid ?? "bilinmiyor")")
         
-        // Son veriler
-        completionData = dummyCompletionData
-        performanceData = dummyPerformanceData
-        
-        // İstatistik özeti
-        let totalGames = dummyCompletionData.count
-        let completedGames = dummyCompletionData.filter { $0.completed }.count
-        let averageTime = dummyPerformanceData.map { $0.time }.reduce(0, +) / Double(max(1, dummyPerformanceData.count))
-        let bestTime = dummyPerformanceData.map { $0.time }.min() ?? 0
-        let averageErrors = Double(dummyPerformanceData.map { $0.errors }.reduce(0, +)) / Double(max(1, dummyPerformanceData.count))
-        let successRate = Double(completedGames) / Double(max(1, totalGames))
-        
-        // Trend hesapla - Basit bir şekilde
-        let firstHalf = Array(dummyPerformanceData.prefix(numberOfDays/2))
-        let secondHalf = Array(dummyPerformanceData.suffix(numberOfDays/2))
-        
-        let firstHalfAvg = firstHalf.map { $0.time }.reduce(0, +) / Double(max(1, firstHalf.count))
-        let secondHalfAvg = secondHalf.map { $0.time }.reduce(0, +) / Double(max(1, secondHalf.count))
-        
-        let trendDirection: StatisticsData.TrendDirection
-        let trendDiff = secondHalfAvg - firstHalfAvg
-        if abs(trendDiff) < 30 { // 30 saniyelik fark anlamsız kabul edilir
-            trendDirection = .stable
-        } else if trendDiff < 0 { // Daha hızlı çözdüyse (süre azaldıysa) iyileşme var
-            trendDirection = .up
-        } else { // Daha yavaş çözdüyse kötüleşme var
-            trendDirection = .down
-        }
-        
-        // Özet istatistik nesnesini oluştur
-        statistics = StatisticsData(
-            totalGames: totalGames,
-            completedGames: completedGames,
-            averageTime: averageTime,
-            bestTime: bestTime,
-            averageErrors: averageErrors,
-            successRate: successRate,
-            trendDirection: trendDirection
+        // Onay isteyin
+        let confirmAlert = UIAlertController(
+            title: LocalizationManager.shared.localizedString(for: "Dikkat"),
+            message: LocalizationManager.shared.localizedString(for: "Tüm istatistik verileri, yüksek skorlar ve tamamlanmış oyunlar silinecek. Bu işlem geri alınamaz."),
+            preferredStyle: .alert
         )
+        
+        confirmAlert.addAction(UIAlertAction(
+            title: LocalizationManager.shared.localizedString(for: "İptal"),
+            style: .cancel
+        ) { _ in 
+            print("❌ Kullanıcı silme işlemini iptal etti")
+        })
+        
+        confirmAlert.addAction(UIAlertAction(
+            title: LocalizationManager.shared.localizedString(for: "Sil"),
+            style: .destructive
+        ) { _ in
+            print("✅ Kullanıcı silme işlemini onayladı")
+            // Yükleme göstergesi
+            let loadingAlert = UIAlertController(
+                title: LocalizationManager.shared.localizedString(for: "İşlem Sürüyor"),
+                message: LocalizationManager.shared.localizedString(for: "İstatistikler, skorlar ve tamamlanmış oyunlar siliniyor..."),
+                preferredStyle: .alert
+            )
+            
+            // Yükleme göstergesini göster
+            self.getTopViewController()?.present(loadingAlert, animated: true)
+            
+            // Core Data'dan skorları sil
+            print("🔄 deleteAllHighScores fonksiyonu çağrılıyor")
+            self.deleteAllHighScores { success in
+                print("✅ deleteAllHighScores tamamlandı - başarı: \(success)")
+                
+                // Tamamlanmış oyunları sil
+                print("🔄 deleteAllCompletedGames fonksiyonu çağrılıyor")
+                PersistenceController.shared.deleteAllCompletedGames()
+                
+                // Veriyi hemen yenile
+                print("🔄 Veriler silindikten sonra yenileniyor")
+                DispatchQueue.main.async {
+                    // Sayfayı yenile
+                    self.refreshTrigger = UUID() // View ID'sini değiştirerek yeniden render et
+                    self.loadData() // Verileri yeniden yükle
+                }
+                
+                // Yükleme göstergesini kaldır ve başarı mesajı göster
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    // Yükleme göstergesini kapat
+                    loadingAlert.dismiss(animated: true) {
+                        // Başarı mesajı göster
+                        let successAlert = UIAlertController(
+                            title: LocalizationManager.shared.localizedString(for: "İşlem Tamamlandı"),
+                            message: success ? 
+                                LocalizationManager.shared.localizedString(for: "Tüm istatistikler ve tamamlanmış oyunlar başarıyla silindi.") :
+                                LocalizationManager.shared.localizedString(for: "Bazı veriler silinemedi."),
+                            preferredStyle: .alert
+                        )
+                        successAlert.addAction(UIAlertAction(
+                            title: LocalizationManager.shared.localizedString(for: "Tamam"),
+                            style: .default
+                        ))
+                        
+                        // Başarı mesajını göster
+                        self.getTopViewController()?.present(successAlert, animated: true)
+                    }
+                }
+            }
+        })
+        
+        // Onay dialogunu göster
+        getTopViewController()?.present(confirmAlert, animated: true)
+    }
+    
+    // En üstteki view controller'ı bulma yardımcı fonksiyonu
+    private func getTopViewController() -> UIViewController? {
+        // UIWindow dizisini alıyoruz
+        let windows = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .filter { $0.isKeyWindow }
+        
+        // Key window'u bulduk
+        guard let keyWindow = windows.first else {
+            print("❌ Key window bulunamadı!")
+            return nil
+        }
+        
+        // Root controller'dan başlayarak en üstteki controller'ı bul
+        var topController = keyWindow.rootViewController
+        while let presentedController = topController?.presentedViewController {
+            topController = presentedController
+        }
+        
+        print("✅ Top view controller bulundu: \(String(describing: type(of: topController)))")
+        return topController
+    }
+    
+    // Tüm yüksek skorları sil
+    private func deleteAllHighScores(completion: @escaping (Bool) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("⚠️ Kullanıcı giriş yapmamış!")
+            completion(false)
+            return
+        }
+        
+        let context = PersistenceController.shared.container.viewContext
+        
+        // Firebase'den yüksek skorları sil
+        Firestore.firestore().collection("highScores")
+            .whereField("userID", isEqualTo: userID)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("❌ Firestore skor sorgulama hatası: \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                guard let documents = snapshot?.documents, !documents.isEmpty else {
+                    print("ℹ️ Firestore'da yüksek skor bulunamadı")
+                    // Firebase'de veri yoksa Core Data'dan silmeye devam et
+                    self.deleteHighScoresFromCoreData(context: context, completion: completion)
+                    return
+                }
+                
+                print("📊 Firebase'den silinecek skor sayısı: \(documents.count)")
+                
+                // Batch işlemi oluştur
+                let batch = Firestore.firestore().batch()
+                
+                for document in documents {
+                    print("🗑️ Firebase'den siliniyor: \(document.documentID)")
+                    let scoreRef = Firestore.firestore().collection("highScores").document(document.documentID)
+                    batch.deleteDocument(scoreRef)
+                }
+                
+                // Batch işlemini uygula
+                batch.commit { error in
+                    if let error = error {
+                        print("❌ Firebase skor silme hatası: \(error.localizedDescription)")
+                        completion(false)
+                    } else {
+                        print("✅ Firebase'den \(documents.count) skor silindi")
+                        // Firebase'den sildikten sonra Core Data'dan da sil
+                        self.deleteHighScoresFromCoreData(context: context, completion: completion)
+                    }
+                }
+            }
+    }
+    
+    // Core Data'dan yüksek skorları sil
+    private func deleteHighScoresFromCoreData(context: NSManagedObjectContext, completion: @escaping (Bool) -> Void) {
+        let fetchRequest: NSFetchRequest<HighScore> = HighScore.fetchRequest()
+        
+        do {
+            let highScores = try context.fetch(fetchRequest)
+            
+            if highScores.isEmpty {
+                print("ℹ️ Core Data'da silinecek yüksek skor bulunamadı")
+                completion(true)
+                return
+            }
+            
+            print("📊 Core Data'dan silinecek skor sayısı: \(highScores.count)")
+            
+            for score in highScores {
+                context.delete(score)
+                print("🗑️ Core Data'dan silindi: \(score.id?.uuidString ?? "bilinmiyor")")
+            }
+            
+            try context.save()
+            print("✅ Tüm yüksek skorlar Core Data'dan silindi")
+            completion(true)
+        } catch {
+            print("❌ Core Data skor silme hatası: \(error.localizedDescription)")
+            completion(false)
+        }
     }
 }
 

@@ -861,12 +861,12 @@ struct SettingsView: View {
                 // İkon
                 ZStack {
                     Circle()
-                        .fill(Color.red.opacity(0.15))
+                        .fill(getBatteryColor().opacity(0.15))
                         .frame(width: 36, height: 36)
                     
-                    Image(systemName: "battery.0")
+                    Image(systemName: getBatteryIcon())
                         .font(.system(size: 16))
-                        .foregroundColor(.red)
+                        .foregroundColor(getBatteryColor())
                 }
                 
                 // Başlık ve durum
@@ -1740,15 +1740,6 @@ struct LanguageSelectionSheet: View {
                     .padding(.leading)
                     
                     Spacer()
-                    
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text.localizedSafe("settings.done")
-                            .scaledFont(size: 16, weight: .semibold)
-                            .foregroundColor(.blue)
-                    }
-                    .padding()
                 }
                 
                 Text.localizedSafe("language.selection")

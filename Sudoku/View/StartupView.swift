@@ -52,115 +52,121 @@ struct StartupView: View {
     ]
     
     var body: some View {
-        ZStack {
-            // Ana uygulama her zaman yüklü ve hazır olacak (arka planda)
-            ContentView()
-                .localizationAware()
-                .opacity(isReady ? 1 : 0)
-                .animation(.easeIn(duration: 0.3), value: isReady)
-            
-            // Açılış ekranı (isReady olana kadar veya forceShowSplash=true iken görünür)
-            if !isReady || forceShowSplash {
+        Group {
+            if isReady && !forceShowSplash {
+                // İşlem tamamlandığında sadece ContentView gösterilecek
+                ContentView()
+            } else {
+                // Henüz hazır değilse veya zorla splash gösterilecekse ZStack kullan
                 ZStack {
-                    // Arkaplan gradyant
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color(UIColor.systemBackground),
-                            Color(UIColor.systemBackground).opacity(0.8),
-                            gridColors[0].opacity(0.1),
-                            gridColors[1].opacity(0.1)
-                        ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .ignoresSafeArea()
-                    .opacity(backgroundOpacity)
-                    
-                    // Sudoku grid animasyonu
-                    if showGrid {
-                        SudokuGridAnimation()
-                            .opacity(gridOpacity)
+                    // Arka planda ContentView'u sadece hazırsa göster
+                    if isReady {
+                        ContentView()
                     }
                     
-                    // Uçuşan sayılar
-                    if showNumbers {
-                        ForEach(0..<numbers.count, id: \.self) { index in
-                            Text("\(numbers[index])")
-                                .font(.system(size: numberSizes[index], weight: .semibold, design: .rounded))
-                                .foregroundColor(numberColors[index])
-                                .position(numberPositions[index])
-                                .opacity(0.7)
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                    }
-                    
-                    // Logo ve başlık - Ekranın ortasında
-                    VStack(spacing: 20) {
-                        Spacer()
-                        // Logo - AnimatedSudokuLogo kullanıyoruz
-                        AnimatedSudokuLogo(isStartupScreen: true, continuousRotation: true)
-                            .frame(width: 120, height: 120)
-                            .scaleEffect(logoScale)
-                            .opacity(logoOpacity)
-                        
-                        // Uygulama adı
-                        Text(LocalizationManager.shared.localizedString(for: "SUDOKU"))
-                            .font(.system(size: 42, weight: .heavy, design: .rounded))
-                            .foregroundColor(.primary)
-                            .tracking(5)
-                            .opacity(textOpacity)
-                        
-                        // Alt başlık
-                        Text.localizedSafe("Zihninizi Çalıştırın")
-                            .font(.system(size: 18, weight: .medium, design: .rounded))
-                            .foregroundColor(.secondary)
-                            .padding(.top, -5)
-                            .opacity(textOpacity * 0.8)
-                        
-                        Spacer()
-                        
-                        // Geliştirici bilgisi - Arka plan ile korumalı
-                        HStack(spacing: 8) {
-                            // Geliştirici simgesi
-                            ZStack {
-                                Circle()
-                                    .fill(LinearGradient(
-                                        gradient: Gradient(colors: [gridColors[2], gridColors[0]]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
-                                    .frame(width: 36, height: 36)
-                                
-                                Text("N")
-                                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                                    .foregroundColor(.white)
-                            }
-                            
-                            // Geliştirici adı
-                            VStack(alignment: .leading, spacing: 0) {
-                                Text.localizedSafe("Geliştirici")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.secondary)
-                                
-                                Text("Necati Yıldırım")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.primary)
-                            }
-                        }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(UIColor.systemBackground).opacity(0.9))
-                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    // Açılış ekranı
+                    ZStack {
+                        // Arkaplan gradyant
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color(UIColor.systemBackground),
+                                Color(UIColor.systemBackground).opacity(0.8),
+                                gridColors[0].opacity(0.1),
+                                gridColors[1].opacity(0.1)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                        .padding(.bottom, 20)
-                        .opacity(textOpacity * 0.9)
-                        .zIndex(10) // Uçuşan sayıların altında kalmasını önlemek için
+                        .ignoresSafeArea()
+                        .opacity(backgroundOpacity)
                         
-                        Spacer()
+                        // Sudoku grid animasyonu
+                        if showGrid {
+                            SudokuGridAnimation()
+                                .opacity(gridOpacity)
+                        }
+                        
+                        // Uçuşan sayılar
+                        if showNumbers {
+                            ForEach(0..<numbers.count, id: \.self) { index in
+                                Text("\(numbers[index])")
+                                    .font(.system(size: numberSizes[index], weight: .semibold, design: .rounded))
+                                    .foregroundColor(numberColors[index])
+                                    .position(numberPositions[index])
+                                    .opacity(0.7)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                        }
+                        
+                        // Logo ve başlık - Ekranın ortasında
+                        VStack(spacing: 20) {
+                            Spacer()
+                            // Logo - AnimatedSudokuLogo kullanıyoruz
+                            AnimatedSudokuLogo()
+                                .frame(width: 120, height: 120)
+                                .scaleEffect(logoScale)
+                                .opacity(logoOpacity)
+                            
+                            // Uygulama adı
+                            Text(LocalizationManager.shared.localizedString(for: "SUDOKU"))
+                                .font(.system(size: 42, weight: .heavy, design: .rounded))
+                                .foregroundColor(.primary)
+                                .tracking(5)
+                                .opacity(textOpacity)
+                            
+                            // Alt başlık
+                            Text(LocalizationManager.shared.localizedString(for: "Zihninizi Çalıştırın"))
+                                .font(.system(size: 18, weight: .medium, design: .rounded))
+                                .foregroundColor(.secondary)
+                                .padding(.top, -5)
+                                .opacity(textOpacity * 0.8)
+                            
+                            Spacer()
+                            
+                            // Geliştirici bilgisi - Arka plan ile korumalı
+                            HStack(spacing: 8) {
+                                // Geliştirici simgesi
+                                ZStack {
+                                    Circle()
+                                        .fill(LinearGradient(
+                                            gradient: Gradient(colors: [gridColors[2], gridColors[0]]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ))
+                                        .frame(width: 36, height: 36)
+                                    
+                                    Text("N")
+                                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                }
+                                
+                                // Geliştirici adı
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Text(LocalizationManager.shared.localizedString(for: "Geliştirici"))
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.secondary)
+                                    
+                                    Text("Necati Yıldırım")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.primary)
+                                }
+                            }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(UIColor.systemBackground).opacity(0.9))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                            )
+                            .padding(.bottom, 20)
+                            .opacity(textOpacity * 0.9)
+                            .zIndex(10) // Uçuşan sayıların altında kalmasını önlemek için
+                            
+                            Spacer()
+                        }
+                        .frame(maxHeight: .infinity)
                     }
-                    .frame(maxHeight: .infinity)
+                    .opacity(isReady ? 0 : 1) // isReady olduğunda tamamen görünmez yap
                 }
                 .onAppear {
                     // Animasyon başlat
@@ -181,8 +187,6 @@ struct StartupView: View {
                         
                         DispatchQueue.main.asyncAfter(deadline: .now() + resetDuration) {
                             print("🔄 Splash ekranını kapatıp ana sayfaya dönülüyor")
-                            // ContentView'u hazırla (arka planda)
-                            isReady = true
                             
                             // Kapanış animasyonunu uygula
                             withAnimation(.easeInOut(duration: 0.3)) {
@@ -190,29 +194,37 @@ struct StartupView: View {
                                 textOpacity = 0
                                 backgroundOpacity = 0
                                 gridOpacity = 0
+                                showNumbers = false
+                            }
+                            
+                            // Animasyon bittikten sonra isReady'yi ayarla
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                isReady = true
                             }
                         }
                     } else {
                         // Normal açılış - belirtilen süre sonra ContentView'a geç
                         print("🚀 StartupView \(displayDuration) saniye sonra ContentView'a geçecek...")
                         DispatchQueue.main.asyncAfter(deadline: .now() + displayDuration) {
-                            // ÖNCE ContentView'u hazırla (arka planda)
-                            print("🚀 StartupView uygulamayı başlatıyor...")
-                            isReady = true
-                            
-                            // SONRA kapanış animasyonunu uygula
+                            // ÖNCE kapanış animasyonunu uygula
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 logoOpacity = 0
                                 textOpacity = 0
                                 backgroundOpacity = 0
                                 gridOpacity = 0
+                                showNumbers = false
+                            }
+                            
+                            // Animasyon bittikten sonra ContentView'a geç
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                print("🚀 StartupView uygulamayı başlatıyor...")
+                                isReady = true
                             }
                         }
                     }
                 }
             }
         }
-        .localizationAware()
     }
     
     // Animasyonları başlat

@@ -495,32 +495,55 @@ class SudokuViewModel: ObservableObject {
 
     // Oyun tamamlanma kontrolü - optimize edildi
     private func checkGameCompletion() {
-        // Hızlı kontrol: Eğer tahta yeterli derecede dolmamışsa, tamamlanmamıştır
-        if !board.isBoardFilledEnough() {
+        // Oyun zaten tamamlanmışsa tekrar kontrol etmeye gerek yok
+        if gameState == .completed {
             return
         }
         
-        // Hata varsa, tamamlanmamıştır
-        if !invalidCells.isEmpty {
-            return
-        }
-        
-        // Tam kontrol (daha maliyetli)
-        if board.isComplete() {
-            // Tamamlama sesi çal
-            SoundManager.shared.playCompletionSound()
-            
-            // Oyun durumunu güncellemeden önce halihazırda oynanıyorsa diye kontrol et
-            if gameState == .playing {
-                print("✅ Sudoku tamamlandı! Skor kaydedilecek.")
-                handleGameCompletion()
-                
-                // Kayıtlı oyunu sil (oyun tamamlandı)
-                deleteSavedGameIfExists()
-            } else {
-                gameState = .completed
-                stopTimer()
+        // Tüm hücrelerin dolu olup olmadığını kontrol et
+        var isComplete = true
+        for row in 0..<9 {
+            for col in 0..<9 {
+                if board.getValue(row: row, column: col) == nil {
+                    isComplete = false
+                    break
+                }
             }
+            if !isComplete {
+                break
+            }
+        }
+        
+        // Eğer tüm hücreler doluysa ve doğruysa
+        if isComplete && !hasErrors {
+            // Oyunu tamamlandı olarak işaretle
+            gameState = .completed
+            
+            // Yüksek skoru kaydet
+            let score = calculateScore()
+            PersistenceController.shared.saveHighScore(
+                difficulty: board.difficulty.rawValue,
+                elapsedTime: elapsedTime,
+                errorCount: errorCount,
+                hintCount: hintCount,
+                score: score
+            )
+            
+            // Oyunu Firebase'e kaydet
+            if let gameID = currentGameID {
+                PersistenceController.shared.saveGameToFirestore(
+                    gameID: gameID,
+                    board: board.getBoardArray(),
+                    difficulty: board.difficulty.rawValue,
+                    elapsedTime: elapsedTime
+                )
+            }
+            
+            // Tamamlanma sesini çal
+            SoundManager.shared.playGameCompletedSound()
+            
+            // Tebrik mesajını göster
+            showCompletionAlert = true
         }
     }
     
@@ -1400,42 +1423,34 @@ class SudokuViewModel: ObservableObject {
         gameState = .completed
         stopTimer()
         
-        // Skoru kaydet
-        let hintUsed = 3 - remainingHints
-        print("📊 Skor kaydediliyor... Zorluk: \(board.difficulty.rawValue), Süre: \(elapsedTime), Hatalar: \(errorCount), İpuçları: \(hintUsed)")
-        
-        ScoreManager.shared.saveScore(
-            difficulty: board.difficulty,
-            timeElapsed: elapsedTime,
+        // Yüksek skoru kaydet
+        let score = calculateScore()
+        PersistenceController.shared.saveHighScore(
+            difficulty: board.difficulty.rawValue,
+            elapsedTime: elapsedTime,
             errorCount: errorCount,
-            hintCount: hintUsed,
-            moveCount: moveCount
+            hintCount: 3 - remainingHints,
+            score: score
         )
         
-        // Oyun tamamlandığında bildirim gönder (gerekirse kullanılabilir)
-        NotificationCenter.default.post(name: NSNotification.Name("GameCompleted"), object: nil, userInfo: [
-            "difficulty": board.difficulty.rawValue,
-            "score": calculatePerformanceScore(),
-            "time": elapsedTime
-        ])
-        
-        // Ses efekti çal
-        SoundManager.shared.playGameCompletedSound()
-        
-        // Haptic feedback (titreşim)
-        if enableHapticFeedback {
-            let generator = UINotificationFeedbackGenerator()
-            generator.prepare()
-            generator.notificationOccurred(.success)
+        // Eğer oyun kaydedilmişse, hem Firebase hem de CoreData'dan sil
+        if let gameID = currentGameID {
+            // Firebase'den sil
+            PersistenceController.shared.deleteGameFromFirestore(gameID: gameID)
             
-            // Daha güçlü bir etki için kısa aralıklarla birkaç kez titreşim
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                let secondGen = UIImpactFeedbackGenerator(style: .medium)
-                secondGen.impactOccurred()
-            }
+            // CoreData'dan sil
+            PersistenceController.shared.deleteSavedGameFromCoreData(gameID: gameID.uuidString)
+            
+            // currentGameID'yi sıfırla
+            currentGameID = nil
+            print("✅ Tamamlanan oyun başarıyla silindi")
         }
         
-        print("✅ Oyun tamamlama işlemi tamamlandı ve skor kaydedildi.")
+        // Tamamlanma sesini çal
+        SoundManager.shared.playGameCompletedSound()
+        
+        // Tebrik mesajını göster
+        showCompletionAlert = true
     }
     
     // Performans skorunu hesapla
@@ -2570,37 +2585,28 @@ class SudokuViewModel: ObservableObject {
     
     // Bir değere sahip tüm hücreleri vurgula
     private func updateSameValueCells() {
-        // Performans optimizasyonu: Seçili hücre yoksa güncelleme yapma
-        guard let selectedPosition = selectedCell, 
+        // Seçili hücre yoksa veya değeri 0 ise vurgulamaları temizle
+        guard let selectedPosition = selectedCell,
               let selectedValue = board.getValue(at: selectedPosition.row, col: selectedPosition.column),
               selectedValue > 0 else {
             sameValuePositions.removeAll(keepingCapacity: true)
             return
         }
         
-        // Önbelleklenmiş değeri kontrol et - sadece seçili hücre veya değer değiştiyse güncelle
-        let cacheKey = "sameValue_\(selectedPosition.row)_\(selectedPosition.column)_\(selectedValue)"
-        if let cached = sameValueCache[cacheKey] {
-            sameValuePositions = cached
-            return
-        }
-        
-        // Performans optimizasyonu: Önceki vurgulamaları tamamen silmek yerine yeni set oluştur
+        // Yeni pozisyonlar için set oluştur
         var newPositions = Set<Position>()
         
-        // Tüm tahtada aynı değere sahip hücreleri bul - optimize edildi
+        // Tüm tahtayı tara ve aynı değere sahip hücreleri bul
         for row in 0..<9 {
             for col in 0..<9 {
-                if let value = board.getValue(at: row, col: col), value == selectedValue {
+                if let value = board.getValue(at: row, col: col), 
+                   value == selectedValue && value > 0 {
                     newPositions.insert(Position(row: row, col: col))
                 }
             }
         }
         
-        // Önbelleğe al
-        sameValueCache[cacheKey] = newPositions
-        
-        // Sadece değişiklik varsa güncelle
+        // Pozisyonları güncelle
         if sameValuePositions != newPositions {
             sameValuePositions = newPositions
         }
@@ -2647,6 +2653,45 @@ class SudokuViewModel: ObservableObject {
         let newValue: Int?
         let previousValue: Int?
     }
+    
+    @Published var showCompletionAlert = false
+    @Published var hasErrors = false
+    
+    // Skoru hesapla
+    private func calculateScore() -> Int {
+        let baseScore = 1000
+        let difficultyMultiplier: Double
+        
+        switch board.difficulty {
+        case .easy:
+            difficultyMultiplier = 1.0
+        case .medium:
+            difficultyMultiplier = 1.5
+        case .hard:
+            difficultyMultiplier = 2.0
+        case .expert:
+            difficultyMultiplier = 3.0
+        }
+        
+        // Zaman cezası: Her 30 saniye için -50 puan
+        let timeDeduction = Int((elapsedTime / 30.0) * 50)
+        
+        // Hata cezası: Her hata için -100 puan
+        let errorDeduction = errorCount * 100
+        
+        // İpucu cezası: Her ipucu için -150 puan
+        let hintDeduction = (3 - remainingHints) * 150
+        
+        // Toplam skoru hesapla
+        let finalScore = Int(Double(baseScore) * difficultyMultiplier) - timeDeduction - errorDeduction - hintDeduction
+        
+        // Skor 0'ın altına düşmesin
+        return max(finalScore, 0)
+    }
+} 
+
+// MARK: - NSManagedObject Extensions for HighScoresView Compatibility
+extension NSManagedObject {
 } 
 
 // MARK: - NSManagedObject Extensions for HighScoresView Compatibility

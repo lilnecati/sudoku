@@ -17,6 +17,9 @@ struct ScoreboardView: View {
     // Detaylı istatistik sayfasına geçiş için state
     @State private var showDetailedStatistics = false
     
+    // Yükleniyor durumu için state
+    @State private var isLoading = false
+    
     var body: some View {
         ZStack {
             // Izgara arka planı
@@ -105,6 +108,10 @@ struct ScoreboardView: View {
             loadData()
         }
         .onAppear {
+            // Firebase'den yüksek skorları senkronize et
+            isLoading = true
+            PersistenceController.shared.refreshHighScores()
+            isLoading = false
             loadData()
         }
         // Detaylı istatistik sayfasına geçiş

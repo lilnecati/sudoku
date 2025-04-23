@@ -6,18 +6,36 @@
 
 import SwiftUI
 import CoreData
+import Firebase
+import FirebaseAuth
 
 struct SavedGamesView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \SavedGame.dateCreated, ascending: false)],
-        animation: .default)
-    private var savedGames: FetchedResults<SavedGame>
+    
+    // FetchRequest'i kaldırıp State değişkenine geçiyoruz
+    //@FetchRequest(
+    //    sortDescriptors: [NSSortDescriptor(keyPath: \SavedGame.dateCreated, ascending: false)],
+    //    animation: .default)
+    //private var savedGames: FetchedResults<SavedGame>
+    
+    // Verileri manuel olarak tutacak değişken 
+    @State private var savedGames: [SavedGame] = [] {
+        didSet {
+            // savedGames değiştiğinde filtrelemeyi otomatik olarak çağır
+            filterGames()
+        }
+    }
+    @State private var filteredGames: [SavedGame] = []  // Filtrelenmiş oyunları saklayacak yeni değişken
     
     @ObservedObject var viewModel: SudokuViewModel
     @State private var gameToDelete: SavedGame? = nil
     @State private var showingDeleteAlert = false
-    @State private var selectedDifficulty: String = "Tümü"
+    @State private var selectedDifficulty: String = "Tümü" {
+        didSet {
+            // Zorluk seviyesi değiştiğinde filtrelemeyi çağır
+            filterGames()
+        }
+    }
     @Environment(\.presentationMode) var presentationMode
     
     // Oyun seçme fonksiyonu - ContentView'a oyunu iletmek için
@@ -40,11 +58,21 @@ struct SavedGamesView: View {
         }
     }
     
-    var filteredSavedGames: [SavedGame] {
+    // Oyunları filtreleyen fonksiyon
+    private func filterGames() {
         if selectedDifficulty == "Tümü" {
-            return Array(savedGames)
+            #if DEBUG
+            // Sadece debug modunda print
+            print("🔍 Tüm zorluk seviyeleri gösteriliyor. Toplam oyun sayısı: \(savedGames.count)")
+            #endif
+            filteredGames = Array(savedGames)
         } else {
-            return savedGames.filter { $0.difficulty == selectedDifficulty }
+            let filtered = savedGames.filter { $0.difficulty == selectedDifficulty }
+            #if DEBUG
+            // Sadece debug modunda print
+            print("🔍 '\(selectedDifficulty)' zorluk seviyesine göre filtreleniyor. Oyun sayısı: \(filtered.count)")
+            #endif
+            filteredGames = filtered
         }
     }
     
@@ -102,11 +130,45 @@ struct SavedGamesView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 15) {
-                // Başlık
-                Text.localizedSafe("Kaydedilmiş Oyunlar")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(Color.textColor(for: colorScheme))
-                    .padding(.top)
+                // Başlık ve Temizle butonu yan yana
+                HStack {
+                    Text.localizedSafe("Kaydedilmiş Oyunlar")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(Color.textColor(for: colorScheme))
+                    
+                    Spacer()
+                    
+                    // Tümünü Temizle butonu
+                    if !filteredGames.isEmpty {
+                        Button(action: {
+                            // Tüm oyunları sil
+                            PersistenceController.shared.deleteAllSavedGames()
+                            // ViewContext'i yenile
+                            viewContext.reset()
+                            // FetchRequest'i yenile
+                            do {
+                                try viewContext.save()
+                            } catch {
+                                print("❌ ViewContext yenileme hatası: \(error)")
+                            }
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "trash")
+                                Text.localizedSafe("Tümünü Sil")
+                            }
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.red)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .stroke(Color.red.opacity(0.5), lineWidth: 1)
+                            )
+                        }
+                    }
+                }
+                .padding(.top)
+                .padding(.horizontal)
                 
                 // Özelleştirilmiş zorluk seviyesi filtreleme
                 customDifficultyPicker()
@@ -117,27 +179,22 @@ struct SavedGamesView: View {
                 Spacer()
                     .frame(height: 15)
                 
-                if filteredSavedGames.isEmpty {
+                if filteredGames.isEmpty {
                     Spacer()
                     emptyStateView
                     Spacer()
                 } else {
                     // Kaydedilmiş oyunlar listesi - List kullanımı ile silme işlemi
                     List {
-                        ForEach(filteredSavedGames, id: \.objectID) { game in
+                        ForEach(filteredGames, id: \.objectID) { game in
                             savedGameCard(for: game)
                                 .listRowSeparator(.hidden)
                                 .listRowBackground(Color.clear)
                                 .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
-                                        // Onay sormadan direkt sil
-                                        viewContext.delete(game)
-                                        do {
-                                            try viewContext.save()
-                                        } catch {
-                                            print("Error saving context: \(error)")
-                                        }
+                                        // PersistenceController üzerinden sil
+                                        PersistenceController.shared.deleteSavedGame(game)
                                     } label: {
                                         Label("Sil", systemImage: "trash")
                                     }
@@ -147,6 +204,50 @@ struct SavedGamesView: View {
                     .listStyle(PlainListStyle())
                     .environment(\.defaultMinListRowHeight, 175)
                 }
+            }
+        }
+        // Notification Center dinleyicisi ekle
+        .onAppear {
+            // Manuel olarak kayıtlı oyunları yükle
+            loadSavedGames()
+            
+            print("🔍 SavedGamesView - Bulunan kaydedilmiş oyun sayısı: \(savedGames.count)")
+            
+            // Firebase senkronizasyonunu sadece kaydedilmiş oyunlar sayfasına ilk girişte çalıştır
+            if Auth.auth().currentUser != nil {
+                // Eğer kullanıcı giriş yapmışsa senkronize et
+                PersistenceController.shared.syncSavedGamesFromFirestore { success in
+                    if success {
+                        print("✅ Firebase senkronizasyonu başarılı")
+                        // Veriler güncellendiğinde otomatik olarak yüklenecek (NotificationCenter sayesinde)
+                    }
+                }
+            } else {
+                print("ℹ️ Firebase senkronizasyonu yapılmadı: Kullanıcı giriş yapmamış")
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshSavedGames"))) { _ in
+            // Manuel olarak oyunları tekrar yükle - Silinen oyunları hemen güncellemek için
+            print("🔄 SavedGamesView: Bildirim alındı - veri yenileniyor")
+            
+            // Doğrudan tüm oyunları yükleyelim
+            let freshGames = PersistenceController.shared.getAllSavedGames()
+            
+            // Silinen oyunların güncel durumlarını görmek için çağırıyoruz
+            print("🔍 Güncel veritabanı durumu: \(freshGames.count) oyun mevcut")
+            
+            // UI güncelleme - silinen oyunlar varsa hemen gösterilecek
+            DispatchQueue.main.async {
+                // Tarih sırasına göre sıralayalım
+                let sortedGames = freshGames.sorted { 
+                    let date1 = $0.dateCreated ?? Date.distantPast
+                    let date2 = $1.dateCreated ?? Date.distantPast
+                    return date1 > date2
+                }
+                
+                // Direkt UI'ı güncelleyecek şekilde atama yapalım
+                self.savedGames = sortedGames
+                // filterGames() savedGames didSet içinde otomatik çağrılacak
             }
         }
         // Bildirim yaklaşımı kullandığımız için burada bir şey yapmaya gerek yok
@@ -432,7 +533,7 @@ struct SavedGamesView: View {
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: CGFloat(completionPercentage) / 100 * UIScreen.main.bounds.width * 0.75, height: 6)
+                            .frame(width: max(0, min(CGFloat(completionPercentage) / 100, 1.0)) * (UIScreen.main.bounds.width * 0.75 - 40), height: 6)
                             .animation(nil, value: completionPercentage)
                     }
                 }
@@ -624,5 +725,38 @@ struct SavedGamesView: View {
         UserDefaults.standard.set(finalResult, forKey: cachedKey)
         
         return finalResult
+    }
+    
+    // Manuel olarak kayıtlı oyunları yükleme fonksiyonu
+    private func loadSavedGames() {
+        // PersistenceController'dan veri çekelim
+        let allGames = PersistenceController.shared.getAllSavedGames()
+        
+        print("📊 PersistenceController.getAllSavedGames() üzerinden \(allGames.count) oyun yüklendi")
+        
+        // Tarih sırasına göre sıralayalım (en yeni önce)
+        let sortedGames = allGames.sorted { 
+            let date1 = $0.dateCreated ?? Date.distantPast
+            let date2 = $1.dateCreated ?? Date.distantPast
+            return date1 > date2
+        }
+        
+        // Verileri güncelle - SwiftUI'a güncelleme olduğunu bildir
+        DispatchQueue.main.async {
+            self.savedGames = sortedGames
+            // filterGames() savedGames didSet içinde otomatik çağrılacak
+        }
+        
+        // Sadece detaylı debug modunda oyun detaylarını yazdır
+        #if DEBUG
+        if allGames.count > 0 {
+            print("🎮 \(allGames.count) oyun bulundu. İlk oyun detayları:")
+            if let game = allGames.first {
+                print("   📝 ID: \(game.value(forKey: "id") ?? "ID yok")")
+                print("   📝 Zorluk: \(game.difficulty ?? "Bilinmiyor")")
+                print("   📝 Tarih: \(game.dateCreated?.description ?? "Tarih yok")")
+            }
+        }
+        #endif
     }
 }

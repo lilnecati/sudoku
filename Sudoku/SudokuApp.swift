@@ -7,6 +7,8 @@
 import SwiftUI
 import CoreData
 import Combine
+import Firebase
+import FirebaseFirestore
 
 // Metin ölçeği için EnvironmentKey
 struct TextScaleKey: EnvironmentKey {
@@ -103,6 +105,8 @@ struct ColorManager {
 
 @main
 struct SudokuApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var localizationManager = LocalizationManager.shared
     @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
@@ -117,14 +121,12 @@ struct SudokuApp: App {
     @State private var showSplashOnResume = false
     
     @Environment(\.colorScheme) var systemColorScheme
-    @Environment(\.scenePhase) var scenePhase
     
     // State to track if initialization succeeded
     @State private var initializationError: Error? = nil
     @State private var isInitialized = false
     
-    // Ekran kararmasını önlemek için durum değişkeni
-    @State private var preventScreenDimming = false
+    // NOT: Ekran kararması kontrolü artık sadece GameView içinde yapılıyor
     
     private var textSizePreference: TextSizePreference {
         return TextSizePreference(rawValue: textSizeString) ?? .medium
@@ -135,6 +137,10 @@ struct SudokuApp: App {
     private let viewContext: NSManagedObjectContext
     
     init() {
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
+        
         print("📱 Sudoku app initializing...")
         #if DEBUG
         print("📊 Debug mode active")
@@ -151,141 +157,55 @@ struct SudokuApp: App {
     }
     
     var body: some Scene {
-        // iOS'un uygulamayı kapatmasından sonra bile sekme durumunu restore etmesini engelle
         WindowGroup {
-            // State restore özelliğini Window Group seviyesinde kontrol ediyoruz
-            ZStack {
-                if let error = initializationError {
-                    InitializationErrorView(error: error) {
-                        initializationError = nil
-                        isInitialized = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            isInitialized = true
-                        }
-                    }
-                } else {
-                    // Özel StartupView ile ContentView'u sarmalayarak, her açılışta ana sayfadan başlamayı garanti ediyoruz
-                    StartupView(forceShowSplash: showSplashOnResume)
-                        .environment(\.managedObjectContext, viewContext)
-                        .environmentObject(themeManager)
-                        .environmentObject(localizationManager)
-                        .preferredColorScheme(themeManager.colorScheme)
-                        .environment(\.locale, Locale(identifier: LocalizationManager.shared.currentLanguage))
-                        .environment(\.textScale, textSizePreference.scaleFactor)
-                        .environment(\.dynamicTypeSize, textSizePreference.toDynamicTypeSize())
-                        .onAppear {
-                            if !isInitialized {
-                                isInitialized = true
-                                print("✅ Content view appeared successfully")
-                                
-                                // Güç tasarrufu durumunu kontrol et
-                                let powerManager = PowerSavingManager.shared
-                                print("🔋 Power saving mode: \(powerManager.isPowerSavingEnabled ? "ON" : "OFF")")
-                                
-                                // StartupView ile başlangıç sorununu çözdük
-                            }
-                            
-                            // PowerSaving Manager'ı başlat
-                            let powerManager = PowerSavingManager.shared
-                            print("🔋 Power saving mode: \(powerManager.isPowerSavingEnabled ? "ON" : "OFF")")
-                            
-                            // Oyun ekranının açılıp kapanmasını izlemek için bildirim dinleyiciler ekle
-                            setupGameScreenObservers()
-                            
-                            // Metin boyutu değişim bildirimini dinle
-                            NotificationCenter.default.addObserver(forName: Notification.Name("TextSizeChanged"), object: nil, queue: .main) { notification in
-                                print("📱 Text size changed to: \(self.textSizePreference.rawValue)")
-                                
-                                // UI'ı yenile
-                                DispatchQueue.main.async {
-                                    NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
-                                }
-                            }
-                            
-                            // Dil değişikliği bildirimini dinle
-                            NotificationCenter.default.addObserver(forName: Notification.Name("AppLanguageChanged"), object: nil, queue: .main) { notification in
-                                print("🌐 App language changed")
-                                
-                                // UI'ı yenile
-                                DispatchQueue.main.async {
-                                    // Locale environment değerini güncelle
-                                    // Burada doğrudan değiştiremiyoruz, o yüzden force update kullanılıyor
-                                    localizationManager.objectWillChange.send()
-                                    NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
-                                }
-                            }
-                            
-                            // Kullanıcı giriş/çıkış bildirimlerini dinle
-                            setupUserChangeObservers()
-                        }
-                }
-            }
-        }
-        .onChange(of: scenePhase) { _, newValue in
-            if newValue == .background {
-                // Uygulama arka plana geçtiğinde aktif oyunu otomatik olarak duraklat
-                NotificationCenter.default.post(name: Notification.Name("PauseActiveGame"), object: nil)
-                print("📱 App moved to background - pausing active game")
-                
-                // Arka plana geçme zamanını kaydet
-                lastBackgroundTime = Date().timeIntervalSince1970
-                print("⏰ Background time saved: \(lastBackgroundTime)")
-                
-                // Ekran kararmasını tekrar etkinleştir
-                UIApplication.shared.isIdleTimerDisabled = false
-                
-                // CoreData bağlamını kaydet
-                do {
-                    try viewContext.save()
-                    print("✅ Context saved successfully")
-                } catch {
-                    print("❌ Failed to save context: \(error)")
-                }
-            } else if newValue == .active {
-                // Uygulama tekrar aktif olduğunda, ne kadar süre arka planda kaldığını kontrol et
-                let currentTime = Date().timeIntervalSince1970
-                let timeInBackground = currentTime - lastBackgroundTime
-                
-                // Aktif oyun varsa ekran kararmasını engelle
-                if preventScreenDimming {
-                    UIApplication.shared.isIdleTimerDisabled = true
-                    print("🔆 Ekran kararması engellendi")
-                }
-                
-                if timeInBackground > gameResetTimeInterval {
-                    // 2 dakikadan fazla arka planda kaldıysa, uygulamayı tamamen sıfırla
-                    print("⏰ App was in background for \(Int(timeInBackground)) seconds - resetting whole app")
-                    
-                    // Splash ekranını zorunlu göster
-                    showSplashOnResume = true
-                    
-                    // Ana sayfaya dönüş bildirimini gönder
-                    NotificationCenter.default.post(name: Notification.Name("ReturnToMainMenu"), object: nil)
-                    
-                    // Oyunu sıfırla 
-                    NotificationCenter.default.post(name: Notification.Name("ResetGameAfterTimeout"), object: nil)
-                    
-                    // Uygulama değişimini bildirim olarak gönder (UI'nin güncellemesini sağlar)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+            StartupView(forceShowSplash: showSplashOnResume)
+                .environmentObject(themeManager)
+                .environmentObject(localizationManager)
+                .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
+                .onChange(of: scenePhase) { newPhase in
+                    switch newPhase {
+                    case .active:
+                        // Uygulamanın arka plandan dönüş süresini kontrol et
+                        let currentTime = Date().timeIntervalSince1970
+                        let timeSinceBackground = currentTime - lastBackgroundTime
                         
-                        // Kısa süre sonra splash ekranı modunu kapat
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                            self.showSplashOnResume = false
+                        // Eğer belirli bir süreden fazla arka planda kaldıysa splash ekranını göster
+                        if lastBackgroundTime > 0 && timeSinceBackground > gameResetTimeInterval {
+                            print("🔄 Uygulama \(Int(timeSinceBackground)) saniye sonra geri döndü - Splash ekranı gösterilecek")
+                            showSplashOnResume = true
+                        } else {
+                            showSplashOnResume = false
                         }
-                    }
-                } else {
-                    // Normal aktif olma bildirimi
-                    print("📱 App became active after \(Int(timeInBackground)) seconds")
-                    
-                    // Bildirim göndermeden önce kısa bir gecikme ekle
-                    // Bu, birden fazla bildirim gönderilmesini önleyecek
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        NotificationCenter.default.post(name: Notification.Name("AppBecameActive"), object: nil)
+                        
+                        // Uygulama aktif olduğunda verileri senkronize et
+                        PersistenceController.shared.syncSavedGamesFromFirestore { success in
+                            if success {
+                                print("✅ Oyunlar başarıyla senkronize edildi")
+                            } else {
+                                print("⚠️ Oyun senkronizasyonunda sorun oluştu")
+                            }
+                        }
+                    case .background:
+                        // Arka plana geçiş zamanını kaydet
+                        lastBackgroundTime = Date().timeIntervalSince1970
+                        print("🔄 Uygulama arka plana alındı: \(Date())")
+                        
+                        // Arka plana geçerken değişiklikleri kaydet
+                        PersistenceController.shared.save()
+                    case .inactive:
+                        // Uygulama inaktif olduğunda değişiklikleri kaydet
+                        PersistenceController.shared.save()
+                    @unknown default:
+                        break
                     }
                 }
-            }
         }
+    }
+}
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        return true
     }
 }
 
@@ -347,16 +267,17 @@ struct InitializationErrorView: View {
 
 // MARK: - Game Screen Observers
 private func setupGameScreenObservers() {
-    // Oyun ekranı açıldığında ekran kararmasını engelle
+    // Oyun ekranı açıldığında ekran kararmasını engelle - sadece Sudoku oyunu için
     NotificationCenter.default.addObserver(
         forName: Notification.Name("GameScreenOpened"),
         object: nil,
         queue: .main
     ) { _ in
-        // Ana iş parçacığında ekran kararmasını engelle
+        // Sadece Sudoku oyun ekranı için ekran kararmasını engelle
+        // Ana iş parçacığında işlemi yap
         DispatchQueue.main.async {
-            UIApplication.shared.isIdleTimerDisabled = true
-            print("🔆 GameScreenOpened bildirim alındı - Ekran kararması engellendi")
+            // Burada başka bir işlem yapmıyoruz, GameView zaten kendi içinde idleTimerDisabled'ı ayarlıyor
+            print("🔆 GameScreenOpened bildirim alındı - GameView tarafından ekran kararması engelleniyor")
         }
     }
     
@@ -368,8 +289,8 @@ private func setupGameScreenObservers() {
     ) { _ in
         // Ana iş parçacığında ekran kararmasını tekrar etkinleştir
         DispatchQueue.main.async {
-            UIApplication.shared.isIdleTimerDisabled = false
-            print("🔅 GameScreenClosed bildirim alındı - Ekran kararması etkinleştirildi")
+            // GameView kapandığında sistem otomatik olarak UIApplication.shared.isIdleTimerDisabled = false yapıyor
+            print("🔅 GameScreenClosed bildirim alındı - Ekran kararması GameView tarafından etkinleştirildi")
         }
     }
 }

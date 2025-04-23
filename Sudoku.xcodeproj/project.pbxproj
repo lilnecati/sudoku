@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A49FE2302DB812F4003E5251 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A49FE22F2DB812F4003E5251 /* GoogleService-Info.plist */; };
+		A49FE7C22DB82A3D003E5251 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A49FE7C12DB82A3D003E5251 /* FirebaseAuth */; };
+		A49FE7C42DB82A3D003E5251 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A49FE7C32DB82A3D003E5251 /* FirebaseCore */; };
+		A49FE7C62DB82F54003E5251 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A49FE7C52DB82F54003E5251 /* FirebaseFirestore */; };
 		A4CB25B72D951FC0004E56BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = A4CB25B62D951FC0004E56BE /* README.md */; };
 		A4CB25B92D951FCC004E56BE /* variables.md in Resources */ = {isa = PBXBuildFile; fileRef = A4CB25B82D951FCC004E56BE /* variables.md */; };
 		A4CB25BB2D951FFB004E56BE /* fix_all_errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4CB25BA2D951FFB004E56BE /* fix_all_errors.swift */; };
@@ -36,6 +40,7 @@
 		A4861ADF2D8FFB8A0027B8B9 /* Sudoku.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sudoku.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4861AEF2D8FFB8B0027B8B9 /* SudokuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SudokuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4861AF92D8FFB8B0027B8B9 /* SudokuUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SudokuUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A49FE22F2DB812F4003E5251 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A4CB25B62D951FC0004E56BE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		A4CB25B82D951FCC004E56BE /* variables.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = variables.md; sourceTree = "<group>"; };
 		A4CB25BA2D951FFB004E56BE /* fix_all_errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fix_all_errors.swift; sourceTree = "<group>"; };
@@ -67,6 +72,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A49FE7C42DB82A3D003E5251 /* FirebaseCore in Frameworks */,
+				A49FE7C22DB82A3D003E5251 /* FirebaseAuth in Frameworks */,
+				A49FE7C62DB82F54003E5251 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,6 +98,7 @@
 		A4861AD62D8FFB8A0027B8B9 = {
 			isa = PBXGroup;
 			children = (
+				A49FE22F2DB812F4003E5251 /* GoogleService-Info.plist */,
 				A4CB25BA2D951FFB004E56BE /* fix_all_errors.swift */,
 				A4CB25BC2D9520C6004E56BE /* fix_difficulty.swift */,
 				A4CB25BE2D9520E0004E56BE /* fix_duplicate.swift */,
@@ -100,6 +109,7 @@
 				A4861AF22D8FFB8B0027B8B9 /* SudokuTests */,
 				A4861AFC2D8FFB8B0027B8B9 /* SudokuUITests */,
 				A4861AE02D8FFB8A0027B8B9 /* Products */,
+				F72F6D6CC3B5297FB3D08284 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -111,6 +121,13 @@
 				A4861AF92D8FFB8B0027B8B9 /* SudokuUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		F72F6D6CC3B5297FB3D08284 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -132,8 +149,6 @@
 				A4861AE12D8FFB8A0027B8B9 /* Sudoku */,
 			);
 			name = Sudoku;
-			packageProductDependencies = (
-			);
 			productName = Sudoku;
 			productReference = A4861ADF2D8FFB8A0027B8B9 /* Sudoku.app */;
 			productType = "com.apple.product-type.application";
@@ -155,8 +170,6 @@
 				A4861AF22D8FFB8B0027B8B9 /* SudokuTests */,
 			);
 			name = SudokuTests;
-			packageProductDependencies = (
-			);
 			productName = SudokuTests;
 			productReference = A4861AEF2D8FFB8B0027B8B9 /* SudokuTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -178,8 +191,6 @@
 				A4861AFC2D8FFB8B0027B8B9 /* SudokuUITests */,
 			);
 			name = SudokuUITests;
-			packageProductDependencies = (
-			);
 			productName = SudokuUITests;
 			productReference = A4861AF92D8FFB8B0027B8B9 /* SudokuUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -212,12 +223,14 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
-				Base,
 				tr,
 				fr,
 			);
 			mainGroup = A4861AD62D8FFB8A0027B8B9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A49FE7C02DB82A3D003E5251 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A4861AE02D8FFB8A0027B8B9 /* Products */;
 			projectDirPath = "";
@@ -237,6 +250,7 @@
 			files = (
 				A4CB25B72D951FC0004E56BE /* README.md in Resources */,
 				A4CB25B92D951FCC004E56BE /* variables.md in Resources */,
+				A49FE2302DB812F4003E5251 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -590,6 +604,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A49FE7C02DB82A3D003E5251 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.12.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A49FE7C12DB82A3D003E5251 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A49FE7C02DB82A3D003E5251 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		A49FE7C32DB82A3D003E5251 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A49FE7C02DB82A3D003E5251 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		A49FE7C52DB82F54003E5251 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A49FE7C02DB82A3D003E5251 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A4861AD72D8FFB8A0027B8B9 /* Project object */;
 }

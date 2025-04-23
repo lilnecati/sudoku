@@ -214,17 +214,52 @@ struct LoginView: View {
             return
         }
         
+        // Email'i belirle (kullanıcı adı veya doğrudan email olabilir)
+        let email = PersistenceController.shared.getEmailFromUsername(username)
+        
+        // Önce Firebase'de giriş dene
+        PersistenceController.shared.loginUserWithFirebase(email: email, password: password) { user, error in
+            DispatchQueue.main.async {
+                // Firebase girişi başarısız olursa, yerel giriş dene
+                if user == nil && error == nil {
+                    // Firebase'de giriş başarısız olduğu için yerel girişi deneyelim
+                    self.loginUserLocally()
+                } else if let user = user {
+                    // Firebase giriş başarılı
+                    self.isLoading = false
+                    self.currentUser = user
+                    self.isPresented = false
+                    
+                    // Kullanıcı giriş bildirimini gönder
+                    NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
+                    
+                    // Başarılı giriş titreşimi
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.prepare()
+                    impactFeedback.impactOccurred()
+                } else if let error = error {
+                    // Firebase giriş hatası
+                    self.isLoading = false
+                    self.errorMessage = "Giriş hatası: \(error.localizedDescription)"
+                    self.showError = true
+                }
+            }
+        }
+    }
+    
+    // Yerel veritabanında giriş deneyin
+    private func loginUserLocally() {
         // Giriş işlemi
         DispatchQueue.global().async {
-            let result = PersistenceController.shared.loginUser(username: username, password: password)
+            let result = PersistenceController.shared.loginUser(username: self.username, password: self.password)
             
             DispatchQueue.main.async {
-                isLoading = false
+                self.isLoading = false
                 
                 if let user = result {
                     // Başarılı giriş
-                    currentUser = user
-                    isPresented = false
+                    self.currentUser = user
+                    self.isPresented = false
                     
                     // Kullanıcı giriş bildirimini gönder
                     NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
@@ -235,8 +270,8 @@ struct LoginView: View {
                     impactFeedback.impactOccurred()
                 } else {
                     // Başarısız giriş
-                    errorMessage = "Kullanıcı adı veya şifre hatalı."
-                    showError = true
+                    self.errorMessage = "Kullanıcı adı veya şifre hatalı."
+                    self.showError = true
                 }
             }
         }
