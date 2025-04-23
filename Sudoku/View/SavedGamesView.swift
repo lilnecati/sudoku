@@ -760,8 +760,7 @@ struct SavedGamesView: View {
         // Tamamlanmamış oyunları filtrele
         let uncompletelGames = allGames.filter { game in
             // Firebase'den isCompleted değerini kontrol et
-            if let gameID = game.id?.uuidString.uppercased() {
-                // Kullanılmayan gameRef değişkenini kaldırdık
+            if game.id != nil {
                 // Async olarak çalıştığı için burada filtreleme yapamıyoruz
                 // Bu nedenle filtrelemeyi filterGames() içinde yapacağız
             }
