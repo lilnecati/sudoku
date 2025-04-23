@@ -422,6 +422,203 @@ Bu proje MIT Lisansı altında lisanslanmıştır - detaylar için [LICENSE.md](
 - Sürekli geri bildirim sağlayan test kullanıcılarımıza
 - Lokalizasyon desteği için dil uzmanlarımıza
 
+## Firebase Entegrasyonu
+
+### Genel Bakış
+
+Sudoku uygulaması, bulut tabanlı veri senkronizasyonu ve kullanıcı kimlik doğrulama işlemleri için Firebase'i kullanmaktadır. Bu entegrasyon sayesinde kullanıcılar:
+
+- Farklı cihazlar arasında oyun ilerlemelerini senkronize edebilir
+- Kaydedilmiş oyunlarını çevrimiçi depolayabilir
+- Skorlarını ve istatistiklerini güvenle saklayabilir
+- İnternet bağlantısı olmadan oyun oynayabilir, internet bağlantısı sağlandığında veriler otomatik olarak senkronize edilir
+
+### Kurulum
+
+Firebase entegrasyonu için aşağıdaki adımlar izlenmiştir:
+
+1. Xcode projesine Firebase SDK eklenmesi:
+   ```swift
+   // Package Dependencies olarak eklendi
+   .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "10.0.0"))
+   ```
+
+2. Gerekli Firebase modüllerinin içe aktarılması:
+   ```swift
+   import FirebaseCore
+   import FirebaseAuth
+   import FirebaseFirestore
+   import FirebaseStorage
+   ```
+
+3. Firebase'in yapılandırılması:
+   ```swift
+   // SudokuApp.swift (veya AppDelegate) içerisinde
+   FirebaseApp.configure()
+   ```
+
+### Firebase Hizmetleri Kullanımı
+
+#### Authentication (Kimlik Doğrulama)
+
+Kullanıcı hesapları ve kimlik doğrulama işlemleri için `FirebaseAuth` kullanılmıştır:
+
+```swift
+// Kullanıcı girişi
+Auth.auth().signIn(withEmail: email, password: password) { result, error in
+    // Hata kontrolü ve kullanıcı bilgisi işleme
+}
+
+// Kullanıcı kaydı
+Auth.auth().createUser(withEmail: email, password: password) { result, error in
+    // Kullanıcı profili oluşturma
+}
+
+// Kullanıcı çıkışı
+try? Auth.auth().signOut()
+```
+
+#### Firestore (Veritabanı)
+
+Oyun verileri, istatistikler ve kullanıcı profilleri için `Firestore` kullanılmıştır:
+
+```swift
+let db = Firestore.firestore()
+
+// Veri yükleme
+db.collection("savedGames")
+    .whereField("userId", isEqualTo: Auth.auth().currentUser?.uid ?? "")
+    .getDocuments { snapshot, error in
+        // Kaydedilmiş oyunları işleme
+    }
+
+// Veri kaydetme
+db.collection("savedGames").document(gameId).setData([
+    "userId": Auth.auth().currentUser?.uid ?? "",
+    "boardState": encodedBoardState,
+    "difficulty": difficulty.rawValue,
+    "dateCreated": Timestamp(),
+    "isCompleted": false
+])
+
+// Veri silme
+db.collection("savedGames").document(gameId).delete()
+```
+
+#### Storage (Depolama)
+
+Kullanıcı profil fotoğrafları için `FirebaseStorage` kullanılmıştır:
+
+```swift
+let storage = Storage.storage()
+let storageRef = storage.reference().child("profileImages/\(userId).jpg")
+
+// Resim yükleme
+if let imageData = profileImage.jpegData(compressionQuality: 0.8) {
+    storageRef.putData(imageData, metadata: nil) { metadata, error in
+        // Yükleme işlemini kontrol etme
+    }
+}
+
+// Resim indirme
+storageRef.getData(maxSize: 1 * 1024 * 1024) { data, error in
+    if let imageData = data {
+        let image = UIImage(data: imageData)
+        // Resmi kullanıcı arayüzünde gösterme
+    }
+}
+```
+
+### Offline Kullanım ve Senkronizasyon
+
+Firebase, internet bağlantısı olmadığında bile çalışabilir. Uygulama, çevrimdışı kullanım için aşağıdaki yapılandırmaları yapar:
+
+```swift
+// Firebase'in çevrimdışı kalıcılığını etkinleştirme
+let settings = Firestore.firestore().settings
+settings.isPersistenceEnabled = true
+Firestore.firestore().settings = settings
+```
+
+Çevrimdışıyken yapılan değişiklikler, internet bağlantısı sağlandığında otomatik olarak senkronize edilir.
+
+### Veri Modeli
+
+Firebase'de aşağıdaki ana koleksiyonlar kullanılır:
+
+- **users**: Kullanıcı profilleri ve ayarları
+- **savedGames**: Kaydedilmiş oyunlar ve durumları
+- **statistics**: Kullanıcı istatistikleri ve performans verileri
+- **highScores**: Zorluk seviyesine göre en yüksek skorlar
+
+### Güvenlik Kuralları
+
+Firebase Firestore için güvenlik kuralları, verilerin yalnızca doğru kullanıcılar tarafından erişilebilmesini sağlar:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Kaydedilmiş oyunlar kullanıcıya özeldir
+    match /savedGames/{gameId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Kullanıcı verileri sadece kendi kullanıcısı tarafından okunabilir ve yazılabilir
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // İstatistikler kullanıcıya özeldir
+    match /statistics/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Yüksek skorlar herkes tarafından okunabilir, ancak sadece doğrulanmış kullanıcılar tarafından yazılabilir
+    match /highScores/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+  }
+}
+```
+
+### Hata Yönetimi ve Geri Bildirim
+
+Firebase işlemleri sırasında oluşabilecek hatalar için kapsamlı hata yönetimi uygulanmıştır:
+
+```swift
+// Örnek hata işleme
+db.collection("savedGames").document(gameId).setData(gameData) { error in
+    if let error = error {
+        print("Oyun kaydedilirken hata oluştu: \(error.localizedDescription)")
+        // Kullanıcıya hata bildirimi gösterme
+    } else {
+        print("Oyun başarıyla kaydedildi")
+        // Başarı bildirimi gösterme
+    }
+}
+```
+
+### Performans Optimizasyonu
+
+Veri transferini ve pil kullanımını optimize etmek için şu önlemler alınmıştır:
+
+- Yalnızca gerekli verilerin indirilmesi için sorgu filtreleme
+- Büyük veri kümeleri için sayfalama kullanımı
+- Veri sınırlamaları ile ağ kullanımını azaltma
+- Kullanıcı etkileşimine dayalı önbellek politikaları
+
+### Veri Senkronizasyon Stratejisi
+
+Veri senkronizasyonu şu stratejiye göre gerçekleştirilir:
+
+1. Yerel veriler her zaman önceliklidir (hızlı erişim için)
+2. Uygulama başlatıldığında ve düzenli aralıklarla Firebase ile senkronizasyon yapılır
+3. Çakışma durumunda en son değiştirilen veri önceliklidir
+4. Çevrimdışı değişiklikler kuyruklanır ve internet bağlantısı sağlandığında işlenir
+
 ---
 
 <p align="center">
