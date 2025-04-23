@@ -113,6 +113,15 @@ struct ScoreboardView: View {
             PersistenceController.shared.refreshHighScores()
             isLoading = false
             loadData()
+            setupLanguageChangeListener()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshStatistics"))) { _ in
+            print("🔄 ScoreboardView: İstatistikler yenileme bildirimi alındı")
+            loadData()
+        }
+        .onChange(of: selectedDifficulty) { _, newDifficulty in
+            print("🔄 Zorluk seviyesi değişti: \(newDifficulty.rawValue)")
+            loadData()
         }
         // Detaylı istatistik sayfasına geçiş
         .fullScreenCover(isPresented: $showDetailedStatistics) {
@@ -941,6 +950,10 @@ struct ScoreboardView: View {
         case .expert:
             return "Uzman Oyunları"
         }
+    }
+    
+    private func setupLanguageChangeListener() {
+        // Language change listener setup
     }
 }
 

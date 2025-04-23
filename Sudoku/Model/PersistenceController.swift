@@ -1551,7 +1551,7 @@ class PersistenceController {
         print("🔄 Tüm tamamlanmış oyunlar Firestore'dan siliniyor... Kullanıcı ID: \(userID)")
         
         // 1. Önce kullanıcıya ait tüm oyunları getirelim
-        db.collection("games")
+        db.collection("savedGames")
             .whereField("userID", isEqualTo: userID)
             .whereField("isCompleted", isEqualTo: true)
             .getDocuments { [weak self] snapshot, error in
@@ -1575,7 +1575,7 @@ class PersistenceController {
                 for document in documents {
                     let documentID = document.documentID
                     print("🗑️ Siliniyor: \(documentID)")
-                    let gameRef = self.db.collection("games").document(documentID)
+                    let gameRef = self.db.collection("savedGames").document(documentID)
                     batch.deleteDocument(gameRef)
                 }
                 
@@ -1601,7 +1601,7 @@ class PersistenceController {
         for documentID in documentIDs {
             group.enter()
             
-            db.collection("games").document(documentID).getDocument { document, error in
+            db.collection("savedGames").document(documentID).getDocument { document, error in
                 defer { group.leave() }
                 
                 if let document = document, document.exists {

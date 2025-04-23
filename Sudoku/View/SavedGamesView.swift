@@ -60,14 +60,36 @@ struct SavedGamesView: View {
     
     // Oyunları filtreleyen fonksiyon
     private func filterGames() {
+        // Önce tamamlanmamış oyunları filtrele (isCompleted == false veya nil)
+        let uncompleted = savedGames.filter { savedGame in
+            // Önce oyun verilerine eriş
+            guard let boardStateData = savedGame.boardState else { return true }
+            
+            do {
+                // JSON veriyi ayrıştır
+                if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any],
+                   // isCompleted anahtarını kontrol et
+                   let isCompleted = dict["isCompleted"] as? Bool {
+                    // Tamamlanmış oyunları gösterme
+                    return !isCompleted
+                }
+            } catch {
+                print("❌ JSON ayrıştırma hatası: \(error)")
+            }
+            
+            // Hata durumunda veya isCompleted değeri yoksa göster
+            return true
+        }
+        
+        // Ardından zorluk seviyesine göre filtrele
         if selectedDifficulty == "Tümü" {
             #if DEBUG
             // Sadece debug modunda print
-            print("🔍 Tüm zorluk seviyeleri gösteriliyor. Toplam oyun sayısı: \(savedGames.count)")
+            print("🔍 Tüm zorluk seviyeleri gösteriliyor. Toplam oyun sayısı: \(uncompleted.count)")
             #endif
-            filteredGames = Array(savedGames)
+            filteredGames = Array(uncompleted)
         } else {
-            let filtered = savedGames.filter { $0.difficulty == selectedDifficulty }
+            let filtered = uncompleted.filter { $0.difficulty == selectedDifficulty }
             #if DEBUG
             // Sadece debug modunda print
             print("🔍 '\(selectedDifficulty)' zorluk seviyesine göre filtreleniyor. Oyun sayısı: \(filtered.count)")
@@ -729,34 +751,29 @@ struct SavedGamesView: View {
     
     // Manuel olarak kayıtlı oyunları yükleme fonksiyonu
     private func loadSavedGames() {
-        // PersistenceController'dan veri çekelim
-        let allGames = PersistenceController.shared.getAllSavedGames()
+        // PersistenceController üzerinden oyunları yükle
+        let allGames = PersistenceController.shared.loadSavedGames()
         
-        print("📊 PersistenceController.getAllSavedGames() üzerinden \(allGames.count) oyun yüklendi")
+        // Tamamlanmamış oyunları filtrele
+        let uncompletelGames = allGames.filter { game in
+            // Firebase'den isCompleted değerini kontrol et
+            if let gameID = game.id?.uuidString.uppercased() {
+                let gameRef = Firestore.firestore().collection("savedGames").document(gameID)
+                
+                // Async olarak çalıştığı için burada filtreleme yapamıyoruz
+                // Bu nedenle filtrelemeyi filterGames() içinde yapacağız
+            }
+            return true
+        }
         
-        // Tarih sırasına göre sıralayalım (en yeni önce)
-        let sortedGames = allGames.sorted { 
+        // Tarihe göre sırala (en son kaydedilenler önce)
+        let sortedGames = uncompletelGames.sorted {
             let date1 = $0.dateCreated ?? Date.distantPast
             let date2 = $1.dateCreated ?? Date.distantPast
             return date1 > date2
         }
         
-        // Verileri güncelle - SwiftUI'a güncelleme olduğunu bildir
-        DispatchQueue.main.async {
-            self.savedGames = sortedGames
-            // filterGames() savedGames didSet içinde otomatik çağrılacak
-        }
-        
-        // Sadece detaylı debug modunda oyun detaylarını yazdır
-        #if DEBUG
-        if allGames.count > 0 {
-            print("🎮 \(allGames.count) oyun bulundu. İlk oyun detayları:")
-            if let game = allGames.first {
-                print("   📝 ID: \(game.value(forKey: "id") ?? "ID yok")")
-                print("   📝 Zorluk: \(game.difficulty ?? "Bilinmiyor")")
-                print("   📝 Tarih: \(game.dateCreated?.description ?? "Tarih yok")")
-            }
-        }
-        #endif
+        // State'i güncelle (didSet üzerinden filterGames() çağrılacak)
+        savedGames = sortedGames
     }
 }

@@ -215,6 +215,10 @@ struct DetailedStatisticsView: View {
             loadData()
             setupLanguageChangeListener()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshStatistics"))) { _ in
+            print("🔄 DetailedStatisticsView: İstatistikler yenileme bildirimi alındı")
+            loadData()
+        }
         .onChange(of: selectedTimeRange) { _, _ in
             print("🔄 Zaman aralığı değişti: \(selectedTimeRange.rawValue)")
             loadData()
@@ -770,7 +774,7 @@ struct DetailedStatisticsView: View {
         
         // Firestore'dan tamamlanmış oyunları çek
         let db = Firestore.firestore()
-        var query = db.collection("games")
+        var query = db.collection("savedGames")
             .whereField("userID", isEqualTo: userID)
             .whereField("isCompleted", isEqualTo: true)
             .whereField("difficulty", isEqualTo: selectedDifficulty.rawValue)
@@ -797,7 +801,7 @@ struct DetailedStatisticsView: View {
         query = query.whereField("timestamp", isGreaterThan: fromDate)
         
         // Sorgulama yapılıyor bilgisi
-        print("🔍 Firestore sorgusu yapılıyor: games koleksiyonu")
+        print("🔍 Firestore sorgusu yapılıyor: savedGames koleksiyonu")
         
         // Verileri çek
         query.getDocuments { snapshot, error in
@@ -1041,6 +1045,10 @@ struct DetailedStatisticsView: View {
                     // Sayfayı yenile
                     self.refreshTrigger = UUID() // View ID'sini değiştirerek yeniden render et
                     self.loadData() // Verileri yeniden yükle
+                    
+                    // Bildirim gönder - diğer görünümlerin de yenilenmesi için
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshStatistics"), object: nil)
                 }
                 
                 // Yükleme göstergesini kaldır ve başarı mesajı göster

@@ -10,6 +10,8 @@ import Combine
 import CoreData
 import AudioToolbox
 import AVFoundation
+import FirebaseFirestore
+import FirebaseAuth
 
 // Position yapısı
 struct Position: Hashable {
@@ -516,34 +518,8 @@ class SudokuViewModel: ObservableObject {
         
         // Eğer tüm hücreler doluysa ve doğruysa
         if isComplete && !hasErrors {
-            // Oyunu tamamlandı olarak işaretle
-            gameState = .completed
-            
-            // Yüksek skoru kaydet
-            let score = calculateScore()
-            PersistenceController.shared.saveHighScore(
-                difficulty: board.difficulty.rawValue,
-                elapsedTime: elapsedTime,
-                errorCount: errorCount,
-                hintCount: hintCount,
-                score: score
-            )
-            
-            // Oyunu Firebase'e kaydet
-            if let gameID = currentGameID {
-                PersistenceController.shared.saveGameToFirestore(
-                    gameID: gameID,
-                    board: board.getBoardArray(),
-                    difficulty: board.difficulty.rawValue,
-                    elapsedTime: elapsedTime
-                )
-            }
-            
-            // Tamamlanma sesini çal
-            SoundManager.shared.playGameCompletedSound()
-            
-            // Tebrik mesajını göster
-            showCompletionAlert = true
+            // handleGameCompletion fonksiyonunu çağır - tüm tamamlanma işlemleri burada
+            handleGameCompletion()
         }
     }
     
@@ -1433,17 +1409,38 @@ class SudokuViewModel: ObservableObject {
             score: score
         )
         
-        // Eğer oyun kaydedilmişse, hem Firebase hem de CoreData'dan sil
+        // Oyunu Firebase'e kaydet ve isCompleted=true olarak işaretle
         if let gameID = currentGameID {
-            // Firebase'den sil
-            PersistenceController.shared.deleteGameFromFirestore(gameID: gameID)
+            // Firebase'e oyunu tamamlanmış olarak kaydet
+            let flatBoard = board.getBoardArray().flatMap { $0 }
+            let userID = Auth.auth().currentUser?.uid ?? "guest"
             
-            // CoreData'dan sil
-            PersistenceController.shared.deleteSavedGameFromCoreData(gameID: gameID.uuidString)
+            // Firestore'da kayıt için doküman oluştur
+            let documentID = gameID.uuidString.uppercased()
+            let gameRef = PersistenceController.shared.db.collection("savedGames").document(documentID)
             
-            // currentGameID'yi sıfırla
-            currentGameID = nil
-            print("✅ Tamamlanan oyun başarıyla silindi")
+            let gameData: [String: Any] = [
+                "userID": userID,
+                "difficulty": board.difficulty.rawValue,
+                "elapsedTime": elapsedTime,
+                "dateCreated": FieldValue.serverTimestamp(),
+                "board": flatBoard,
+                "size": board.getBoardArray().count,
+                "isCompleted": true  // Oyunu tamamlandı olarak işaretle
+            ]
+            
+            // Firestore'a kaydet
+            gameRef.setData(gameData) { error in
+                if let error = error {
+                    print("❌ Firestore tamamlanmış oyun kaydı hatası: \(error.localizedDescription)")
+                } else {
+                    print("✅ Tamamlanmış oyun Firebase Firestore'a kaydedildi: \(documentID)")
+                }
+            }
+            
+            // İstatistik görünümlerini yenileme bildirimi gönder
+            NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+            NotificationCenter.default.post(name: NSNotification.Name("RefreshStatistics"), object: nil)
         }
         
         // Tamamlanma sesini çal
