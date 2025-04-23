@@ -518,6 +518,7 @@ class SudokuViewModel: ObservableObject {
         
         // Eğer tüm hücreler doluysa ve doğruysa
         if isComplete && !hasErrors {
+            print("📱 Oyun tamamlandı! handleGameCompletion() çağrılıyor...")
             // handleGameCompletion fonksiyonunu çağır - tüm tamamlanma işlemleri burada
             handleGameCompletion()
         }
@@ -1399,9 +1400,9 @@ class SudokuViewModel: ObservableObject {
         gameState = .completed
         stopTimer()
         
-        // Yüksek skoru kaydet
+        // Yüksek skoru kaydet - sonucu _ ile무시하여uyarıyı giderelim
         let score = calculateScore()
-        PersistenceController.shared.saveHighScore(
+        _ = PersistenceController.shared.saveHighScore(
             difficulty: board.difficulty.rawValue,
             elapsedTime: elapsedTime,
             errorCount: errorCount,
@@ -1409,38 +1410,20 @@ class SudokuViewModel: ObservableObject {
             score: score
         )
         
-        // Oyunu Firebase'e kaydet ve isCompleted=true olarak işaretle
+        // Oyunu tamamlanmış olarak işaretle ve kayıtlı oyunlardan kaldır
         if let gameID = currentGameID {
-            // Firebase'e oyunu tamamlanmış olarak kaydet
-            let flatBoard = board.getBoardArray().flatMap { $0 }
-            let userID = Auth.auth().currentUser?.uid ?? "guest"
+            // Yeni fonksiyonu kullan - hem kaydeder hem siler
+            PersistenceController.shared.saveCompletedGame(
+                gameID: gameID,
+                board: board.getBoardArray(),
+                difficulty: board.difficulty.rawValue,
+                elapsedTime: elapsedTime,
+                errorCount: errorCount,
+                hintCount: 3 - remainingHints
+            )
             
-            // Firestore'da kayıt için doküman oluştur
-            let documentID = gameID.uuidString.uppercased()
-            let gameRef = PersistenceController.shared.db.collection("savedGames").document(documentID)
-            
-            let gameData: [String: Any] = [
-                "userID": userID,
-                "difficulty": board.difficulty.rawValue,
-                "elapsedTime": elapsedTime,
-                "dateCreated": FieldValue.serverTimestamp(),
-                "board": flatBoard,
-                "size": board.getBoardArray().count,
-                "isCompleted": true  // Oyunu tamamlandı olarak işaretle
-            ]
-            
-            // Firestore'a kaydet
-            gameRef.setData(gameData) { error in
-                if let error = error {
-                    print("❌ Firestore tamamlanmış oyun kaydı hatası: \(error.localizedDescription)")
-                } else {
-                    print("✅ Tamamlanmış oyun Firebase Firestore'a kaydedildi: \(documentID)")
-                }
-            }
-            
-            // İstatistik görünümlerini yenileme bildirimi gönder
-            NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
-            NotificationCenter.default.post(name: NSNotification.Name("RefreshStatistics"), object: nil)
+            // currentGameID'yi sıfırla (yeni oyun başlayabilsin)
+            currentGameID = nil
         }
         
         // Tamamlanma sesini çal

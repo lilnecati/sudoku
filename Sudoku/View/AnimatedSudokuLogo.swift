@@ -159,7 +159,7 @@ struct AnimatedSudokuLogo: View {
         .onAppear {
             startAnimation()
         }
-        .onChange(of: scenePhase) { newPhase in
+        .onChange(of: scenePhase) { oldPhase, newPhase in
             switch newPhase {
             case .active:
                 startAnimation()

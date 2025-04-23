@@ -263,7 +263,8 @@ class PersistenceController {
             // Tahtayı serialleştir (boardState artık dizi olarak serialleştirilecek)
             let boardDict: [String: Any] = [
                 "board": board,
-                "difficulty": difficulty
+                "difficulty": difficulty,
+                "isCompleted": false  // Yeni eklenen oyunlar tamamlanmamış olarak işaretlenir
             ]
             
             game.boardState = try? JSONSerialization.data(withJSONObject: boardDict)
@@ -345,7 +346,8 @@ class PersistenceController {
                     // Veri güncellemesi
                     let boardDict: [String: Any] = [
                         "board": board,
-                        "difficulty": difficulty
+                        "difficulty": difficulty,
+                        "isCompleted": false  // Güncellenmiş oyunlar tamamlanmamış olarak işaretlenir
                     ]
                     
                     existingGame.boardState = try? JSONSerialization.data(withJSONObject: boardDict)
@@ -688,6 +690,10 @@ class PersistenceController {
     func deleteSavedGameWithID(_ gameID: UUID) {
         let context = container.viewContext
         
+        // UUID'yi uppercase olarak kullan
+        let documentID = gameID.uuidString.uppercased()
+        print("🔄 \(documentID) ID'li oyun siliniyor...")
+        
         // ID'ye göre oyunu bul
         let request: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
@@ -696,15 +702,36 @@ class PersistenceController {
             let games = try context.fetch(request)
             
             if let existingGame = games.first {
-                // Oyunu sil
+                // Oyunu Core Data'dan sil
                 context.delete(existingGame)
                 try context.save()
-                print("✅ ID'si \(gameID) olan oyun başarıyla silindi")
+                print("✅ ID'si \(gameID) olan oyun başarıyla Core Data'dan silindi")
+                
+                // Silinen oyunu "son silinen oyunlar" listesine ekle
+                let deletedGamesKey = "recentlyDeletedGameIDs"
+                var recentlyDeletedIDs = UserDefaults.standard.stringArray(forKey: deletedGamesKey) ?? []
+                
+                // Eğer zaten listede yoksa ekle
+                if !recentlyDeletedIDs.contains(documentID) {
+                    recentlyDeletedIDs.append(documentID)
+                    UserDefaults.standard.set(recentlyDeletedIDs, forKey: deletedGamesKey)
+                    
+                    // Silme zamanını kaydet
+                    let deletedTimestampsKey = "deletedGameTimestamps"
+                    var deletedTimestamps = UserDefaults.standard.dictionary(forKey: deletedTimestampsKey) as? [String: Double] ?? [:]
+                    deletedTimestamps[documentID] = Date().timeIntervalSince1970
+                    UserDefaults.standard.set(deletedTimestamps, forKey: deletedTimestampsKey)
+                }
                 
                 // Firestore'dan da sil
                 deleteGameFromFirestore(gameID: gameID)
+                
+                // Bildirimleri gönder
+                NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
             } else {
-                print("❓ Silinecek oyun bulunamadı, ID: \(gameID)")
+                print("❓ Silinecek oyun Core Data'da bulunamadı, ID: \(gameID)")
+                // Core Data'da bulunamasa bile Firebase'den silmeyi dene
+                deleteGameFromFirestore(gameID: gameID)
             }
         } catch {
             print("❌ Oyun silinemedi: \(error)")
@@ -720,7 +747,7 @@ class PersistenceController {
             if let error = error {
                 print("❌ Firestore'dan oyun silme hatası: \(error.localizedDescription)")
             } else {
-                print("✅ Oyun Firestore'dan silindi: \(gameID)")
+                print("✅ Oyun Firestore'dan silindi: \(documentID)")
             }
         }
     }
@@ -1509,21 +1536,95 @@ class PersistenceController {
             }
     }
     
-    // CoreData'dan kayıtlı oyunu sil
+    // Tamamlanmış oyunu kaydet - istatistikler için Firebase'e kaydet, ancak kayıtlı oyunlardan sil
+    func saveCompletedGame(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval, errorCount: Int, hintCount: Int) {
+        print("🏆 Tamamlanmış oyun kaydediliyor ve kaldırılıyor, ID: \(gameID)")
+        
+        // Önce Firebase'e tamamlanmış olarak kaydet (istatistikler için)
+        let flatBoard = board.flatMap { $0 }
+        let userID = Auth.auth().currentUser?.uid ?? "guest"
+        
+        // Firestore'da kayıt için doküman oluştur
+        let documentID = gameID.uuidString.uppercased()
+        let gameRef = db.collection("savedGames").document(documentID)
+        
+        let gameData: [String: Any] = [
+            "userID": userID,
+            "difficulty": difficulty,
+            "elapsedTime": elapsedTime,
+            "dateCreated": FieldValue.serverTimestamp(),
+            "timestamp": FieldValue.serverTimestamp(),
+            "board": flatBoard,
+            "size": board.count,
+            "isCompleted": true,
+            "errorCount": errorCount,
+            "hintCount": hintCount
+        ]
+        
+        // Firestore'a kaydet
+        gameRef.setData(gameData) { [weak self] error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ Tamamlanmış oyun Firestore'a kaydedilemedi: \(error.localizedDescription)")
+            } else {
+                print("✅ Tamamlanmış oyun Firestore'a kaydedildi: \(documentID)")
+                
+                // Kayıtlı oyunlardan silmek için Core Data'dan kaldır
+                DispatchQueue.main.async {
+                    self.deleteSavedGameFromCoreData(gameID: gameID.uuidString)
+                    
+                    // Silinen oyunları takip listesine ekle (senkronizasyon için)
+                    let deletedGamesKey = "recentlyDeletedGameIDs"
+                    var recentlyDeletedIDs = UserDefaults.standard.stringArray(forKey: deletedGamesKey) ?? []
+                    if !recentlyDeletedIDs.contains(documentID) {
+                        recentlyDeletedIDs.append(documentID)
+                        UserDefaults.standard.set(recentlyDeletedIDs, forKey: deletedGamesKey)
+                        
+                        // Silme zamanını kaydet
+                        let deletedTimestampsKey = "deletedGameTimestamps"
+                        var deletedTimestamps = UserDefaults.standard.dictionary(forKey: deletedTimestampsKey) as? [String: Double] ?? [:]
+                        deletedTimestamps[documentID] = Date().timeIntervalSince1970
+                        UserDefaults.standard.set(deletedTimestamps, forKey: deletedTimestampsKey)
+                    }
+                    
+                    // Kullanıcı arayüzünü yenile
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshStatistics"), object: nil)
+                }
+            }
+        }
+    }
+    
+    // CoreData'dan oyunu sil - Firebase'i etkilemez, sadece kayıtlı oyunları etkiler
     func deleteSavedGameFromCoreData(gameID: String) {
         let context = container.viewContext
-        let fetchRequest: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %@", gameID)
+        
+        print("🔄 Core Data'dan oyun siliniyor, ID: \(gameID)")
+        
+        // ID'ye göre oyunu bul
+        let request: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
+        
+        if let uuid = UUID(uuidString: gameID) {
+            request.predicate = NSPredicate(format: "id == %@", uuid as CVarArg)
+        } else {
+            print("❌ Geçersiz UUID: \(gameID)")
+            return
+        }
         
         do {
-            let results = try context.fetch(fetchRequest)
-            if let gameToDelete = results.first {
-                context.delete(gameToDelete)
+            let games = try context.fetch(request)
+            
+            if let existingGame = games.first {
+                // Oyunu Core Data'dan sil
+                context.delete(existingGame)
                 try context.save()
-                print("✅ Oyun CoreData'dan başarıyla silindi")
+                print("✅ ID'si \(gameID) olan oyun başarıyla Core Data'dan silindi")
+            } else {
+                print("⚠️ Silinecek oyun Core Data'da bulunamadı, ID: \(gameID)")
             }
         } catch {
-            print("❌ CoreData'dan oyun silinirken hata: \(error.localizedDescription)")
+            print("❌ Core Data'dan oyun silinirken hata: \(error.localizedDescription)")
         }
     }
     

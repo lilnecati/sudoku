@@ -162,7 +162,7 @@ struct SudokuApp: App {
                 .environmentObject(themeManager)
                 .environmentObject(localizationManager)
                 .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
-                .onChange(of: scenePhase) { newPhase in
+                .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {
                     case .active:
                         // Uygulamanın arka plandan dönüş süresini kontrol et

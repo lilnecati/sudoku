@@ -74,6 +74,17 @@ struct DetailedStatisticsView: View {
         
         enum TrendDirection {
             case up, down, stable
+            
+            var localizedDescription: String {
+                switch self {
+                case .up:
+                    return "İyileşiyor"
+                case .down:
+                    return "Geriliyor"
+                case .stable:
+                    return "Sabit"
+                }
+            }
         }
         
         static var placeholder: StatisticsData {
@@ -139,31 +150,49 @@ struct DetailedStatisticsView: View {
                         .padding(.horizontal)
                         .padding(.top)
                         
-                        // Filtreler
-                        HStack(spacing: 16) {
+                        // Filtreler - Zaman ve zorluk yan yana olacak
+                        HStack(alignment: .top, spacing: 12) {
                             // Zaman aralığı seçici
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(LocalizationManager.shared.localizedString(for: "Time Range"))
-                                    .font(.callout)
+                                    .font(.system(size: 15, weight: .medium))
                                     .foregroundColor(.secondary)
+                                    .padding(.leading, 4)
                                 
-                                timeRangePicker
+                                VStack(spacing: 0) {
+                                    timeRangePicker
+                                }
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(colorScheme == .dark ? Color(.systemGray6).opacity(0.8) : Color.white)
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
+                                )
                             }
+                            .frame(maxWidth: .infinity)
                             
                             // Zorluk seviyesi seçici
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(LocalizationManager.shared.localizedString(for: "Difficulty Level"))
-                                    .font(.callout)
+                                    .font(.system(size: 15, weight: .medium))
                                     .foregroundColor(.secondary)
+                                    .padding(.leading, 4)
                                 
-                                difficultyPicker
+                                VStack(spacing: 0) {
+                                    difficultyPicker
+                                }
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(colorScheme == .dark ? Color(.systemGray6).opacity(0.8) : Color.white)
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
+                                )
                             }
+                            .frame(maxWidth: .infinity)
                         }
-                        .padding()
+                        .padding(16)
                         .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.9) : Color.white.opacity(0.95))
+                                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                         )
                         .padding(.horizontal)
                         
@@ -181,18 +210,33 @@ struct DetailedStatisticsView: View {
                             print("📌 SIL BUTONUNA BASILDI")
                             deleteAllCompletedGames()
                         }) {
-                            HStack {
+                            HStack(spacing: 10) {
                                 Image(systemName: "trash.fill")
+                                    .font(.system(size: 15))
+                                    .foregroundColor(.white)
+                                
                                 Text(LocalizationManager.shared.localizedString(for: "Tüm İstatistikleri Sil"))
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white)
                             }
-                            .foregroundColor(.white)
-                            .padding()
+                            .padding(.vertical, 15)
+                            .padding(.horizontal, 20)
                             .frame(maxWidth: .infinity)
                             .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.red)
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.red, Color.red.opacity(0.8)]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 15))
+                            .shadow(color: Color.red.opacity(0.5), radius: 4, x: 0, y: 2)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
                             )
                         }
+                        .buttonStyle(StatScaleButtonStyle()) // Özel buton stilini kullanalım
                         .padding(.horizontal)
                         .padding(.top, 20)
                         .padding(.bottom, 40)
@@ -233,43 +277,168 @@ struct DetailedStatisticsView: View {
     
     // Zaman aralığı seçici
     private var timeRangePicker: some View {
-        Picker("", selection: $selectedTimeRange) {
+        VStack(spacing: 8) {
             ForEach(TimeRange.allCases) { range in
-                Group {
+                let isSelected = selectedTimeRange == range
+                let title: String = {
                     switch range {
                     case .week:
-                        Text(LocalizationManager.shared.localizedString(for: "Son Hafta")).tag(range)
+                        return LocalizationManager.shared.localizedString(for: "Hafta")
                     case .month:
-                        Text(LocalizationManager.shared.localizedString(for: "Son Ay")).tag(range)
+                        return LocalizationManager.shared.localizedString(for: "Ay")
                     case .year:
-                        Text(LocalizationManager.shared.localizedString(for: "Son Yıl")).tag(range)
+                        return LocalizationManager.shared.localizedString(for: "Yıl")
                     case .allTime:
-                        Text(LocalizationManager.shared.localizedString(for: "Tüm Zamanlar")).tag(range)
+                        return LocalizationManager.shared.localizedString(for: "Tümü")
                     }
+                }()
+                
+                Button {
+                    print("Zaman aralığı seçildi: \(range.rawValue)")
+                    selectedTimeRange = range
+                } label: {
+                    HStack(spacing: 8) {
+                        // Zaman ikonu
+                        Image(systemName: timeRangeIcon(for: range))
+                            .font(.system(size: isSelected ? 16 : 14))
+                            .foregroundColor(isSelected ? .white : Color.primary.opacity(0.6))
+                        
+                        Text(title)
+                            .font(.system(size: isSelected ? 15 : 14, weight: isSelected ? .semibold : .medium))
+                            .foregroundColor(isSelected ? .white : Color.primary.opacity(0.7))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                    .background(
+                        ZStack {
+                            if isSelected {
+                                // Seçili arkaplan
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [Color.blue, Color.purple]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .shadow(color: Color.blue.opacity(0.4), radius: 3, x: 0, y: 2)
+                            } else {
+                                // Seçili olmayan durum için görünür arka plan
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                            }
+                        }
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(
+                                isSelected ? Color.clear : Color.gray.opacity(0.3),
+                                lineWidth: 1
+                            )
+                    )
+                    .contentShape(Rectangle()) // Tüm alanı tıklanabilir yap
                 }
+                .buttonStyle(EasyTapButtonStyle()) // Özel butonu stili ile tıklamayı kolaylaştır
             }
         }
-        .pickerStyle(SegmentedPickerStyle())
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
-                .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: 1)
-        )
+        .padding(6)
     }
     
     // Zorluk seviyesi seçici
     private var difficultyPicker: some View {
-        Picker("", selection: $selectedDifficulty) {
+        VStack(spacing: 8) {
             ForEach(SudokuBoard.Difficulty.allCases) { difficulty in
-                Text(difficulty.localizedName).tag(difficulty)
+                let isSelected = selectedDifficulty == difficulty
+                let title = difficulty.localizedName
+                let difficultyColor = getDifficultyColor(difficulty)
+                
+                Button {
+                    print("Zorluk seçildi: \(difficulty.rawValue)")
+                    selectedDifficulty = difficulty
+                } label: {
+                    HStack(spacing: 8) {
+                        // Zorluk ikonu
+                        Image(systemName: difficultyIcon(for: difficulty))
+                            .font(.system(size: isSelected ? 16 : 14))
+                            .foregroundColor(isSelected ? .white : difficultyColor.opacity(0.8))
+                        
+                        Text(title)
+                            .font(.system(size: isSelected ? 15 : 14, weight: isSelected ? .semibold : .medium))
+                            .foregroundColor(isSelected ? .white : Color.primary.opacity(0.7))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                    .background(
+                        ZStack {
+                            if isSelected {
+                                // Seçili arkaplan
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [difficultyColor, difficultyColor.opacity(0.7)]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .shadow(color: difficultyColor.opacity(0.4), radius: 3, x: 0, y: 2)
+                            } else {
+                                // Seçili olmayan durum için görünür arka plan
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                            }
+                        }
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(
+                                isSelected ? Color.clear : Color.gray.opacity(0.3),
+                                lineWidth: 1
+                            )
+                    )
+                    .contentShape(Rectangle()) // Tüm alanı tıklanabilir yap
+                }
+                .buttonStyle(EasyTapButtonStyle()) // Özel butonu stili ile tıklamayı kolaylaştır
             }
         }
-        .pickerStyle(SegmentedPickerStyle())
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
-                .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: 1)
-        )
+        .padding(6)
+    }
+    
+    // Zaman aralığı ikonu
+    private func timeRangeIcon(for range: TimeRange) -> String {
+        switch range {
+        case .week:
+            return "calendar.badge.clock"
+        case .month:
+            return "calendar.badge.plus"
+        case .year:
+            return "calendar"
+        case .allTime:
+            return "infinity"
+        }
+    }
+    
+    // Zorluk seviyesi ikonu
+    private func difficultyIcon(for difficulty: SudokuBoard.Difficulty) -> String {
+        switch difficulty {
+        case .easy:
+            return "leaf"
+        case .medium:
+            return "flame"
+        case .hard:
+            return "bolt"
+        case .expert:
+            return "star"
+        }
     }
     
     // Özet istatistik kartı
@@ -278,75 +447,85 @@ struct DetailedStatisticsView: View {
             // Başlık
             HStack {
                 Text(LocalizationManager.shared.localizedString(for: "Summary"))
-                    .font(.headline)
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Spacer()
                 
                 // Renk açıklaması (seçilen zorluk seviyesinin rengi)
-                Circle()
-                    .fill(getDifficultyColor(selectedDifficulty))
-                    .frame(width: 12, height: 12)
-                
-                Text(selectedDifficulty.localizedName)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(getDifficultyColor(selectedDifficulty))
+                        .frame(width: 10, height: 10)
+                    
+                    Text(selectedDifficulty.localizedName)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule()
+                        .fill(getDifficultyColor(selectedDifficulty).opacity(0.1))
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(getDifficultyColor(selectedDifficulty).opacity(0.3), lineWidth: 1)
+                        )
+                )
             }
             .padding(.horizontal)
             
-            // Bölüm çizgisi
-            Divider()
+            // Bölüm çizgisi - gradient çizgi
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [.clear, getDifficultyColor(selectedDifficulty).opacity(0.5), .clear]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: 1)
                 .padding(.horizontal)
             
-            // İstatistik değerleri - 3 satır, 2 sütun grid
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
-                statItem(title: gamesPlayedTitle, value: "\(statistics.totalGames)", icon: "gamecontroller.fill", color: .blue)
-                
-                statItem(
-                    title: completionRateTitle,
-                    value: "\(Int(statistics.successRate * 100))%",
+            // İstatistik değerleri - daha gelişmiş, kartlı tasarım
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                // Tamamlama oranı
+                statCard(
+                    title: LocalizationManager.shared.localizedString(for: "Tamamlama"),
+                    value: String(format: "%d%%", Int(statistics.successRate * 100)),
                     icon: "checkmark.circle.fill",
-                    color: .green
+                    color: .green,
+                    details: "\(statistics.completedGames)/\(statistics.totalGames) " + LocalizationManager.shared.localizedString(for: "oyun")
                 )
                 
-                statItem(
-                    title: accuracyTitle,
-                    value: "\(Int((1 - min(1, statistics.averageErrors / 3)) * 100))%",
-                    icon: "target",
-                    color: .orange
-                )
-                
-                statItem(
-                    title: avgTimeTitle,
+                // Ortalama süre
+                statCard(
+                    title: LocalizationManager.shared.localizedString(for: "Ort. Süre"),
                     value: formatTime(statistics.averageTime),
-                    icon: "clock.fill",
-                    color: .purple
+                    icon: "stopwatch.fill",
+                    color: .blue,
+                    details: LocalizationManager.shared.localizedString(for: "Her oyun")
                 )
                 
-                statItem(
+                // Doğruluk - hatalar
+                statCard(
+                    title: LocalizationManager.shared.localizedString(for: "Doğruluk"),
+                    value: String(format: "%.1f", statistics.averageErrors),
+                    icon: "exclamationmark.triangle.fill",
+                    color: .orange,
+                    details: LocalizationManager.shared.localizedString(for: "Ort. hata")
+                )
+                
+                // Trend
+                statCard(
                     title: LocalizationManager.shared.localizedString(for: "Trend"),
                     value: getTrendValue(),
-                    icon: getTrendIcon(), 
-                    color: getTrendColor()
-                )
-                
-                statItem(
-                    title: LocalizationManager.shared.localizedString(for: "Fastest"),
-                    value: formatTime(statistics.bestTime),
-                    icon: "bolt.fill",
-                    color: .yellow
+                    icon: getTrendIcon(),
+                    color: getTrendColor(),
+                    details: LocalizationManager.shared.localizedString(for: "Son oyunlarda")
                 )
             }
             .padding()
-            
-            if statistics.totalGames == 0 {
-                // Hiç veri yoksa mesaj göster
-                Text(noDataMessage)
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding()
-            }
         }
         .background(
             RoundedRectangle(cornerRadius: 16)
@@ -356,47 +535,75 @@ struct DetailedStatisticsView: View {
         .padding(.horizontal)
     }
     
-    // Tek istatistik öğesi
-    private func statItem(title: String, value: String, icon: String, color: Color) -> some View {
-        HStack(spacing: 12) {
+    // Tek istatistik kartı
+    private func statCard(title: String, value: String, icon: String, color: Color, details: String) -> some View {
+        VStack(spacing: 14) {
             // İkon
             Image(systemName: icon)
-                .foregroundColor(color)
-                .font(.system(size: 20))
-                .frame(width: 24, height: 24)
+                .foregroundColor(.white)
+                .font(.system(size: 14, weight: .bold))
+                .frame(width: 28, height: 28)
+                .background(
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [color, color.opacity(0.8)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: color.opacity(0.3), radius: 3, x: 0, y: 2)
+                )
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(spacing: 4) {
+                // Ana değer
+                Text(value)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.primary)
+                
+                // Başlık
                 Text(title)
-                    .font(.caption)
+                    .font(.system(size: 13))
                     .foregroundColor(.secondary)
                 
-                Text(value)
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(.primary)
+                // Detay bilgisi
+                Text(details)
+                    .font(.system(size: 11))
+                    .foregroundColor(.gray)
+                    .padding(.top, 2)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6).opacity(0.5))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(color.opacity(0.2), lineWidth: 1)
+        )
     }
     
     // Tamamlama oranı grafiği
     private var completionRateChart: some View {
         VStack(spacing: 16) {
             HStack {
-                Text(LocalizationManager.shared.localizedString(for: "Completion Rate"))
-                    .font(.headline)
+                Text(LocalizationManager.shared.localizedString(for: "Tamamlama Oranı"))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Spacer()
                 
-                // Tamamlama oranı
-                HStack(spacing: 4) {
-                    Text(String(format: "%d%%", Int(statistics.successRate * 100)))
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color.green)
-                    
-                    Image(systemName: "checkmark.circle.fill")
+                // Etiket
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 10))
                         .foregroundColor(.green)
-                        .font(.system(size: 14))
+                    
+                    Text(LocalizationManager.shared.localizedString(for: "Tamamlanma"))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
@@ -413,11 +620,7 @@ struct DetailedStatisticsView: View {
             
             if completionData.isEmpty {
                 // Hiç veri yoksa mesaj göster
-                Text(noDataMessage)
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.vertical, 30)
+                emptyDataView()
             } else {
                 // Geliştirilmiş tamamlama grafiği
                 VStack(spacing: 8) {
@@ -502,20 +705,20 @@ struct DetailedStatisticsView: View {
         VStack(spacing: 16) {
             HStack {
                 Text(LocalizationManager.shared.localizedString(for: "Performans Trendi"))
-                    .font(.headline)
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Spacer()
                 
-                // En iyi süre
-                HStack(spacing: 4) {
-                    Text(formatTime(statistics.bestTime))
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color.purple)
-                    
+                // En iyi süre etiketi
+                HStack(spacing: 6) {
                     Image(systemName: "bolt.fill")
+                        .font(.system(size: 10))
                         .foregroundColor(.purple)
-                        .font(.system(size: 14))
+                    
+                    Text(formatTime(statistics.bestTime))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
@@ -532,11 +735,7 @@ struct DetailedStatisticsView: View {
             
             if performanceData.isEmpty {
                 // Hiç veri yoksa mesaj göster
-                Text(noDataMessage)
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.vertical, 30)
+                emptyDataView()
             } else {
                 // Geliştirilmiş performans grafiği
                 VStack(spacing: 8) {
@@ -614,6 +813,42 @@ struct DetailedStatisticsView: View {
                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
         )
         .padding(.horizontal)
+    }
+    
+    // Veri yok görünümü
+    private func emptyDataView() -> some View {
+        VStack(spacing: 16) {
+            // Boş veri ikonu
+            Image(systemName: "chart.bar.xaxis")
+                .font(.system(size: 40))
+                .foregroundColor(Color.gray.opacity(0.5))
+                .padding(.bottom, 8)
+            
+            // Mesaj
+            Text(noDataMessage)
+                .font(.system(size: 15))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+            
+            // Alt bilgi
+            Text(LocalizationManager.shared.localizedString(for: "Oyun tamamladıkça burada istatistikleriniz görünecek"))
+                .font(.system(size: 13))
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 30)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 30)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.5) : Color(.systemGray6).opacity(0.3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 30)
     }
     
     // MARK: - Helper Fonksiyonlar
@@ -774,10 +1009,8 @@ struct DetailedStatisticsView: View {
         
         // Firestore'dan tamamlanmış oyunları çek
         let db = Firestore.firestore()
-        var query = db.collection("savedGames")
+        let query = db.collection("savedGames")
             .whereField("userID", isEqualTo: userID)
-            .whereField("isCompleted", isEqualTo: true)
-            .whereField("difficulty", isEqualTo: selectedDifficulty.rawValue)
             
         // Zaman aralığına göre filtreleme
         let calendar = Calendar.current
@@ -797,10 +1030,7 @@ struct DetailedStatisticsView: View {
         
         print("📅 Tarih filtresi: \(fromDate) - \(today)")
         
-        // Tarih filtresini ekle
-        query = query.whereField("timestamp", isGreaterThan: fromDate)
-        
-        // Sorgulama yapılıyor bilgisi
+        // Sorgu çok basitleştirildi, sadece userID kullanılıyor. Diğer filtreleri kod içinde yapacağız.
         print("🔍 Firestore sorgusu yapılıyor: savedGames koleksiyonu")
         
         // Verileri çek
@@ -821,7 +1051,33 @@ struct DetailedStatisticsView: View {
                 return
             }
             
-            if documents.isEmpty {
+            // Tüm filtreleri kod içinde uygula
+            let filteredDocuments = documents.filter { document in
+                let data = document.data()
+                
+                // isCompleted kontrolü
+                guard (data["isCompleted"] as? Bool) == true else {
+                    return false
+                }
+                
+                // difficulty kontrolü
+                guard (data["difficulty"] as? String) == selectedDifficulty.rawValue else {
+                    return false
+                }
+                
+                // Tarih kontrolü - dateCreated veya timestamp kullan
+                if let dateTimestamp = data["dateCreated"] as? Timestamp {
+                    let creationDate = dateTimestamp.dateValue()
+                    return creationDate > fromDate
+                } else if let timestamp = data["timestamp"] as? Timestamp {
+                    let creationDate = timestamp.dateValue()
+                    return creationDate > fromDate
+                }
+                
+                return false
+            }
+            
+            if filteredDocuments.isEmpty {
                 print("ℹ️ Bu filtreye uygun tamamlanmış oyun bulunamadı")
                 // Veri bulunamadıysa boş bırak
                 DispatchQueue.main.async {
@@ -833,7 +1089,7 @@ struct DetailedStatisticsView: View {
                 return
             }
             
-            print("📊 \(documents.count) tamamlanmış oyun bulundu")
+            print("📊 \(filteredDocuments.count) tamamlanmış oyun bulundu")
             
             // İstatistik verileri için geçici diziler
             var tempCompletionData: [CompletionDataPoint] = []
@@ -845,12 +1101,12 @@ struct DetailedStatisticsView: View {
             var bestTime: TimeInterval = Double.infinity
             
             // Her oyunu işle
-            for (index, document) in documents.enumerated() {
+            for (index, document) in filteredDocuments.enumerated() {
                 let data = document.data()
                 
                 // Doküman ID
                 let docID = document.documentID
-                print("📄 Oyun \(index+1)/\(documents.count) işleniyor - ID: \(docID)")
+                print("🔍 Oyun \(index+1)/\(filteredDocuments.count) işleniyor - ID: \(docID)")
                 
                 // Timestamp'i tarih olarak al
                 if let timestamp = data["timestamp"] as? Timestamp {
@@ -858,13 +1114,6 @@ struct DetailedStatisticsView: View {
                     print("   📅 Tarih: \(date)")
                 } else {
                     print("   ⚠️ Timestamp bulunamadı")
-                }
-                
-                // Oyun tamamlanmış mı?
-                if let isCompleted = data["isCompleted"] as? Bool {
-                    print("   ✓ Tamamlanma: \(isCompleted ? "Evet" : "Hayır")")
-                } else {
-                    print("   ⚠️ isCompleted alanı bulunamadı")
                 }
                 
                 // Süre
@@ -883,14 +1132,13 @@ struct DetailedStatisticsView: View {
                 
                 // Verileri al
                 let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-                let isCompleted = data["isCompleted"] as? Bool ?? false
                 let elapsedTime = data["elapsedTime"] as? TimeInterval ?? 0
                 let errorCount = data["errorCount"] as? Int ?? 0
                 
                 // Tamamlama verisi ekle
                 tempCompletionData.append(CompletionDataPoint(
                     date: timestamp,
-                    completed: isCompleted
+                    completed: true
                 ))
                 
                 // Performans verisi ekle
@@ -905,7 +1153,7 @@ struct DetailedStatisticsView: View {
                 totalErrors += errorCount
                 
                 // En iyi süreyi güncelle
-                if isCompleted && elapsedTime > 0 && elapsedTime < bestTime {
+                if elapsedTime > 0 && elapsedTime < bestTime {
                     bestTime = elapsedTime
                 }
             }
@@ -953,17 +1201,17 @@ struct DetailedStatisticsView: View {
                 
                 // İstatistik özetini oluştur
                 self.statistics = StatisticsData(
-                    totalGames: documents.count,
-                    completedGames: documents.count, // Tüm oyunlar tamamlanmış (filter ile çektik)
-                    averageTime: totalTime / Double(max(1, documents.count)),
+                    totalGames: filteredDocuments.count,
+                    completedGames: filteredDocuments.count, // Tüm oyunlar tamamlanmış (filter ile çektik)
+                    averageTime: totalTime / Double(max(1, filteredDocuments.count)),
                     bestTime: bestTime,
-                    averageErrors: Double(totalErrors) / Double(max(1, documents.count)),
+                    averageErrors: Double(totalErrors) / Double(max(1, filteredDocuments.count)),
                     successRate: 1.0, // Tamamlanma oranı %100 (filter ile tamamlanmış oyunları çektik)
                     trendDirection: trendDirection
                 )
                 
-                print("✅ UI güncellendi: \(documents.count) oyun gösteriliyor")
-                print("📊 İSTATİSTİK YÜKLEME TAMAMLANDI 📊")
+                print("✅ UI güncellendi: \(filteredDocuments.count) oyun gösteriliyor")
+                print("�� İSTATİSTİK YÜKLEME TAMAMLANDI 📊")
             }
         }
     }
@@ -1183,6 +1431,26 @@ struct DetailedStatisticsView: View {
             print("❌ Core Data skor silme hatası: \(error.localizedDescription)")
             completion(false)
         }
+    }
+}
+
+// MARK: - Özel Buton Stili
+struct StatScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .opacity(configuration.isPressed ? 0.9 : 1)
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Özel buton stili - kolay basılma için
+struct EasyTapButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .opacity(configuration.isPressed ? 0.9 : 1)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 

@@ -8,6 +8,7 @@ import SwiftUI
 import CoreData
 import Firebase
 import FirebaseAuth
+import FirebaseFirestore
 
 struct SavedGamesView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -67,11 +68,13 @@ struct SavedGamesView: View {
             
             do {
                 // JSON veriyi ayrıştır
-                if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any],
-                   // isCompleted anahtarını kontrol et
-                   let isCompleted = dict["isCompleted"] as? Bool {
-                    // Tamamlanmış oyunları gösterme
-                    return !isCompleted
+                if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
+                    // isCompleted anahtarını kontrol et
+                    if let isCompleted = dict["isCompleted"] as? Bool, isCompleted {
+                        // Tamamlanmış oyunları gösterme
+                        print("ℹ️ Tamamlanmış oyun filtrelendi: \(savedGame.id?.uuidString ?? "ID yok")")
+                        return false
+                    }
                 }
             } catch {
                 print("❌ JSON ayrıştırma hatası: \(error)")
@@ -758,8 +761,7 @@ struct SavedGamesView: View {
         let uncompletelGames = allGames.filter { game in
             // Firebase'den isCompleted değerini kontrol et
             if let gameID = game.id?.uuidString.uppercased() {
-                let gameRef = Firestore.firestore().collection("savedGames").document(gameID)
-                
+                // Kullanılmayan gameRef değişkenini kaldırdık
                 // Async olarak çalıştığı için burada filtreleme yapamıyoruz
                 // Bu nedenle filtrelemeyi filterGames() içinde yapacağız
             }
