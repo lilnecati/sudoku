@@ -30,8 +30,16 @@ Bu uygulama, aşağıdaki açık kaynak bileşenlerini kullanmaktadır:
 - Apple Inc. tarafından geliştirilen deklaratif UI framework'ü
 - [Apple Developer Agreement](https://developer.apple.com/terms/) kapsamında kullanılmaktadır
 
-### Bir Başka Açık Kaynak Bileşeni
-- Lisans bilgisi ve atıflar burada listelenecek
+### Firebase
+- Google LLC tarafından geliştirilen bir mobil ve web uygulama geliştirme platformu
+- [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) altında lisanslanmıştır
+- Firebase bileşenleri: Authentication, Firestore, Storage
+- Lisans bilgisi: https://firebase.google.com/terms
+
+### Swift Collections
+- Apple Inc. tarafından geliştirilen veri yapıları kütüphanesi
+- [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) altında lisanslanmıştır
+- GitHub: https://github.com/apple/swift-collections
 
 ### İkonlar ve Görsel Öğeler
 - [SF Symbols](https://developer.apple.com/sf-symbols/) - Apple Inc. (Apple Developer License)

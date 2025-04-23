@@ -407,8 +407,9 @@ Katılımdan önce lütfen [katkıda bulunma kılavuzumuzu](CONTRIBUTING.md) oku
 <div align="center">
   <img src="Assets/screenshot1.png" width="200" alt="Ana Menü"/>
   <img src="Assets/screenshot2.png" width="200" alt="Oyun Ekranı"/>
-  <img src="Assets/screenshot3.png" width="200" alt="İpucu Sistemi"/>
-  <img src="Assets/screenshot4.png" width="200" alt="Ayarlar"/>
+  <img src="Assets/screenshot3.png" width="200" alt="Skor Tablosu"/>
+  <img src="Assets/screenshot4.png" width="200" alt="Kayıtlı Oyunlar"/>
+  <img src="Assets/screenshot5.png" width="200" alt="Ayarlar"/>
 </div>
 
 ## 📝 Lisans
