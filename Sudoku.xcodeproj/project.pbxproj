@@ -11,7 +11,6 @@
 		A49FE7C22DB82A3D003E5251 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A49FE7C12DB82A3D003E5251 /* FirebaseAuth */; };
 		A49FE7C42DB82A3D003E5251 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A49FE7C32DB82A3D003E5251 /* FirebaseCore */; };
 		A49FE7C62DB82F54003E5251 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A49FE7C52DB82F54003E5251 /* FirebaseFirestore */; };
-		A49FE7CC2DB9657E003E5251 /* variables.md in Resources */ = {isa = PBXBuildFile; fileRef = A49FE7CB2DB9657E003E5251 /* variables.md */; };
 		A49FE7CE2DB965CA003E5251 /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = A49FE7CD2DB965CA003E5251 /* LICENSE.md */; };
 		A4CB25B72D951FC0004E56BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = A4CB25B62D951FC0004E56BE /* README.md */; };
 		A4CB25B92D951FCC004E56BE /* variables.md in Resources */ = {isa = PBXBuildFile; fileRef = A4CB25B82D951FCC004E56BE /* variables.md */; };
@@ -43,7 +42,6 @@
 		A4861AEF2D8FFB8B0027B8B9 /* SudokuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SudokuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4861AF92D8FFB8B0027B8B9 /* SudokuUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SudokuUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A49FE22F2DB812F4003E5251 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
-		A49FE7CB2DB9657E003E5251 /* variables.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = variables.md; sourceTree = "<group>"; };
 		A49FE7CD2DB965CA003E5251 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		A4CB25B62D951FC0004E56BE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		A4CB25B82D951FCC004E56BE /* variables.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = variables.md; sourceTree = "<group>"; };
@@ -121,7 +119,6 @@
 		A4861AE02D8FFB8A0027B8B9 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A49FE7CB2DB9657E003E5251 /* variables.md */,
 				A4861ADF2D8FFB8A0027B8B9 /* Sudoku.app */,
 				A4861AEF2D8FFB8B0027B8B9 /* SudokuTests.xctest */,
 				A4861AF92D8FFB8B0027B8B9 /* SudokuUITests.xctest */,
@@ -257,7 +254,6 @@
 				A4CB25B72D951FC0004E56BE /* README.md in Resources */,
 				A4CB25B92D951FCC004E56BE /* variables.md in Resources */,
 				A49FE2302DB812F4003E5251 /* GoogleService-Info.plist in Resources */,
-				A49FE7CC2DB9657E003E5251 /* variables.md in Resources */,
 				A49FE7CE2DB965CA003E5251 /* LICENSE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

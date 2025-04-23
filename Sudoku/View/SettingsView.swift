@@ -1310,6 +1310,54 @@ struct SettingsView: View {
             )
             .padding(.horizontal)
             
+            // Başarılarım butonu - yeni eklendi
+            HStack {
+                let isLoggedIn = PersistenceController.shared.getCurrentUser() != nil
+                
+                Button(action: {
+                    // Kullanıcı giriş yaptı mı kontrol et
+                    if isLoggedIn {
+                        // Başarılar sayfasına git
+                        SoundManager.shared.playNavigationSound()
+                    } else {
+                        // Giriş sayfasına git
+                        SoundManager.shared.playNavigationSound()
+                    }
+                }) {
+                    HStack {
+                        Label {
+                            Text("Başarılarım")
+                                .scaledFont(size: 16, weight: .medium)
+                                .foregroundColor(isLoggedIn ? .primary : .gray)
+                        } icon: {
+                            Image(systemName: "trophy.fill")
+                                .foregroundColor(isLoggedIn ? .yellow : .gray)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(isLoggedIn ? .secondary : .gray)
+                            .font(.system(size: 14))
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    )
+                }
+                .disabled(!isLoggedIn)
+                
+                if !isLoggedIn {
+                    Text("Firebase hesabı gereklidir")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.leading, 8)
+                }
+            }
+            .padding(.horizontal)
+            
             // Profil yönetimi butonu
             if let _ = PersistenceController.shared.getCurrentUser() {
                 // Kullanıcı giriş yapmışsa profil düzenleme ve çıkış butonları

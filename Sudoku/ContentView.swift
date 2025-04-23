@@ -847,6 +847,15 @@ struct ContentView: View {
                     .zIndex(2)
             }
             
+            // Başarı bildirimi
+            if AchievementManager.shared.showAchievementAlert, 
+               let achievement = AchievementManager.shared.lastUnlockedAchievement {
+                AchievementNotification(achievement: achievement) {
+                    AchievementManager.shared.showAchievementAlert = false
+                }
+                .zIndex(4) // En üstte göster
+            }
+            
             // Genel yükleniyor göstergesi
             if isLoading {
                 Color.black.opacity(0.6)

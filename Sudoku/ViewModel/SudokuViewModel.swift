@@ -2509,6 +2509,14 @@ class SudokuViewModel: ObservableObject {
             moveCount: moveCount
         )
         
+        // Başarıları güncelle
+        AchievementManager.shared.processGameCompletion(
+            difficulty: board.difficulty,
+            time: elapsedTime,
+            errorCount: errorCount,
+            hintCount: hintUsed
+        )
+        
         // Oyun tamamlandığında bildirim gönder (gerekirse kullanılabilir)
         NotificationCenter.default.post(name: NSNotification.Name("GameCompleted"), object: nil, userInfo: [
             "difficulty": board.difficulty.rawValue,

@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
     "?" : {
 
     },
@@ -177,6 +180,16 @@
     "%lld" : {
 
     },
+    "%lld / %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld / %2$lld"
+          }
+        }
+      }
+    },
     "%lld:%@" : {
       "localizations" : {
         "en" : {
@@ -206,6 +219,9 @@
 
     },
     "© 2024 Necati Yıldırım" : {
+
+    },
+    "+%lld puan" : {
 
     },
     "🇫🇷" : {
@@ -427,6 +443,18 @@
         }
       }
     },
+    "Başarı Detayı" : {
+
+    },
+    "Başarı Kazanıldı!" : {
+
+    },
+    "Başarılar" : {
+
+    },
+    "Başarılarım" : {
+
+    },
     "Bitti" : {
       "comment" : "İpucu bitirme butonu",
       "localizations" : {
@@ -488,6 +516,9 @@
           }
         }
       }
+    },
+    "Bu başarıyı kazanmak için daha fazla %@ zorluk seviyesinde Sudoku oynayın." : {
+
     },
     "Bu hücre, sudoku tahtasında çözülebilir bir hücre olarak belirlendi." : {
       "comment" : "İpucu açıklaması",
@@ -1209,6 +1240,9 @@
     "Finished" : {
 
     },
+    "Firebase hesabı gereklidir" : {
+
+    },
     "Geliştirici" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1495,6 +1529,9 @@
         }
       }
     },
+    "Hata yapmadan dikkatli bir şekilde oynayın." : {
+
+    },
     "Hata: %@" : {
       "localizations" : {
         "en" : {
@@ -1561,6 +1598,9 @@
         }
       }
     },
+    "Her gün uygulamayı açın ve oynamaya devam edin." : {
+
+    },
     "Her oyunda yalnızca 3 ipucu kullanabilirsiniz!" : {
       "localizations" : {
         "en" : {
@@ -1593,6 +1633,9 @@
           }
         }
       }
+    },
+    "Her zorluk seviyesinden en az bir oyun tamamlayın." : {
+
     },
     "Hesabı Sil" : {
       "localizations" : {
@@ -1857,6 +1900,9 @@
         }
       }
     },
+    "İpucu kullanmadan kendiniz çözün." : {
+
+    },
     "İyileşiyor" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1896,6 +1942,9 @@
           }
         }
       }
+    },
+    "Kapat" : {
+
     },
     "Karanlık Mod" : {
       "localizations" : {
@@ -2045,6 +2094,9 @@
           }
         }
       }
+    },
+    "Kilitli" : {
+
     },
     "Kolay" : {
       "extractionState" : "stale",
@@ -2262,6 +2314,9 @@
         }
       }
     },
+    "Nasıl Kazanılır?" : {
+
+    },
     "Nasıl Oynanır" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2458,6 +2513,9 @@
         }
       }
     },
+    "Odaklanın ve hızlı çözmeye çalışın." : {
+
+    },
     "Only the value %lld can be placed in this cell because all other numbers have been eliminated." : {
 
     },
@@ -2642,6 +2700,9 @@
           }
         }
       }
+    },
+    "Oynamaya devam edin ve bu başarıyı keşfedin." : {
+
     },
     "Oynanan" : {
       "extractionState" : "manual",
@@ -3105,6 +3166,9 @@
           }
         }
       }
+    },
+    "Sadece Açılanlar" : {
+
     },
     "Satır, sütun ve 3x3 bölgesindeki diğer sayılar nedeniyle, bu hücreye sadece 4 yerleştirilebilir." : {
       "extractionState" : "stale",
@@ -3956,6 +4020,9 @@
           }
         }
       }
+    },
+    "Tamamlandı: %@" : {
+
     },
     "Tamamlanma" : {
       "extractionState" : "stale",
@@ -5236,6 +5303,9 @@
     },
     "X-Wing deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir" : {
       "comment" : "İpucu açıklaması"
+    },
+    "Yeni Başarı!" : {
+
     },
     "Yeni Hesap Oluştur" : {
       "localizations" : {

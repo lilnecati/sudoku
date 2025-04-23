@@ -9,6 +9,7 @@ import CoreData
 import Combine
 import Firebase
 import FirebaseFirestore
+import FirebaseAuth
 
 // Metin ölçeği için EnvironmentKey
 struct TextScaleKey: EnvironmentKey {
@@ -105,7 +106,7 @@ struct ColorManager {
 
 @main
 struct SudokuApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var localizationManager = LocalizationManager.shared
@@ -137,10 +138,6 @@ struct SudokuApp: App {
     private let viewContext: NSManagedObjectContext
     
     init() {
-        if FirebaseApp.app() == nil {
-            FirebaseApp.configure()
-        }
-        
         print("📱 Sudoku app initializing...")
         #if DEBUG
         print("📊 Debug mode active")
@@ -162,6 +159,14 @@ struct SudokuApp: App {
                 .environmentObject(themeManager)
                 .environmentObject(localizationManager)
                 .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
+                .onAppear {
+                    // Firebase Auth'un hazır olması için bir gecikme ekleyelim
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        // Achievement manager'ı başlat
+                        _ = AchievementManager.shared
+                        print("✅ AchievementManager başlatıldı")
+                    }
+                }
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {
                     case .active:
@@ -205,6 +210,16 @@ struct SudokuApp: App {
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        // Firebase konfigürasyonu
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+            print("✅ Firebase yapılandırması başarıyla tamamlandı")
+        } else {
+            print("⚠️ Firebase zaten yapılandırılmış")
+        }
+        
+        // Diğer ayarlar
+        
         return true
     }
 }
