@@ -195,7 +195,68 @@ class AchievementManager: ObservableObject {
             Achievement(id: "midnight_solver", name: "Gece Yarısı Çözücüsü", description: "Gece yarısı (23:45-00:15) bir Sudoku tamamla", category: .special, iconName: "moon.circle.fill", requiredValue: 1),
             Achievement(id: "puzzle_variety", name: "Çeşitlilik Ustası", description: "Her zorluk seviyesinden en az 5 Sudoku tamamla", category: .special, iconName: "chart.bar.doc.horizontal", requiredValue: 20),
             Achievement(id: "sudoku_master", name: "Sudoku Zirve", description: "Her kategoriden en az 3 başarı kazan", category: .special, iconName: "crown.fill", requiredValue: 15),
-            Achievement(id: "sudoku_grandmaster", name: "Sudoku Grandmaster", description: "Her kategoriden en az 5 başarı kazan", category: .special, iconName: "crown.fill", requiredValue: 25)
+            Achievement(id: "sudoku_grandmaster", name: "Sudoku Grandmaster", description: "Her kategoriden en az 5 başarı kazan", category: .special, iconName: "crown.fill", requiredValue: 25),
+            
+            // Yeni tematik başarımlar
+            Achievement(id: "seasonal_spring", name: "Bahar Çiçeği", description: "İlkbahar mevsiminde 10 Sudoku tamamla", category: .special, iconName: "leaf.fill", requiredValue: 10),
+            Achievement(id: "seasonal_summer", name: "Yaz Güneşi", description: "Yaz mevsiminde 15 Sudoku tamamla", category: .special, iconName: "sun.max.fill", requiredValue: 15),
+            Achievement(id: "seasonal_autumn", name: "Sonbahar Yaprakları", description: "Sonbahar mevsiminde 12 Sudoku tamamla", category: .special, iconName: "leaf.arrow.circlepath", requiredValue: 12),
+            Achievement(id: "seasonal_winter", name: "Kış Soğuğu", description: "Kış mevsiminde 20 Sudoku tamamla", category: .special, iconName: "snow", requiredValue: 20),
+            
+            // Saat bazlı başarımlar
+            Achievement(id: "clock_morning_rush", name: "Sabah Koşuşturması", description: "Sabah 7-9 arası 5 Sudoku tamamla", category: .time, iconName: "sunrise.fill", requiredValue: 5),
+            Achievement(id: "clock_lunch_break", name: "Öğle Molası", description: "Öğlen 12-14 arası 5 Sudoku tamamla", category: .time, iconName: "fork.knife", requiredValue: 5),
+            Achievement(id: "clock_tea_time", name: "Çay Saati", description: "Öğleden sonra 15-17 arası 5 Sudoku tamamla", category: .time, iconName: "cup.and.saucer.fill", requiredValue: 5),
+            Achievement(id: "clock_prime_time", name: "Altın Saatler", description: "Akşam 20-22 arası 5 Sudoku tamamla", category: .time, iconName: "tv.fill", requiredValue: 5),
+            
+            // Hız bazlı başarımlar
+            Achievement(id: "speed_easy_20", name: "Şimşek Gibi (Kolay)", description: "Kolay Sudoku'yu 20 saniyeden kısa sürede tamamla", category: .time, iconName: "bolt.car.fill", requiredValue: 1),
+            Achievement(id: "speed_medium_45", name: "Şimşek Gibi (Orta)", description: "Orta Sudoku'yu 45 saniyeden kısa sürede tamamla", category: .time, iconName: "bolt.car.fill", requiredValue: 1),
+            Achievement(id: "speed_hard_90", name: "Şimşek Gibi (Zor)", description: "Zor Sudoku'yu 90 saniyeden kısa sürede tamamla", category: .time, iconName: "bolt.car.fill", requiredValue: 1),
+            
+            // Kombine başarımlar
+            Achievement(id: "combo_perfect_5", name: "Mükemmel Seri", description: "Art arda 5 oyunu hatasız tamamla", category: .special, iconName: "star.fill", requiredValue: 5),
+            Achievement(id: "combo_perfect_10", name: "Üstün Performans", description: "Art arda 10 oyunu hatasız tamamla", category: .special, iconName: "star.square.fill", requiredValue: 10),
+            Achievement(id: "combo_speed_5", name: "Hız Ustası", description: "Art arda 5 oyunu kendi rekorlarından hızlı tamamla", category: .special, iconName: "timer", requiredValue: 5),
+            
+            // Lokasyon bazlı başarımlar
+            Achievement(id: "location_traveler", name: "Gezgin Sudokucu", description: "En az 3 farklı şehirde Sudoku oyna", category: .special, iconName: "map.fill", requiredValue: 3),
+            Achievement(id: "location_home", name: "Ev Konforu", description: "Ev konumunda 50 Sudoku tamamla", category: .special, iconName: "house.fill", requiredValue: 50),
+            Achievement(id: "location_travel", name: "Yolda Sudoku", description: "Hareket halindeyken 25 Sudoku tamamla", category: .special, iconName: "car.fill", requiredValue: 25),
+            
+            // Hafta içi/sonu başarımları genişletilmiş
+            Achievement(id: "weekday_monday", name: "Pazartesi Sendromu", description: "10 Pazartesi günü Sudoku oyna", category: .streak, iconName: "1.square.fill", requiredValue: 10),
+            Achievement(id: "weekday_wednesday", name: "Haftanın Ortası", description: "10 Çarşamba günü Sudoku oyna", category: .streak, iconName: "3.square.fill", requiredValue: 10),
+            Achievement(id: "weekday_friday", name: "Haftasonu Kapısı", description: "10 Cuma günü Sudoku oyna", category: .streak, iconName: "5.square.fill", requiredValue: 10),
+            
+            // Oyun stili başarımları
+            Achievement(id: "style_methodical", name: "Metodolojik Çözücü", description: "Bir oyunu hiç not almadan tamamla", category: .special, iconName: "pencil.slash", requiredValue: 1),
+            Achievement(id: "style_fast_input", name: "Hızlı Girişçi", description: "30 saniye içinde 30 hücre doldur", category: .special, iconName: "hand.tap.fill", requiredValue: 1),
+            Achievement(id: "style_perfectionist", name: "Mükemmeliyetçi", description: "Bir oyunda tüm notları kullanarak bitir", category: .special, iconName: "doc.text.fill", requiredValue: 1),
+            
+            // Bayram ve özel gün başarımları
+            Achievement(id: "holiday_new_year", name: "Yeni Yıl Sudokusu", description: "Yeni yılın ilk gününde bir Sudoku tamamla", category: .special, iconName: "party.popper.fill", requiredValue: 1),
+            Achievement(id: "holiday_weekend", name: "Hafta Sonu Canavarı", description: "Bir hafta sonunda 20 Sudoku tamamla", category: .special, iconName: "calendar.badge.clock", requiredValue: 20),
+            Achievement(id: "birthday_player", name: "Doğum Günü Oyuncusu", description: "Doğum gününde Sudoku oyna", category: .special, iconName: "gift.fill", requiredValue: 1),
+            
+            // Sosyal başarımlar
+            Achievement(id: "social_share_first", name: "İlk Paylaşım", description: "İlk kez skorunu sosyal medyada paylaş", category: .special, iconName: "square.and.arrow.up", requiredValue: 1),
+            Achievement(id: "social_share_10", name: "Sosyal Sudokucu", description: "10 kez skorunu paylaş", category: .special, iconName: "person.2.fill", requiredValue: 10),
+            Achievement(id: "social_invite", name: "Davetçi", description: "Bir arkadaşını oyuna davet et", category: .special, iconName: "envelope.fill", requiredValue: 1),
+            
+            // Farklı cihaz başarımları
+            Achievement(id: "device_multi", name: "Çok Platformlu", description: "İki farklı cihazda oyna", category: .special, iconName: "laptopcomputer.and.iphone", requiredValue: 2),
+            Achievement(id: "device_sync", name: "Bulut Ustası", description: "10 kez cihazlar arası senkronizasyon yap", category: .special, iconName: "icloud.fill", requiredValue: 10),
+            
+            // İstatistik başarımları
+            Achievement(id: "stats_500_cells", name: "500 Hücre", description: "Toplam 500 Sudoku hücresi doldur", category: .special, iconName: "number.square.fill", requiredValue: 500),
+            Achievement(id: "stats_1000_cells", name: "1000 Hücre", description: "Toplam 1000 Sudoku hücresi doldur", category: .special, iconName: "number.square.fill", requiredValue: 1000),
+            Achievement(id: "stats_5000_cells", name: "5000 Hücre", description: "Toplam 5000 Sudoku hücresi doldur", category: .special, iconName: "number.square.fill", requiredValue: 5000),
+            
+            // Zorluk atlatma başarımları
+            Achievement(id: "progress_all_easy", name: "Kolayı Geride Bırak", description: "30 kolay seviye tamamlayarak orta seviyeye geç", category: .beginner, iconName: "arrowshape.up.fill", requiredValue: 30),
+            Achievement(id: "progress_all_medium", name: "Ortayı Geride Bırak", description: "50 orta seviye tamamlayarak zor seviyeye geç", category: .intermediate, iconName: "arrowshape.up.fill", requiredValue: 50),
+            Achievement(id: "progress_all_hard", name: "Zoru Geride Bırak", description: "70 zor seviye tamamlayarak uzman seviyeye geç", category: .expert, iconName: "arrowshape.up.fill", requiredValue: 70)
         ]
     }
     
@@ -471,6 +532,33 @@ class AchievementManager: ObservableObject {
         
         // Özel saat başarımları
         checkSpecialTimeAchievements()
+        
+        // YENİ: Mevsimsel başarımları kontrol et
+        checkSeasonalAchievements()
+        
+        // YENİ: Saat dilimi başarımları
+        checkClockBasedAchievements()
+        
+        // YENİ: Hızlı tamamlama başarımları
+        checkSpeedAchievements(difficulty: difficulty, time: time)
+        
+        // YENİ: Hatasız seri başarımları
+        checkPerfectComboAchievements(errorCount: errorCount)
+        
+        // YENİ: Hız seri başarımlarını kontrol et
+        checkSpeedComboAchievements(time: time)
+        
+        // YENİ: Hafta içi başarımları
+        checkWeekdayAchievements()
+        
+        // YENİ: Oyun stili başarımları
+        checkGameStyleAchievements(hintCount: hintCount, errorCount: errorCount)
+        
+        // YENİ: Hücre tamamlama başarımları
+        updateCellsCompletedAchievements()
+        
+        // YENİ: Özel gün başarımları
+        checkSpecialDayAchievements()
         
         // İşlem bitince tüm yeni başarımları bildir
         if !newlyUnlockedAchievements.isEmpty {
@@ -787,7 +875,7 @@ class AchievementManager: ObservableObject {
                 if categorizedAchievements.keys.contains(firestoreCategory) {
                     categorizedAchievements[firestoreCategory]?.append(achievementData)
                     print("✅ Başarım kategorisi eşleşti: \(id) -> \(firestoreCategory)")
-                } else {
+            } else {
                     // Bilinmeyen kategoriler için "special" kategorisini kullan
                     categorizedAchievements["special"]?.append(achievementData)
                     print("⚠️ Bilinmeyen kategori: \(categoryName) -> 'special' kullanıldı")
@@ -841,7 +929,7 @@ class AchievementManager: ObservableObject {
                 self.db.collection("users").document(user.uid).updateData(userData) { error in
                     if let error = error {
                         print("❌ Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
-                    } else {
+                } else {
                         print("✅ Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
                     }
                 }
@@ -1421,6 +1509,325 @@ class AchievementManager: ObservableObject {
         // UI güncellemesi yap
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: NSNotification.Name("AchievementsUpdated"), object: nil)
+        }
+    }
+    
+    // YENİ: Mevsimsel başarımları kontrol et (Yeni eklendi)
+    private func checkSeasonalAchievements() {
+        let calendar = Calendar.current
+        let today = Date()
+        let month = calendar.component(.month, from: today)
+        
+        // Hangi mevsimdeyiz?
+        var season = ""
+        switch month {
+        case 3, 4, 5:
+            season = "spring" // İlkbahar: Mart, Nisan, Mayıs
+        case 6, 7, 8:
+            season = "summer" // Yaz: Haziran, Temmuz, Ağustos
+        case 9, 10, 11:
+            season = "autumn" // Sonbahar: Eylül, Ekim, Kasım
+        case 12, 1, 2:
+            season = "winter" // Kış: Aralık, Ocak, Şubat
+        default:
+            season = "unknown"
+        }
+        
+        if season != "unknown" {
+            let achievementId = "seasonal_\(season)"
+            incrementSeasonalAchievement(id: achievementId)
+        }
+    }
+    
+    // Mevsimsel başarımlar için tamamlanan oyun sayısını artır
+    private func incrementSeasonalAchievement(id: String) {
+        let key = "\(id)_count"
+        let count = userDefaults.integer(forKey: key) + 1
+        userDefaults.set(count, forKey: key)
+        
+        var requiredValue = 10 // Varsayılan değer
+        
+        // Başarıma göre gerekli değeri ayarla
+        switch id {
+        case "seasonal_spring":
+            requiredValue = 10
+        case "seasonal_summer":
+            requiredValue = 15
+        case "seasonal_autumn":
+            requiredValue = 12
+        case "seasonal_winter":
+            requiredValue = 20
+        default:
+            break
+        }
+        
+        if count >= requiredValue {
+            updateAchievement(id: id, status: .completed(unlockDate: Date()))
+        } else {
+            updateAchievement(id: id, status: .inProgress(currentValue: count, requiredValue: requiredValue))
+        }
+    }
+    
+    // YENİ: Saat dilimi başarımları (Yeni eklendi)
+    private func checkClockBasedAchievements() {
+        let calendar = Calendar.current
+        let now = Date()
+        let hour = calendar.component(.hour, from: now)
+        
+        // Sabah koşuşturması (7-9)
+        if hour >= 7 && hour < 9 {
+            incrementClockBasedAchievement(id: "clock_morning_rush")
+        }
+        
+        // Öğle arası (12-14)
+        if hour >= 12 && hour < 14 {
+            incrementClockBasedAchievement(id: "clock_lunch_break")
+        }
+        
+        // Çay saati (15-17)
+        if hour >= 15 && hour < 17 {
+            incrementClockBasedAchievement(id: "clock_tea_time")
+        }
+        
+        // Altın saatler (20-22)
+        if hour >= 20 && hour < 22 {
+            incrementClockBasedAchievement(id: "clock_prime_time")
+        }
+    }
+    
+    // Saat dilimi başarımlarını artır
+    private func incrementClockBasedAchievement(id: String) {
+        let key = "\(id)_count"
+        let count = userDefaults.integer(forKey: key) + 1
+        userDefaults.set(count, forKey: key)
+        
+        let requiredValue = 5 // Tüm saat bazlı başarımlar için 5
+        
+        if count >= requiredValue {
+            updateAchievement(id: id, status: .completed(unlockDate: Date()))
+        } else {
+            updateAchievement(id: id, status: .inProgress(currentValue: count, requiredValue: requiredValue))
+        }
+    }
+    
+    // YENİ: Hızlı tamamlama başarımları (Yeni eklendi)
+    private func checkSpeedAchievements(difficulty: SudokuBoard.Difficulty, time: TimeInterval) {
+        let timeInSeconds = time
+        
+        switch difficulty {
+        case .easy:
+            if timeInSeconds < 20.0 {
+                updateAchievement(id: "speed_easy_20", status: .completed(unlockDate: Date()))
+            }
+        case .medium:
+            if timeInSeconds < 45.0 {
+                updateAchievement(id: "speed_medium_45", status: .completed(unlockDate: Date()))
+            }
+        case .hard:
+            if timeInSeconds < 90.0 {
+                updateAchievement(id: "speed_hard_90", status: .completed(unlockDate: Date()))
+            }
+        default:
+            break
+        }
+    }
+    
+    // YENİ: Hatasız seri başarımları (Yeni eklendi)
+    private func checkPerfectComboAchievements(errorCount: Int) {
+        if errorCount == 0 {
+            // Art arda hatasız oyunları takip et
+            let key = "perfect_combo_count"
+            var count = userDefaults.integer(forKey: key)
+            count += 1
+            userDefaults.set(count, forKey: key)
+            
+            if count >= 5 {
+                updateAchievement(id: "combo_perfect_5", status: .completed(unlockDate: Date()))
+            } else {
+                updateAchievement(id: "combo_perfect_5", status: .inProgress(currentValue: count, requiredValue: 5))
+            }
+            
+            if count >= 10 {
+                updateAchievement(id: "combo_perfect_10", status: .completed(unlockDate: Date()))
+            } else {
+                updateAchievement(id: "combo_perfect_10", status: .inProgress(currentValue: count, requiredValue: 10))
+            }
+        } else {
+            // Hata yapılmış, seriyi sıfırla
+            userDefaults.set(0, forKey: "perfect_combo_count")
+        }
+    }
+    
+    // YENİ: Hız seri başarımları (Yeni eklendi)
+    private func checkSpeedComboAchievements(time: TimeInterval) {
+        // Son oyunun süresini kaydet
+        let key = "last_game_time"
+        let lastGameTime = userDefaults.double(forKey: key)
+        
+        if lastGameTime > 0 && time < lastGameTime {
+            // Kendi rekorunu kırdı, art arda rekor kırma sayısını artır
+            let comboKey = "speed_combo_count"
+            var count = userDefaults.integer(forKey: comboKey)
+            count += 1
+            userDefaults.set(count, forKey: comboKey)
+            
+            if count >= 5 {
+                updateAchievement(id: "combo_speed_5", status: .completed(unlockDate: Date()))
+            } else {
+                updateAchievement(id: "combo_speed_5", status: .inProgress(currentValue: count, requiredValue: 5))
+            }
+        } else if time >= lastGameTime {
+            // Rekor kırılmadı, seriyi sıfırla
+            userDefaults.set(0, forKey: "speed_combo_count")
+        }
+        
+        // Bu oyunun süresini kaydet
+        userDefaults.set(time, forKey: key)
+    }
+    
+    // YENİ: Hafta içi başarımları (Yeni eklendi)
+    private func checkWeekdayAchievements() {
+        let calendar = Calendar.current
+        let today = Date()
+        let weekday = calendar.component(.weekday, from: today)
+        
+        // Hafta içi günleri
+        switch weekday {
+        case 2: // Pazartesi
+            incrementWeekdayAchievement(id: "weekday_monday")
+        case 4: // Çarşamba
+            incrementWeekdayAchievement(id: "weekday_wednesday")
+        case 6: // Cuma
+            incrementWeekdayAchievement(id: "weekday_friday")
+        default:
+            break
+        }
+    }
+    
+    // Belirli gün başarımlarını artır
+    private func incrementWeekdayAchievement(id: String) {
+        let key = "\(id)_count"
+        let count = userDefaults.integer(forKey: key) + 1
+        userDefaults.set(count, forKey: key)
+        
+        let requiredValue = 10 // Tüm gün bazlı başarımlar için 10
+        
+        if count >= requiredValue {
+            updateAchievement(id: id, status: .completed(unlockDate: Date()))
+        } else {
+            updateAchievement(id: id, status: .inProgress(currentValue: count, requiredValue: requiredValue))
+        }
+    }
+    
+    // YENİ: Oyun stili başarımları (Yeni eklendi)
+    private func checkGameStyleAchievements(hintCount: Int, errorCount: Int) {
+        // Metodolojik Çözücü (Not almadan oyunu tamamlama)
+        let notesUsed = userDefaults.bool(forKey: "notes_used_in_current_game")
+        if !notesUsed {
+            updateAchievement(id: "style_methodical", status: .completed(unlockDate: Date()))
+        }
+        
+        // Mükemmeliyetçi (Tüm notları kullanma)
+        let allNotesUsed = userDefaults.bool(forKey: "all_notes_used_in_current_game")
+        if allNotesUsed {
+            updateAchievement(id: "style_perfectionist", status: .completed(unlockDate: Date()))
+        }
+        
+        // Hızlı Girişçi (30 saniye içinde 30 hücre) - Bu başarım için ana oyun kodunda lojik eklenmesi gerekebilir
+        // Bu başarım için ayrı bir fonksiyon kullanılabilir
+    }
+    
+    // YENİ: Tamamlanan hücre sayısı başarımları (Yeni eklendi)
+    private func updateCellsCompletedAchievements() {
+        // Her Sudoku 81 hücreye sahip, bu yüzden her oyun tamamlandığında 81 hücre ekliyoruz
+        let key = "total_cells_completed"
+        let currentCells = userDefaults.integer(forKey: key)
+        let newTotal = currentCells + 81
+        userDefaults.set(newTotal, forKey: key)
+        
+        // Başarımları kontrol et
+        if newTotal >= 500 {
+            updateAchievement(id: "stats_500_cells", status: .completed(unlockDate: Date()))
+        } else {
+            updateAchievement(id: "stats_500_cells", status: .inProgress(currentValue: newTotal, requiredValue: 500))
+        }
+        
+        if newTotal >= 1000 {
+            updateAchievement(id: "stats_1000_cells", status: .completed(unlockDate: Date()))
+        } else {
+            updateAchievement(id: "stats_1000_cells", status: .inProgress(currentValue: newTotal, requiredValue: 1000))
+        }
+        
+        if newTotal >= 5000 {
+            updateAchievement(id: "stats_5000_cells", status: .completed(unlockDate: Date()))
+        } else {
+            updateAchievement(id: "stats_5000_cells", status: .inProgress(currentValue: newTotal, requiredValue: 5000))
+        }
+    }
+    
+    // YENİ: Özel gün başarımları (Yeni eklendi)
+    private func checkSpecialDayAchievements() {
+        let calendar = Calendar.current
+        let today = Date()
+        let day = calendar.component(.day, from: today)
+        let month = calendar.component(.month, from: today)
+        
+        // Yeni yıl kontrolü
+        if day == 1 && month == 1 {
+            updateAchievement(id: "holiday_new_year", status: .completed(unlockDate: Date()))
+        }
+        
+        // Doğum günü başarımını yılın belirli bir gününde (örn: 15 Temmuz) herkes için otomatik olarak aç
+        // Bu sabit tarih seçimi ile oyuncular belirli bir günde oynadıklarında başarımı kazanır
+        if day == 15 && month == 7 {  // 15 Temmuz - örnek tarih
+            updateAchievement(id: "birthday_player", status: .completed(unlockDate: Date()))
+        }
+        
+        // Hafta sonu canavarı - Bir hafta sonunda 20 oyun
+        // Bu başarım için ekstra bir fonksiyon gerekebilir
+        checkWeekendWarriorAchievement()
+    }
+    
+    // Hafta sonu canavarı başarımını kontrol et
+    private func checkWeekendWarriorAchievement() {
+        let calendar = Calendar.current
+        let today = Date()
+        let weekday = calendar.component(.weekday, from: today)
+        
+        // Cumartesi (7) veya Pazar (1) günü mü?
+        if weekday == 1 || weekday == 7 {
+            // Bugünün tarihini al
+            let todayKey = "weekend_warrior_date"
+            let todayCountKey = "weekend_warrior_count"
+            
+            // Kayıtlı tarihi kontrol et
+            let savedDateTimeInterval = userDefaults.double(forKey: todayKey)
+            let savedDate = Date(timeIntervalSince1970: savedDateTimeInterval)
+            
+            // Bugün aynı hafta sonu mu kontrol et
+            let isSameWeekend = calendar.isDate(savedDate, equalTo: today, toGranularity: .weekOfYear) &&
+                               (calendar.component(.weekday, from: savedDate) == 1 || 
+                                calendar.component(.weekday, from: savedDate) == 7)
+            
+            if isSameWeekend || savedDateTimeInterval == 0 {
+                // Sayacı artır
+                let currentCount = userDefaults.integer(forKey: todayCountKey) + 1
+                userDefaults.set(currentCount, forKey: todayCountKey)
+                
+                // Başarım kontrolü
+                if currentCount >= 20 {
+                    updateAchievement(id: "holiday_weekend", status: .completed(unlockDate: Date()))
+                } else {
+                    updateAchievement(id: "holiday_weekend", status: .inProgress(currentValue: currentCount, requiredValue: 20))
+                }
+                
+                // Tarihi kaydet
+                userDefaults.set(today.timeIntervalSince1970, forKey: todayKey)
+            } else {
+                // Yeni hafta sonu, sayacı sıfırla
+                userDefaults.set(1, forKey: todayCountKey)
+                userDefaults.set(today.timeIntervalSince1970, forKey: todayKey)
+            }
         }
     }
 } 

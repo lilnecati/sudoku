@@ -91,7 +91,7 @@ struct AchievementsSheet: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
+        ZStack {
                 Color(.systemGroupedBackground)
                     .edgesIgnoringSafeArea(.all)
                 
@@ -161,7 +161,7 @@ struct AchievementsSheet: View {
                     // Filtre seçenekleri
                     HStack {
                         Menu {
-                            Button(action: { 
+        Button(action: {
                                 self.showUnlockedOnly = false
                                 self.filterOption = .all
                             }) {
@@ -202,15 +202,15 @@ struct AchievementsSheet: View {
                         } label: {
                             Label {
                                 Text.localizedSafe("achievements.filter", defaultValue: "Filtrele")
-                                    .foregroundColor(.primary)
+                .foregroundColor(.primary)
                             } icon: {
                                 Image(systemName: "line.3.horizontal.decrease.circle")
                                     .foregroundColor(.blue)
-                            }
+        }
                             .font(.system(size: 15, weight: .medium))
                             .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(
+        .padding(.horizontal, 12)
+        .background(
                                 RoundedRectangle(cornerRadius: 8)
                                     .fill(Color(.systemGray6))
                             )
@@ -247,9 +247,9 @@ struct AchievementsSheet: View {
                             Button(action: {
                                 self.sortOption = .progress
                             }) {
-                                Label {
+            Label {
                                     Text.localizedSafe("achievements.sort.progress", defaultValue: "İlerlemeye Göre")
-                                } icon: {
+            } icon: {
                                     if sortOption == .progress {
                                         Image(systemName: "checkmark")
                                     }
@@ -264,9 +264,9 @@ struct AchievementsSheet: View {
                                     .foregroundColor(.blue)
                             }
                             .font(.system(size: 15, weight: .medium))
-                            .padding(.vertical, 8)
+        .padding(.vertical, 8)
                             .padding(.horizontal, 12)
-                            .background(
+        .background(
                                 RoundedRectangle(cornerRadius: 8)
                                     .fill(Color(.systemGray6))
                             )
@@ -291,14 +291,14 @@ struct AchievementsSheet: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Color(.systemGroupedBackground))
                     } else {
-                        ScrollView {
+        ScrollView {
                             LazyVStack(spacing: 10) {
-                                ForEach(filteredAchievements) { achievement in
-                                    AchievementCard(achievement: achievement)
-                                        .padding(.horizontal)
-                                }
-                            }
-                            .padding(.vertical)
+                ForEach(filteredAchievements) { achievement in
+                    AchievementCard(achievement: achievement)
+                        .padding(.horizontal)
+                }
+            }
+            .padding(.vertical)
                         }
                     }
                 }
@@ -361,7 +361,7 @@ struct CategoryFilterButton: View {
                     Text.localizedSafe(title, defaultValue: defaultValue)
                         .scaledFont(size: 14)
                 } else {
-                    Text(title)
+                Text(title)
                         .scaledFont(size: 14)
                 }
             }
@@ -668,15 +668,15 @@ struct AchievementDetailView: View {
                 totalCompletionsTipView(achievement)
             } else if isDifficultyAchievement(achievement.id) {
                 difficultyTipView(for: achievement)
-            } else if isStreakAchievement(achievement.id) {
+        } else if isStreakAchievement(achievement.id) {
                 streakTipView(for: achievement)
-            } else if isTimeAchievement(achievement.id) {
+        } else if isTimeAchievement(achievement.id) {
                 timeTipView(for: achievement)
-            } else if achievement.id == "no_errors" {
-                noErrorsTipView()
+        } else if achievement.id == "no_errors" {
+            noErrorsTipView()
             } else if isPuzzleVarietyAchievement(achievement.id) {
                 variationsTipView(achievement)
-            } else {
+        } else {
                 // Diğer başarım tipleri için varsayılan ipucu
                 HStack {
                     Image(systemName: "lightbulb.fill")
@@ -756,7 +756,7 @@ struct AchievementDetailView: View {
         if components.count >= 2 {
             let difficulty = components[0]
             
-            HStack {
+        HStack {
                 Image(systemName: "chart.bar.fill")
                     .foregroundColor(.blue)
                 
@@ -780,7 +780,7 @@ struct AchievementDetailView: View {
     @ViewBuilder
     private func streakTipView(for achievement: Achievement) -> some View {
         if let days = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
-            HStack {
+        HStack {
                 Image(systemName: "flame.fill")
                     .foregroundColor(.purple)
                 
@@ -804,7 +804,7 @@ struct AchievementDetailView: View {
     @ViewBuilder
     private func timeTipView(for achievement: Achievement) -> some View {
         if let minutes = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
-            HStack {
+        HStack {
                 Image(systemName: "clock.fill")
                     .foregroundColor(.yellow)
                 
@@ -844,7 +844,7 @@ struct AchievementDetailView: View {
     @ViewBuilder
     private func totalCompletionsTipView(_ achievement: Achievement) -> some View {
         if let count = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
-            HStack {
+        HStack {
                 Image(systemName: "number.circle.fill")
                     .foregroundColor(.blue)
                 
@@ -868,7 +868,7 @@ struct AchievementDetailView: View {
     @ViewBuilder
     private func variationsTipView(_ achievement: Achievement) -> some View {
         if let count = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
-            HStack {
+        HStack {
                 Image(systemName: "square.grid.3x3.fill")
                     .foregroundColor(.orange)
                 
