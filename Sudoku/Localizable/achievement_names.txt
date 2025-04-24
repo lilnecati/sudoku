@@ -1,0 +1,359 @@
+// Kolay seviye başarımları
+"achievement.easy_1.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "First Step"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "İlk Adım"
+      }
+    }
+  }
+},
+"achievement.easy_1.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete your first Easy Sudoku"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "İlk Kolay Sudoku'yu tamamla"
+      }
+    }
+  }
+},
+"achievement.easy_10.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Easy Expert"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Kolay Uzman"
+      }
+    }
+  }
+},
+"achievement.easy_10.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete 10 Easy Sudoku puzzles"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "10 Kolay Sudoku tamamla"
+      }
+    }
+  }
+},
+"achievement.easy_50.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Easy Master"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Kolay Üstat"
+      }
+    }
+  }
+},
+"achievement.easy_50.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete 50 Easy Sudoku puzzles"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "50 Kolay Sudoku tamamla"
+      }
+    }
+  }
+},
+"achievement.easy_100.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Easy Legend"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Kolay Efsane"
+      }
+    }
+  }
+},
+"achievement.easy_100.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete 100 Easy Sudoku puzzles"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "100 Kolay Sudoku tamamla"
+      }
+    }
+  }
+},
+
+// Orta seviye başarımları
+"achievement.medium_1.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Step Up"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Zorluğa Adım"
+      }
+    }
+  }
+},
+"achievement.medium_1.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete your first Medium Sudoku"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "İlk Orta Sudoku'yu tamamla"
+      }
+    }
+  }
+},
+"achievement.medium_10.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Medium Expert"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Orta Seviye Uzman"
+      }
+    }
+  }
+},
+"achievement.medium_10.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete 10 Medium Sudoku puzzles"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "10 Orta seviye Sudoku tamamla"
+      }
+    }
+  }
+},
+
+// Zor seviye başarımları
+"achievement.hard_1.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Hard Challenge"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Zor Meydan Okuma"
+      }
+    }
+  }
+},
+"achievement.hard_1.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete your first Hard Sudoku"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "İlk Zor Sudoku'yu tamamla"
+      }
+    }
+  }
+},
+"achievement.hard_10.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Hard Expert"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Zor Uzman"
+      }
+    }
+  }
+},
+"achievement.hard_10.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete 10 Hard Sudoku puzzles"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "10 Zor Sudoku tamamla"
+      }
+    }
+  }
+},
+
+// Özel başarımlar
+"achievement.no_errors.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Flawless"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Kusursuz"
+      }
+    }
+  }
+},
+"achievement.no_errors.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete a Sudoku without making any mistakes"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Hiç hata yapmadan bir Sudoku tamamla"
+      }
+    }
+  }
+},
+"achievement.no_hints.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "No Help Needed"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Yardımsız"
+      }
+    }
+  }
+},
+"achievement.no_hints.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete a Sudoku without using any hints"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Hiç ipucu kullanmadan bir Sudoku tamamla"
+      }
+    }
+  }
+},
+"achievement.total_100.name" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Century Club"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Yüzler Kulübü"
+      }
+    }
+  }
+},
+"achievement.total_100.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete a total of 100 Sudoku puzzles"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Toplam 100 Sudoku tamamla"
+      }
+    }
+  }
+} 

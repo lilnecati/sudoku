@@ -1,16 +1,32 @@
 import SwiftUI
 import StoreKit
 
-struct AchievementsView: View {
+// Ana Başarımlar sayfası - artık bir sheet görünümü
+struct AchievementsSheet: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.presentationMode) var presentationMode
     
     @ObservedObject private var achievementManager = AchievementManager.shared
     @State private var selectedCategory: AchievementCategory? = nil
     @State private var showUnlockedOnly = false
+    @State private var showingInfo = false
+    // Filtre ve sıralama seçenekleri için enum'lar
+    enum FilterOption {
+        case all, completed, incomplete
+    }
+    
+    enum SortOption {
+        case `default`, completed, progress
+    }
+    
+    @State private var filterOption: FilterOption = .all
+    @State private var sortOption: SortOption = .default
+    // Ekranı yenilemek için ekstra durum
+    @State private var refreshID = UUID()
     
     // Kategorilere göre filtrelenmiş başarılar
     private var filteredAchievements: [Achievement] {
+        // İlk önce tüm başarımları al
         var achievements = achievementManager.achievements
         
         // Kategori filtresi
@@ -23,129 +39,303 @@ struct AchievementsView: View {
             achievements = achievements.filter { $0.isCompleted }
         }
         
-        // Önce tamamlananlar, sonra ilerleme durumunda olanlar, en son kilitliler
-        return achievements.sorted { a, b in
-            if a.isCompleted && !b.isCompleted {
-                return true
-            } else if !a.isCompleted && b.isCompleted {
-                return false
-            } else if !a.isCompleted && !b.isCompleted {
-                return a.progress > b.progress
-            } else {
-                // İki başarı da tamamlanmışsa, kategori ve ID'ye göre sırala
-                if a.category == b.category {
-                    return a.id < b.id
-                }
-                return a.category.rawValue < b.category.rawValue
-            }
+        // Sıralama için yardımcı fonksiyon
+        return sortAchievements(achievements)
+    }
+    
+    // Başarımları sıralayan yardımcı fonksiyon
+    private func sortAchievements(_ achievements: [Achievement]) -> [Achievement] {
+        return achievements.sorted(by: compareAchievements)
+    }
+    
+    // Karşılaştırma fonksiyonu - ayrı şekilde tanımlandı
+    private func compareAchievements(a: Achievement, b: Achievement) -> Bool {
+        // Önce duruma göre karşılaştır
+        let comparisonResult = compareByCompletionStatus(a: a, b: b)
+        if comparisonResult != nil {
+            return comparisonResult!
         }
+        
+        // Durumları aynıysa kategoriye göre karşılaştır
+        return compareByCategoryAndId(a: a, b: b)
+    }
+    
+    // Tamamlanma durumuna göre karşılaştırma
+    private func compareByCompletionStatus(a: Achievement, b: Achievement) -> Bool? {
+        // Önce tamamlanmış olanlar
+        if a.isCompleted && !b.isCompleted {
+            return true
+        } 
+        // Sonra tamamlanmamış olanlar
+        else if !a.isCompleted && b.isCompleted {
+            return false
+        } 
+        // İkisi de tamamlanmamışsa, ilerleme durumuna göre
+        else if !a.isCompleted && !b.isCompleted {
+            return a.progress > b.progress
+        } 
+        
+        // İkisi de tamamlandıysa nil döndür (diğer kriterlere göre değerlendirilecek)
+        return nil
+    }
+    
+    // Kategori ve ID'ye göre karşılaştırma
+    private func compareByCategoryAndId(a: Achievement, b: Achievement) -> Bool {
+        // Aynı kategorideyse ID'ye göre
+        if a.category == b.category {
+            return a.id < b.id
+        }
+        // Farklı kategorideyse kategori adına göre
+        return a.category.rawValue < b.category.rawValue
     }
     
     var body: some View {
-        ZStack {
-            // Arka plan
-            GridBackgroundView()
-                .ignoresSafeArea()
-            
-            // İçerik
-            VStack(spacing: 0) {
-                // Başlık ve toplam puan
-                HStack {
-                    Text("Başarılar")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                    
-                    Spacer()
-                    
-                    // Toplam puan göstergesi
-                    HStack(spacing: 4) {
-                        Image(systemName: "star.fill")
-                            .foregroundColor(.yellow)
-                        
-                        Text("\(achievementManager.totalPoints)")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6))
-                    )
-                }
-                .padding(.horizontal)
-                .padding(.top)
+        NavigationView {
+            ZStack {
+                Color(.systemGroupedBackground)
+                    .edgesIgnoringSafeArea(.all)
                 
-                // Filtreler
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        // Tümü filtresi
-                        CategoryFilterButton(
-                            title: "Tümü",
-                            systemImage: "list.bullet",
-                            isSelected: selectedCategory == nil,
-                            action: { selectedCategory = nil }
-                        )
-                        
-                        // Kategori filtreleri
-                        ForEach(AchievementCategory.allCases) { category in
+                VStack(spacing: 0) {
+                    // Kategori seçici
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
                             CategoryFilterButton(
-                                title: category.rawValue,
-                                systemImage: category.iconName,
-                                isSelected: selectedCategory == category,
-                                action: { 
-                                    selectedCategory = selectedCategory == category ? nil : category
+                                title: "achievements.category.all",
+                                systemImage: "rectangle.grid.2x2.fill",
+                                isSelected: selectedCategory == nil,
+                                action: { selectedCategory = nil },
+                                isLocalizedKey: true,
+                                defaultValue: "Tümü"
+                            )
+                            
+                            CategoryFilterButton(
+                                title: "achievements.category.daily",
+                                systemImage: "calendar",
+                                isSelected: selectedCategory == .beginner,
+                                action: { selectedCategory = .beginner },
+                                isLocalizedKey: true,
+                                defaultValue: "Günlük"
+                            )
+                            
+                            CategoryFilterButton(
+                                title: "achievements.category.streak",
+                                systemImage: "flame.fill",
+                                isSelected: selectedCategory == .streak,
+                                action: { selectedCategory = .streak },
+                                isLocalizedKey: true,
+                                defaultValue: "Seri"
+                            )
+                            
+                            CategoryFilterButton(
+                                title: "achievements.category.special",
+                                systemImage: "sparkles",
+                                isSelected: selectedCategory == .special,
+                                action: { selectedCategory = .special },
+                                isLocalizedKey: true,
+                                defaultValue: "Özel"
+                            )
+                            
+                            CategoryFilterButton(
+                                title: "achievements.category.difficulty",
+                                systemImage: "chart.bar.fill",
+                                isSelected: selectedCategory == .difficulty,
+                                action: { selectedCategory = .difficulty },
+                                isLocalizedKey: true,
+                                defaultValue: "Zorluk"
+                            )
+                            
+                            CategoryFilterButton(
+                                title: "achievements.category.time",
+                                systemImage: "clock.fill",
+                                isSelected: selectedCategory == .time,
+                                action: { selectedCategory = .time },
+                                isLocalizedKey: true,
+                                defaultValue: "Zaman"
+                            )
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                    }
+                    .background(Color(.systemBackground))
+                    
+                    // Filtre seçenekleri
+                    HStack {
+                        Menu {
+                            Button(action: { 
+                                self.showUnlockedOnly = false
+                                self.filterOption = .all
+                            }) {
+                                Label {
+                                    Text.localizedSafe("achievements.filter.all", defaultValue: "Tümünü Göster")
+                                } icon: {
+                                    if filterOption == .all {
+                                        Image(systemName: "checkmark")
+                                    }
                                 }
+                            }
+                            
+                            Button(action: {
+                                self.showUnlockedOnly = true
+                                self.filterOption = .completed
+                            }) {
+                                Label {
+                                    Text.localizedSafe("achievements.filter.completed", defaultValue: "Tamamlananlar")
+                                } icon: {
+                                    if filterOption == .completed {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                            
+                            Button(action: {
+                                self.showUnlockedOnly = false
+                                self.filterOption = .incomplete
+                            }) {
+                                Label {
+                                    Text.localizedSafe("achievements.filter.incomplete", defaultValue: "Tamamlanmayanlar")
+                                } icon: {
+                                    if filterOption == .incomplete {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label {
+                                Text.localizedSafe("achievements.filter", defaultValue: "Filtrele")
+                                    .foregroundColor(.primary)
+                            } icon: {
+                                Image(systemName: "line.3.horizontal.decrease.circle")
+                                    .foregroundColor(.blue)
+                            }
+                            .font(.system(size: 15, weight: .medium))
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(.systemGray6))
                             )
                         }
                         
-                        // Sadece açılanlar filtresi
-                        Toggle(isOn: $showUnlockedOnly) {
-                            Label {
-                                Text("Sadece Açılanlar")
-                                    .font(.subheadline)
-                            } icon: {
-                                Image(systemName: "lock.open.fill")
-                                    .foregroundColor(.green)
+                        Spacer()
+                        
+                        // Sıralama seçenekleri
+                        Menu {
+                            Button(action: {
+                                self.sortOption = .default
+                            }) {
+                                Label {
+                                    Text.localizedSafe("achievements.sort.default", defaultValue: "Varsayılan")
+                                } icon: {
+                                    if sortOption == .default {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
                             }
+                            
+                            Button(action: {
+                                self.sortOption = .completed
+                            }) {
+                                Label {
+                                    Text.localizedSafe("achievements.sort.completed_first", defaultValue: "Tamamlananlar Önce")
+                                } icon: {
+                                    if sortOption == .completed {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                            
+                            Button(action: {
+                                self.sortOption = .progress
+                            }) {
+                                Label {
+                                    Text.localizedSafe("achievements.sort.progress", defaultValue: "İlerlemeye Göre")
+                                } icon: {
+                                    if sortOption == .progress {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label {
+                                Text.localizedSafe("achievements.sort", defaultValue: "Sırala")
+                                    .foregroundColor(.primary)
+                            } icon: {
+                                Image(systemName: "arrow.up.arrow.down")
+                                    .foregroundColor(.blue)
+                            }
+                            .font(.system(size: 15, weight: .medium))
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(.systemGray6))
+                            )
                         }
-                        .toggleStyle(SwitchToggleStyle(tint: .blue))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemBackground))
-                                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
-                        )
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
-                }
-                
-                // Başarılar listesi
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(filteredAchievements) { achievement in
-                            AchievementCard(achievement: achievement)
-                                .padding(.horizontal)
+                    .background(Color(.systemBackground))
+                    .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: 1)
+                    
+                    // Başarım listesi
+                    if filteredAchievements.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "trophy.fill")
+                                .font(.system(size: 50))
+                                .foregroundColor(.gray.opacity(0.5))
+                            
+                            Text.localizedSafe("achievements.empty.message", defaultValue: "Bu kategoride başarım bulunamadı.")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(.systemGroupedBackground))
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 10) {
+                                ForEach(filteredAchievements) { achievement in
+                                    AchievementCard(achievement: achievement)
+                                        .padding(.horizontal)
+                                }
+                            }
+                            .padding(.vertical)
                         }
                     }
-                    .padding(.vertical)
                 }
             }
+            .navigationBarTitle(Text.localizedSafe("achievements.title", defaultValue: "Başarımlar"), displayMode: .inline)
+            .navigationBarItems(
+                trailing: HStack {
+                    if achievementManager.totalPoints > 0 {
+                        HStack(spacing: 4) {
+                            Text("\(achievementManager.totalPoints)")
+                                .font(.system(size: 16, weight: .bold))
+                            
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.yellow)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(
+                            Capsule()
+                                .fill(Color(.systemGray5))
+                        )
+                    }
+                    
+                    Button(action: {
+                        self.showingInfo = true
+                    }) {
+                        Image(systemName: "info.circle")
+                    }
+                    .sheet(isPresented: $showingInfo) {
+                        AchievementsInfoView()
+                    }
+                }
+            )
         }
-        .navigationBarTitle("", displayMode: .inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-            }
+        .onAppear {
+            // AchievementManager kendi kendine yüklenir
         }
     }
 }
@@ -156,6 +346,8 @@ struct CategoryFilterButton: View {
     let systemImage: String
     let isSelected: Bool
     let action: () -> Void
+    var isLocalizedKey: Bool = false
+    var defaultValue: String = ""
     
     @Environment(\.colorScheme) var colorScheme
     
@@ -165,8 +357,13 @@ struct CategoryFilterButton: View {
                 Image(systemName: systemImage)
                     .font(.system(size: 14))
                 
-                Text(title)
-                    .font(.subheadline)
+                if isLocalizedKey {
+                    Text.localizedSafe(title, defaultValue: defaultValue)
+                        .scaledFont(size: 14)
+                } else {
+                    Text(title)
+                        .scaledFont(size: 14)
+                }
             }
             .foregroundColor(isSelected ? .white : .primary)
             .padding(.horizontal, 12)
@@ -214,13 +411,13 @@ struct AchievementCard: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     // Başarı adı
-                    Text(achievement.name)
-                        .font(.headline)
+                    Text.localizedSafe("achievement.\(achievement.id).name", defaultValue: achievement.name)
+                        .scaledFont(size: 16, weight: .medium)
                         .foregroundColor(achievement.isCompleted ? .primary : .secondary)
                     
                     // Başarı açıklaması
-                    Text(achievement.description)
-                        .font(.subheadline)
+                    Text.localizedSafe("achievement.\(achievement.id).description", defaultValue: achievement.description)
+                        .scaledFont(size: 14)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                     
@@ -235,9 +432,8 @@ struct AchievementCard: View {
                         RoundedRectangle(cornerRadius: 4)
                             .fill(colorForCategory(achievement.category))
                             .frame(width: max(4, CGFloat(achievement.progress) * 200), height: 6)
-                            .animation(.easeInOut, value: achievement.progress)
                     }
-                    .frame(width: 200)
+                    .frame(width: 200, height: 6)
                 }
                 
                 Spacer()
@@ -275,6 +471,8 @@ struct AchievementCard: View {
             return .pink
         case .time:
             return .yellow
+        case .difficulty:
+            return .blue
         }
     }
 }
@@ -314,21 +512,20 @@ struct AchievementDetailView: View {
                         
                         // Başlık
                         Text(achievement.name)
-                            .font(.title)
-                            .fontWeight(.bold)
+                            .scaledFont(size: 22, weight: .bold)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                         
                         // Açıklama
                         Text(achievement.description)
-                            .font(.body)
+                            .scaledFont(size: 16)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                         
                         // Kategori
                         Text(achievement.category.rawValue)
-                            .font(.subheadline)
+                            .scaledFont(size: 14)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(
@@ -351,32 +548,32 @@ struct AchievementDetailView: View {
                                     .fill(colorForCategory(achievement.category))
                                     .frame(width: max(4, CGFloat(achievement.progress) * 300), height: 12)
                             }
-                            .frame(width: 300)
+                            .frame(width: 300, height: 12)
                             
                             // İlerleme metni
                             HStack {
                                 // Durum bilgisi
-                                switch achievement.status {
-                                case .locked:
-                                    Text("Kilitli")
-                                        .font(.caption)
+                                if achievement.isCompleted {
+                                    Text.localizedSafe("achievements.status.completed", defaultValue: "Tamamlandı")
+                                        .scaledFont(size: 12)
                                         .foregroundColor(.secondary)
-                                case .inProgress(let current, let required):
-                                    Text("\(current) / \(required)")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                case .completed(let date):
-                                    Text("Tamamlandı: \(formattedDate(date))")
-                                        .font(.caption)
+                                } else {
+                                    let progressFormat = NSLocalizedString("achievements.status.progress", comment: "")
+                                    let progressText = String.localizedStringWithFormat(progressFormat, achievement.currentValue, achievement.targetValue)
+                                    
+                                    Text(progressText)
+                                        .scaledFont(size: 12)
                                         .foregroundColor(.secondary)
                                 }
                                 
                                 Spacer()
                                 
                                 // Ödül puanı
-                                Text("+\(achievement.rewardPoints) puan")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
+                                let pointsFormat = NSLocalizedString("achievements.status.reward_points", comment: "")
+                                let pointsText = String.localizedStringWithFormat(pointsFormat, achievement.pointValue)
+                                
+                                Text(pointsText)
+                                    .scaledFont(size: 12, weight: .bold)
                                     .foregroundColor(.secondary)
                             }
                             .padding(.horizontal, 4)
@@ -390,8 +587,8 @@ struct AchievementDetailView: View {
                                 Image(systemName: "checkmark.seal.fill")
                                     .foregroundColor(.green)
                                 
-                                Text("Başarı Kazanıldı!")
-                                    .font(.headline)
+                                Text.localizedSafe("achievements.completed", defaultValue: "Başarı Kazanıldı!")
+                                    .scaledFont(size: 16, weight: .medium)
                                     .foregroundColor(.green)
                             }
                             .padding(.vertical, 10)
@@ -410,12 +607,10 @@ struct AchievementDetailView: View {
                     // İpucu bölümü
                     if !achievement.isCompleted {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Nasıl Kazanılır?")
-                                .font(.headline)
-                                .padding(.leading)
+                            tipTitle()
                             
                             VStack(alignment: .leading, spacing: 8) {
-                                tipForAchievement(achievement)
+                                tipView(for: achievement)
                             }
                             .padding()
                             .background(
@@ -424,12 +619,15 @@ struct AchievementDetailView: View {
                             )
                             .padding(.horizontal)
                         }
+                        .padding(.horizontal)
                     }
                 }
             }
-            .navigationBarTitle("Başarı Detayı", displayMode: .inline)
-            .navigationBarItems(trailing: Button("Kapat") {
+            .navigationBarTitle(Text.localizedSafe("achievements.detail.title", defaultValue: "Başarı Detayı"), displayMode: .inline)
+            .navigationBarItems(trailing: Button(action: {
                 presentationMode.wrappedValue.dismiss()
+            }) {
+                Text.localizedSafe("achievements.detail.close", defaultValue: "Kapat")
             })
         }
     }
@@ -449,6 +647,8 @@ struct AchievementDetailView: View {
             return .pink
         case .time:
             return .yellow
+        case .difficulty:
+            return .blue
         }
     }
     
@@ -461,61 +661,231 @@ struct AchievementDetailView: View {
         return formatter.string(from: date)
     }
     
-    // Başarı için ipucu
+    // İpucu görünümü
+    private func tipView(for achievement: Achievement) -> some View {
+        Group {
+            if isTotalCompletionAchievement(achievement.id) {
+                totalCompletionsTipView(achievement)
+            } else if isDifficultyAchievement(achievement.id) {
+                difficultyTipView(for: achievement)
+            } else if isStreakAchievement(achievement.id) {
+                streakTipView(for: achievement)
+            } else if isTimeAchievement(achievement.id) {
+                timeTipView(for: achievement)
+            } else if achievement.id == "no_errors" {
+                noErrorsTipView()
+            } else if isPuzzleVarietyAchievement(achievement.id) {
+                variationsTipView(achievement)
+            } else {
+                // Diğer başarım tipleri için varsayılan ipucu
+                HStack {
+                    Image(systemName: "lightbulb.fill")
+                        .foregroundColor(.yellow)
+                    
+                    Text.localizedSafe("achievements.tip.general", defaultValue: "Bu başarımın koşullarını sağlamak için oynamaya devam edin.")
+                        .scaledFont(size: 14)
+                    
+                    Spacer()
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6))
+                )
+            }
+        }
+    }
+    
+    // İlerleme metni
+    private func progressText() -> some View {
+        Group {
+            if achievement.isCompleted {
+                Text.localizedSafe("achievements.completed", defaultValue: "Başarı Kazanıldı!")
+                    .font(.headline)
+                    .foregroundColor(.green)
+            } else {
+                let localizedFormat = NSLocalizedString("achievements.progress.value", comment: "")
+                let localizedText = String.localizedStringWithFormat(localizedFormat, achievement.currentValue, achievement.targetValue)
+                
+                Text(localizedText)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+    
+    // İpucu başlığı
+    private func tipTitle() -> some View {
+        HStack {
+            Text.localizedSafe("achievements.howto.earn", defaultValue: "Nasıl Kazanılır?")
+                .font(.headline)
+                .padding(.leading, 8)
+            Spacer()
+        }
+        .padding(.top)
+    }
+    
+    // Başarım ID kontrolü için yardımcı metodlar
+    private func isDifficultyAchievement(_ id: String) -> Bool {
+        return id.hasPrefix("easy_") || 
+               id.hasPrefix("medium_") || 
+               id.hasPrefix("hard_") || 
+               id.hasPrefix("expert_")
+    }
+    
+    private func isStreakAchievement(_ id: String) -> Bool {
+        return id.hasPrefix("streak_")
+    }
+    
+    private func isTimeAchievement(_ id: String) -> Bool {
+        return id.hasPrefix("time_")
+    }
+    
+    private func isTotalCompletionAchievement(_ id: String) -> Bool {
+        return id.hasPrefix("total_")
+    }
+    
+    private func isPuzzleVarietyAchievement(_ id: String) -> Bool {
+        return id.hasPrefix("variety_")
+    }
+    
+    // Özel ipucu görünümleri
     @ViewBuilder
-    private func tipForAchievement(_ achievement: Achievement) -> some View {
-        if achievement.id.hasPrefix("easy_") || 
-           achievement.id.hasPrefix("medium_") || 
-           achievement.id.hasPrefix("hard_") || 
-           achievement.id.hasPrefix("expert_") {
+    private func difficultyTipView(for achievement: Achievement) -> some View {
+        let components = achievement.id.components(separatedBy: "_")
+        if components.count >= 2 {
+            let difficulty = components[0]
+            
             HStack {
-                Image(systemName: "gamecontroller.fill")
-                Text("Bu başarıyı kazanmak için daha fazla \(achievement.category.rawValue) zorluk seviyesinde Sudoku oynayın.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                Image(systemName: "chart.bar.fill")
+                    .foregroundColor(.blue)
+                
+                // %@ formatı kullanılmış, doğru şekilde formatlama yapılmalı
+                let localizedFormat = NSLocalizedString("achievements.tip.difficulty", comment: "")
+                let localizedText = String.localizedStringWithFormat(localizedFormat, difficulty)
+                
+                Text(localizedText)
+                    .font(.footnote)
+                
+                Spacer()
             }
-        } else if achievement.id.hasPrefix("streak_") {
-            HStack {
-                Image(systemName: "calendar")
-                Text("Her gün uygulamayı açın ve oynamaya devam edin.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-        } else if achievement.id.hasPrefix("time_") {
-            HStack {
-                Image(systemName: "timer")
-                Text("Odaklanın ve hızlı çözmeye çalışın.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-        } else if achievement.id == "no_errors" {
-            HStack {
-                Image(systemName: "checkmark.seal.fill")
-                Text("Hata yapmadan dikkatli bir şekilde oynayın.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-        } else if achievement.id == "no_hints" {
-            HStack {
-                Image(systemName: "lightbulb.slash.fill")
-                Text("İpucu kullanmadan kendiniz çözün.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-        } else if achievement.id == "all_difficulties" {
-            HStack {
-                Image(systemName: "square.stack.3d.up.fill")
-                Text("Her zorluk seviyesinden en az bir oyun tamamlayın.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
+            .padding()
+            .background(Color(.systemGray6).opacity(0.8))
+            .cornerRadius(8)
         } else {
+            EmptyView()
+        }
+    }
+    
+    @ViewBuilder
+    private func streakTipView(for achievement: Achievement) -> some View {
+        if let days = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
             HStack {
-                Image(systemName: "questionmark.circle.fill")
-                Text("Oynamaya devam edin ve bu başarıyı keşfedin.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                Image(systemName: "flame.fill")
+                    .foregroundColor(.purple)
+                
+                // %lld formatı kullanılmış, doğru şekilde formatlama yapılmalı
+                let localizedFormat = NSLocalizedString("achievements.tip.streak", comment: "")
+                let localizedText = String.localizedStringWithFormat(localizedFormat, days)
+                
+                Text(localizedText)
+                    .font(.footnote)
+                
+                Spacer()
             }
+            .padding()
+            .background(Color(.systemGray6).opacity(0.8))
+            .cornerRadius(8)
+        } else {
+            EmptyView()
+        }
+    }
+    
+    @ViewBuilder
+    private func timeTipView(for achievement: Achievement) -> some View {
+        if let minutes = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
+            HStack {
+                Image(systemName: "clock.fill")
+                    .foregroundColor(.yellow)
+                
+                // %lld formatı kullanılmış, doğru şekilde formatlama yapılmalı
+                let localizedFormat = NSLocalizedString("achievements.tip.time", comment: "")
+                let localizedText = String.localizedStringWithFormat(localizedFormat, minutes)
+                
+                Text(localizedText)
+                    .font(.footnote)
+                
+                Spacer()
+            }
+            .padding()
+            .background(Color(.systemGray6).opacity(0.8))
+            .cornerRadius(8)
+        } else {
+            EmptyView()
+        }
+    }
+    
+    @ViewBuilder
+    private func noErrorsTipView() -> some View {
+        HStack {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
+            
+            Text.localizedSafe("achievements.tip.no_errors", defaultValue: "Hiç hata yapmadan bir Sudoku tamamlayın")
+                .font(.footnote)
+            
+            Spacer()
+        }
+        .padding()
+        .background(Color(.systemGray6).opacity(0.8))
+        .cornerRadius(8)
+    }
+    
+    @ViewBuilder
+    private func totalCompletionsTipView(_ achievement: Achievement) -> some View {
+        if let count = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
+            HStack {
+                Image(systemName: "number.circle.fill")
+                    .foregroundColor(.blue)
+                
+                // %lld formatı kullanılmış, doğru şekilde formatlama yapılmalı
+                let localizedFormat = NSLocalizedString("achievements.tip.total_games", comment: "")
+                let localizedText = String.localizedStringWithFormat(localizedFormat, count)
+                
+                Text(localizedText)
+                    .font(.footnote)
+                
+                Spacer()
+            }
+            .padding()
+            .background(Color(.systemGray6).opacity(0.8))
+            .cornerRadius(8)
+        } else {
+            EmptyView()
+        }
+    }
+    
+    @ViewBuilder
+    private func variationsTipView(_ achievement: Achievement) -> some View {
+        if let count = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
+            HStack {
+                Image(systemName: "square.grid.3x3.fill")
+                    .foregroundColor(.orange)
+                
+                // %lld formatı kullanılmış, doğru şekilde formatlama yapılmalı
+                let localizedFormat = NSLocalizedString("achievements.tip.variations", comment: "")
+                let localizedText = String.localizedStringWithFormat(localizedFormat, count)
+                
+                Text(localizedText)
+                    .font(.footnote)
+                
+                Spacer()
+            }
+            .padding()
+            .background(Color(.systemGray6).opacity(0.8))
+            .cornerRadius(8)
+        } else {
+            EmptyView()
         }
     }
 }
@@ -552,16 +922,19 @@ struct AchievementNotification: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Yeni Başarı!")
-                        .font(.headline)
+                    Text.localizedSafe("achievements.notification.new", defaultValue: "Yeni Başarı!")
+                        .scaledFont(size: 16, weight: .medium)
                         .foregroundColor(.primary)
                     
-                    Text(achievement.name)
-                        .font(.subheadline)
+                    Text.localizedSafe("achievement.\(achievement.id).name", defaultValue: achievement.name)
+                        .scaledFont(size: 14)
                         .foregroundColor(.secondary)
                     
-                    Text("+\(achievement.rewardPoints) puan")
-                        .font(.caption)
+                    let pointsFormat = NSLocalizedString("achievements.notification.points", comment: "")
+                    let pointsText = String.localizedStringWithFormat(pointsFormat, achievement.pointValue)
+                    
+                    Text(pointsText)
+                        .scaledFont(size: 12)
                         .foregroundColor(.green)
                 }
                 
@@ -595,7 +968,7 @@ struct AchievementNotification: View {
             }
             
             // 4 saniye sonra otomatik kapanma
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 if isShowing {
                     withAnimation {
                         isShowing = false
@@ -623,6 +996,138 @@ struct AchievementNotification: View {
             return .pink
         case .time:
             return .yellow
+        case .difficulty:
+            return .blue
         }
+    }
+}
+
+// Eski AchievementsView'ı yedekliyoruz
+// Orijinal AchievementsView
+struct AchievementsView: View {
+    @Environment(\.colorScheme) var colorScheme
+    @State private var showAchievementsSheet = false
+    
+    var body: some View {
+        ZStack {
+            // Arka plan
+            GridBackgroundView()
+                .ignoresSafeArea()
+            
+            // İçerik
+            Button(action: {
+                showAchievementsSheet = true
+            }) {
+                Text("Başarımlar")
+                    .scaledFont(size: 16, weight: .medium)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+            .sheet(isPresented: $showAchievementsSheet) {
+                AchievementsSheet()
+            }
+        }
+    }
+}
+
+struct AchievementsInfoView: View {
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Group {
+                        Text.localizedSafe("achievements.info.title", defaultValue: "Başarımlar Hakkında")
+                            .font(.headline)
+                        
+                        Text.localizedSafe("achievements.info.description", defaultValue: "Başarımlar, Sudoku oynarken ilerlemenizi ve başarılarınızı takip eden özel ödüllerdir. Farklı kategorilerde başarımlar kazanabilir ve yıldız puanları toplayabilirsiniz.")
+                            .font(.body)
+                        
+                        Text.localizedSafe("achievements.info.categories", defaultValue: "Başarım Kategorileri")
+                            .font(.headline)
+                            .padding(.top, 8)
+                        
+                        HStack {
+                            Image(systemName: "calendar")
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.blue)
+                            Text.localizedSafe("achievements.info.daily", defaultValue: "Başlangıç: Kolay zorluk seviyesinde tamamlanan başarımlar.")
+                        }
+                        
+                        HStack {
+                            Image(systemName: "flame")
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.orange)
+                            Text.localizedSafe("achievements.info.streak", defaultValue: "Seri: Arka arkaya günlerde oynayarak kazanılan başarımlar.")
+                        }
+                        
+                        HStack {
+                            Image(systemName: "star")
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.yellow)
+                            Text.localizedSafe("achievements.info.special", defaultValue: "Özel: Belirli koşulları sağlayarak kazanılan özel başarımlar.")
+                        }
+                        
+                        HStack {
+                            Image(systemName: "chart.bar")
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.purple)
+                            Text.localizedSafe("achievements.info.difficulty", defaultValue: "Zorluk: Farklı zorluk seviyelerinde oyunlar tamamlayarak kazanılan başarımlar.")
+                        }
+                        
+                        HStack {
+                            Image(systemName: "clock")
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.red)
+                            Text.localizedSafe("achievements.info.time", defaultValue: "Zaman: Belirli sürelerde oyunlar tamamlayarak kazanılan başarımlar.")
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    Group {
+                        Text.localizedSafe("achievements.info.tips", defaultValue: "İpuçları")
+                            .font(.headline)
+                        
+                        Text.localizedSafe("achievements.info.tips.description", defaultValue: "Başarımların detay sayfasında, onları nasıl kazanacağınıza dair ipuçları bulabilirsiniz. Bazı başarımlar için ilerleme durumunuzu da görebilirsiniz.")
+                            .font(.body)
+                    }
+                    
+                    Divider()
+                    
+                    Group {
+                        Text.localizedSafe("achievements.info.sync", defaultValue: "Senkronizasyon")
+                            .font(.headline)
+                        
+                        Text.localizedSafe("achievements.info.sync.description", defaultValue: "Başarımlarınız, hesabınıza giriş yaptığınızda otomatik olarak senkronize edilir ve farklı cihazlarda da erişilebilir olur.")
+                            .font(.body)
+                    }
+                }
+                .padding()
+            }
+            .navigationBarTitle(Text.localizedSafe("achievements.info.header", defaultValue: "Başarımlar Hakkında"), displayMode: .inline)
+            .navigationBarItems(trailing: Button(action: {
+                presentationMode.wrappedValue.dismiss()
+            }) {
+                Text.localizedSafe("achievements.info.done", defaultValue: "Tamam")
+            })
+        }
+    }
+}
+
+extension View {
+    // Herhangi bir View'ı AnyView tipine dönüştürmek için yardımcı metod
+    func eraseToAnyView() -> AnyView {
+        return AnyView(self)
+    }
+}
+
+// AchievementCategory için all değerini tanımlayan extension'ı tutuyoruz
+extension AchievementCategory {
+    static var all: AchievementCategory? {
+        return nil
     }
 }

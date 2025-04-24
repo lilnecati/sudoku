@@ -96,6 +96,17 @@ class ScoreManager {
             try context.save()
             print("✅ Skor başarıyla kaydedildi: ID: \(scoreId), Toplam Puan: \(scoreResults.totalScore)")
             
+            // Skoru doğrudan Firebase'e de kaydet
+            PersistenceController.shared.saveHighScoreToFirestore(
+                scoreID: scoreId.uuidString,
+                difficulty: difficulty.rawValue,
+                elapsedTime: timeElapsed,
+                errorCount: errorCount,
+                hintCount: hintCount,
+                score: scoreResults.totalScore,
+                playerName: "Oyuncu"
+            )
+            
             // Kaydedilen skoru kontrol et
             validateScoreSaved(scoreId: scoreId)
         } catch {

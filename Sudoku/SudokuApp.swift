@@ -159,12 +159,21 @@ struct SudokuApp: App {
                 .environmentObject(themeManager)
                 .environmentObject(localizationManager)
                 .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
+                .environment(\.textScale, textSizePreference.scaleFactor)
+                .environment(\.managedObjectContext, viewContext)
+                .accentColor(ColorManager.primaryBlue)
+                .achievementToastSystem()
                 .onAppear {
                     // Firebase Auth'un hazır olması için bir gecikme ekleyelim
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         // Achievement manager'ı başlat
-                        _ = AchievementManager.shared
+                        let achievementManager = AchievementManager.shared
                         print("✅ AchievementManager başlatıldı")
+                        
+                        // Eğer kullanıcı oturum açmışsa, başarımları Firebase'den yükle
+                        if Auth.auth().currentUser != nil {
+                            achievementManager.loadAchievementsFromFirebase()
+                        }
                     }
                 }
                 .onChange(of: scenePhase) { oldPhase, newPhase in

@@ -1009,7 +1009,9 @@ struct DetailedStatisticsView: View {
         
         // Firestore'dan tamamlanmış oyunları çek
         let db = Firestore.firestore()
-        let query = db.collection("savedGames")
+        
+        // savedGames koleksiyonu yerine highScores koleksiyonunu kullan
+        let query = db.collection("highScores")
             .whereField("userID", isEqualTo: userID)
             
         // Zaman aralığına göre filtreleme
@@ -1031,7 +1033,7 @@ struct DetailedStatisticsView: View {
         print("📅 Tarih filtresi: \(fromDate) - \(today)")
         
         // Sorgu çok basitleştirildi, sadece userID kullanılıyor. Diğer filtreleri kod içinde yapacağız.
-        print("🔍 Firestore sorgusu yapılıyor: savedGames koleksiyonu")
+        print("🔍 Firestore sorgusu yapılıyor: highScores koleksiyonu")
         
         // Verileri çek
         query.getDocuments { snapshot, error in
@@ -1055,18 +1057,16 @@ struct DetailedStatisticsView: View {
             let filteredDocuments = documents.filter { document in
                 let data = document.data()
                 
-                // isCompleted kontrolü
-                guard (data["isCompleted"] as? Bool) == true else {
-                    return false
-                }
+                // İlk olarak tamamlanma kontrolü - highScores'ta kayıt varsa tamamlanmış demektir
+                // isCompleted kontrolünü kaldırdık çünkü highScores sadece tamamlanmış oyunları içerir
                 
                 // difficulty kontrolü
                 guard (data["difficulty"] as? String) == selectedDifficulty.rawValue else {
                     return false
                 }
                 
-                // Tarih kontrolü - dateCreated veya timestamp kullan
-                if let dateTimestamp = data["dateCreated"] as? Timestamp {
+                // Tarih kontrolü - date veya timestamp kullan
+                if let dateTimestamp = data["date"] as? Timestamp {
                     let creationDate = dateTimestamp.dateValue()
                     return creationDate > fromDate
                 } else if let timestamp = data["timestamp"] as? Timestamp {
@@ -1109,7 +1109,10 @@ struct DetailedStatisticsView: View {
                 print("🔍 Oyun \(index+1)/\(filteredDocuments.count) işleniyor - ID: \(docID)")
                 
                 // Timestamp'i tarih olarak al
-                if let timestamp = data["timestamp"] as? Timestamp {
+                if let timestamp = data["date"] as? Timestamp {
+                    let date = timestamp.dateValue()
+                    print("   📅 Tarih: \(date)")
+                } else if let timestamp = data["timestamp"] as? Timestamp {
                     let date = timestamp.dateValue()
                     print("   📅 Tarih: \(date)")
                 } else {
@@ -1130,20 +1133,28 @@ struct DetailedStatisticsView: View {
                     print("   ⚠️ errorCount alanı bulunamadı")
                 }
                 
-                // Verileri al
-                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                // Verileri al - tarih bilgisini date veya timestamp alanından al
+                let date: Date
+                if let dateTimestamp = data["date"] as? Timestamp {
+                    date = dateTimestamp.dateValue()
+                } else if let timestamp = data["timestamp"] as? Timestamp {
+                    date = timestamp.dateValue()
+                } else {
+                    date = Date() // Varsayılan değer
+                }
+                
                 let elapsedTime = data["elapsedTime"] as? TimeInterval ?? 0
                 let errorCount = data["errorCount"] as? Int ?? 0
                 
                 // Tamamlama verisi ekle
                 tempCompletionData.append(CompletionDataPoint(
-                    date: timestamp,
+                    date: date,
                     completed: true
                 ))
                 
                 // Performans verisi ekle
                 tempPerformanceData.append(PerformanceDataPoint(
-                    date: timestamp,
+                    date: date,
                     time: elapsedTime,
                     errors: errorCount
                 ))
@@ -1211,7 +1222,7 @@ struct DetailedStatisticsView: View {
                 )
                 
                 print("✅ UI güncellendi: \(filteredDocuments.count) oyun gösteriliyor")
-                print("�� İSTATİSTİK YÜKLEME TAMAMLANDI 📊")
+                print("📊 İSTATİSTİK YÜKLEME TAMAMLANDI 📊")
             }
         }
     }

@@ -702,11 +702,6 @@ class PersistenceController {
             let games = try context.fetch(request)
             
             if let existingGame = games.first {
-                // Oyunu Core Data'dan sil
-                context.delete(existingGame)
-                try context.save()
-                print("✅ ID'si \(gameID) olan oyun başarıyla Core Data'dan silindi")
-                
                 // Silinen oyunu "son silinen oyunlar" listesine ekle
                 let deletedGamesKey = "recentlyDeletedGameIDs"
                 var recentlyDeletedIDs = UserDefaults.standard.stringArray(forKey: deletedGamesKey) ?? []
@@ -723,10 +718,15 @@ class PersistenceController {
                     UserDefaults.standard.set(deletedTimestamps, forKey: deletedTimestampsKey)
                 }
                 
-                // Firestore'dan da sil
+                // Önce Firestore'dan silme işlemini başlat
                 deleteGameFromFirestore(gameID: gameID)
                 
-                // Bildirimleri gönder
+                // Ardından Core Data'dan sil
+                context.delete(existingGame)
+                try context.save()
+                print("✅ ID'si \(gameID) olan oyun başarıyla Core Data'dan silindi")
+                
+                // Bildirimleri gönder - UI güncellemesi için
                 NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
             } else {
                 print("❓ Silinecek oyun Core Data'da bulunamadı, ID: \(gameID)")
@@ -1188,7 +1188,7 @@ class PersistenceController {
         
         do {
             let users = try context.fetch(request)
-            if let user = users.first, let email = user.email {
+            if let user = users.first, let email = user.email, !email.isEmpty {
                 return email
             }
         } catch {
@@ -1196,7 +1196,8 @@ class PersistenceController {
         }
         
         // E-posta bulunamadıysa, doğrudan kullanıcı adını döndür
-        // (Firebase giriş başarısız olacak, ancak yerel giriş denemesi yapılabilir)
+        // Bu Firebase'de e-posta formatı kontrolünde başarısız olabilir, ama loginUser 
+        // fonksiyonunda önce yerel giriş denediğimiz için sorun olmayacak
         return usernameOrEmail
     }
     
@@ -1570,8 +1571,18 @@ class PersistenceController {
             } else {
                 print("✅ Tamamlanmış oyun Firestore'a kaydedildi: \(documentID)")
                 
-                // Kayıtlı oyunlardan silmek için Core Data'dan kaldır
+                // Aynı ID ile kaydedilmiş orijinal oyunu Firebase'den silmeyi deneyelim
+                self.db.collection("savedGames").document(documentID).delete { deleteError in
+                    if let deleteError = deleteError {
+                        print("⚠️ Orijinal oyun Firestore'dan silinemedi: \(deleteError.localizedDescription)")
+                    } else {
+                        print("✅ Orijinal oyun Firestore'dan başarıyla silindi: \(documentID)")
+                    }
+                }
+                
+                // Firebase'e kayıt başarılı olduğunda Core Data'dan sil
                 DispatchQueue.main.async {
+                    // Önce silme işlemini gerçekleştir
                     self.deleteSavedGameFromCoreData(gameID: gameID.uuidString)
                     
                     // Silinen oyunları takip listesine ekle (senkronizasyon için)
@@ -1588,9 +1599,14 @@ class PersistenceController {
                         UserDefaults.standard.set(deletedTimestamps, forKey: deletedTimestampsKey)
                     }
                     
-                    // Kullanıcı arayüzünü yenile
-                    NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+                    // Kullanıcı arayüzünü yenile - önce diğer bildirimleri gönder
                     NotificationCenter.default.post(name: NSNotification.Name("RefreshStatistics"), object: nil)
+                    
+                    // SavedGames için UI güncellemesi
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        print("📣 Firebase kayıt ve silme sonrası UI yenileme gönderiliyor")
+                        NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+                    }
                 }
             }
         }
@@ -1620,6 +1636,9 @@ class PersistenceController {
                 context.delete(existingGame)
                 try context.save()
                 print("✅ ID'si \(gameID) olan oyun başarıyla Core Data'dan silindi")
+                
+                // Yerel silme işleminden sonra UI güncellemesi yap
+                NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
             } else {
                 print("⚠️ Silinecek oyun Core Data'da bulunamadı, ID: \(gameID)")
             }

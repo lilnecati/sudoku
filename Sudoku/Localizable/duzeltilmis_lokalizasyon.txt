@@ -1,0 +1,1095 @@
+// Başarım detay sayfası
+"achievements.detail.title" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Achievement Detail"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Détail du Succès"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarı Detayı"
+      }
+    }
+  }
+},
+"achievements.detail.close" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Close"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Fermer"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Kapat"
+      }
+    }
+  }
+},
+
+// Başarım bildirimleri
+"achievements.notification.new" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "New Achievement!"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Nouveau Succès !"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Yeni Başarı!"
+      }
+    }
+  }
+},
+"achievements.notification.points" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "+%lld points"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "+%lld points"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "+%lld puan"
+      }
+    }
+  }
+},
+
+// Başarım durumları
+"achievements.status.locked" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Locked"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Verrouillé"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Kilitli"
+      }
+    }
+  }
+},
+"achievements.status.progress" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "%lld / %lld"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "%lld / %lld"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "%lld / %lld"
+      }
+    }
+  }
+},
+"achievements.status.completed_date" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Completed: %@"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Terminé: %@"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tamamlandı: %@"
+      }
+    }
+  }
+},
+"achievements.status.reward_points" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "+%lld points"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "+%lld points"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "+%lld puan"
+      }
+    }
+  }
+},
+
+// İpuçları
+"achievements.tip.difficulty" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete a game at %@ difficulty level."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Terminez une partie au niveau de difficulté %@."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "%@ zorluk seviyesinde bir oyunu tamamlayın."
+      }
+    }
+  }
+},
+"achievements.tip.streak" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Play Sudoku for %lld consecutive days."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Jouez au Sudoku pendant %lld jours consécutifs."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "%lld gün art arda oyun oynayın."
+      }
+    }
+  }
+},
+"achievements.tip.time" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete a game in less than %lld minutes."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Terminez une partie en moins de %lld minutes."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "%lld dakikadan daha kısa sürede bir oyunu tamamlayın."
+      }
+    }
+  }
+},
+"achievements.tip.no_errors" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete a game without making any mistakes."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Terminez une partie sans faire d'erreurs."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Hiç hata yapmadan bir oyunu tamamlayın."
+      }
+    }
+  }
+},
+"achievements.tip.total_games" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete a total of %lld games."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Terminez un total de %lld parties."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Toplam %lld oyun tamamlayın."
+      }
+    }
+  }
+},
+"achievements.tip.variations" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Complete a total of %lld games from different difficulty levels."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Terminez un total de %lld parties à différents niveaux de difficulté."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Farklı zorluk seviyelerinden toplam %lld oyun tamamlayın."
+      }
+    }
+  }
+},
+"achievements.tip.general" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Keep playing to fulfill the requirements for this achievement."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Continuez à jouer pour remplir les conditions de ce succès."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Bu başarımın koşullarını sağlamak için oynamaya devam edin."
+      }
+    }
+  }
+},
+
+// İlerleme
+"achievements.completed" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Achievement Unlocked!"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Succès Débloqué !"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarı Kazanıldı!"
+      }
+    }
+  }
+},
+"achievements.progress.value" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Progress: %lld/%lld"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Progrès: %lld/%lld"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "İlerleme: %lld/%lld"
+      }
+    }
+  }
+},
+"achievements.incomplete" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Achievement Not Yet Unlocked"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Succès Pas Encore Débloqué"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarı Henüz Kazanılmadı"
+      }
+    }
+  }
+},
+"achievements.howto.earn" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "How to Earn?"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Comment Obtenir ?"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Nasıl Kazanılır?"
+      }
+    }
+  }
+},
+
+// Kategoriler
+"achievements.category.all" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "All"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tous"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tümü"
+      }
+    }
+  }
+},
+"achievements.category.daily" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Daily"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Quotidien"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Günlük"
+      }
+    }
+  }
+},
+"achievements.category.streak" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Streak"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Série"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Seri"
+      }
+    }
+  }
+},
+"achievements.category.special" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Special"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Spécial"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Özel"
+      }
+    }
+  }
+},
+"achievements.category.difficulty" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Difficulty"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Difficulté"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Zorluk"
+      }
+    }
+  }
+},
+"achievements.category.time" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Time"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Temps"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Zaman"
+      }
+    }
+  }
+},
+
+// Filtreler ve sıralama
+"achievements.filter" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Filter"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Filtrer"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Filtrele"
+      }
+    }
+  }
+},
+"achievements.filter.all" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Show All"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Afficher Tout"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tümünü Göster"
+      }
+    }
+  }
+},
+"achievements.filter.completed" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Completed"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Terminés"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tamamlananlar"
+      }
+    }
+  }
+},
+"achievements.filter.incomplete" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Incomplete"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Non Terminés"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tamamlanmayanlar"
+      }
+    }
+  }
+},
+"achievements.sort" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Sort"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Trier"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Sırala"
+      }
+    }
+  }
+},
+"achievements.sort.default" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Default"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Par Défaut"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Varsayılan"
+      }
+    }
+  }
+},
+"achievements.sort.completed_first" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Completed First"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Terminés d'Abord"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tamamlananlar Önce"
+      }
+    }
+  }
+},
+"achievements.sort.progress" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "By Progress"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Par Progrès"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "İlerlemeye Göre"
+      }
+    }
+  }
+},
+
+// Diğer
+"achievements.title" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Achievements"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Succès"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarımlar"
+      }
+    }
+  }
+},
+"achievements.empty.message" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "No achievements found in this category."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Aucun succès trouvé dans cette catégorie."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Bu kategoride başarım bulunamadı."
+      }
+    }
+  }
+},
+
+// Bilgi sayfası
+"achievements.info.header" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "About Achievements"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "À Propos des Succès"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarımlar Hakkında"
+      }
+    }
+  }
+},
+"achievements.info.title" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "About Achievements"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "À Propos des Succès"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarımlar Hakkında"
+      }
+    }
+  }
+},
+"achievements.info.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Achievements are special rewards that track your progress and accomplishments while playing Sudoku. You can earn achievements in different categories and collect star points."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Les succès sont des récompenses spéciales qui suivent vos progrès et vos accomplissements lorsque vous jouez au Sudoku. Vous pouvez gagner des succès dans différentes catégories et collecter des points étoiles."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarımlar, Sudoku oynarken ilerlemenizi ve başarılarınızı takip eden özel ödüllerdir. Farklı kategorilerde başarımlar kazanabilir ve yıldız puanları toplayabilirsiniz."
+      }
+    }
+  }
+},
+"achievements.info.categories" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Achievement Categories"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Catégories de Succès"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarım Kategorileri"
+      }
+    }
+  }
+},
+"achievements.info.daily" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Daily: Achievements earned by playing every day."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Quotidien: Succès obtenus en jouant chaque jour."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Günlük: Her gün oynayarak kazanılan başarımlar."
+      }
+    }
+  }
+},
+"achievements.info.streak" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Streak: Achievements earned by playing on consecutive days."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Série: Succès obtenus en jouant plusieurs jours consécutifs."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Seri: Arka arkaya günlerde oynayarak kazanılan başarımlar."
+      }
+    }
+  }
+},
+"achievements.info.special" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Special: Achievements earned by fulfilling specific conditions."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Spécial: Succès obtenus en remplissant des conditions spécifiques."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Özel: Belirli koşulları sağlayarak kazanılan özel başarımlar."
+      }
+    }
+  }
+},
+"achievements.info.difficulty" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Difficulty: Achievements earned by completing games at different difficulty levels."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Difficulté: Succès obtenus en terminant des parties à différents niveaux de difficulté."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Zorluk: Farklı zorluk seviyelerinde oyunlar tamamlayarak kazanılan başarımlar."
+      }
+    }
+  }
+},
+"achievements.info.time" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Time: Achievements earned by completing games within specific times."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Temps: Succès obtenus en terminant des parties dans des délais spécifiques."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Zaman: Belirli sürelerde oyunlar tamamlayarak kazanılan başarımlar."
+      }
+    }
+  }
+},
+"achievements.info.tips" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tips"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Conseils"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "İpuçları"
+      }
+    }
+  }
+},
+"achievements.info.tips.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "On the achievement detail page, you can find tips on how to earn them. For some achievements, you can also see your progress."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Sur la page de détail du succès, vous pouvez trouver des conseils sur la façon de les obtenir. Pour certains succès, vous pouvez également voir votre progression."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarımların detay sayfasında, onları nasıl kazanacağınıza dair ipuçları bulabilirsiniz. Bazı başarımlar için ilerleme durumunuzu da görebilirsiniz."
+      }
+    }
+  }
+},
+"achievements.info.sync" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Synchronization"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Synchronisation"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Senkronizasyon"
+      }
+    }
+  }
+},
+"achievements.info.sync.description" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Your achievements are automatically synchronized when you log in to your account and are accessible on different devices."
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Vos succès sont automatiquement synchronisés lorsque vous vous connectez à votre compte et sont accessibles sur différents appareils."
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Başarımlarınız, hesabınıza giriş yaptığınızda otomatik olarak senkronize edilir ve farklı cihazlarda da erişilebilir olur."
+      }
+    }
+  }
+},
+"achievements.info.done" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Done"
+      }
+    },
+    "fr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Terminé"
+      }
+    },
+    "tr" : {
+      "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tamam"
+      }
+    }
+  }
+} 

@@ -63,6 +63,9 @@ struct SettingsView: View {
     // Dil seçimi için sheet state değişkeni
     @State private var showLanguageSheet = false
     
+    // Başarımlar için sheet state değişkeni
+    @State private var showAchievementsSheet = false
+    
     @State private var username = ""
     @State private var password = ""
     @State private var email = ""
@@ -310,12 +313,15 @@ struct SettingsView: View {
             // Tema değişikliği olduğunda anında uygulamak için
             themeManager.objectWillChange.send()
         }
-        .padding(.horizontal)
         .sheet(isPresented: $showLanguageSheet) {
             LanguageSelectionSheet(
                 selectedLanguage: $selectedLanguage,
                 localizationManager: localizationManager
             )
+            .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showAchievementsSheet) {
+            AchievementsSheet()
             .presentationDetents([.medium, .large])
         }
     }
@@ -385,7 +391,7 @@ struct SettingsView: View {
             
             Spacer()
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 6)
         .padding(.vertical, 5)
     }
     
@@ -444,13 +450,14 @@ struct SettingsView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            .padding()
+            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
-            .padding(.horizontal)
+            .padding(.horizontal, 8)
             
             // Ses seviyesi kaydırıcısı - eğer ses açıksa
             if enableSoundEffects {
@@ -528,7 +535,7 @@ struct SettingsView: View {
                         .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                 )
-                .padding(.horizontal)
+                .padding(.horizontal, 8)
                 .transition(.opacity)
             }
             
@@ -593,7 +600,7 @@ struct SettingsView: View {
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
-            .padding(.horizontal)
+            .padding(.horizontal, 8)
         }
     }
     
@@ -652,13 +659,14 @@ struct SettingsView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            .padding()
+            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
-            .padding(.horizontal)
+            .padding(.horizontal, 8)
             
             // Karanlık mod
             if !themeManager.useSystemAppearance {
@@ -720,7 +728,7 @@ struct SettingsView: View {
                         .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                 )
-                .padding(.horizontal)
+                .padding(.horizontal, 8)
             }
             
             // Metin boyutu
@@ -776,7 +784,7 @@ struct SettingsView: View {
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
-            .padding(.horizontal)
+            .padding(.horizontal, 8)
         }
     }
     
@@ -907,7 +915,7 @@ struct SettingsView: View {
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
-            .padding(.horizontal)
+            .padding(.horizontal, 8)
             
             // Güç Tasarrufu Ayarları
             Section {
@@ -962,7 +970,7 @@ struct SettingsView: View {
                         .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                 )
-                .padding(.horizontal)
+                .padding(.horizontal, 8)
                 
                 // Otomatik güç tasarrufu
                 HStack {
@@ -1011,7 +1019,7 @@ struct SettingsView: View {
                         .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                 )
-                .padding(.horizontal)
+                .padding(.horizontal, 8)
                 
                 // Güç tasarrufu açıklaması
                 if powerSavingMode || autoPowerSaving {
@@ -1106,7 +1114,6 @@ struct SettingsView: View {
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
             )
-            .padding(.horizontal)
             
             // Bilgi kartları
             InfoCard(
@@ -1144,8 +1151,8 @@ struct SettingsView: View {
                                 .strokeBorder(Color.red.opacity(0.3), lineWidth: 1)
                         )
                 )
-                .padding(.horizontal)
             }
+            .padding(.horizontal, 8)
             
             // Telif hakkı ve yapım yılı
             Text("© 2024 Necati Yıldırım")
@@ -1194,7 +1201,7 @@ struct SettingsView: View {
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
-            .padding(.horizontal)
+            .padding(.horizontal, 8)
         }
     }
     
@@ -1247,118 +1254,72 @@ struct SettingsView: View {
     // Profil ve hesap ayarları görünümü
     private func profileSettingsView() -> some View {
         VStack(spacing: 20) {
-            // Kullanıcı profil kartı
+            // Kullanıcı profil kartı - Büyük ve göze çarpan tasarım
             HStack {
                 // Profil resmi
                 ZStack {
                     Circle()
-                        .fill(Color.blue.opacity(0.15))
-                        .frame(width: 70, height: 70)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 80, height: 80)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
                     
                     // Kullanıcı giriş durumuna göre farklı sembol göster
                     if let user = PersistenceController.shared.getCurrentUser() {
                         VStack {
                             Text(String(user.name?.prefix(1) ?? "U"))
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(.blue)
+                                .font(.system(size: 34, weight: .bold))
+                                .foregroundColor(.white)
                         }
                     } else {
                         Image(systemName: "person.fill")
-                            .font(.system(size: 32))
-                            .foregroundColor(.blue)
+                            .font(.system(size: 34))
+                            .foregroundColor(.white)
                     }
                 }
                 
                 Spacer()
-                .frame(width: 15)
+                .frame(width: 20)
                 
-                // Kullanıcı bilgileri
-                VStack(alignment: .leading, spacing: 5) {
+                // Kullanıcı bilgileri - Daha kompakt
+                VStack(alignment: .leading, spacing: 6) {
                     if let user = PersistenceController.shared.getCurrentUser() {
                         // Giriş yapılmışsa kullanıcı bilgilerini göster
                         Text(user.name ?? "İsimsiz Kullanıcı")
-                            .scaledFont(size: 18, weight: .bold)
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.primary)
                         
                         Text("@\(user.username ?? "")")
-                            .scaledFont(size: 14)
-                            .foregroundColor(.secondary)
-                        
-                        Text(user.email ?? "")
-                            .scaledFont(size: 14)
+                            .font(.system(size: 16))
                             .foregroundColor(.secondary)
                     } else {
                         // Giriş yapılmamışsa giriş seçenekleri göster
                         Text.localizedSafe("Giriş Yapmadınız")
-                            .scaledFont(size: 18, weight: .bold)
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.primary)
                         
-                        Text.localizedSafe("Skorlarınızı kaydetmek ve cihazlar arası senkronizasyon için giriş yapın")
-                            .scaledFont(size: 14)
+                        Text.localizedSafe("Skorlarınızı kaydetmek için giriş yapın")
+                            .font(.system(size: 16))
                             .foregroundColor(.secondary)
-                            .lineLimit(2)
+                            .lineLimit(1)
                     }
                 }
                 
                 Spacer()
             }
-            .padding()
+            .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
             )
-            .padding(.horizontal)
             
-            // Başarılarım butonu - yeni eklendi
-            HStack {
-                let isLoggedIn = PersistenceController.shared.getCurrentUser() != nil
-                
-                Button(action: {
-                    // Kullanıcı giriş yaptı mı kontrol et
-                    if isLoggedIn {
-                        // Başarılar sayfasına git
-                        SoundManager.shared.playNavigationSound()
-                    } else {
-                        // Giriş sayfasına git
-                        SoundManager.shared.playNavigationSound()
-                    }
-                }) {
-                    HStack {
-                        Label {
-                            Text("Başarılarım")
-                                .scaledFont(size: 16, weight: .medium)
-                                .foregroundColor(isLoggedIn ? .primary : .gray)
-                        } icon: {
-                            Image(systemName: "trophy.fill")
-                                .foregroundColor(isLoggedIn ? .yellow : .gray)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(isLoggedIn ? .secondary : .gray)
-                            .font(.system(size: 14))
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    )
-                }
-                .disabled(!isLoggedIn)
-                
-                if !isLoggedIn {
-                    Text("Hesap Gereklidir !")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(.leading, 8)
-                }
-            }
-            .padding(.horizontal)
-            
-            // Profil yönetimi butonu
+            // Hesap butonu - sadece giriş yapmışsa
             if let _ = PersistenceController.shared.getCurrentUser() {
                 // Kullanıcı giriş yapmışsa profil düzenleme ve çıkış butonları
                 NavigationLink(destination: ProfileEditView()) {
@@ -1378,7 +1339,8 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                             .font(.system(size: 14))
                     }
-                    .padding()
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
@@ -1386,7 +1348,7 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal)
+                .padding(.horizontal, 8)
                 
                 // Çıkış butonu
                 Button(action: {
@@ -1423,7 +1385,7 @@ struct SettingsView: View {
                         NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
                         
                         // UI'ı tamamen sıfırlamak için sayfayı kapat
-                        presentationMode.wrappedValue.dismiss()
+                        self.presentationMode.wrappedValue.dismiss()
                         
                         // Dummy state değişkeni ile görünümü yenileme
                         isRefreshing.toggle()
@@ -1449,7 +1411,7 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal)
+                .padding(.horizontal, 8)
             } else {
                 // Kullanıcı giriş yapmamışsa giriş ve kayıt butonları
                 NavigationLink(destination: LoginViewContainer()) {
@@ -1465,6 +1427,7 @@ struct SettingsView: View {
                         
                         Spacer()
                         
+                        
                         Image(systemName: "chevron.right")
                             .foregroundColor(.secondary)
                             .font(.system(size: 14))
@@ -1477,7 +1440,7 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal)
+                .padding(.horizontal, 8)
                 
                 NavigationLink(destination: RegisterViewContainer()) {
                     HStack {
@@ -1504,8 +1467,147 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal)
+                .padding(.horizontal, 8)
             }
+            
+            // Dil Seçimi başlığı
+            sectionHeader(title: "Dil Seçimi", systemImage: "globe")
+            
+            // Dil Seçimi
+            VStack(spacing: 20) {
+                // Dil seçimi düğmesi
+                Button(action: {
+                    showLanguageSheet = true
+                }) {
+                    HStack(spacing: 15) {
+                        // İkon
+                        ZStack {
+                            Circle()
+                                .fill(Color.blue.opacity(0.15))
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "globe")
+                                .font(.system(size: 16))
+                                .foregroundColor(.blue)
+                        }
+                        
+                        // Başlık ve açıklama
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text.localizedSafe("language.selection")
+                                .scaledFont(size: 16, weight: .semibold)
+                                .foregroundColor(.primary)
+                            
+                            Text(AppLanguage.allLanguages.first(where: { $0.code == selectedLanguage })?.name ?? "Türkçe")
+                                .scaledFont(size: 13)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.gray)
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 8)
+            
+            // Başarımlar başlığı
+            sectionHeader(title: "Başarımlar", systemImage: "trophy.fill")
+            
+            // Başarımlar Bölümü
+            VStack(spacing: 20) {
+                // Başarımlar düğmesi
+                Button(action: {
+                    showAchievementsSheet = true
+                }) {
+                    HStack(spacing: 15) {
+                        // İkon
+                        ZStack {
+                            Circle()
+                                .fill(Color.yellow.opacity(0.15))
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "trophy.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(.yellow)
+                        }
+                        
+                        // Başlık ve açıklama
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Başarımlar")
+                                .scaledFont(size: 16, weight: .semibold)
+                                .foregroundColor(.primary)
+                            
+                            Text("Tüm başarımlarınızı görüntüleyin")
+                                .scaledFont(size: 13)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.gray)
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Başarımları sıfırlama düğmesi
+                Button(action: {
+                    resetAchievementData()
+                }) {
+                    HStack(spacing: 15) {
+                        // İkon
+                        ZStack {
+                            Circle()
+                                .fill(Color.red.opacity(0.15))
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.system(size: 16))
+                                .foregroundColor(.red)
+                        }
+                        
+                        // Başlık ve açıklama
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Başarımları Sıfırla")
+                                .scaledFont(size: 16, weight: .semibold)
+                                .foregroundColor(.red)
+                            
+                            Text("Tüm başarımları sıfırlayın")
+                                .scaledFont(size: 13)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 8)
         }
     }
     
@@ -1513,124 +1615,30 @@ struct SettingsView: View {
         ScrollView {
             VStack(spacing: 25) {
                 // Hesap ve profil bölümü - En yukarı taşındı
-                sectionHeader(title: "Profil", systemImage: "person.crop.circle.fill")
+                self.sectionHeader(title: "Profil", systemImage: "person.crop.circle.fill")
                 
                 // Profil ve hesap ayarları bölümü
-                profileSettingsView()
+                self.profileSettingsView()
 
-                // Dil Seçimi
-                Section {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text.localizedSafe("language.selection")
-                            .font(.headline)
-                            .padding(.bottom, 5)
-                        
-                        // Dil seçimi düğmesi
-                        Button(action: {
-                            showLanguageSheet = true
-                        }) {
-                            HStack {
-                                Label {
-                                    VStack(alignment: .leading) {
-                                        Text.localizedSafe("language.selection")
-                                            .font(.headline)
-                                            .foregroundColor(.primary)
-                                        
-                                        Text(selectedLanguage == "tr" ? "🇹🇷 Türkçe" : 
-                                            selectedLanguage == "en" ? "🇬🇧 English" : 
-                                            selectedLanguage == "fr" ? "🇫🇷 Français" : "🇬🇧 English")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    }
-                                } icon: {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.green.opacity(0.15))
-                                            .frame(width: 42, height: 42)
-                                        
-                                        Image(systemName: "globe")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.green)
-                                    }
-                                }
-                                
-                                Spacer()
-                                
-                                HStack(spacing: 3) {
-                                    Text(selectedLanguage == "tr" ? "🇹🇷" : 
-                                         selectedLanguage == "en" ? "🇬🇧" : 
-                                         selectedLanguage == "fr" ? "🇫🇷" : "🇬🇧")
-                                        .font(.system(size: 22))
-                                        .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
-                                        
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
-                                        .font(.system(size: 14))
-                                }
-                            }
-                            .padding()
-                            .background(
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                                    
-                                    // Süsleme çizgisi (sol tarafta renkli çizgi)
-                                    HStack {
-                                        Rectangle()
-                                            .fill(
-                                                LinearGradient(
-                                                    gradient: Gradient(colors: [.green, .green.opacity(0.7)]),
-                                                    startPoint: .top,
-                                                    endPoint: .bottom
-                                                )
-                                            )
-                                            .frame(width: 4)
-                                        Spacer()
-                                    }
-                                    .mask(
-                                        RoundedRectangle(cornerRadius: 16)
-                                    )
-                                }
-                                .shadow(color: Color.black.opacity(0.07), radius: 5, x: 0, y: 3)
-                            )
-                            .overlay(
-                                // Daha büyük buton hissi için ince kenarlık ekle
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
-                            )
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .padding(.horizontal)
-                    }
-                    .padding(.vertical, 5)
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                )
-                .padding(.horizontal)
-                
                 // Ayarlar başlığı
-                sectionHeader(title: "Oyun Ayarları", systemImage: "gamecontroller.fill")
+                self.sectionHeader(title: "Oyun Ayarları", systemImage: "gamecontroller.fill")
                 
                 // Oyun ayarları bölümü
-                gameSettingsView()
+                self.gameSettingsView()
                 
                 // Görünüm ayarları
-                sectionHeader(title: "Görünüm", systemImage: "paintbrush.fill")
+                self.sectionHeader(title: "Görünüm", systemImage: "paintbrush.fill")
                 
                 // Görünüm ayarları bölümü - dil seçimi kaldırıldı
-                appearanceSettingsView()
+                self.appearanceSettingsView()
                 
                 // Güç tasarrufu ayarları (eğer pil yüzdesi 50'den düşükse ön plana çıkar)
-                if powerManager.batteryLevel < 0.5 {
-                    sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle.fill")
-                    powerSavingSettingsView()
+                if self.powerManager.batteryLevel < 0.5 {
+                    self.sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle.fill")
+                    self.powerSavingSettingsView()
                 } else {
-                    sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle")
-                    powerSavingSettingsView()
+                    self.sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle")
+                    self.powerSavingSettingsView()
                 }
                 
                 // Alt bilgi
@@ -1648,19 +1656,50 @@ struct SettingsView: View {
                 .padding(.bottom, 20)
             }
             .padding(.top)
+            .padding(.horizontal, 6)
         }
     }
     
     private var closeButton: some View {
         Button(action: {
-            presentationMode.wrappedValue.dismiss()
+            self.presentationMode.wrappedValue.dismiss()
         }) {
             Text("Tamam")
                 .fontWeight(.semibold)
                 .foregroundColor(.blue)
         }
     }
+    
+    // Başarı verilerini sıfırlayan fonksiyon
+    private func resetAchievementData() {
+        let userDefaults = UserDefaults.standard
+        let achievementsKey = "user_achievements"
+        let streakKey = "user_streak_data"
+        
+        // Başarı verilerini sil
+        userDefaults.removeObject(forKey: achievementsKey)
+        userDefaults.removeObject(forKey: streakKey)
+        
+        // Günlük oyun sayısı verilerini de sil
+        let calendar = Calendar.current
+        for i in -7...7 { // Son 7 gün ve gelecek 7 gün
+            let date = calendar.date(byAdding: .day, value: i, to: Date()) ?? Date()
+            let dayKey = "daily_completions_\(calendar.startOfDay(for: date).timeIntervalSince1970)"
+            userDefaults.removeObject(forKey: dayKey)
+        }
+        
+        // Gece Kuşu ve Erken Kuş başarıları için verileri sil
+        userDefaults.removeObject(forKey: "night_owl_progress")
+        userDefaults.removeObject(forKey: "early_bird_progress")
+        userDefaults.removeObject(forKey: "weekend_warrior_progress")
+        
+        // AchievementManager'ı yeniden başlatmak için bildirim gönder
+        NotificationCenter.default.post(name: Notification.Name("ResetAchievements"), object: nil)
+        
+        print("🧹 Tüm başarı verileri silindi")
+    }
 }
+
 
 struct SettingRow<Content: View>: View {
     var title: String
@@ -1754,7 +1793,8 @@ struct ToggleSettingRow: View {
                 }
                 .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isOn)
             }
-            .padding()
+            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
@@ -1762,7 +1802,7 @@ struct ToggleSettingRow: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
-        .padding(.horizontal)
+        .padding(.horizontal, 6)
     }
 }
 

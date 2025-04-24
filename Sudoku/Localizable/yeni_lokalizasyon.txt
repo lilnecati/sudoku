@@ -1,0 +1,127 @@
+// Başarımlar için yeni lokalizasyon anahtarları
+
+// Başarım detay sayfası
+"achievements.detail.title" : "Başarı Detayı",
+"achievements.detail.close" : "Kapat",
+
+// Başarım bildirimleri
+"achievements.notification.new" : "Yeni Başarı!",
+"achievements.notification.points" : "+%lld puan",
+
+// Başarım durumları
+"achievements.status.locked" : "Kilitli",
+"achievements.status.progress" : "%lld / %lld",
+"achievements.status.completed_date" : "Tamamlandı: %@",
+"achievements.status.reward_points" : "+%lld puan",
+
+// İpuçları
+"achievements.tip.difficulty" : "%@ zorluk seviyesinde bir oyunu tamamlayın.",
+"achievements.tip.streak" : "%lld gün art arda oyun oynayın.",
+"achievements.tip.time" : "%lld dakikadan daha kısa sürede bir oyunu tamamlayın.",
+"achievements.tip.no_errors" : "Hiç hata yapmadan bir oyunu tamamlayın.",
+"achievements.tip.total_games" : "Toplam %lld oyun tamamlayın.",
+"achievements.tip.variations" : "Farklı zorluk seviyelerinden toplam %lld oyun tamamlayın.",
+"achievements.tip.general" : "Bu başarımın koşullarını sağlamak için oynamaya devam edin.",
+
+// İlerleme
+"achievements.completed" : "Başarı Kazanıldı!",
+"achievements.progress.value" : "İlerleme: %lld/%lld",
+"achievements.incomplete" : "Başarı Henüz Kazanılmadı",
+"achievements.howto.earn" : "Nasıl Kazanılır?",
+
+// Kategoriler
+"achievements.category.all" : "Tümü",
+"achievements.category.daily" : "Günlük",
+"achievements.category.streak" : "Seri",
+"achievements.category.special" : "Özel",
+"achievements.category.difficulty" : "Zorluk",
+"achievements.category.time" : "Zaman",
+
+// Filtreler ve sıralama
+"achievements.filter" : "Filtrele",
+"achievements.filter.all" : "Tümünü Göster",
+"achievements.filter.completed" : "Tamamlananlar",
+"achievements.filter.incomplete" : "Tamamlanmayanlar",
+"achievements.sort" : "Sırala",
+"achievements.sort.default" : "Varsayılan",
+"achievements.sort.completed_first" : "Tamamlananlar Önce",
+"achievements.sort.progress" : "İlerlemeye Göre",
+
+// Diğer
+"achievements.title" : "Başarımlar",
+"achievements.empty.message" : "Bu kategoride başarım bulunamadı.",
+
+// Bilgi sayfası
+"achievements.info.header" : "Başarımlar Hakkında",
+"achievements.info.title" : "Başarımlar Hakkında",
+"achievements.info.description" : "Başarımlar, Sudoku oynarken ilerlemenizi ve başarılarınızı takip eden özel ödüllerdir. Farklı kategorilerde başarımlar kazanabilir ve yıldız puanları toplayabilirsiniz.",
+"achievements.info.categories" : "Başarım Kategorileri",
+"achievements.info.daily" : "Günlük: Her gün oynayarak kazanılan başarımlar.",
+"achievements.info.streak" : "Seri: Arka arkaya günlerde oynayarak kazanılan başarımlar.",
+"achievements.info.special" : "Özel: Belirli koşulları sağlayarak kazanılan özel başarımlar.",
+"achievements.info.difficulty" : "Zorluk: Farklı zorluk seviyelerinde oyunlar tamamlayarak kazanılan başarımlar.",
+"achievements.info.time" : "Zaman: Belirli sürelerde oyunlar tamamlayarak kazanılan başarımlar.",
+"achievements.info.tips" : "İpuçları",
+"achievements.info.tips.description" : "Başarımların detay sayfasında, onları nasıl kazanacağınıza dair ipuçları bulabilirsiniz. Bazı başarımlar için ilerleme durumunuzu da görebilirsiniz.",
+"achievements.info.sync" : "Senkronizasyon",
+"achievements.info.sync.description" : "Başarımlarınız, hesabınıza giriş yaptığınızda otomatik olarak senkronize edilir ve farklı cihazlarda da erişilebilir olur.",
+"achievements.info.done" : "Tamam",
+
+// Başarım adları ve açıklamaları
+// Kolay seviye başarımları
+"achievement.easy_1.name" : "İlk Adım",
+"achievement.easy_1.description" : "İlk Kolay Sudoku'yu tamamla",
+"achievement.easy_10.name" : "Kolay Uzman",
+"achievement.easy_10.description" : "10 Kolay Sudoku tamamla",
+"achievement.easy_50.name" : "Kolay Üstat",
+"achievement.easy_50.description" : "50 Kolay Sudoku tamamla",
+"achievement.easy_100.name" : "Kolay Efsane",
+"achievement.easy_100.description" : "100 Kolay Sudoku tamamla",
+
+// Orta seviye başarımları
+"achievement.medium_1.name" : "Zorluğa Adım",
+"achievement.medium_1.description" : "İlk Orta Sudoku'yu tamamla",
+"achievement.medium_10.name" : "Orta Seviye Uzman",
+"achievement.medium_10.description" : "10 Orta seviye Sudoku tamamla",
+
+// Zor seviye başarımları
+"achievement.hard_1.name" : "Zor Meydan Okuma",
+"achievement.hard_1.description" : "İlk Zor Sudoku'yu tamamla",
+"achievement.hard_10.name" : "Zor Uzman",
+"achievement.hard_10.description" : "10 Zor Sudoku tamamla",
+
+// Uzman seviye başarımları
+"achievement.expert_1.name" : "Uzman Meydan Okuma",
+"achievement.expert_1.description" : "İlk Uzman Sudoku'yu tamamla",
+"achievement.expert_5.name" : "Gerçek Sudoku Ustası",
+"achievement.expert_5.description" : "5 Uzman Sudoku tamamla",
+
+// Devamlılık başarımları
+"achievement.streak_3.name" : "Devam Eden Merak",
+"achievement.streak_3.description" : "3 gün üst üste Sudoku oyna",
+"achievement.streak_7.name" : "Haftalık Rutin",
+"achievement.streak_7.description" : "7 gün üst üste Sudoku oyna",
+"achievement.streak_30.name" : "Sudoku Tutkunu",
+"achievement.streak_30.description" : "30 gün üst üste Sudoku oyna",
+
+// Zaman başarımları
+"achievement.time_easy_3.name" : "Hızlı Kolay",
+"achievement.time_easy_3.description" : "Kolay Sudoku'yu 3 dakikadan kısa sürede tamamla",
+"achievement.time_medium_5.name" : "Hızlı Orta",
+"achievement.time_medium_5.description" : "Orta Sudoku'yu 5 dakikadan kısa sürede tamamla",
+"achievement.time_hard_10.name" : "Hızlı Zor",
+"achievement.time_hard_10.description" : "Zor Sudoku'yu 10 dakikadan kısa sürede tamamla",
+
+// Özel başarımlar
+"achievement.no_errors.name" : "Kusursuz",
+"achievement.no_errors.description" : "Hiç hata yapmadan bir Sudoku tamamla",
+"achievement.no_hints.name" : "Yardımsız",
+"achievement.no_hints.description" : "Hiç ipucu kullanmadan bir Sudoku tamamla",
+"achievement.all_difficulties.name" : "Tam Set",
+"achievement.all_difficulties.description" : "Her zorluk seviyesinden en az bir Sudoku tamamla",
+"achievement.daily_5.name" : "Günlük Hedef",
+"achievement.daily_5.description" : "Bir günde 5 Sudoku tamamla",
+"achievement.night_owl.name" : "Gece Kuşu",
+"achievement.night_owl.description" : "Gece saat 22:00 ile 06:00 arasında 10 Sudoku tamamla",
+"achievement.total_100.name" : "Yüzler Kulübü",
+"achievement.total_100.description" : "Toplam 100 Sudoku tamamla" 

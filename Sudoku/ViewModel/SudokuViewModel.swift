@@ -35,6 +35,11 @@ class SudokuViewModel: ObservableObject {
     // Yükleme durumu
     @Published var isLoading: Bool = false
     
+    // Başarım yöneticisine erişim
+    private let achievementManager = AchievementManager.shared
+    // Veritabanı kontrolcüsüne erişim
+    private let persistenceController = PersistenceController.shared
+    
     // Performans iyileştirmesi: Pencil mark'ları hızlı erişim için önbelleğe al
     private var pencilMarkCache: [String: Set<Int>] = [:]
     private var validValuesCache: [String: Set<Int>] = [:]
@@ -518,6 +523,9 @@ class SudokuViewModel: ObservableObject {
         
         // Eğer tüm hücreler doluysa ve doğruysa
         if isComplete && !hasErrors {
+            // Oyun durumunu completed olarak ayarla - bu sayede tekrar çağrılmayı önleriz
+            gameState = .completed
+            
             print("📱 Oyun tamamlandı! handleGameCompletion() çağrılıyor...")
             // handleGameCompletion fonksiyonunu çağır - tüm tamamlanma işlemleri burada
             handleGameCompletion()
@@ -1389,48 +1397,51 @@ class SudokuViewModel: ObservableObject {
     
     // Oyun tamamlandığında çağrılır
     private func handleGameCompletion() {
-        guard gameState == .playing else { 
-            print("⚠️ Oyun zaten tamamlanmış veya farklı bir durumda, işlem yapılmadı.")
-            return 
+        // Oyunu zaten tamamlanmış olarak işaretledik, burada tekrar ayarlamıyoruz
+        print("Game completed!")
+        
+        // Timer'ı durdur
+        if timer != nil && timer!.isValid {
+            timer!.invalidate()
+            timer = nil
         }
         
-        print("🎮 Oyun başarıyla tamamlandı! İstatistikler: Hamle: \(moveCount), Hata: \(errorCount), İpucu: \(3 - remainingHints), Süre: \(Int(elapsedTime)) saniye")
+        // Oyunu tamamla ve başarımları güncelle
+        completeGame()
         
-        // Oyun durumunu güncelle ve zamanlayıcıyı durdur
-        gameState = .completed
-        stopTimer()
+        // completeGame() içinde zaten skor kaydediliyor, burada tekrar kaydetmeye gerek yok
+        // saveHighScore() 
         
-        // Yüksek skoru kaydet - sonucu _ ile무시하여uyarıyı giderelim
-        let score = calculateScore()
-        _ = PersistenceController.shared.saveHighScore(
-            difficulty: board.difficulty.rawValue,
-            elapsedTime: elapsedTime,
-            errorCount: errorCount,
-            hintCount: 3 - remainingHints,
-            score: score
-        )
-        
-        // Oyunu tamamlanmış olarak işaretle ve kayıtlı oyunlardan kaldır
+        // Başarımları göster
+        AchievementNotificationManager.shared.showAllUnlockedAchievements()
+                
+        // Oyun tamamlandığında kayıtlı oyunu sil ve tamamlanmış olarak kaydet
         if let gameID = currentGameID {
-            // Yeni fonksiyonu kullan - hem kaydeder hem siler
-            PersistenceController.shared.saveCompletedGame(
+            // Önce Firebase'den doğrudan silmeyi deneyelim
+            PersistenceController.shared.deleteGameFromFirestore(gameID: gameID)
+            
+            achievementManager.handleCompletedGame(
                 gameID: gameID,
-                board: board.getBoardArray(),
-                difficulty: board.difficulty.rawValue,
-                elapsedTime: elapsedTime,
+                difficulty: board.difficulty,
+                time: elapsedTime,
                 errorCount: errorCount,
                 hintCount: 3 - remainingHints
             )
             
-            // currentGameID'yi sıfırla (yeni oyun başlayabilsin)
-            currentGameID = nil
+            // Oyun hem FireStore'a kaydedildi hem de Core Data'dan silindi
+            print("✅ Oyun tamamlandı olarak işaretlendi!")
+            
+            // Kaydedilmiş oyunları yeniden yükle - daha uzun bir gecikme
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+                print("🔄 SavedGames yenileme bildirimi gönderildi")
+            }
         }
         
-        // Tamamlanma sesini çal
-        SoundManager.shared.playGameCompletedSound()
-        
-        // Tebrik mesajını göster
-        showCompletionAlert = true
+        // Firebase işlemlerine devam et
+        if Auth.auth().currentUser?.uid != nil {
+            // ... existing code ...
+        }
     }
     
     // Performans skorunu hesapla
@@ -2509,6 +2520,7 @@ class SudokuViewModel: ObservableObject {
             moveCount: moveCount
         )
         
+        print("🏆 AchievementManager.processGameCompletion() çağrılıyor...")
         // Başarıları güncelle
         AchievementManager.shared.processGameCompletion(
             difficulty: board.difficulty,
@@ -2516,6 +2528,7 @@ class SudokuViewModel: ObservableObject {
             errorCount: errorCount,
             hintCount: hintUsed
         )
+        print("🏆 AchievementManager.processGameCompletion() tamamlandı!")
         
         // Oyun tamamlandığında bildirim gönder (gerekirse kullanılabilir)
         NotificationCenter.default.post(name: NSNotification.Name("GameCompleted"), object: nil, userInfo: [
@@ -2675,6 +2688,22 @@ class SudokuViewModel: ObservableObject {
         
         // Skor 0'ın altına düşmesin
         return max(finalScore, 0)
+    }
+    
+    // Yüksek skoru kaydetme fonksiyonu
+    func saveHighScore() {
+        let score = calculatePerformanceScore()
+        
+        // Skor kaydetme
+        ScoreManager.shared.saveScore(
+            difficulty: board.difficulty,
+            timeElapsed: elapsedTime,
+            errorCount: errorCount,
+            hintCount: 3 - remainingHints,
+            moveCount: moveCount
+        )
+        
+        print("Yüksek skor kaydedildi: \(score) puan")
     }
 } 
 

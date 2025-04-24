@@ -214,50 +214,17 @@ struct LoginView: View {
             return
         }
         
-        // Email'i belirle (kullanıcı adı veya doğrudan email olabilir)
-        let email = PersistenceController.shared.getEmailFromUsername(username)
+        // Email veya kullanıcı adını işle
+        let emailToUse = PersistenceController.shared.getEmailFromUsername(username)
         
-        // Önce Firebase'de giriş dene
-        PersistenceController.shared.loginUserWithFirebase(email: email, password: password) { user, error in
-            DispatchQueue.main.async {
-                // Firebase girişi başarısız olursa, yerel giriş dene
-                if user == nil && error == nil {
-                    // Firebase'de giriş başarısız olduğu için yerel girişi deneyelim
-                    self.loginUserLocally()
-                } else if let user = user {
-                    // Firebase giriş başarılı
-                    self.isLoading = false
-                    self.currentUser = user
-                    self.isPresented = false
-                    
-                    // Kullanıcı giriş bildirimini gönder
-                    NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
-                    
-                    // Başarılı giriş titreşimi
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                    impactFeedback.prepare()
-                    impactFeedback.impactOccurred()
-                } else if let error = error {
-                    // Firebase giriş hatası
-                    self.isLoading = false
-                    self.errorMessage = "Giriş hatası: \(error.localizedDescription)"
-                    self.showError = true
-                }
-            }
-        }
-    }
-    
-    // Yerel veritabanında giriş deneyin
-    private func loginUserLocally() {
-        // Giriş işlemi
+        // Önce kullanıcı adıyla yerel oturumu deneyelim
         DispatchQueue.global().async {
-            let result = PersistenceController.shared.loginUser(username: self.username, password: self.password)
+            let localResult = PersistenceController.shared.loginUser(username: self.username, password: self.password)
             
-            DispatchQueue.main.async {
-                self.isLoading = false
-                
-                if let user = result {
-                    // Başarılı giriş
+            if let user = localResult {
+                // Yerel giriş başarılı
+                DispatchQueue.main.async {
+                    self.isLoading = false
                     self.currentUser = user
                     self.isPresented = false
                     
@@ -268,10 +235,39 @@ struct LoginView: View {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                     impactFeedback.prepare()
                     impactFeedback.impactOccurred()
-                } else {
-                    // Başarısız giriş
-                    self.errorMessage = "Kullanıcı adı veya şifre hatalı."
-                    self.showError = true
+                }
+                return
+            }
+            
+            // Yerel giriş başarısız, Firebase ile devam edelim
+            DispatchQueue.main.async {
+                // Önce Firebase'de giriş dene
+                PersistenceController.shared.loginUserWithFirebase(email: emailToUse, password: self.password) { user, error in
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        
+                        if let user = user {
+                            // Firebase giriş başarılı
+                            self.currentUser = user
+                            self.isPresented = false
+                            
+                            // Kullanıcı giriş bildirimini gönder
+                            NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
+                            
+                            // Başarılı giriş titreşimi
+                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                            impactFeedback.prepare()
+                            impactFeedback.impactOccurred()
+                        } else {
+                            // Başarısız giriş
+                            if let error = error {
+                                self.errorMessage = "Giriş hatası: \(error.localizedDescription)"
+                            } else {
+                                self.errorMessage = "Kullanıcı adı veya şifre hatalı."
+                            }
+                            self.showError = true
+                        }
+                    }
                 }
             }
         }
