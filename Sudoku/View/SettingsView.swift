@@ -1251,32 +1251,54 @@ struct SettingsView: View {
         print("🌐 Dil değiştirildi: \(previousLanguageName) -> \(newValue.name)")
     }
     
-    // Profil ve hesap ayarları görünümü
+    // Profil resmi için eklenen URL'den yükleme fonksiyonu
+    private func loadImageFromURL(urlString: String, completion: @escaping (UIImage?) -> Void) {
+        guard let url = URL(string: urlString) else { 
+            completion(nil)
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("Profil resmi yüklenemedi: \(error)")
+                completion(nil)
+                return
+            }
+            
+            if let data = data, let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    completion(image)
+                }
+            } else {
+                completion(nil)
+            }
+        }
+        
+        task.resume()
+    }
+    
     private func profileSettingsView() -> some View {
         VStack(spacing: 20) {
             // Kullanıcı profil kartı - Büyük ve göze çarpan tasarım
             HStack {
                 // Profil resmi
                 ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 80, height: 80)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
-                    
-                    // Kullanıcı giriş durumuna göre farklı sembol göster
                     if let user = PersistenceController.shared.getCurrentUser() {
-                        VStack {
-                            Text(String(user.name?.prefix(1) ?? "U"))
-                                .font(.system(size: 34, weight: .bold))
-                                .foregroundColor(.white)
-                        }
+                        // Profil resmi görüntüleme
+                        ProfileImageView(user: user)
+                            .frame(width: 80, height: 80)
                     } else {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 80, height: 80)
+                            .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
+                            
                         Image(systemName: "person.fill")
                             .font(.system(size: 34))
                             .foregroundColor(.white)
@@ -1998,5 +2020,94 @@ struct LanguageCell: View {
         .disabled(isDisabled)
         .buttonStyle(PlainButtonStyle())
         .opacity(isDisabled ? 0.6 : 1.0)
+    }
+}
+
+// Profil resmi görüntüleme bileşeni
+struct ProfileImageView: View {
+    let user: User
+    @State private var profileImage: UIImage?
+    @State private var isLoading = false
+    
+    var body: some View {
+        ZStack {
+            // Arka plan daire
+            Circle()
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
+            
+            if isLoading {
+                // Yükleniyor göstergesi
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+            } else if let image = profileImage {
+                // Profil resmi
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+            } else {
+                // Varsayılan avatar - baş harfler
+                Text(String(user.name?.prefix(1) ?? "U"))
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundColor(.white)
+            }
+        }
+        .onAppear {
+            loadProfileImage()
+        }
+    }
+    
+    private func loadProfileImage() {
+        // Önce yerel depolamada kontrol et
+        if let imageData = user.profileImage, let image = UIImage(data: imageData) {
+            profileImage = image
+            return
+        }
+        
+        // Yerel yoksa URL'den yüklemeyi dene
+        if let photoURL = user.photoURL {
+            isLoading = true
+            
+            guard let url = URL(string: photoURL) else {
+                isLoading = false
+                return
+            }
+            
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                DispatchQueue.main.async {
+                    isLoading = false
+                    
+                    if let data = data, let image = UIImage(data: data) {
+                        profileImage = image
+                        
+                        // Resmi yerel olarak da kaydet
+                        user.profileImage = data
+                        do {
+                            try PersistenceController.shared.container.viewContext.save()
+                        } catch {
+                            print("Profil resmi yerel olarak kaydedilemedi: \(error)")
+                        }
+                    }
+                }
+            }.resume()
+        }
     }
 }

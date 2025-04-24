@@ -6,6 +6,7 @@ target 'Sudoku' do
   
   # Basitleştirilmiş Firebase pod'ları - sadece Auth
   pod 'Firebase/Auth'
+  pod 'Firebase/Storage'
   # Analytics'i kaldırdık: pod 'Firebase/Analytics'
   
   # iOS deployment target uyarılarını düzelt

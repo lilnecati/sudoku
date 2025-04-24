@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import PhotosUI // Fotoğraf seçimi için eklendi
 
 struct ProfileEditView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -12,6 +13,12 @@ struct ProfileEditView: View {
     @State private var newPassword: String = ""
     @State private var confirmPassword: String = ""
     
+    // Yeni eklenen state değişkenleri
+    @State private var selectedImage: UIImage?
+    @State private var isShowingImagePicker = false
+    @State private var isUploadingImage = false
+    @State private var uploadProgress: Double = 0.0
+    
     @State private var isLoading = false
     @State private var showAlert = false
     @State private var alertTitle = ""
@@ -19,6 +26,10 @@ struct ProfileEditView: View {
     @State private var showDeleteConfirmation = false
     
     @State private var showPasswordChange = false
+    
+    // Cloudinary API bilgileri
+    private let cloudName = "dn5ciuoia" // Cloudinary hesabınızdan alındı
+    private let uploadPreset = "sudoku_app" // İmzasız yüklemeler için özel preset
     
     // Mevcut kullanıcı bilgilerini yükle
     private var currentUser: User? {
@@ -35,6 +46,17 @@ struct ProfileEditView: View {
                 VStack(spacing: 25) {
                     // Profil Başlığı
                     profileHeader
+                    
+                    // Yükleme göstergesi
+                    if isUploadingImage {
+                        VStack {
+                            ProgressView("Fotoğraf yükleniyor...")
+                            Text("\(Int(uploadProgress * 100))%")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                    }
                     
                     // Profil düzenleme formu
                     profileForm
@@ -58,14 +80,22 @@ struct ProfileEditView: View {
                 Button("Kaydet") {
                     saveProfile()
                 }
-                .disabled(isLoading)
+                .disabled(isLoading || isUploadingImage)
             }
         }
         .alert(isPresented: $showAlert) {
             Alert(
                 title: Text(alertTitle),
                 message: Text(alertMessage),
-                dismissButton: .default(Text("Tamam"))
+                dismissButton: .default(Text("Tamam")) {
+                    // Alert kapatıldığında yapılacak işlemler
+                    if alertTitle == "Başarılı" {
+                        // Başarı mesajı gösterildikten sonra bildirimi düzgün kapat
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            // İşlemler tamamlandıktan sonra gerekirse ek işlemler yapılabilir
+                        }
+                    }
+                }
             )
         }
         .actionSheet(isPresented: $showDeleteConfirmation) {
@@ -83,6 +113,14 @@ struct ProfileEditView: View {
                 ]
             )
         }
+        .sheet(isPresented: $isShowingImagePicker) {
+            ImagePicker(selectedImage: $selectedImage, didSelectImage: { image in
+                if let image = image {
+                    // Resim seçildiğinde Cloudinary'ye yükle
+                    uploadImageToCloudinary(image)
+                }
+            })
+        }
     }
     
     // Profil başlık kısmı
@@ -90,13 +128,45 @@ struct ProfileEditView: View {
         VStack(spacing: 20) {
             // Profil resmi
             ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.15))
-                    .frame(width: 100, height: 100)
+                if let selectedImage = selectedImage {
+                    Image(uiImage: selectedImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 100, height: 100)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.blue, lineWidth: 2))
+                } else {
+                    Circle()
+                        .fill(Color.blue.opacity(0.15))
+                        .frame(width: 100, height: 100)
+                    
+                    Text(String(name.prefix(1)))
+                        .font(.system(size: 48, weight: .bold))
+                        .foregroundColor(.blue)
+                }
                 
-                Text(String(name.prefix(1)))
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(.blue)
+                // Fotoğraf değiştirme butonu
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            isShowingImagePicker = true
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 32, height: 32)
+                                
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .disabled(isUploadingImage)
+                    }
+                }
+                .frame(width: 100, height: 100)
             }
             
             // Kullanıcı adı
@@ -304,6 +374,14 @@ struct ProfileEditView: View {
         name = user.name ?? ""
         email = user.email ?? ""
         username = user.username ?? ""
+        
+        // Profil resmi varsa yükle
+        if let imageData = user.profileImage, let image = UIImage(data: imageData) {
+            selectedImage = image
+        } else if let photoURL = user.photoURL {
+            // Cloudinary'den profil resmini yükle
+            loadImageFromURL(urlString: photoURL)
+        }
     }
     
     // Şifre değiştirme geçerlilik kontrolü
@@ -343,9 +421,14 @@ struct ProfileEditView: View {
         
         let context = PersistenceController.shared.container.viewContext
         
-        // Kaydet
+        // Temel bilgileri kaydet
         user.name = name
         user.email = email
+        
+        // Profil resmi varsa kaydet
+        if let selectedImage = selectedImage, let imageData = selectedImage.jpegData(compressionQuality: 0.7) {
+            user.profileImage = imageData
+        }
         
         do {
             try context.save()
@@ -423,6 +506,290 @@ struct ProfileEditView: View {
             alertMessage = "Şifre güncellenemedi: \(error.localizedDescription)"
             showAlert = true
             isLoading = false
+        }
+    }
+    
+    // URL'den resim yükleme
+    private func loadImageFromURL(urlString: String) {
+        guard let url = URL(string: urlString) else { 
+            print("⚠️ Geçersiz URL: \(urlString)")
+            return 
+        }
+        
+        print("🔍 Cloudinary URL'den resim yükleniyor: \(urlString)")
+        
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("❌ Profil resmi yüklenemedi: \(error)")
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                print("❌ Sunucu yanıtı hatalı: \(String(describing: response))")
+                return
+            }
+            
+            if let data = data, let image = UIImage(data: data) {
+                print("✅ URL'den resim başarıyla yüklendi")
+                DispatchQueue.main.async {
+                    self.selectedImage = image
+                    
+                    // Resmi yerel olarak da kaydet
+                    guard let user = self.currentUser else { return }
+                    
+                    user.profileImage = data
+                    do {
+                        try PersistenceController.shared.container.viewContext.save()
+                        print("✅ Resim yerel olarak kaydedildi")
+                    } catch {
+                        print("❌ Profil resmi yerel olarak kaydedilemedi: \(error)")
+                    }
+                }
+            } else {
+                print("❌ Resim verisi dönüştürülemedi")
+            }
+        }
+        
+        task.resume()
+    }
+    
+    // Cloudinary'ye resim yükleme
+    private func uploadImageToCloudinary(_ image: UIImage) {
+        guard let user = currentUser, let userId = user.id?.uuidString else {
+            alertTitle = "Hata"
+            alertMessage = "Kullanıcı bilgisi bulunamadı."
+            showAlert = true
+            return
+        }
+        
+        isUploadingImage = true
+        uploadProgress = 0.1 // Başladığını göstermek için
+        
+        // Resmi sıkıştır
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+            isUploadingImage = false
+            alertTitle = "Hata"
+            alertMessage = "Fotoğraf yüklenemedi. Lütfen tekrar deneyin."
+            showAlert = true
+            return
+        }
+        
+        // Önce yerel olarak kaydet
+        user.profileImage = imageData
+        do {
+            try PersistenceController.shared.container.viewContext.save()
+            print("✅ Resim yerel olarak kaydedildi")
+        } catch {
+            print("❌ Resim yerel olarak kaydedilemedi: \(error)")
+        }
+        
+        // Cloudinary URL'sini oluştur
+        let uploadURL = "https://api.cloudinary.com/v1_1/\(cloudName)/image/upload"
+        guard let url = URL(string: uploadURL) else {
+            isUploadingImage = false
+            print("❌ Geçersiz Cloudinary URL: \(uploadURL)")
+            alertTitle = "Hata"
+            alertMessage = "Cloudinary bağlantısı oluşturulamadı."
+            showAlert = true
+            return
+        }
+        
+        print("🚀 Cloudinary'ye yükleme başlatılıyor: \(uploadURL)")
+        print("👤 Kullanıcı: \(userId)")
+        print("🔑 Preset: \(uploadPreset)")
+        
+        // MultipartFormData oluştur
+        let boundary = UUID().uuidString
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        // Form data oluştur
+        var body = Data()
+        
+        // Upload preset ekle
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(uploadPreset)\r\n".data(using: .utf8)!)
+        
+        // Public ID ekle (kullanıcı ID'sini kullan)
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"public_id\"\r\n\r\n".data(using: .utf8)!)
+        body.append("profile_\(userId)\r\n".data(using: .utf8)!)
+        
+        // Resim dosyasını ekle
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"profile.jpg\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n".data(using: .utf8)!)
+        
+        // Sınırı kapat
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        // HTTP isteği oluştur
+        let task = URLSession.shared.uploadTask(with: request, from: body) { data, response, error in
+            DispatchQueue.main.async {
+                self.isUploadingImage = false
+                
+                if let error = error {
+                    print("❌ Cloudinary yükleme hatası: \(error.localizedDescription)")
+                    self.alertTitle = "Hata"
+                    self.alertMessage = "Fotoğraf yüklenemedi: \(error.localizedDescription)"
+                    self.showAlert = true
+                    return
+                }
+                
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("📡 Cloudinary yanıt kodu: \(httpResponse.statusCode)")
+                    
+                    // Yanıtın header'larını yazdır
+                    print("📋 Yanıt başlıkları:")
+                    for (key, value) in httpResponse.allHeaderFields {
+                        print("\(key): \(value)")
+                    }
+                    
+                    guard (200...299).contains(httpResponse.statusCode) else {
+                        print("❌ Başarısız yanıt kodu: \(httpResponse.statusCode)")
+                        self.alertTitle = "Hata"
+                        self.alertMessage = "Sunucu yanıtı hatalı: HTTP \(httpResponse.statusCode)"
+                        self.showAlert = true
+                        return
+                    }
+                }
+                
+                guard let data = data else {
+                    print("❌ Yanıt verisi boş")
+                    self.alertTitle = "Hata"
+                    self.alertMessage = "Yanıt verisi alınamadı"
+                    self.showAlert = true
+                    return
+                }
+                
+                // Yanıt verisini yazdır
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("📄 Cloudinary yanıtı: \(responseString)")
+                }
+                
+                // JSON yanıtını işle
+                do {
+                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        print("✅ JSON yanıtı alındı")
+                        
+                        if let secureUrl = json["secure_url"] as? String {
+                            print("🔗 Yüklenen resim URL: \(secureUrl)")
+                            
+                            // URL'yi kullanıcı bilgilerine kaydet
+                            let context = PersistenceController.shared.container.viewContext
+                            user.photoURL = secureUrl
+                            
+                            do {
+                                try context.save()
+                                print("✅ Resim URL'si CoreData'ya kaydedildi")
+                                // Uyarı mesajını göster ve işlemi tamamla
+                                self.alertTitle = "Başarılı"
+                                self.alertMessage = "Profil fotoğrafınız başarıyla güncellendi."
+                                self.showAlert = true
+                            } catch {
+                                print("❌ CoreData kayıt hatası: \(error.localizedDescription)")
+                                self.alertTitle = "Hata"
+                                self.alertMessage = "Profil fotoğrafı bilgisi kaydedilemedi: \(error.localizedDescription)"
+                                self.showAlert = true
+                            }
+                        } else {
+                            print("❌ JSON'da secure_url alanı bulunamadı")
+                            if let error = json["error"] as? [String: Any] {
+                                print("❌ Cloudinary hata detayı: \(error)")
+                            }
+                            self.alertTitle = "Hata"
+                            self.alertMessage = "Resim URL'si alınamadı"
+                            self.showAlert = true
+                        }
+                    } else {
+                        print("❌ Yanıt JSON formatında değil")
+                        self.alertTitle = "Hata"
+                        self.alertMessage = "Resim URL'si alınamadı"
+                        self.showAlert = true
+                    }
+                } catch {
+                    print("❌ JSON ayrıştırma hatası: \(error.localizedDescription)")
+                    self.alertTitle = "Hata"
+                    self.alertMessage = "JSON işleme hatası: \(error.localizedDescription)"
+                    self.showAlert = true
+                }
+            }
+        }
+        
+        // İlerleme işlemi
+        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
+            if !isUploadingImage {
+                timer.invalidate()
+                return
+            }
+            
+            uploadProgress = min(0.9, uploadProgress + 0.1)
+        }
+        
+        // İsteği başlat
+        task.resume()
+    }
+}
+
+// Resim seçici yapı
+struct ImagePicker: UIViewControllerRepresentable {
+    @Binding var selectedImage: UIImage?
+    @Environment(\.presentationMode) private var presentationMode
+    
+    var didSelectImage: ((UIImage?) -> Void)?
+    
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var config = PHPickerConfiguration()
+        config.filter = .images
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        let parent: ImagePicker
+        
+        init(_ parent: ImagePicker) {
+            self.parent = parent
+        }
+        
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            parent.presentationMode.wrappedValue.dismiss()
+            
+            guard let provider = results.first?.itemProvider else { 
+                parent.didSelectImage?(nil)
+                return
+            }
+            
+            if provider.canLoadObject(ofClass: UIImage.self) {
+                provider.loadObject(ofClass: UIImage.self) { image, _ in
+                    DispatchQueue.main.async {
+                        let uiImage = image as? UIImage
+                        self.parent.selectedImage = uiImage
+                        self.parent.didSelectImage?(uiImage)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Data uzantısı (multipart form data için)
+extension Data {
+    mutating func append(_ string: String) {
+        if let data = string.data(using: .utf8) {
+            append(data)
         }
     }
 }
