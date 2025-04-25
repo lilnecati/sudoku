@@ -2194,20 +2194,15 @@ class PersistenceController {
         db.collection("savedGames")
             .whereField("userID", isEqualTo: userID)
             .whereField("isCompleted", isEqualTo: true)
-            .getDocuments { [weak self] snapshot, error in
-                // Eğer self nil ise veya hata varsa erken çık
-                if self == nil {
-                    completion(false)
-                    return 
-                }
-                
+            .getDocuments { snapshot, error in
+                // Eğer hata varsa erken çık
                 if let error = error {
                     print("❌ Firestore tamamlanmış oyun sorgulama hatası: \(error.localizedDescription)")
                     completion(false)
                     return
                 }
                 
-                guard let self = self, let documents = snapshot?.documents else {
+                guard let documents = snapshot?.documents else {
                     print("ℹ️ Firestore'da tamamlanmış oyun bulunamadı")
                     completion(true)  // Başarılı, ama oyun yok
                     return
@@ -2292,13 +2287,15 @@ class PersistenceController {
             return
         }
         
+        // Firestore referansını yerel bir değişkene kaydedelim
+        let firestore = db
         let group = DispatchGroup()
         var failedDeletions: [String] = []
         
         for documentID in documentIDs {
             group.enter()
             
-            db.collection("savedGames").document(documentID).getDocument { document, error in
+            firestore.collection("savedGames").document(documentID).getDocument { document, error in
                 defer { group.leave() }
                 
                 if let document = document, document.exists {
@@ -2310,7 +2307,26 @@ class PersistenceController {
             }
         }
         
-        // Weak self olmadan kullan, çünkü self gerçekten batch için gerekli
+        // self'i closure içinde kullanmadan ikinci try işlemini tanımlayalım
+        func retryDeletingGames(_ gamesIDs: [String], using firestoreDB: Firestore) {
+            print("🔄 \(gamesIDs.count) adet silinemeyen oyunu tekrar silmeyi deniyorum...")
+            
+            let batch = firestoreDB.batch()
+            for gameID in gamesIDs {
+                let gameRef = firestoreDB.collection("savedGames").document(gameID)
+                batch.deleteDocument(gameRef)
+            }
+            
+            batch.commit { error in
+                if let error = error {
+                    print("❌ İkinci silme denemesi başarısız: \(error.localizedDescription)")
+                } else {
+                    print("✅ İkinci silme denemesi başarılı!")
+                }
+            }
+        }
+        
+        // Hiç self kullanmadan işlemleri tamamlayalım
         group.notify(queue: .main) {
             if failedDeletions.isEmpty {
                 print("✅ Tüm tamamlanmış oyunlar başarıyla silindi!")
@@ -2319,21 +2335,7 @@ class PersistenceController {
                 
                 // Başarısız olanları tekrar silmeyi dene
                 if !failedDeletions.isEmpty {
-                    print("🔄 Silinemeyen oyunları tekrar silmeyi deniyorum...")
-                    
-                    let batch = self.db.batch()
-                    for documentID in failedDeletions {
-                        let gameRef = self.db.collection("savedGames").document(documentID)
-                        batch.deleteDocument(gameRef)
-                    }
-                    
-                    batch.commit { error in
-                        if let error = error {
-                            print("❌ İkinci silme denemesi başarısız: \(error.localizedDescription)")
-                        } else {
-                            print("✅ İkinci silme denemesi başarılı!")
-                        }
-                    }
+                    retryDeletingGames(failedDeletions, using: firestore)
                 }
             }
         }

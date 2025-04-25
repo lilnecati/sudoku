@@ -3,6 +3,7 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import FirebaseFirestore
+import CoreData
 
 class AchievementManager: ObservableObject {
     static let shared = AchievementManager()
@@ -17,6 +18,9 @@ class AchievementManager: ObservableObject {
     @Published var lastUnlockedAchievement: Achievement? = nil
     @Published var unlockedAchievements: [String: Bool] = [:]
     @Published private(set) var newlyUnlockedAchievements: [Achievement] = []
+    
+    // CoreData servis referansı
+    private let achievementCoreDataService = AchievementCoreDataService()
     
     private var db: Firestore {
         return Firestore.firestore()
@@ -63,8 +67,29 @@ class AchievementManager: ObservableObject {
     
     // Kullanıcı giriş yaptığında çağrılan fonksiyon
     @objc private func handleUserLoggedIn() {
-        print("👤 Kullanıcı oturum açtı - Başarımlar Firebase'den yükleniyor")
-        loadAchievementsFromFirebase()
+        print("👤 Kullanıcı oturum açtı - Başarımlar yükleniyor")
+        if let user = Auth.auth().currentUser {
+            // CoreData'dan önce başarımları yükle
+            let coreDataAchievements = achievementCoreDataService.loadAchievements(for: user.uid)
+            if !coreDataAchievements.isEmpty {
+                print("🗄️ CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
+                
+                // CoreData'daki verileri yerel başarımlara yükle
+                for coreDataAchievement in coreDataAchievements {
+                    if let index = achievements.firstIndex(where: { $0.id == coreDataAchievement.id }) {
+                        if !achievements[index].isCompleted && coreDataAchievement.isCompleted {
+                            achievements[index] = coreDataAchievement
+                        }
+                    }
+                }
+                
+                // Toplam puanları hesapla
+                calculateTotalPoints()
+            }
+            
+            // Firebase'den de başarımları yükle (en güncel versiyon olarak)
+            loadAchievementsFromFirebase()
+        }
     }
     
     // Yeni başarımları almak için metod (bildirimler için)
@@ -317,6 +342,11 @@ class AchievementManager: ObservableObject {
         // Firebase ile senkronize et
         syncWithFirebase()
         
+        // CoreData'ya kaydet
+        if let user = Auth.auth().currentUser {
+            achievementCoreDataService.saveAchievements(achievements, for: user.uid)
+        }
+        
         // UI'ın güncellenmesi için genel bir bildirim gönder
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: NSNotification.Name("AchievementsUpdated"), object: nil)
@@ -372,6 +402,11 @@ class AchievementManager: ObservableObject {
                     object: nil,
                     userInfo: ["achievement": achievements[index]]
                 )
+                
+                // CoreData'ya da kaydet
+                if let user = Auth.auth().currentUser {
+                    achievementCoreDataService.updateAchievement(achievements[index], for: user.uid)
+                }
             }
             
             // Değişiklikleri kaydet
@@ -946,113 +981,99 @@ class AchievementManager: ObservableObject {
         }
     }
     
-    // Firebase'den başarıları yükle
+    // Firebase'den başarımları yükle
     func loadAchievementsFromFirebase() {
-        guard let user = Auth.auth().currentUser else { 
-            print("⚠️ Başarımlar yüklenemiyor: Kullanıcı oturum açmamış")
-            return 
+        // Giriş yapmış kullanıcı kontrolü
+        guard let user = Auth.auth().currentUser else {
+            print("❌ Firebase başarımları yüklenemiyor - kullanıcı giriş yapmamış")
+            return
         }
         
-        print("📥 Firebase'den başarımlar yükleniyor...")
+        print("🔄 Firebase'den başarımlar yükleniyor...")
         
-        // Yeni kategori modelinden başarımları getir
-        let userAchievementsRef = db.collection("userAchievements").document(user.uid)
-        userAchievementsRef.getDocument { [weak self] (document, error) in
+        // Firestore'dan başarımları al
+        let userAchievementsRef = db.collection("achievements").document(user.uid)
+        
+        userAchievementsRef.getDocument { [weak self] document, error in
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Firebase başarımları ana belgesi alınamadı: \(error.localizedDescription)")
-                // Hata durumunda eski yapıdan yüklemeyi dene
-                self.loadAchievementsFromLegacyFirebase()
+                print("❌ Firebase başarım yükleme hatası: \(error.localizedDescription)")
                 return
             }
             
-            guard let document = document, document.exists, let data = document.data(),
-                  let categories = data["categories"] as? [String] else {
-                print("⚠️ Kategori bilgisi bulunamadı, eski yapıya bakılacak")
-                self.loadAchievementsFromLegacyFirebase()
-                return
-            }
-            
-            // Toplam puanları ana belgeden al
-            if let totalPoints = data["totalPoints"] as? Int {
-                self.totalPoints = totalPoints
-            }
-            
-            // Tüm kategorilerin verilerini topla
-            var allAchievements: [[String: Any]] = []
-            let dispatchGroup = DispatchGroup()
-            
-            for category in categories {
-                dispatchGroup.enter()
-                // Kategori adını Firestore için güvenli hale getir
-                let safeCategory = category.replacingOccurrences(of: " ", with: "_")
-                                         .replacingOccurrences(of: "/", with: "_")
-                                         .replacingOccurrences(of: ".", with: "_")
+            if let document = document, document.exists {
+                // Ana belge varsa kategorileri kontrol et
+                let categories = document.data()?["categories"] as? [String] ?? []
                 
-                userAchievementsRef.collection("categories").document(safeCategory).getDocument { (categoryDoc, error) in
-                    defer { dispatchGroup.leave() }
+                if categories.isEmpty {
+                    print("⚠️ Kategorileri yok veya boş - Firebase başarımları bulunamadı")
+                    return
+                }
+                
+                print("📊 Firebase'de \(categories.count) başarım kategorisi bulundu")
+                
+                var loadedFirebaseAchievements: [[String: Any]] = []
+                let categoriesGroup = DispatchGroup()
+                
+                // Her kategori için yükleme işlemi
+                for category in categories {
+                    categoriesGroup.enter()
                     
-                    if let error = error {
-                        print("❌ \(category) kategorisi alınamadı: \(error.localizedDescription)")
+                    userAchievementsRef.collection("categories").document(category).getDocument { categoryDoc, categoryError in
+                        if let categoryError = categoryError {
+                            print("❌ Kategori yükleme hatası: \(categoryError.localizedDescription)")
+                            categoriesGroup.leave()
+                            return
+                        }
+                        
+                        if let categoryDoc = categoryDoc, categoryDoc.exists,
+                           let achievements = categoryDoc.data()?["achievements"] as? [[String: Any]] {
+                            // Başarımları listeye ekle
+                            loadedFirebaseAchievements.append(contentsOf: achievements)
+                        }
+                        
+                        categoriesGroup.leave()
+                    }
+                }
+                
+                // Tüm kategoriler yüklendiğinde
+                categoriesGroup.notify(queue: .main) { [weak self] in
+                    guard let self = self else { return }
+                    
+                    if loadedFirebaseAchievements.isEmpty {
+                        print("⚠️ Firebase'den yüklenen başarımlar yok veya boş")
                         return
                     }
                     
-                    guard let categoryDoc = categoryDoc, categoryDoc.exists,
-                          let categoryData = categoryDoc.data(),
-                          let achievements = categoryData["achievements"] as? [[String: Any]] else {
-                        print("⚠️ \(category) kategorisinde başarım bulunamadı")
-                        return
-                    }
+                    // Firebase'den gelen verilerle başarımları güncelle
+                    self.updateAchievementsFromFirebase(loadedFirebaseAchievements)
+                    print("✅ Firebase'den \(loadedFirebaseAchievements.count) başarım yüklendi ve güncellendi")
                     
-                    allAchievements.append(contentsOf: achievements)
-                }
-            }
-            
-            dispatchGroup.notify(queue: .main) {
-                if !allAchievements.isEmpty {
-                    print("✅ Kategori modelinden toplam \(allAchievements.count) başarım yüklendi")
-                    self.updateAchievementsFromFirebase(allAchievements)
-                } else {
-                    print("⚠️ Kategori modelinde başarım bulunamadı, eski yapıya bakılacak")
-                    self.loadAchievementsFromLegacyFirebase()
-                }
-            }
-        }
-    }
-    
-    // Eski yapıdan başarımları yükle (geriye uyumluluk)
-    private func loadAchievementsFromLegacyFirebase() {
-        guard let user = Auth.auth().currentUser else { return }
-        
-        print("📥 Eski Firebase yapısından başarımlar yükleniyor...")
-        db.collection("users").document(user.uid).getDocument { [weak self] document, error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                print("❌ Firestore'dan başarılar alınamadı: \(error.localizedDescription)")
-                return
-            }
-            
-            if let document = document, document.exists, let data = document.data() {
-                if let achievementsData = data["achievements"] as? [[String: Any]] {
-                    print("✅ Eski Firebase yapısından \(achievementsData.count) başarım bulundu")
-                    // Firebase verisi varsa, yerel verileri güncelle
-                    self.updateAchievementsFromFirebase(achievementsData)
-                } else {
-                    print("⚠️ Firebase'de başarım verisi bulunamadı, yerel veriler yükleniyor")
-                    // Firebase verisi yoksa, mevcut yerel verileri gönder
-                    self.syncWithFirebase()
-                }
-                
-                // Toplam puanları Firebase'ten al
-                if let totalPoints = data["totalPoints"] as? Int {
-                    self.totalPoints = totalPoints
+                    // Başarımları CoreData'ya da kaydet
+                    self.achievementCoreDataService.saveAchievements(self.achievements, for: user.uid)
+                    print("💾 Başarımlar CoreData'ya kaydedildi")
                 }
             } else {
-                print("⚠️ Firebase'de kullanıcı belgesi bulunamadı, yerel veriler yükleniyor")
-                // Kullanıcı belgesi yoksa oluştur ve yerel verileri gönder
-                self.syncWithFirebase()
+                print("⚠️ Firebase'de başarım belgesi bulunamadı")
+                
+                // Başarımları CoreData'dan kontrole çalış
+                let coreDataAchievements = self.achievementCoreDataService.loadAchievements(for: user.uid)
+                if !coreDataAchievements.isEmpty {
+                    print("🗄️ CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
+                    
+                    // Yerel başarımlarla birleştir
+                    for coreDataAchievement in coreDataAchievements {
+                        if let index = self.achievements.firstIndex(where: { $0.id == coreDataAchievement.id }) {
+                            if !self.achievements[index].isCompleted && coreDataAchievement.isCompleted {
+                                self.achievements[index] = coreDataAchievement
+                            }
+                        }
+                    }
+                    
+                    // Toplam puanları güncelle
+                    self.calculateTotalPoints()
+                }
             }
         }
     }
@@ -1090,6 +1111,12 @@ class AchievementManager: ObservableObject {
         
         // Firebase'deki verileri sıfırla (eğer kullanıcı giriş yapmışsa)
         deleteAchievementsFromFirebase()
+        
+        // CoreData'daki verileri de sıfırla
+        if let user = Auth.auth().currentUser {
+            // Boş bir başarım listesi göndererek CoreData'dan silinmesini sağla
+            achievementCoreDataService.saveAchievements([], for: user.uid)
+        }
         
         // Uygulamaya bildir - yeniden yükleme gerekebilir
         DispatchQueue.main.async {
