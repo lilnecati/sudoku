@@ -61,10 +61,15 @@ struct SavedGamesView: View {
     
     // Oyunları filtreleyen fonksiyon
     private func filterGames() {
+        print("🔍 Filtreleme başladı: \(savedGames.count) oyun mevcut")
+        
         // Önce tamamlanmamış oyunları filtrele (isCompleted == false veya nil)
         let uncompleted = savedGames.filter { savedGame in
             // Önce oyun verilerine eriş
-            guard let boardStateData = savedGame.boardState else { return true }
+            guard let boardStateData = savedGame.boardState else { 
+                print("⚠️ Oyun verisi (boardState) bulunamadı: \(savedGame.id?.uuidString ?? "ID yok")")
+                return true 
+            }
             
             do {
                 // JSON veriyi ayrıştır
@@ -75,30 +80,30 @@ struct SavedGamesView: View {
                         print("ℹ️ Tamamlanmış oyun filtrelendi: \(savedGame.id?.uuidString ?? "ID yok")")
                         return false
                     }
+                    return true
+                } else {
+                    print("⚠️ JSON ayrıştırma başarılı fakat dictionary değil: \(savedGame.id?.uuidString ?? "ID yok")")
+                    return true
                 }
             } catch {
-                print("❌ JSON ayrıştırma hatası: \(error)")
+                print("❌ JSON ayrıştırma hatası: \(error), Oyun ID: \(savedGame.id?.uuidString ?? "ID yok")")
+                return true
             }
-            
-            // Hata durumunda veya isCompleted değeri yoksa göster
-            return true
         }
         
+        print("🔍 Tamamlanmamış oyun sayısı: \(uncompleted.count)")
+        
         // Ardından zorluk seviyesine göre filtrele
-        if selectedDifficulty == "Tümü" {
-            #if DEBUG
-            // Sadece debug modunda print
+        if selectedDifficulty == "Tümü" || selectedDifficulty == "All" || selectedDifficulty == "Tous" {
             print("🔍 Tüm zorluk seviyeleri gösteriliyor. Toplam oyun sayısı: \(uncompleted.count)")
-            #endif
             filteredGames = Array(uncompleted)
         } else {
             let filtered = uncompleted.filter { $0.difficulty == selectedDifficulty }
-            #if DEBUG
-            // Sadece debug modunda print
             print("🔍 '\(selectedDifficulty)' zorluk seviyesine göre filtreleniyor. Oyun sayısı: \(filtered.count)")
-            #endif
             filteredGames = filtered
         }
+        
+        print("🔄 UI güncellendi: \(filteredGames.count) oyun gösteriliyor")
     }
     
     // Boş durum görünümü
@@ -275,7 +280,20 @@ struct SavedGamesView: View {
                 // filterGames() savedGames didSet içinde otomatik çağrılacak
             }
         }
-        // Bildirim yaklaşımı kullandığımız için burada bir şey yapmaya gerek yok
+        // Kullanıcı giriş yaptığında senkronizasyon yap
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserLoggedIn"))) { _ in
+            print("👤 Kullanıcı giriş yaptı - Kayıtlı oyunları senkronize ediliyor")
+            if Auth.auth().currentUser != nil {
+                // 1 saniye gecikme ile senkronizasyonu çalıştır (giriş işlemi tamamen tamamlansın diye)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    PersistenceController.shared.syncSavedGamesFromFirestore { success in
+                        if success {
+                            print("✅ Giriş sonrası Firebase senkronizasyonu başarılı")
+                        }
+                    }
+                }
+            }
+        }
         .alert(isPresented: $showingDeleteAlert) {
             Alert(
                 title: Text("Oyunu Sil"),
@@ -754,27 +772,25 @@ struct SavedGamesView: View {
     
     // Manuel olarak kayıtlı oyunları yükleme fonksiyonu
     private func loadSavedGames() {
-        // PersistenceController üzerinden oyunları yükle
-        let allGames = PersistenceController.shared.loadSavedGames()
-        
-        // Tamamlanmamış oyunları filtrele
-        let uncompletelGames = allGames.filter { game in
-            // Firebase'den isCompleted değerini kontrol et
-            if game.id != nil {
-                // Async olarak çalıştığı için burada filtreleme yapamıyoruz
-                // Bu nedenle filtrelemeyi filterGames() içinde yapacağız
+        DispatchQueue.main.async {
+            let fetchedGames = PersistenceController.shared.getAllSavedGames()
+            // Tarih sırasına göre sıralayalım
+            let sortedGames = fetchedGames.sorted { 
+                let date1 = $0.dateCreated ?? Date.distantPast
+                let date2 = $1.dateCreated ?? Date.distantPast
+                return date1 > date2
             }
-            return true
+            
+            print("📊 Oyun yükleme: \(sortedGames.count) oyun bulundu")
+            
+            // Log oyun ID'lerini
+            for (index, game) in sortedGames.enumerated() {
+                print("🎮 Oyun \(index+1): ID = \(game.id?.uuidString ?? "ID yok"), difficulty = \(game.difficulty ?? "Bilinmeyen")")
+            }
+            
+            // UI güncellemesi
+            self.savedGames = sortedGames
+            self.filterGames()
         }
-        
-        // Tarihe göre sırala (en son kaydedilenler önce)
-        let sortedGames = uncompletelGames.sorted {
-            let date1 = $0.dateCreated ?? Date.distantPast
-            let date2 = $1.dateCreated ?? Date.distantPast
-            return date1 > date2
-        }
-        
-        // State'i güncelle (didSet üzerinden filterGames() çağrılacak)
-        savedGames = sortedGames
     }
 }

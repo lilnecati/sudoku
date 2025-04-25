@@ -390,9 +390,6 @@ class PersistenceController {
             let existingGames = try context.fetch(fetchRequest)
             print("📊 Senkronizasyon öncesi yerel veritabanında \(existingGames.count) oyun var")
             
-            // Mevcut oyunların ID'lerini bir dictionary'de saklayarak silinen oyunları takip edelim
-            var existingGameIDs: [String: Bool] = [:]
-            
             // Silinen oyunları izlemek için son 24 saat içinde silinen ID'leri kontrol et
             let deletedGamesKey = "recentlyDeletedGameIDs"
             var recentlyDeletedIDs: [String] = UserDefaults.standard.stringArray(forKey: deletedGamesKey) ?? []
@@ -403,35 +400,28 @@ class PersistenceController {
             
             // Silinen ID'lerin zaman damgalarını al
             let deletedTimestampsKey = "deletedGameTimestamps"
-            var deletedTimestamps = UserDefaults.standard.dictionary(forKey: deletedTimestampsKey) as? [String: Double] ?? [:]
+            let deletedTimestamps = UserDefaults.standard.dictionary(forKey: deletedTimestampsKey) as? [String: Double] ?? [:]
             
             // Eski kayıtları temizle (24 saatten eski)
-            for (id, timestamp) in deletedTimestamps {
-                if currentTimestamp - timestamp > oneDayInSeconds {
-                    deletedTimestamps.removeValue(forKey: id)
-                    if let index = recentlyDeletedIDs.firstIndex(of: id) {
-                        recentlyDeletedIDs.remove(at: index)
-                    }
+            var updatedDeletedIDs: [String] = []
+            var updatedDeletedTimestamps: [String: Double] = [:]
+            
+            for id in recentlyDeletedIDs {
+                if let timestamp = deletedTimestamps[id],
+                   currentTimestamp - timestamp < oneDayInSeconds {
+                    // Hala geçerli (24 saat geçmemiş)
+                    updatedDeletedIDs.append(id)
+                    updatedDeletedTimestamps[id] = timestamp
                 }
             }
             
-            // Değişiklikleri kaydet
-            UserDefaults.standard.set(recentlyDeletedIDs, forKey: deletedGamesKey)
-            UserDefaults.standard.set(deletedTimestamps, forKey: deletedTimestampsKey)
+            // Güncellenmiş listeleri sakla
+            UserDefaults.standard.set(updatedDeletedIDs, forKey: deletedGamesKey)
+            UserDefaults.standard.set(updatedDeletedTimestamps, forKey: deletedTimestampsKey)
             
-            print("Yeni format tespit edildi")
+            // Mevcut silinen ID'lerin son halini güncelle
+            recentlyDeletedIDs = updatedDeletedIDs
             
-            // Tüm mevcut oyunların ID'lerini loglayalım ve dictionary'e ekleyelim
-            for (index, game) in existingGames.enumerated() {
-                if let id = game.value(forKey: "id") as? UUID {
-                    let idString = id.uuidString
-                    existingGameIDs[idString] = true
-                    print("   🎮 Yerel oyun \(index+1): ID = \(idString), difficulty = \(game.difficulty ?? "nil")")
-                } else {
-                    print("   ⚠️ Yerel oyun \(index+1): ID eksik")
-                }
-            }
-        
             // Kullanıcının kayıtlı oyunlarını getir
             db.collection("savedGames")
                 .whereField("userID", isEqualTo: userID)
@@ -452,6 +442,12 @@ class PersistenceController {
                     
                     print("📊 Firestore'dan \(documents.count) oyun getirildi")
                     
+                    var newOrUpdatedGames = 0
+                    
+                    // Her belge için veri formatını kontrol edelim
+                    let hasNewDataFormat = self.checkNewDataFormat(documents: documents)
+                    print("🔍 Veri formatı kontrolü: \(hasNewDataFormat ? "Yeni format tespit edildi" : "Eski format tespit edildi")")
+                    
                     // Firestore'dan gelen oyunları detaylı loglayalım
                     for (index, document) in documents.enumerated() {
                         let data = document.data()
@@ -462,75 +458,151 @@ class PersistenceController {
                     
                     // Her oyunu CoreData'ya kaydet veya güncelle
                     for document in documents {
+                        let documentID = document.documentID
                         let data = document.data()
-                        let gameIDString = document.documentID
                         
-                        // Eğer bu ID son 24 saatte silindi olarak işaretlendiyse, senkronize etme
-                        if recentlyDeletedIDs.contains(gameIDString) {
-                            print("⏭️ ID: \(gameIDString) olan oyun son 24 saat içinde silinmiş, senkronize edilmiyor.")
+                        // Eğer bu ID yerel olarak silinmişse, senkronize etme
+                        if recentlyDeletedIDs.contains(documentID.uppercased()) || recentlyDeletedIDs.contains(documentID.lowercased()) {
+                            print("⏭️ ID: \(documentID) olan oyun yakın zamanda silinmiş. Senkronize edilmiyor.")
                             continue
                         }
                         
-                        // Eğer bu ID yerel veritabanında yoksa, muhtemelen silinmiştir
-                        // Bu durumda senkronize etmiyoruz
-                        if existingGameIDs[gameIDString] == nil {
-                            print("⏭️ ID: \(gameIDString) olan oyun yerel veritabanında bulunmadı, muhtemelen silinmiş. Senkronize edilmiyor.")
+                        // Oyunu yerel veritabanında bulmaya çalış - önce UUID'yi standardize edelim
+                        let standardizedID = UUID(uuidString: documentID) ?? UUID(uuidString: documentID.uppercased()) ?? UUID(uuidString: documentID.lowercased())
+                        
+                        if standardizedID == nil {
+                            print("⚠️ Geçersiz UUID formatı: \(documentID). Bu oyun atlanıyor.")
                             continue
                         }
                         
-                        guard let gameID = UUID(uuidString: gameIDString),
-                              let difficulty = data["difficulty"] as? String,
-                              let elapsedTime = data["elapsedTime"] as? TimeInterval,
-                              let flatBoard = data["board"] as? [Int],
-                              let size = data["size"] as? Int else {
-                            continue
-                        }
-                        
-                        // 1D diziyi 2D diziye dönüştür
-                        var board: [[Int]] = []
-                        for i in stride(from: 0, to: flatBoard.count, by: size) {
-                            let row = Array(flatBoard[i..<min(i + size, flatBoard.count)])
-                            board.append(row)
-                        }
-                        
-                        // CoreData'da oyunu ara veya yeni oluştur
                         let fetchRequest: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
-                        fetchRequest.predicate = NSPredicate(format: "id == %@", gameID as CVarArg)
+                        fetchRequest.predicate = NSPredicate(format: "id == %@", standardizedID! as CVarArg)
                         
                         do {
-                            let existingGames = try context.fetch(fetchRequest)
+                            let matchingGames = try context.fetch(fetchRequest)
                             
-                            if let existingGame = existingGames.first {
+                            // Firestore'dan oyun verilerini çıkaralım
+                                let difficulty = data["difficulty"] as? String ?? "Kolay"
+                                let dateCreated = (data["dateCreated"] as? Timestamp)?.dateValue() ?? Date()
+                                let elapsedTime = data["elapsedTime"] as? Double ?? 0
+                            
+                            // Oyun yerel veritabanında varsa güncelle
+                            if let existingGame = matchingGames.first {
+                                // Güncellemeden önce değişiklik olup olmadığını kontrol edelim
+                                let hasChanged = existingGame.difficulty != difficulty ||
+                                                existingGame.elapsedTime != elapsedTime ||
+                                                self.hasBoardStateChanged(existingGame: existingGame, firestoreData: data, newFormat: hasNewDataFormat)
+                                
+                                if hasChanged {
+                                    print("🔄 Oyun ID: \(documentID) için değişiklik tespit edildi. Güncelleniyor...")
+                                
                                 // Oyunu güncelle
-                                let boardDict: [String: Any] = [
-                                    "board": board,
-                                    "difficulty": difficulty
-                                ]
-                                existingGame.boardState = try? JSONSerialization.data(withJSONObject: boardDict)
-                                existingGame.elapsedTime = elapsedTime
-                                existingGame.dateCreated = Date()
-                                print("✅ Oyun güncellendi: \(gameID)")
+                                    existingGame.difficulty = difficulty
+                                    existingGame.dateCreated = dateCreated
+                                    existingGame.elapsedTime = elapsedTime
+                                    
+                                    // Tahta durumunu güncelle
+                                    if hasNewDataFormat {
+                                        // Yeni format (boardState bir map)
+                                        if let boardData = data["boardState"] as? [String: Any],
+                                           let boardJSON = try? JSONSerialization.data(withJSONObject: boardData) {
+                                            existingGame.boardState = boardJSON
+                                    newOrUpdatedGames += 1
+                                }
                             } else {
-                                // Bu duruma ulaşılmamalı, çünkü existingGameIDs kontrolü yapıldı
-                                print("⚠️ Beklenmeyen durum: ID: \(gameID) olan oyun dictionary'de var ama fetchRequest bulamadı.")
+                                        // Eski format (flat board)
+                                        if let flatBoard = data["board"] as? [Int],
+                                           let size = data["size"] as? Int {
+                                            
+                                            // Düz diziyi matrise dönüştür
+                                            var board: [[Int]] = []
+                                            for i in stride(from: 0, to: flatBoard.count, by: size) {
+                                                let row = Array(flatBoard[i..<min(i + size, flatBoard.count)])
+                                                board.append(row)
+                                            }
+                                            
+                                            // Tahta verisini JSON olarak kaydet
+                                            let boardDict: [String: Any] = [
+                                                "board": board,
+                                                "difficulty": difficulty,
+                                                "isCompleted": data["isCompleted"] as? Bool ?? false
+                                            ]
+                                            
+                                            if let boardJSON = try? JSONSerialization.data(withJSONObject: boardDict) {
+                                                existingGame.boardState = boardJSON
+                                                newOrUpdatedGames += 1
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    print("ℹ️ Oyun ID: \(documentID) için değişiklik yok. Atlıyor.")
+                                }
+                            } else {
+                                // Yeni oyun oluştur
+                                print("➕ Yeni oyun oluşturuluyor: \(documentID)")
+                                
+                                let newGame = SavedGame(context: context)
+                                newGame.id = standardizedID
+                                newGame.difficulty = difficulty
+                                newGame.dateCreated = dateCreated
+                                newGame.elapsedTime = elapsedTime
+                                
+                                // Tahta durumunu ayarla
+                                if hasNewDataFormat {
+                                    // Yeni format (boardState bir map)
+                                if let boardData = data["boardState"] as? [String: Any],
+                                       let boardJSON = try? JSONSerialization.data(withJSONObject: boardData) {
+                                        newGame.boardState = boardJSON
+                                        newOrUpdatedGames += 1
+                                    }
+                                } else {
+                                    // Eski format (flat board)
+                                    if let flatBoard = data["board"] as? [Int],
+                                       let size = data["size"] as? Int {
+                                        
+                                        // Düz diziyi matrise dönüştür
+                                        var board: [[Int]] = []
+                                        for i in stride(from: 0, to: flatBoard.count, by: size) {
+                                            let row = Array(flatBoard[i..<min(i + size, flatBoard.count)])
+                                            board.append(row)
+                                        }
+                                        
+                                        // Tahta verisini JSON olarak kaydet
+                                        let boardDict: [String: Any] = [
+                                            "board": board,
+                                            "difficulty": difficulty,
+                                            "isCompleted": data["isCompleted"] as? Bool ?? false
+                                        ]
+                                        
+                                        if let boardJSON = try? JSONSerialization.data(withJSONObject: boardDict) {
+                                            newGame.boardState = boardJSON
+                                            newOrUpdatedGames += 1
+                                        }
+                                    }
+                                }
                             }
                         } catch {
-                            print("❌ CoreData oyun güncelleme hatası: \(error.localizedDescription)")
+                            print("❌ Oyun işleme hatası: \(error.localizedDescription)")
                         }
                     }
                     
                     // Değişiklikleri kaydet
                     do {
+                        if context.hasChanges {
                         try context.save()
                         
                         // Sadece değişiklik olduğunda bildirim gönder
-                        // Bu değişen bir şey varsa anlamına gelir
-                        if documents.count > 0 {
-                            print("✅ Oyunlar başarıyla senkronize edildi")
+                        if newOrUpdatedGames > 0 {
+                                print("✅ \(newOrUpdatedGames) oyun başarıyla senkronize edildi")
                             // Core Data'nın yenilenmesi için bildirim gönder
                             DispatchQueue.main.async {
                                 NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
                             }
+                        } else {
+                                print("ℹ️ Senkronizasyon tamamlandı, değişiklik yapılmadı.")
+                            }
+                        } else {
+                            print("ℹ️ Senkronizasyon tamamlandı, kaydedilecek değişiklik yok.")
                         }
                         
                         print("✅ Firebase senkronizasyonu tamamlandı")
@@ -544,6 +616,121 @@ class PersistenceController {
             print("⚠️ Yerel veritabanı sorgulanamadı: \(error)")
             completion(false)
         }
+    }
+    
+    // Yeni format tespiti için iyileştirilmiş yardımcı fonksiyon
+    private func checkNewDataFormat(documents: [QueryDocumentSnapshot]) -> Bool {
+        var newFormatCount = 0
+        var oldFormatCount = 0
+        
+        for document in documents {
+            let data = document.data()
+        
+        // Yeni formatta, boardState bir map olacak
+        if let _ = data["boardState"] as? [String: Any] {
+                newFormatCount += 1
+            }
+            // Eski formatta, board bir dizi olacak
+            else if let _ = data["board"] as? [Int] {
+                oldFormatCount += 1
+            }
+        }
+        
+        print("📊 Format Analizi: \(newFormatCount) yeni format, \(oldFormatCount) eski format oyun")
+        
+        // Çoğunluğa göre karar ver
+        return newFormatCount >= oldFormatCount
+    }
+    
+    // BoardState değişimini kontrol et
+    private func hasBoardStateChanged(existingGame: SavedGame, firestoreData: [String: Any], newFormat: Bool) -> Bool {
+        // Mevcut oyunun boardState'ini kontrol et
+        guard let existingBoardData = existingGame.boardState else {
+            return true // Eğer mevcut veri yoksa, değişiklik var sayalım
+        }
+        
+        if newFormat {
+            // Yeni format için kontrol
+            if let boardData = firestoreData["boardState"] as? [String: Any],
+               let newBoardJSON = try? JSONSerialization.data(withJSONObject: boardData) {
+                // Veri boyutu farklıysa, içerik değişmiştir
+                if existingBoardData.count != newBoardJSON.count {
+            return true
+        }
+                
+                // Daha detaylı karşılaştırma için verileri decode edip karşılaştıralım
+                do {
+                    let existingDict = try JSONSerialization.jsonObject(with: existingBoardData) as? [String: Any]
+                    let newDict = try JSONSerialization.jsonObject(with: newBoardJSON) as? [String: Any]
+                    
+                    // Board veya difficulty değişmişse
+                    if let existingBoard = existingDict?["board"] as? [[Int]],
+                       let newBoard = newDict?["board"] as? [[Int]],
+                       !self.areArraysEqual(existingBoard, newBoard) {
+                        return true
+                    }
+                    
+                    if let existingDifficulty = existingDict?["difficulty"] as? String,
+                       let newDifficulty = newDict?["difficulty"] as? String,
+                       existingDifficulty != newDifficulty {
+                        return true
+                    }
+                    
+                    // isCompleted durumu değişmişse
+                    if let existingCompleted = existingDict?["isCompleted"] as? Bool,
+                       let newCompleted = newDict?["isCompleted"] as? Bool,
+                       existingCompleted != newCompleted {
+                        return true
+                    }
+                } catch {
+                    print("⚠️ JSON karşılaştırma hatası: \(error)")
+                    return true // Hata durumunda güvenli tarafta kal
+                }
+            }
+        } else {
+            // Eski format için kontrol (board array)
+            if let flatBoard = firestoreData["board"] as? [Int],
+               let size = firestoreData["size"] as? Int {
+                
+                // Düz diziyi matrise dönüştür
+                var board: [[Int]] = []
+                for i in stride(from: 0, to: flatBoard.count, by: size) {
+                    let row = Array(flatBoard[i..<min(i + size, flatBoard.count)])
+                    board.append(row)
+                }
+                
+                // Mevcut veriyi karşılaştır
+                do {
+                    if let existingDict = try JSONSerialization.jsonObject(with: existingBoardData) as? [String: Any],
+                       let existingBoard = existingDict["board"] as? [[Int]] {
+                        
+                        if !self.areArraysEqual(existingBoard, board) {
+                            return true
+                        }
+                    }
+                } catch {
+                    print("⚠️ JSON karşılaştırma hatası: \(error)")
+                    return true
+                }
+            }
+        }
+        
+        return false
+    }
+    
+    // İki dizi karşılaştırma yardımcı fonksiyonu
+    private func areArraysEqual(_ array1: [[Int]], _ array2: [[Int]]) -> Bool {
+        guard array1.count == array2.count else { return false }
+        
+        for i in 0..<array1.count {
+            guard i < array2.count && array1[i].count == array2[i].count else { return false }
+            
+            for j in 0..<array1[i].count {
+                guard j < array2[i].count && array1[i][j] == array2[i][j] else { return false }
+            }
+        }
+        
+        return true
     }
     
     // Kayıtlı oyunları yükle - güncellendi
@@ -1012,6 +1199,69 @@ class PersistenceController {
     
     // MARK: - Firebase User Management
     
+    // Profil resimlerini senkronize etmek için yeni bir fonksiyon ekle
+    func syncProfileImage(completion: @escaping (Bool) -> Void = { _ in }) {
+        // Kullanıcı giriş yapmış mı kontrol et
+        guard let currentUser = getCurrentUser(), 
+              let firebaseUID = currentUser.firebaseUID else {
+            print("⚠️ Profil resmi senkronize edilemedi: Kullanıcı giriş yapmamış veya Firebase UID yok")
+            completion(false)
+            return
+        }
+        
+        print("🔄 Profil resmi Firebase'den senkronize ediliyor...")
+        
+        // Firebase'den kullanıcı bilgilerini al
+        db.collection("users").document(firebaseUID).getDocument { [weak self] (document, error) in
+            guard let self = self else { 
+                completion(false)
+                return 
+            }
+            
+            if let error = error {
+                print("❌ Firebase profil bilgisi getirme hatası: \(error.localizedDescription)")
+                completion(false)
+                return
+            }
+            
+            guard let document = document, document.exists,
+                  let userData = document.data() else {
+                print("⚠️ Firebase'de kullanıcı bilgisi bulunamadı")
+                completion(false)
+                return
+            }
+            
+            // Profil resmi URL'sini kontrol et
+            if let photoURL = userData["photoURL"] as? String {
+                // URL'leri karşılaştır
+                if photoURL != currentUser.photoURL {
+                    print("🔄 Firebase'de farklı profil resmi bulundu, güncelleniyor...")
+                    
+                    // Yerel URL'yi güncelle
+                    currentUser.photoURL = photoURL
+                    
+                    do {
+                        try self.container.viewContext.save()
+                        print("✅ Profil resmi URL'si yerel veritabanında güncellendi")
+                        
+                        // Profil resmini indir
+                        self.downloadProfileImage(forUser: currentUser, fromURL: photoURL)
+                        completion(true)
+                    } catch {
+                        print("❌ Profil resmi URL'si güncellenirken hata: \(error.localizedDescription)")
+                        completion(false)
+                    }
+                } else {
+                    print("✅ Profil resmi URL'si zaten güncel")
+                    completion(true)
+                }
+            } else {
+                print("ℹ️ Firebase'de profil resmi URL'si bulunamadı")
+                completion(false)
+            }
+        }
+    }
+    
     func registerUserWithFirebase(username: String, password: String, email: String, name: String, completion: @escaping (Bool, Error?) -> Void) {
         // Önce Firebase Auth'a kaydet
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
@@ -1104,51 +1354,121 @@ class PersistenceController {
                 return
             }
             
-            // Firestore'daki kullanıcı bilgilerini güncelle
-            self.db.collection("users").document(firebaseUser.uid).updateData([
-                "lastLoginDate": FieldValue.serverTimestamp(),
-                "isLoggedIn": true
-            ]) { error in
-                if let error = error {
-                    print("⚠️ Firestore giriş bilgisi güncellenemedi: \(error.localizedDescription)")
-                    // Hata olsa da devam et
+            // Firestore'daki kullanıcı bilgilerini al ve güncelle
+            self.db.collection("users").document(firebaseUser.uid).getDocument { [weak self] (document, error) in
+                guard let self = self else { return }
+                
+                var userProfile: [String: Any] = [
+                    "lastLoginDate": FieldValue.serverTimestamp(),
+                    "isLoggedIn": true
+                ]
+                
+                if let document = document, document.exists {
+                    // Kullanıcı zaten var, bilgileri alalım
+                    let userData = document.data() ?? [:]
+                    
+                    // Profil resmi URL'sini al
+                    if let photoURL = userData["photoURL"] as? String {
+                        print("📸 Kullanıcının Firestore'da kayıtlı profil resmi bulundu: \(photoURL)")
+                        userProfile["photoURL"] = photoURL
+                    } else if let photoURL = firebaseUser.photoURL?.absoluteString {
+                        print("📸 Kullanıcının Firebase Auth'ta kayıtlı profil resmi bulundu: \(photoURL)")
+                        userProfile["photoURL"] = photoURL
+                    }
+                    
+                    // Firestore'da profil bilgilerini güncelle
+                    self.db.collection("users").document(firebaseUser.uid).updateData(userProfile) { error in
+                        if let error = error {
+                            print("⚠️ Firestore giriş bilgisi güncellenemedi: \(error.localizedDescription)")
+                        } else {
+                            print("✅ Firestore giriş bilgisi güncellendi")
+                        }
+                    }
                 } else {
-                    print("✅ Firestore giriş bilgisi güncellendi")
+                    // Kullanıcı belki ilk kez Firebase ile giriş yapıyor, kayıt edelim
+                    if let photoURL = firebaseUser.photoURL?.absoluteString {
+                        userProfile["photoURL"] = photoURL
+                    }
+                    userProfile["email"] = email
+                    userProfile["name"] = firebaseUser.displayName ?? "Kullanıcı"
+                    userProfile["username"] = email.components(separatedBy: "@").first
+                    userProfile["registrationDate"] = FieldValue.serverTimestamp()
+                    
+                    self.db.collection("users").document(firebaseUser.uid).setData(userProfile) { error in
+                        if let error = error {
+                            print("⚠️ Firestore yeni kullanıcı kaydedilemedi: \(error.localizedDescription)")
+                        } else {
+                            print("✅ Kullanıcı Firestore'a kaydedildi")
+                        }
+                    }
                 }
-            }
-            
-            // Firebase UID'ye göre yerel kullanıcıyı bulma
-            let context = self.container.viewContext
-            let request: NSFetchRequest<User> = User.fetchRequest()
-            request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUser.uid)
-            
-            do {
-                let users = try context.fetch(request)
-                if let existingUser = users.first {
-                    // Kullanıcı yerel veritabanında var, giriş durumunu güncelle
-                    existingUser.isLoggedIn = true
-                    try context.save()
-                    print("✅ Firebase kullanıcısı yerel veritabanında güncellendi")
-                    completion(existingUser, nil)
-                    return
+                
+                // Firebase UID'ye göre yerel kullanıcıyı bulma
+                let context = self.container.viewContext
+                let request: NSFetchRequest<User> = User.fetchRequest()
+                request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUser.uid)
+                
+                do {
+                    let users = try context.fetch(request)
+                    if let existingUser = users.first {
+                        // Kullanıcı yerel veritabanında var, giriş durumunu ve profil resmi URL'sini güncelle
+                        existingUser.isLoggedIn = true
+                        
+                        // Profil resmi URL'sini güncelle
+                        if let photoURL = userProfile["photoURL"] as? String {
+                            existingUser.photoURL = photoURL
+                            print("✅ Profil resmi URL'si güncellendi: \(photoURL)")
+                            
+                            // Profil resmini hemen indirmeyi başlat
+                            self.downloadProfileImage(forUser: existingUser, fromURL: photoURL)
+                        }
+                        
+                        try context.save()
+                        print("✅ Firebase kullanıcısı yerel veritabanında güncellendi")
+                        
+                        // Giriş bildirimini gönder
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: NSNotification.Name("UserLoggedIn"), object: nil)
+                        }
+                        
+                        completion(existingUser, nil)
+                        return
+                    }
+                } catch {
+                    print("❌ Firebase UID ile kullanıcı aranırken hata: \(error.localizedDescription)")
                 }
-            } catch {
-                print("❌ Firebase UID ile kullanıcı aranırken hata: \(error.localizedDescription)")
-            }
-            
-            // Email'e göre kullanıcıyı ara
-            request.predicate = NSPredicate(format: "email == %@", email)
-            
-            do {
-                let users = try context.fetch(request)
-                if let existingUser = users.first {
-                    // Kullanıcı var, firebase UID'sini güncelle
-                    existingUser.isLoggedIn = true
-                    existingUser.firebaseUID = firebaseUser.uid
-                    try context.save()
-                    print("✅ Kullanıcı firebase UID ile güncellendi")
-                    completion(existingUser, nil)
-                } else {
+                
+                // Email'e göre kullanıcıyı ara
+                request.predicate = NSPredicate(format: "email == %@", email)
+                
+                do {
+                    let users = try context.fetch(request)
+                    if let existingUser = users.first {
+                        // Kullanıcı var, firebase UID'sini güncelle
+                        existingUser.isLoggedIn = true
+                        existingUser.firebaseUID = firebaseUser.uid
+                        
+                        // Profil resmi URL'sini güncelle
+                        if let photoURL = userProfile["photoURL"] as? String {
+                            existingUser.photoURL = photoURL
+                            print("✅ Varolan kullanıcının profil resmi URL'si güncellendi: \(photoURL)")
+                            
+                            // Profil resmini hemen indirmeyi başlat
+                            self.downloadProfileImage(forUser: existingUser, fromURL: photoURL)
+                        }
+                        
+                        try context.save()
+                        print("✅ Kullanıcı firebase UID ile güncellendi")
+                        
+                        // Giriş bildirimini gönder
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: NSNotification.Name("UserLoggedIn"), object: nil)
+                        }
+                        
+                        completion(existingUser, nil)
+                        return
+                    }
+                    
                     // Kullanıcı yerel veritabanında yok, oluştur
                     let newUser = User(context: context)
                     
@@ -1156,20 +1476,84 @@ class PersistenceController {
                     newUser.id = UUID()
                     newUser.username = email.components(separatedBy: "@").first ?? "user_\(UUID().uuidString.prefix(8))"
                     newUser.email = email
-                    newUser.name = firebaseUser.displayName
+                    newUser.name = firebaseUser.displayName ?? newUser.username
                     newUser.registrationDate = Date()
                     newUser.isLoggedIn = true
                     newUser.firebaseUID = firebaseUser.uid
                     
+                    // Profil resmi URL'sini ayarla
+                    if let photoURL = userProfile["photoURL"] as? String {
+                        newUser.photoURL = photoURL
+                        print("✅ Yeni kullanıcının profil resmi URL'si ayarlandı: \(photoURL)")
+                        
+                        // Profil resmini hemen indirmeyi başlat
+                        self.downloadProfileImage(forUser: newUser, fromURL: photoURL)
+                    }
+                    
                     try context.save()
                     print("✅ Firebase kullanıcısı yerel veritabanına kaydedildi")
+                    
+                    // Profil resmi olmasa bile giriş bildirimini gönder
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: NSNotification.Name("UserLoggedIn"), object: nil)
+                    }
+                    
                     completion(newUser, nil)
+                } catch {
+                    print("❌ Firebase kullanıcısı yerel veritabanına kaydedilemedi: \(error.localizedDescription)")
+                    completion(nil, error)
                 }
-            } catch {
-                print("❌ Firebase kullanıcısı yerel veritabanına kaydedilemedi: \(error.localizedDescription)")
-                completion(nil, error)
             }
         }
+    }
+    
+    // Profil resmi yükleme yardımcı fonksiyonu
+    private func downloadProfileImage(forUser user: User, fromURL urlString: String) {
+        print("🔄 Profil resmi indiriliyor: \(urlString)")
+        
+        guard let url = URL(string: urlString) else {
+            print("❌ Geçersiz profil resmi URL'si")
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ Profil resmi indirme hatası: \(error.localizedDescription)")
+                return
+            }
+            
+            if let response = response as? HTTPURLResponse {
+                print("📡 Profil resmi yanıt kodu: \(response.statusCode)")
+            }
+            
+            guard let data = data, let _ = UIImage(data: data) else {
+                print("❌ Profil resmi verisi geçerli bir görüntü değil")
+                return
+            }
+            
+            print("✅ Profil resmi başarıyla indirildi: \(data.count) byte")
+            
+            DispatchQueue.main.async {
+                // CoreData'ya profil resmini kaydet
+                user.profileImage = data
+                
+                do {
+                    try self.container.viewContext.save()
+                    print("✅ Profil resmi yerel veritabanına kaydedildi")
+                    
+                    // UI güncellemesi için bildirim gönder
+                    NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
+                    // Kullanıcı giriş bildirimini de gönder
+                    NotificationCenter.default.post(name: NSNotification.Name("UserLoggedIn"), object: nil)
+                } catch {
+                    print("❌ Profil resmi yerel olarak kaydedilemedi: \(error.localizedDescription)")
+                }
+            }
+        }
+        
+        task.resume()
     }
     
     func getEmailFromUsername(_ usernameOrEmail: String) -> String {
@@ -1545,23 +1929,77 @@ class PersistenceController {
         let flatBoard = board.flatMap { $0 }
         let userID = Auth.auth().currentUser?.uid ?? "guest"
         
-        // Firestore'da kayıt için doküman oluştur
+        // Firestore'da kayıt için doküman oluştur - UUID'yi uppercase olarak standardize et
         let documentID = gameID.uuidString.uppercased()
         let gameRef = db.collection("savedGames").document(documentID)
         
+        // Tamamlanmış oyun verisi - daha kapsamlı veri yapısı
         let gameData: [String: Any] = [
             "userID": userID,
             "difficulty": difficulty,
             "elapsedTime": elapsedTime,
             "dateCreated": FieldValue.serverTimestamp(),
             "timestamp": FieldValue.serverTimestamp(),
-            "board": flatBoard,
             "size": board.count,
             "isCompleted": true,
             "errorCount": errorCount,
-            "hintCount": hintCount
+            "hintCount": hintCount,
+            // Hem düz board hem de boardState ekleyelim (geriye dönük uyumluluk için)
+            "board": flatBoard,
+            // Yeni format için boardState objesi
+            "boardState": [
+                "board": board,
+                "difficulty": difficulty,
+                "isCompleted": true,
+                "dateCompleted": Date().timeIntervalSince1970
+            ]
         ]
         
+        // Önce mevcut belgeyi kontrol edelim - varsa silip tekrar oluşturacağız
+        gameRef.getDocument { [weak self] (document, error) in
+            guard let self = self else { return }
+            
+            // 1. Silinen oyunları takip listesine ekle (Senkronizasyon için)
+                    let deletedGamesKey = "recentlyDeletedGameIDs"
+                    var recentlyDeletedIDs = UserDefaults.standard.stringArray(forKey: deletedGamesKey) ?? []
+            
+            // Oyun ID'sini standardize et ve eğer listede yoksa ekle
+                    if !recentlyDeletedIDs.contains(documentID) {
+                        recentlyDeletedIDs.append(documentID)
+                        UserDefaults.standard.set(recentlyDeletedIDs, forKey: deletedGamesKey)
+                        
+                // Silme zamanını da kaydet
+                        let deletedTimestampsKey = "deletedGameTimestamps"
+                        var deletedTimestamps = UserDefaults.standard.dictionary(forKey: deletedTimestampsKey) as? [String: Double] ?? [:]
+                        deletedTimestamps[documentID] = Date().timeIntervalSince1970
+                        UserDefaults.standard.set(deletedTimestamps, forKey: deletedTimestampsKey)
+                
+                print("📝 Tamamlanan oyun ID \(documentID) silinen oyunlar listesine eklendi")
+            }
+            
+            // 2. Firestore'da kayıtlı belge varsa önce silelim
+            if let document = document, document.exists {
+                gameRef.delete { [weak self] deleteError in
+                    guard let self = self else { return }
+                    
+                    if let deleteError = deleteError {
+                        print("⚠️ Tamamlanmış oyun kaydedilmeden önce silinemedi: \(deleteError.localizedDescription)")
+                    } else {
+                        print("✅ Tamamlanmış oyun kaydedilmeden önce başarıyla silindi: \(documentID)")
+                    }
+                    
+                    // Silme işleminden sonra yeni veriyi kaydet
+                    self.saveCompletedGameData(gameRef: gameRef, gameData: gameData, documentID: documentID, gameID: gameID)
+                }
+            } else {
+                // Doğrudan kaydet - silmeye gerek yok
+                self.saveCompletedGameData(gameRef: gameRef, gameData: gameData, documentID: documentID, gameID: gameID)
+            }
+        }
+    }
+    
+    // Tamamlanmış oyun verilerini kaydetme yardımcı fonksiyonu
+    private func saveCompletedGameData(gameRef: DocumentReference, gameData: [String: Any], documentID: String, gameID: UUID) {
         // Firestore'a kaydet
         gameRef.setData(gameData) { [weak self] error in
             guard let self = self else { return }
@@ -1571,62 +2009,59 @@ class PersistenceController {
             } else {
                 print("✅ Tamamlanmış oyun Firestore'a kaydedildi: \(documentID)")
                 
-                // Aynı ID ile kaydedilmiş orijinal oyunu Firebase'den silmeyi deneyelim
-                self.db.collection("savedGames").document(documentID).delete { deleteError in
-                    if let deleteError = deleteError {
-                        print("⚠️ Orijinal oyun Firestore'dan silinemedi: \(deleteError.localizedDescription)")
-                    } else {
-                        print("✅ Orijinal oyun Firestore'dan başarıyla silindi: \(documentID)")
-                    }
-                }
-                
                 // Firebase'e kayıt başarılı olduğunda Core Data'dan sil
                 DispatchQueue.main.async {
-                    // Önce silme işlemini gerçekleştir
-                    self.deleteSavedGameFromCoreData(gameID: gameID.uuidString)
+                    // Core Data'dan silme işlemini gerçekleştir
+                    self.deleteSavedGameFromCoreData(gameID: documentID)
                     
-                    // Silinen oyunları takip listesine ekle (senkronizasyon için)
-                    let deletedGamesKey = "recentlyDeletedGameIDs"
-                    var recentlyDeletedIDs = UserDefaults.standard.stringArray(forKey: deletedGamesKey) ?? []
-                    if !recentlyDeletedIDs.contains(documentID) {
-                        recentlyDeletedIDs.append(documentID)
-                        UserDefaults.standard.set(recentlyDeletedIDs, forKey: deletedGamesKey)
-                        
-                        // Silme zamanını kaydet
-                        let deletedTimestampsKey = "deletedGameTimestamps"
-                        var deletedTimestamps = UserDefaults.standard.dictionary(forKey: deletedTimestampsKey) as? [String: Double] ?? [:]
-                        deletedTimestamps[documentID] = Date().timeIntervalSince1970
-                        UserDefaults.standard.set(deletedTimestamps, forKey: deletedTimestampsKey)
-                    }
-                    
-                    // Kullanıcı arayüzünü yenile - önce diğer bildirimleri gönder
+                    // UI güncellemelerini daha tutarlı hale getirmek için
+                    // tüm bildirimleri tek bir yerde toplayalım
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        // İstatistikleri güncelle
                     NotificationCenter.default.post(name: NSNotification.Name("RefreshStatistics"), object: nil)
                     
-                    // SavedGames için UI güncellemesi
+                        // Oyun listesini güncelle - daha uzun bir gecikme ile
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        print("📣 Firebase kayıt ve silme sonrası UI yenileme gönderiliyor")
+                            print("📣 Tamamlanmış oyun kaydedildi, UI güncelleme bildirimi gönderiliyor")
                         NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+                        }
                     }
                 }
             }
         }
     }
     
-    // CoreData'dan oyunu sil - Firebase'i etkilemez, sadece kayıtlı oyunları etkiler
+    // CoreData'dan oyunu sil - UUID formatını düzgün şekilde işle
     func deleteSavedGameFromCoreData(gameID: String) {
         let context = container.viewContext
         
         print("🔄 Core Data'dan oyun siliniyor, ID: \(gameID)")
         
-        // ID'ye göre oyunu bul
-        let request: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
+        // ID'yi normalize et - büyük/küçük harf ve UUID formatı sorunlarını ele al
+        var normalizedUUID: UUID?
         
+        // Doğrudan verilen ID'yi dene
         if let uuid = UUID(uuidString: gameID) {
-            request.predicate = NSPredicate(format: "id == %@", uuid as CVarArg)
-        } else {
-            print("❌ Geçersiz UUID: \(gameID)")
+            normalizedUUID = uuid
+        }
+        // Büyük harfe çevirip dene
+        else if let uuid = UUID(uuidString: gameID.uppercased()) {
+            normalizedUUID = uuid
+        }
+        // Küçük harfe çevirip dene
+        else if let uuid = UUID(uuidString: gameID.lowercased()) {
+            normalizedUUID = uuid
+        }
+        
+        // Geçerli bir UUID elde edemedik
+        if normalizedUUID == nil {
+            print("❌ Geçersiz UUID formatı: \(gameID)")
             return
         }
+        
+        // ID'ye göre oyunu bul
+        let request: NSFetchRequest<SavedGame> = SavedGame.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", normalizedUUID! as CVarArg)
         
         do {
             let games = try context.fetch(request)
@@ -1636,11 +2071,8 @@ class PersistenceController {
                 context.delete(existingGame)
                 try context.save()
                 print("✅ ID'si \(gameID) olan oyun başarıyla Core Data'dan silindi")
-                
-                // Yerel silme işleminden sonra UI güncellemesi yap
-                NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
             } else {
-                print("⚠️ Silinecek oyun Core Data'da bulunamadı, ID: \(gameID)")
+                print("ℹ️ Silinecek oyun Core Data'da bulunamadı, ID: \(gameID)")
             }
         } catch {
             print("❌ Core Data'dan oyun silinirken hata: \(error.localizedDescription)")
@@ -1652,10 +2084,12 @@ class PersistenceController {
     // Tüm tamamlanmış oyunları sil
     func deleteAllCompletedGames() {
         // Kullanıcı kontrolü: giriş yapmışsa
-        guard Auth.auth().currentUser != nil else {
+        guard let userID = Auth.auth().currentUser?.uid else {
             print("⚠️ Firestore oyunları silinemedi: Kullanıcı giriş yapmamış")
             return
         }
+        
+        print("🔄 Tüm tamamlanmış oyunları silme işlemi başlatılıyor... Kullanıcı ID: \(userID)")
         
         // Doğrudan Firestore'dan tamamlanmış oyunları sil
         deleteAllCompletedGamesFromFirestore()
@@ -1670,7 +2104,7 @@ class PersistenceController {
         
         print("🔄 Tüm tamamlanmış oyunlar Firestore'dan siliniyor... Kullanıcı ID: \(userID)")
         
-        // 1. Önce kullanıcıya ait tüm oyunları getirelim
+        // 1. Önce kullanıcıya ait tüm tamamlanmış oyunları getirelim
         db.collection("savedGames")
             .whereField("userID", isEqualTo: userID)
             .whereField("isCompleted", isEqualTo: true)
@@ -1689,7 +2123,26 @@ class PersistenceController {
                 
                 print("📊 Bulunan tamamlanmış oyun sayısı: \(documents.count)")
                 
-                // Tamamlanmış oyunları sil
+                // 2. Silinen oyunları takip için ID'leri kaydet
+                let deletedGamesKey = "recentlyDeletedGameIDs"
+                var recentlyDeletedIDs = UserDefaults.standard.stringArray(forKey: deletedGamesKey) ?? []
+                let deletedTimestampsKey = "deletedGameTimestamps"
+                var deletedTimestamps = UserDefaults.standard.dictionary(forKey: deletedTimestampsKey) as? [String: Double] ?? [:]
+                let currentTimestamp = Date().timeIntervalSince1970
+                
+                for document in documents {
+                    let documentID = document.documentID
+                    if !recentlyDeletedIDs.contains(documentID) {
+                        recentlyDeletedIDs.append(documentID)
+                        deletedTimestamps[documentID] = currentTimestamp
+                    }
+                }
+                
+                // Güncellenmiş silinen ID'leri kaydet
+                UserDefaults.standard.set(recentlyDeletedIDs, forKey: deletedGamesKey)
+                UserDefaults.standard.set(deletedTimestamps, forKey: deletedTimestampsKey)
+                
+                // 3. Tamamlanmış oyunları toplu olarak sil
                 let batch = self.db.batch()
                 
                 for document in documents {
@@ -1706,15 +2159,139 @@ class PersistenceController {
                     } else {
                         print("✅ \(documents.count) tamamlanmış oyun Firestore'dan silindi")
                         
-                        // Silme işleminin doğruluğunu kontrol et
+                        // 4. Silme işlemini doğrula
                         self.verifyCompletedGameDeletion(of: documents.map { $0.documentID })
+                        
+                        // 5. UI güncellemesi için bildirim gönder
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: NSNotification.Name("RefreshStatistics"), object: nil)
+                            
+                            // Oyun listesi güncellemesini geciktir
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+                            }
+                        }
                     }
                 }
             }
     }
     
+    // Tamamlanmış oyunları senkronize et
+    func syncCompletedGamesFromFirestore(completion: @escaping (Bool) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("⚠️ Tamamlanmış oyunlar senkronize edilemedi: Kullanıcı giriş yapmamış")
+            completion(false)
+            return
+        }
+        
+        print("🔄 Tamamlanmış oyunlar Firestore'dan senkronize ediliyor...")
+        
+        // Silinen oyunlar listesini al
+        let deletedGamesKey = "recentlyDeletedGameIDs"
+        let recentlyDeletedIDs = UserDefaults.standard.stringArray(forKey: deletedGamesKey) ?? []
+        
+        // Kullanıcının tamamlanmış oyunlarını getir
+        db.collection("savedGames")
+            .whereField("userID", isEqualTo: userID)
+            .whereField("isCompleted", isEqualTo: true)
+            .getDocuments { [weak self] snapshot, error in
+                // Eğer self nil ise veya hata varsa erken çık
+                if self == nil {
+                    completion(false)
+                    return 
+                }
+                
+                if let error = error {
+                    print("❌ Firestore tamamlanmış oyun sorgulama hatası: \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                guard let self = self, let documents = snapshot?.documents else {
+                    print("ℹ️ Firestore'da tamamlanmış oyun bulunamadı")
+                    completion(true)  // Başarılı, ama oyun yok
+                    return
+                }
+                
+                if documents.isEmpty {
+                    print("ℹ️ Firestore'da tamamlanmış oyun bulunamadı")
+                    completion(true)  // Başarılı, ama oyun yok
+                    return
+                }
+                
+                print("📊 Bulunan tamamlanmış oyun sayısı: \(documents.count)")
+                
+                // İstatistikler için veri hazırla
+                var stats: [String: Int] = [
+                    "Easy": 0,
+                    "Medium": 0, 
+                    "Hard": 0,
+                    "Expert": 0,
+                    "total": 0
+                ]
+                
+                var totalElapsedTime: TimeInterval = 0
+                var totalErrorCount: Int = 0
+                var totalHintCount: Int = 0
+                
+                // Her belge için istatistikleri güncelle
+                for document in documents {
+                    let data = document.data()
+                    let documentID = document.documentID
+                    
+                    // Eğer bu oyun silinmiş listesindeyse, atla
+                    if recentlyDeletedIDs.contains(documentID) ||
+                       recentlyDeletedIDs.contains(documentID.uppercased()) ||
+                       recentlyDeletedIDs.contains(documentID.lowercased()) {
+                        print("⏭️ ID: \(documentID) olan tamamlanmış oyun yakın zamanda silinmiş. Atlanıyor.")
+                        continue
+                    }
+                    
+                    // İstatistikleri güncelle
+                    if let difficulty = data["difficulty"] as? String {
+                        stats[difficulty] = (stats[difficulty] ?? 0) + 1
+                        stats["total"] = (stats["total"] ?? 0) + 1
+                    }
+                    
+                    if let elapsedTime = data["elapsedTime"] as? TimeInterval {
+                        totalElapsedTime += elapsedTime
+                    }
+                    
+                    if let errorCount = data["errorCount"] as? Int {
+                        totalErrorCount += errorCount
+                    }
+                    
+                    if let hintCount = data["hintCount"] as? Int {
+                        totalHintCount += hintCount
+                    }
+                }
+                
+                // İstatistikleri kaydet
+                let userDefaults = UserDefaults.standard
+                userDefaults.set(stats, forKey: "CompletedGameStats")
+                userDefaults.set(totalElapsedTime, forKey: "TotalGameTime")
+                userDefaults.set(totalErrorCount, forKey: "TotalErrorCount")
+                userDefaults.set(totalHintCount, forKey: "TotalHintCount")
+                
+                print("✅ Tamamlanmış oyun istatistikleri güncellendi: \(stats)")
+                
+                // UI güncellemesi için bildirim gönder
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshStatistics"), object: nil)
+                }
+                
+                completion(true)
+            }
+    }
+    
     // Tamamlanmış oyunların silinmesini doğrula
     private func verifyCompletedGameDeletion(of documentIDs: [String]) {
+        // Eğer silinecek belge yoksa doğrudan çık
+        if documentIDs.isEmpty {
+            print("ℹ️ Doğrulanacak silinen belge yok")
+            return
+        }
+        
         let group = DispatchGroup()
         var failedDeletions: [String] = []
         
@@ -1733,11 +2310,31 @@ class PersistenceController {
             }
         }
         
+        // Weak self olmadan kullan, çünkü self gerçekten batch için gerekli
         group.notify(queue: .main) {
             if failedDeletions.isEmpty {
                 print("✅ Tüm tamamlanmış oyunlar başarıyla silindi!")
             } else {
                 print("⚠️ \(failedDeletions.count) tamamlanmış oyun silinemedi: \(failedDeletions)")
+                
+                // Başarısız olanları tekrar silmeyi dene
+                if !failedDeletions.isEmpty {
+                    print("🔄 Silinemeyen oyunları tekrar silmeyi deniyorum...")
+                    
+                    let batch = self.db.batch()
+                    for documentID in failedDeletions {
+                        let gameRef = self.db.collection("savedGames").document(documentID)
+                        batch.deleteDocument(gameRef)
+                    }
+                    
+                    batch.commit { error in
+                        if let error = error {
+                            print("❌ İkinci silme denemesi başarısız: \(error.localizedDescription)")
+                        } else {
+                            print("✅ İkinci silme denemesi başarılı!")
+                        }
+                    }
+                }
             }
         }
     }

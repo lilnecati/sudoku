@@ -542,6 +542,9 @@ struct ProfileEditView: View {
                     do {
                         try PersistenceController.shared.container.viewContext.save()
                         print("✅ Resim yerel olarak kaydedildi")
+                        
+                        // Profil resmi güncellendiği için bildirim gönder
+                        NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
                     } catch {
                         print("❌ Profil resmi yerel olarak kaydedilemedi: \(error)")
                     }
@@ -687,6 +690,29 @@ struct ProfileEditView: View {
                             do {
                                 try context.save()
                                 print("✅ Resim URL'si CoreData'ya kaydedildi")
+                                
+                                // Firebase'e URL'yi kaydet
+                                if let firebaseUID = user.firebaseUID {
+                                    print("🔄 Profil resmi URL'si Firebase'e gönderiliyor...")
+                                    PersistenceController.shared.db.collection("users").document(firebaseUID).updateData([
+                                        "photoURL": secureUrl
+                                    ]) { error in
+                                        if let error = error {
+                                            print("❌ Firebase profil resmi güncelleme hatası: \(error.localizedDescription)")
+                                        } else {
+                                            print("✅ Profil resmi URL'si Firebase'e kaydedildi")
+                                            
+                                            // ProfileImageUpdated bildirimini gönder
+                                            NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
+                                        }
+                                    }
+                                } else {
+                                    print("⚠️ Kullanıcının Firebase UID'si yok, Firebase güncellemesi yapılamadı")
+                                    
+                                    // Firebase ID olmasa da profil resmi güncellendiğinde bildirim gönder
+                                    NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
+                                }
+                                
                                 // Uyarı mesajını göster ve işlemi tamamla
                                 self.alertTitle = "Başarılı"
                                 self.alertMessage = "Profil fotoğrafınız başarıyla güncellendi."

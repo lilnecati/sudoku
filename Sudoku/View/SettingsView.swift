@@ -287,9 +287,57 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationView {
-            mainSettingsView
-                .navigationBarTitle(Text.localized("settings.title"), displayMode: .large)
-                .navigationBarItems(trailing: closeButton)
+            ZStack {
+                GridBackgroundView()
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 25) {
+                        // Profil ve hesap ayarları bölümü - başlık olmadan
+                        self.profileSettingsView()
+
+                        // Ayarlar başlığı
+                        self.sectionHeader(title: "Oyun Ayarları", systemImage: "gamecontroller.fill")
+                        
+                        // Oyun ayarları bölümü
+                        self.gameSettingsView()
+                        
+                        // Görünüm ayarları
+                        self.sectionHeader(title: "Görünüm", systemImage: "paintbrush.fill")
+                        
+                        // Görünüm ayarları bölümü - dil seçimi kaldırıldı
+                        self.appearanceSettingsView()
+                        
+                        // Güç tasarrufu ayarları (eğer pil yüzdesi 50'den düşükse ön plana çıkar)
+                        if self.powerManager.batteryLevel < 0.5 {
+                            self.sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle.fill")
+                            self.powerSavingSettingsView()
+                        } else {
+                            self.sectionHeader(title: "Güç Yönetimi", systemImage: "bolt.circle")
+                            self.powerSavingSettingsView()
+                        }
+                        
+                        // Alt bilgi
+                        VStack(spacing: 5) {
+                            Text("Geliştirici: Necati Yıldırım")
+                                .scaledFont(size: 14)
+                                .foregroundColor(.secondary)
+                            
+                            Text("Sürüm 1.0")
+                                .scaledFont(size: 12)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 30)
+                        .padding(.bottom, 20)
+                    }
+                    .padding(.top)
+                    .padding(.horizontal, 16)
+                }
+                .padding(.vertical, 8)
+            }
+            .navigationBarTitle(Text.localized("settings.title"), displayMode: .large)
+            .navigationBarItems(trailing: closeButton)
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .localizationAware()
@@ -300,6 +348,12 @@ struct SettingsView: View {
         .onAppear {
             // Bildirim dinleyicilerini ayarla
             setupObservers()
+            
+            // Mevcut kullanıcıyı getir
+            currentUser = PersistenceController.shared.getCurrentUser()
+            
+            // Profil resmini senkronize et
+            syncProfileImage()
         }
         .onDisappear {
             // Bildirim dinleyicilerini temizle
@@ -336,6 +390,25 @@ struct SettingsView: View {
         ) { _ in
             showRegisterView = true
         }
+        
+        // Profil resmi güncellendiğinde bildirimi dinle
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("ProfileImageUpdated"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            // UI'da güncelleme yapmak için mevcut kullanıcı bilgisini yeniden yükle
+            self.currentUser = PersistenceController.shared.getCurrentUser()
+        }
+        
+        // Kullanıcı giriş yaptığında senkronizasyonu başlat
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("UserLoggedIn"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            self.syncProfileImage()
+        }
     }
     
     // Bildirim dinleyicileri temizle
@@ -345,6 +418,35 @@ struct SettingsView: View {
             name: Notification.Name("ShowRegisterView"),
             object: nil
         )
+        
+        NotificationCenter.default.removeObserver(
+            self,
+            name: Notification.Name("ProfileImageUpdated"),
+            object: nil
+        )
+        
+        NotificationCenter.default.removeObserver(
+            self,
+            name: Notification.Name("UserLoggedIn"),
+            object: nil
+        )
+    }
+    
+    // Profil resmini senkronize et
+    private func syncProfileImage() {
+        DispatchQueue.global(qos: .background).async {
+            PersistenceController.shared.syncProfileImage { success in
+                if success {
+                    print("✅ Profil resmi başarıyla senkronize edildi")
+                    // Başarılı olduğunda ana thread'de UI güncellemesi yapabiliriz
+                    DispatchQueue.main.async {
+                        self.currentUser = PersistenceController.shared.getCurrentUser()
+                    }
+                } else {
+                    print("⚠️ Profil resmi senkronizasyonu başarısız oldu veya gereksizdi")
+                }
+            }
+        }
     }
     
     // Pil seviyesi değişince arayüzü güncelle
@@ -369,13 +471,25 @@ struct SettingsView: View {
     
     private func backgroundRectangle(cornerRadius: CGFloat = 12) -> some View {
         RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .fill(.ultraThinMaterial)
+            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(colorScheme == .dark ? 
+                            Color.white.opacity(0.15) : 
+                            Color.blue.opacity(0.1), 
+                            lineWidth: 1)
+            )
     }
     
     private func settingRowBackground() -> some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(colorScheme == .dark ? Color(UIColor.tertiarySystemBackground) : Color.white)
+            .fill(.ultraThinMaterial)
+            .shadow(color: Color.black.opacity(0.07), radius: 3, x: 0, y: 1)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+            )
     }
     
     // Section başlığı yardımcı metodu
@@ -391,8 +505,14 @@ struct SettingsView: View {
             
             Spacer()
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.blue.opacity(0.1))
+                .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 2)
+        )
         .padding(.horizontal, 6)
-        .padding(.vertical, 5)
     }
     
     private func gameSettingsView() -> some View {
@@ -454,8 +574,8 @@ struct SettingsView: View {
             .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
             .padding(.horizontal, 8)
             
@@ -532,8 +652,8 @@ struct SettingsView: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 )
                 .padding(.horizontal, 8)
                 .transition(.opacity)
@@ -597,8 +717,8 @@ struct SettingsView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
             .padding(.horizontal, 8)
         }
@@ -663,8 +783,8 @@ struct SettingsView: View {
             .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
             .padding(.horizontal, 8)
             
@@ -725,8 +845,8 @@ struct SettingsView: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 )
                 .padding(.horizontal, 8)
             }
@@ -781,8 +901,8 @@ struct SettingsView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
             .padding(.horizontal, 8)
         }
@@ -912,8 +1032,8 @@ struct SettingsView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
             .padding(.horizontal, 8)
             
@@ -967,8 +1087,8 @@ struct SettingsView: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 )
                 .padding(.horizontal, 8)
                 
@@ -1016,8 +1136,8 @@ struct SettingsView: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 )
                 .padding(.horizontal, 8)
                 
@@ -1288,17 +1408,17 @@ struct SettingsView: View {
                         ProfileImageView(user: user)
                             .frame(width: 80, height: 80)
                     } else {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
-                            .frame(width: 80, height: 80)
-                            .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
-                            
+                        )
+                        .frame(width: 80, height: 80)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
+                    
                         Image(systemName: "person.fill")
                             .font(.system(size: 34))
                             .foregroundColor(.white)
@@ -1636,10 +1756,7 @@ struct SettingsView: View {
     private var mainSettingsView: some View {
         ScrollView {
             VStack(spacing: 25) {
-                // Hesap ve profil bölümü - En yukarı taşındı
-                self.sectionHeader(title: "Profil", systemImage: "person.crop.circle.fill")
-                
-                // Profil ve hesap ayarları bölümü
+                // Profil ve hesap ayarları bölümü - başlık olmadan
                 self.profileSettingsView()
 
                 // Ayarlar başlığı
@@ -1678,8 +1795,12 @@ struct SettingsView: View {
                 .padding(.bottom, 20)
             }
             .padding(.top)
-            .padding(.horizontal, 6)
+            .padding(.horizontal, 16)
         }
+        .background(.ultraThinMaterial)
+        .cornerRadius(20)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
     
     private var closeButton: some View {
@@ -1819,8 +1940,12 @@ struct ToggleSettingRow: View {
             .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: Color.black.opacity(0.07), radius: 5, x: 0, y: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(color.opacity(0.2), lineWidth: 1)
+                    )
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -2073,21 +2198,28 @@ struct ProfileImageView: View {
         .onAppear {
             loadProfileImage()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ProfileImageUpdated"))) { _ in
+            print("📢 Profil resmi güncelleme bildirimi alındı")
+            loadProfileImage()
+        }
     }
     
     private func loadProfileImage() {
         // Önce yerel depolamada kontrol et
         if let imageData = user.profileImage, let image = UIImage(data: imageData) {
             profileImage = image
+            print("✅ Profil resmi yerel depolamadan yüklendi")
             return
         }
         
         // Yerel yoksa URL'den yüklemeyi dene
         if let photoURL = user.photoURL {
             isLoading = true
+            print("🔄 Profil resmi URL'den yükleniyor: \(photoURL)")
             
             guard let url = URL(string: photoURL) else {
                 isLoading = false
+                print("❌ Geçersiz profil resmi URL'si: \(photoURL)")
                 return
             }
             
@@ -2095,19 +2227,34 @@ struct ProfileImageView: View {
                 DispatchQueue.main.async {
                     isLoading = false
                     
+                    if let error = error {
+                        print("❌ Profil resmi yükleme hatası: \(error)")
+                        return
+                    }
+                    
+                    if let response = response as? HTTPURLResponse {
+                        print("📡 URL yanıt kodu: \(response.statusCode)")
+                    }
+                    
                     if let data = data, let image = UIImage(data: data) {
-                        profileImage = image
+                        print("✅ Profil resmi URL'den başarıyla yüklendi")
+                        self.profileImage = image
                         
                         // Resmi yerel olarak da kaydet
-                        user.profileImage = data
+                        self.user.profileImage = data
                         do {
                             try PersistenceController.shared.container.viewContext.save()
+                            print("✅ Profil resmi yerel veritabanına kaydedildi")
                         } catch {
-                            print("Profil resmi yerel olarak kaydedilemedi: \(error)")
+                            print("❌ Profil resmi yerel olarak kaydedilemedi: \(error)")
                         }
+                    } else {
+                        print("❌ Profil resmi verisi dönüştürülemedi")
                     }
                 }
             }.resume()
+        } else {
+            print("ℹ️ Kullanıcının profil resmi URL'si yok")
         }
     }
 }
