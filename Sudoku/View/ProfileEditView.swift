@@ -25,6 +25,9 @@ struct ProfileEditView: View {
     @State private var alertMessage = ""
     @State private var showDeleteConfirmation = false
     
+    // Yeniden kimlik doğrulama için
+    @State private var showReauthDialog = false
+    
     @State private var showPasswordChange = false
     
     // Cloudinary API bilgileri
@@ -104,13 +107,49 @@ struct ProfileEditView: View {
                 message: Text("Bu işlem geri alınamaz. Tüm verileriniz silinecektir."),
                 buttons: [
                     .destructive(Text("Hesabı Sil")) {
-                        // Hesap silme işlemi - henüz uygulanmadı
-                        alertTitle = "Bilgi"
-                        alertMessage = "Bu özellik şu anda geliştirme aşamasındadır."
-                        showAlert = true
+                        // Yeniden kimlik doğrulama diyaloğunu göster
+                        showReauthDialog = true
                     },
                     .cancel()
                 ]
+            )
+        }
+        // Yeniden kimlik doğrulama diyaloğu
+        .alert(isPresented: $showReauthDialog) {
+            Alert(
+                title: Text("Hesabı Silme Onayı"),
+                message: Text("Bu işlem geri alınamaz. Tüm verileriniz silinecektir."),
+                primaryButton: .destructive(Text("Hesabı Sil")) {
+                    // Hesap silme işlemi
+                    isLoading = true
+                    alertTitle = "Hesap Siliniyor"
+                    alertMessage = "Hesabınız siliniyor, lütfen bekleyin..."
+                    showAlert = true
+                    
+                    PersistenceController.shared.deleteUserAccount { success, error in
+                        DispatchQueue.main.async {
+                            isLoading = false
+                            
+                            if success {
+                                // Hesap başarıyla silindi
+                                alertTitle = "Başarılı"
+                                alertMessage = "Hesabınız başarıyla silindi."
+                                showAlert = true
+                                
+                                // Ana menü ekranına dön
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                    self.presentationMode.wrappedValue.dismiss()
+                                }
+                            } else {
+                                // Hesap silme işlemi başarısız oldu
+                                alertTitle = "Hata"
+                                alertMessage = "Hesap silme işlemi başarısız oldu: \(error?.localizedDescription ?? "Bilinmeyen hata")"
+                                showAlert = true
+                            }
+                        }
+                    }
+                },
+                secondaryButton: .cancel()
             )
         }
         .sheet(isPresented: $isShowingImagePicker) {
@@ -216,21 +255,31 @@ struct ProfileEditView: View {
             
             // Kullanıcı Adı
             VStack(alignment: .leading, spacing: 8) {
-                Text("Kullanıcı Adı")
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                HStack {
+                    Text("Kullanıcı Adı")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text("(Değiştirilemez)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 4)
+                }
                 
-                TextField("Kullanıcı adınızı girin", text: $username)
-                    .padding()
-                    .autocapitalization(.none)
-                    .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
-                    .cornerRadius(10)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
-                    )
-                    .disabled(true) // Kullanıcı adı değiştirilemez
-                    .foregroundColor(.gray)
+                HStack {
+                    // Kullanıcı adını doğru şekilde göster
+                    let displayUsername = username.isEmpty ? "Henüz kullanıcı adı oluşturulmamış" : username
+                    Text(displayUsername)
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(colorScheme == .dark ? Color.white.opacity(0.05) : Color.gray.opacity(0.1))
+                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                        .foregroundColor(username.isEmpty ? .secondary : .primary)
+                }
             }
         }
         .padding(.vertical, 10)
@@ -374,6 +423,10 @@ struct ProfileEditView: View {
         name = user.name ?? ""
         email = user.email ?? ""
         username = user.username ?? ""
+        
+        // Debug bilgisi
+        print("DEBUG - ProfileEditView - Kullanıcı adı: \(username)")
+        print("DEBUG - ProfileEditView - E-posta: \(email)")
         
         // Profil resmi varsa yükle
         if let imageData = user.profileImage, let image = UIImage(data: imageData) {
@@ -616,10 +669,16 @@ struct ProfileEditView: View {
         body.append("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n".data(using: .utf8)!)
         body.append("\(uploadPreset)\r\n".data(using: .utf8)!)
         
-        // Public ID ekle (kullanıcı ID'sini kullan)
+        // Benzersiz bir public_id kullan (kullanıcı ID + zaman damgası + rastgele string)
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let randomString = UUID().uuidString.prefix(8)
+        let uniquePublicId = "profile_\(userId)_\(timestamp)_\(randomString)"
+        
+        print("🏷️ Benzersiz profil resmi ID: \(uniquePublicId)")
+        
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"public_id\"\r\n\r\n".data(using: .utf8)!)
-        body.append("profile_\(userId)\r\n".data(using: .utf8)!)
+        body.append("\(uniquePublicId)\r\n".data(using: .utf8)!)
         
         // Resim dosyasını ekle
         body.append("--\(boundary)\r\n".data(using: .utf8)!)

@@ -123,27 +123,37 @@ class AchievementManager: ObservableObject {
     // Oyun tamamlandığında biten oyunu kayıtlardan silmek için
     func handleCompletedGame(gameID: UUID, difficulty: SudokuBoard.Difficulty, time: TimeInterval, errorCount: Int, hintCount: Int) {
         // Tamamlanmış oyunu kaydet ve kayıtlı oyunlardan sil
-        let board = Array(repeating: Array(repeating: 0, count: 9), count: 9) // dummy board
+        // Firebase Firestore iç içe dizileri desteklemediği için düz bir dizi kullanıyoruz
+        // Bellek optimizasyonu: Sabit boyutlu dizi kullanıyoruz
+        // Boş bir tahta için tek boyutlu dizi oluşturuyoruz (81 hücre)
+        let flatBoard = [Int](repeating: 0, count: 81) // 9x9 düzleştirilmiş tahta
         
-        // Önce Firebase'e kaydedelim, başarılı olduğunda Core Data'dan sileceğiz
+        // Önemli: Önce silme işlemini gerçekleştiriyoruz, sonra kaydediyoruz
+        // Bu şekilde çift silme işlemi önlenmiş olacak
+        logDebug("Oyun tamamlandı: \(gameID) - Önce silme işlemi yapılıyor")
+        PersistenceController.shared.deleteGameFromFirestore(gameID: gameID)
+        
+        // Silme işleminden sonra kayıt işlemi yapılıyor
+        // Not: saveCompletedGame fonksiyonu 2D dizi bekliyor, ancak içeride flatMap ile düzleştiriyor
+        // Bellek optimizasyonu: Tek bir dizi oluşturuyoruz ve referans olarak kullanıyoruz
+        let singleRowBoard = [flatBoard] // Tek satırlı 2D dizi (nested array olmadan)
+        
+        logDebug("Oyun tamamlandı: \(gameID) - Silme işleminden sonra kayıt yapılıyor")
         PersistenceController.shared.saveCompletedGame(
             gameID: gameID,
-            board: board,
+            board: singleRowBoard, // Tek satırlı 2D dizi olarak gönderiyoruz
             difficulty: difficulty.rawValue,
             elapsedTime: time,
             errorCount: errorCount,
             hintCount: hintCount
         )
         
-        // Fire'dan doğrudan silme işlemini de çağıralım
-        PersistenceController.shared.deleteGameFromFirestore(gameID: gameID)
-        
-        // UI güncellemesi için gecikme ile bildirim gönderelim - bu UI'da anında değişikliği göstermeyecek
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        // UI güncellemesi için bildirim gönderiyoruz - gecikmesiz
+        DispatchQueue.main.async {
             NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
         }
         
-        print("✅ Tamamlanan oyun işlenip, kayıtlı oyunlardan silindi")
+        logSuccess("Tamamlanan oyun işlenip, kayıtlı oyunlardan silindi")
     }
     
     // Başarıları oluştur ve hazırla

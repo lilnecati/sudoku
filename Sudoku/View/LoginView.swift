@@ -38,18 +38,11 @@ struct LoginView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(
-            LinearGradient(
-                gradient: Gradient(colors: [Color.purple, Color.blue]),
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        )
+        .background(isDisabled ? Color.gray : Color.blue.opacity(0.8))
         .foregroundColor(.white)
-        .cornerRadius(10)
+        .cornerRadius(12)
         .disabled(isDisabled)
-        .opacity(isDisabled ? 0.6 : 1)
-        .shadow(color: Color.purple.opacity(colorScheme == .dark ? 0.5 : 0.3), radius: colorScheme == .dark ? 10 : 5, x: 0, y: 5)
+        .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
     }
     
     // Klavyeyi kapat
@@ -61,24 +54,26 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            // Izgara arka planı - ağır arka plan animasyonlarını kaldırdık
-            Color(UIColor.systemBackground)
+            // ProfileEditView ile aynı arka plan
+            GridBackgroundView()
                 .ignoresSafeArea()
             
             // Ana içerik için ScrollView
             ScrollView {
                 VStack(spacing: 20) {
-                    // Logo ve başlık - Basit hale getirildi
+                    // Logo ve başlık - ProfileEditView ile aynı stil
                     VStack(spacing: 10) {
                         Image(systemName: "person.circle.fill")
-                            .font(.system(size: 60))
+                            .font(.system(size: 70))
                             .foregroundColor(.blue)
+                            .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
                         
                         Text("Giriş Yap")
-                            .font(.system(size: 24, weight: .bold))
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(.primary)
                     }
-                    .padding(.top, 20)
-                    .padding(.bottom, 20)
+                    .padding(.top, 30)
+                    .padding(.bottom, 30)
                     
                     // Giriş formu - Basitleştirildi
                     VStack(spacing: 15) {
@@ -89,8 +84,12 @@ struct LoginView: View {
                             
                             TextField("Kullanıcı adınızı girin", text: $username)
                                 .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .cornerRadius(10)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                )
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
                                 .submitLabel(.next)
@@ -107,8 +106,12 @@ struct LoginView: View {
                             
                             SecureField("Şifrenizi girin", text: $password)
                                 .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .cornerRadius(10)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                )
                                 .submitLabel(.done)
                                 .onSubmit {
                                     if !username.isEmpty && !password.isEmpty {
@@ -129,26 +132,23 @@ struct LoginView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         
-                        // Giriş butonu - Basitleştirildi
+                        // Giriş butonu - ProfileEditView stili ile
                         Button(action: loginUser) {
                             if isLoading {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle())
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
                                 Text("Giriş Yap")
                                     .fontWeight(.semibold)
                                     .frame(maxWidth: .infinity)
-                                    .padding()
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(
-                            (username.isEmpty || password.isEmpty || isLoading) ? 
-                                Color.gray : Color.blue
-                        )
+                        .padding()
+                        .background((username.isEmpty || password.isEmpty || isLoading) ? Color.gray : Color.blue.opacity(0.8))
                         .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .cornerRadius(12)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
                         .disabled(username.isEmpty || password.isEmpty || isLoading)
                         
                         // Kayıt ol butonu

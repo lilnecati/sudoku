@@ -1436,9 +1436,27 @@ struct SettingsView: View {
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.primary)
                         
-                        Text("@\(user.username ?? "")")
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
+                        HStack(spacing: 4) {
+                            // Kullanıcı adını doğru şekilde göster
+                            let displayUsername = user.username ?? ""
+                            Text("@\(displayUsername)")
+                                .onAppear {
+                                    print("DEBUG - Kullanıcı adı: \(displayUsername)")
+                                    print("DEBUG - E-posta: \(user.email ?? "")")
+                                }
+                                .font(.system(size: 16))
+                                .foregroundColor(.secondary)
+                            
+                            Text("(Değiştirilemez)")
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary.opacity(0.7))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.secondary.opacity(0.1))
+                                )
+                        }
                     } else {
                         // Giriş yapılmamışsa giriş seçenekleri göster
                         Text.localizedSafe("Giriş Yapmadınız")
@@ -2205,10 +2223,17 @@ struct ProfileImageView: View {
     }
     
     private func loadProfileImage() {
+        // Resmin yüklenme zamanını ekle
+        let loadTime = Date()
+        print("🕒 Profil resmi yükleme başladı: \(loadTime)")
+        
+        // Önbellekteki resimleri temizle (cihaz-simülatör arasındaki farklılıkları önlemek için)
+        URLCache.shared.removeAllCachedResponses()
+        
         // Önce yerel depolamada kontrol et
         if let imageData = user.profileImage, let image = UIImage(data: imageData) {
             profileImage = image
-            print("✅ Profil resmi yerel depolamadan yüklendi")
+            print("✅ Profil resmi yerel depolamadan yüklendi - Boyut: \(imageData.count) byte, Hash: \(imageData.hashValue)")
             return
         }
         
@@ -2223,7 +2248,11 @@ struct ProfileImageView: View {
                 return
             }
             
-            URLSession.shared.dataTask(with: url) { data, response, error in
+            // Önbellek politikası - yeniden yüklemeyi zorla
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+            
+            URLSession.shared.dataTask(with: request) { data, response, error in
                 DispatchQueue.main.async {
                     isLoading = false
                     
@@ -2237,14 +2266,19 @@ struct ProfileImageView: View {
                     }
                     
                     if let data = data, let image = UIImage(data: data) {
-                        print("✅ Profil resmi URL'den başarıyla yüklendi")
+                        print("✅ Profil resmi URL'den başarıyla yüklendi - Boyut: \(data.count) byte, Hash: \(data.hashValue)")
                         self.profileImage = image
                         
                         // Resmi yerel olarak da kaydet
                         self.user.profileImage = data
+                        // Not: Burada zaman damgası ekleyecektik fakat User modelinde lastProfileUpdate özelliği yok
                         do {
                             try PersistenceController.shared.container.viewContext.save()
+                            UserDefaults.standard.synchronize() // Hemen senkronize et
                             print("✅ Profil resmi yerel veritabanına kaydedildi")
+                            
+                            // Tüm profil resmi görünümlerini güncellemek için bildirim gönder
+                            NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
                         } catch {
                             print("❌ Profil resmi yerel olarak kaydedilemedi: \(error)")
                         }

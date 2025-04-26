@@ -90,16 +90,18 @@ struct RegisterView: View {
     
     var body: some View {
         ZStack {
-            // Basit arka plan - GridBackgroundView yerine düz renk
-            Color(UIColor.systemBackground)
+            // ProfileEditView ile aynı arka plan
+            GridBackgroundView()
                 .ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 20) {
-                    // Başlık - basitleştirildi
+                    // Başlık - ProfileEditView ile aynı stil
                     Text("Yeni Hesap Oluştur")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.primary)
                         .padding(.top, 20)
+                        .padding(.bottom, 10)
                     
                     VStack(spacing: 16) {
                         // Ad Soyad - basitleştirildi
@@ -109,8 +111,12 @@ struct RegisterView: View {
                             
                             TextField("Adınızı ve soyadınızı girin", text: $name)
                                 .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .cornerRadius(10)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                )
                                 .focused($focusName)
                                 .submitLabel(.next)
                                 .onSubmit { focusEmail = true }
@@ -123,8 +129,12 @@ struct RegisterView: View {
                             
                             TextField("E-posta adresinizi girin", text: $email)
                                 .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .cornerRadius(10)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                )
                                 .keyboardType(.emailAddress)
                                 .autocapitalization(.none)
                                 .focused($focusEmail)
@@ -132,20 +142,41 @@ struct RegisterView: View {
                                 .onSubmit { focusUsername = true }
                         }
                         
-                        // Kullanıcı adı - basitleştirildi
+                        // Kullanıcı adı - Önemli alan
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Kullanıcı Adı")
-                                .font(.headline)
+                            HStack(spacing: 4) {
+                                Text("Kullanıcı Adı")
+                                    .font(.headline)
+                                
+                                Text("(Zorunlu ve Değiştirilemez)")
+                                    .font(.caption)
+                                    .foregroundColor(.red.opacity(0.8))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.red.opacity(0.1))
+                                    )
+                            }
                             
-                            TextField("En az 4 karakter", text: $username)
+                            Text("Kullanıcı adınız benzersiz olmalı ve daha sonra değiştirilemez.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.bottom, 4)
+                            
+                            TextField("Benzersiz kullanıcı adı (en az 4 karakter)", text: $username)
                                 .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .cornerRadius(10)
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
                                 .focused($focusUsername)
                                 .submitLabel(.next)
                                 .onSubmit { focusPassword = true }
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.blue, lineWidth: 1)
+                                )
                         }
                         
                         // Şifre - basitleştirildi
@@ -155,8 +186,12 @@ struct RegisterView: View {
                             
                             SecureField("Şifrenizi girin", text: $password)
                                 .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .cornerRadius(10)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                )
                                 .focused($focusPassword)
                                 .submitLabel(.next)
                                 .onSubmit { focusConfirmPassword = true }
@@ -191,8 +226,12 @@ struct RegisterView: View {
                             
                             SecureField("Şifrenizi tekrar girin", text: $confirmPassword)
                                 .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
+                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .cornerRadius(10)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                )
                                 .focused($focusConfirmPassword)
                                 .submitLabel(.done)
                                 .onSubmit {
@@ -216,23 +255,23 @@ struct RegisterView: View {
                             }
                         }
                         
-                        // Kayıt Ol butonu - basitleştirildi
+                        // Kayıt Ol butonu - ProfileEditView stili ile
                         Button(action: registerUser) {
                             if isLoading {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle())
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
                                 Text("Kayıt Ol")
                                     .fontWeight(.semibold)
                                     .frame(maxWidth: .infinity)
-                                    .padding()
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(isFormInvalid ? Color.gray : Color.blue)
+                        .padding()
+                        .background(isFormInvalid ? Color.gray : Color.blue.opacity(0.8))
                         .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .cornerRadius(12)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
                         .disabled(isFormInvalid)
                         
                         // Zaten hesabınız var mı butonu

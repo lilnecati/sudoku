@@ -4,6 +4,12 @@
     "?" : {
 
     },
+    "(Değiştirilemez)" : {
+
+    },
+    "(Zorunlu ve Değiştirilemez)" : {
+
+    },
     "@%@" : {
 
     },
@@ -3067,6 +3073,9 @@
     "Başarımları Sıfırla" : {
 
     },
+    "Benzersiz kullanıcı adı (en az 4 karakter)" : {
+
+    },
     "Bitti" : {
       "comment" : "İpucu bitirme butonu",
       "localizations" : {
@@ -3653,6 +3662,7 @@
       }
     },
     "En az 4 karakter" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4253,6 +4263,9 @@
         }
       }
     },
+    "Hesabı Silme Onayı" : {
+
+    },
     "Hesabınız yok mu?" : {
       "localizations" : {
         "en" : {
@@ -4756,6 +4769,9 @@
           }
         }
       }
+    },
+    "Kullanıcı adınız benzersiz olmalı ve daha sonra değiştirilemez." : {
+
     },
     "Kullanıcı adınızı girin" : {
       "localizations" : {

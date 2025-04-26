@@ -2546,6 +2546,83 @@ class SudokuViewModel: ObservableObject {
         
         // Ses çal
         SoundManager.shared.playGameCompletedSound()
+        
+        print("🏆 AchievementManager başarımları güncelleniyor...")
+        // Başarıları güncelle - processGameCompletion fonksiyonu yerine zorluk başarımları ayrı ayrı güncelleniyor
+        let achievementManager = AchievementManager.shared
+        
+        // Zorluk seviyesine göre başarım
+        switch board.difficulty {
+        case .easy:
+            achievementManager.updateAchievement("easy_1", completed: true)
+        case .medium:
+            achievementManager.updateAchievement("medium_1", completed: true)
+        case .hard:
+            achievementManager.updateAchievement("hard_1", completed: true)
+        case .expert:
+            achievementManager.updateAchievement("expert_1", completed: true)
+        }
+        
+        // Hatasız oyun başarımları
+        if errorCount == 0 {
+            achievementManager.updateAchievement("no_errors", completed: true)
+        }
+        
+        // İpuçsuz oyun başarımları 
+        if hintUsed == 0 {
+            achievementManager.updateAchievement("no_hints", completed: true)
+        }
+        
+        // Zaman başarımları
+        let timeInMinutes = elapsedTime / 60.0
+        
+        switch board.difficulty {
+        case .easy:
+            if timeInMinutes < 3.0 {
+                achievementManager.updateAchievement("time_easy_3", completed: true)
+                
+                if timeInMinutes < 2.0 {
+                    achievementManager.updateAchievement("time_easy_2", completed: true)
+                    
+                    if timeInMinutes < 1.0 {
+                        achievementManager.updateAchievement("time_easy_1", completed: true)
+                    }
+                }
+            }
+        case .medium:
+            if timeInMinutes < 5.0 {
+                achievementManager.updateAchievement("time_medium_5", completed: true)
+                
+                if timeInMinutes < 3.0 {
+                    achievementManager.updateAchievement("time_medium_3", completed: true)
+                }
+            }
+        case .hard:
+            if timeInMinutes < 10.0 {
+                achievementManager.updateAchievement("time_hard_10", completed: true)
+                
+                if timeInMinutes < 5.0 {
+                    achievementManager.updateAchievement("time_hard_5", completed: true)
+                }
+            }
+        case .expert:
+            if timeInMinutes < 15.0 {
+                achievementManager.updateAchievement("time_expert_15", completed: true)
+                
+                if timeInMinutes < 8.0 {
+                    achievementManager.updateAchievement("time_expert_8", completed: true)
+                }
+            }
+        }
+        
+        print("🏆 Başarım güncellemeleri tamamlandı!")
+        
+        // Oyun tamamlandığında bildirim gönder (gerekirse kullanılabilir)
+        NotificationCenter.default.post(name: NSNotification.Name("GameCompleted"), object: nil, userInfo: [
+            "difficulty": board.difficulty.rawValue,
+            "score": calculatePerformanceScore(),
+            "time": elapsedTime
+        ])
     }
     
     // Hücre vurgulamalarını güncelle
