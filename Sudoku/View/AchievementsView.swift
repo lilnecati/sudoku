@@ -671,15 +671,15 @@ struct AchievementDetailView: View {
                 totalCompletionsTipView(achievement)
             } else if isDifficultyAchievement(achievement.id) {
                 difficultyTipView(for: achievement)
-            } else if isStreakAchievement(achievement.id) {
+        } else if isStreakAchievement(achievement.id) {
                 streakTipView(for: achievement)
-            } else if isTimeAchievement(achievement.id) {
+        } else if isTimeAchievement(achievement.id) {
                 timeTipView(for: achievement)
-            } else if achievement.id == "no_errors" {
-                noErrorsTipView()
+        } else if achievement.id == "no_errors" {
+            noErrorsTipView()
             } else if isPuzzleVarietyAchievement(achievement.id) {
                 variationsTipView(achievement)
-            } else {
+        } else {
                 // Diğer başarım tipleri için varsayılan ipucu
                 HStack {
                     Image(systemName: "lightbulb.fill")
@@ -759,7 +759,7 @@ struct AchievementDetailView: View {
         if components.count >= 2 {
             let difficulty = components[0]
             
-            HStack {
+        HStack {
                 Image(systemName: "chart.bar.fill")
                     .foregroundColor(.blue)
                 
@@ -783,7 +783,7 @@ struct AchievementDetailView: View {
     @ViewBuilder
     private func streakTipView(for achievement: Achievement) -> some View {
         if let days = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
-            HStack {
+        HStack {
                 Image(systemName: "flame.fill")
                     .foregroundColor(.purple)
                 
@@ -807,7 +807,7 @@ struct AchievementDetailView: View {
     @ViewBuilder
     private func timeTipView(for achievement: Achievement) -> some View {
         if let minutes = Int(achievement.id.components(separatedBy: "_").last ?? "0") {
-            HStack {
+        HStack {
                 Image(systemName: "clock.fill")
                     .foregroundColor(.yellow)
                 

@@ -83,6 +83,7 @@ struct Achievement: Identifiable, Codable, Equatable {
     var completionDate: Date?
     var status: AchievementStatus = .locked
     var rewardPoints: Int = 0
+    var lastSyncDate: Date? = nil
     
     // Kullanıcı arayüzü için yardımcı özellikler
     var progress: Double {
@@ -156,7 +157,9 @@ struct Achievement: Identifiable, Codable, Equatable {
             "unlockedDate": unlockedDate as Any,
             "completionDate": completionDate as Any,
             "pointValue": pointValue,
-            "rewardPoints": rewardPoints
+            "rewardPoints": rewardPoints,
+            "lastSyncDate": lastSyncDate as Any,
+            "lastUpdated": Date()
         ]
     }
     
@@ -190,6 +193,7 @@ struct Achievement: Identifiable, Codable, Equatable {
         achievement.unlockedDate = dict["unlockedDate"] as? Date
         achievement.completionDate = dict["completionDate"] as? Date
         achievement.rewardPoints = dict["rewardPoints"] as? Int ?? pointValue
+        achievement.lastSyncDate = dict["lastSyncDate"] as? Date
         
         return achievement
     }

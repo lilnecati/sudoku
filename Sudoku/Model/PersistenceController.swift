@@ -1975,8 +1975,8 @@ class PersistenceController {
                         UserDefaults.standard.set(deletedTimestamps, forKey: deletedTimestampsKey)
                 
                 print("📝 Tamamlanan oyun ID \(documentID) silinen oyunlar listesine eklendi")
-            }
-            
+                    }
+                    
             // 2. Firestore'da kayıtlı belge varsa önce silelim
             if let document = document, document.exists {
                 gameRef.delete { [weak self] deleteError in
@@ -2169,8 +2169,8 @@ class PersistenceController {
                             // Oyun listesi güncellemesini geciktir
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                 NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
-                            }
-                        }
+                    }
+                }
                     }
                 }
             }

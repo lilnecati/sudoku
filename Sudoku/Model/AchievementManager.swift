@@ -11,6 +11,7 @@ class AchievementManager: ObservableObject {
     private let userDefaults = UserDefaults.standard
     private let achievementsKey = "user_achievements"
     private let streakKey = "user_streak_data"
+    private let pendingSyncKey = "pending_sync_achievements"
     
     @Published private(set) var achievements: [Achievement] = []
     @Published private(set) var totalPoints: Int = 0
@@ -18,6 +19,10 @@ class AchievementManager: ObservableObject {
     @Published var lastUnlockedAchievement: Achievement? = nil
     @Published var unlockedAchievements: [String: Bool] = [:]
     @Published private(set) var newlyUnlockedAchievements: [Achievement] = []
+    
+    // Çevrimdışı mod için senkronizasyon kuyruğu
+    private var pendingSyncQueue: [String] = []
+    private var isCurrentlySync: Bool = false
     
     // CoreData servis referansı
     private let achievementCoreDataService = AchievementCoreDataService()
@@ -35,12 +40,7 @@ class AchievementManager: ObservableObject {
     
     private var streakData: StreakData?
     
-    private init() {
-        setupAchievements()
-        loadAchievements()
-        checkDailyLogin()
-        checkDailyAchievementsStatus()
-        
+    private func setupNotifications() {
         // Başarı sıfırlama bildirimi için dinleyici ekle
         NotificationCenter.default.addObserver(
             self,
@@ -56,6 +56,23 @@ class AchievementManager: ObservableObject {
             name: Notification.Name("UserLoggedIn"),
             object: nil
         )
+        
+        // İnternet bağlantısı değişiklikleri için dinleyiciler
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleNetworkConnectivityChange),
+            name: NSNotification.Name("NetworkReachabilityChanged"),
+            object: nil
+        )
+    }
+    
+    private init() {
+        setupAchievements()
+        loadAchievements()
+        loadPendingSyncQueue()
+        checkDailyLogin()
+        checkDailyAchievementsStatus()
+        setupNotifications()
         
         // Eğer kullanıcı giriş yapmışsa, Firebase'den başarımları yükle
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -339,8 +356,9 @@ class AchievementManager: ObservableObject {
         // Toplam puanları hesapla
         calculateTotalPoints()
         
-        // Firebase ile senkronize et
-        syncWithFirebase()
+        // Senkronizasyon kuyruk sistemini kullanarak Firebase ile senkronize et
+        // syncWithFirebase() yerine queueSyncWithFirebase() kullan
+        queueSyncWithFirebase()
         
         // CoreData'ya kaydet
         if let user = Auth.auth().currentUser {
@@ -370,6 +388,9 @@ class AchievementManager: ObservableObject {
         }
         
         let previousStatus = achievements[index].status
+        
+        // Zaman damgası güncelleme - senkronizasyon çakışması çözümlemesi için
+        achievements[index].lastSyncDate = Date()
         
         // Sadece tamamlanmadıysa güncelle
         if !previousStatus.isCompleted {
@@ -845,9 +866,96 @@ class AchievementManager: ObservableObject {
     }
     
     // Firestore'a başarımları senkronize et
-    func syncWithFirebase() {
+    // MARK: - Senkronizasyon İyileştirmeleri
+    
+    // İnternet bağlantısı değişikliği bildirimi
+    @objc private func handleNetworkConnectivityChange(_ notification: Notification) {
+        if let isConnected = notification.userInfo?["isConnected"] as? Bool, isConnected {
+            print("🌐 İnternet bağlantısı tespit edildi - Bekleyen başarımlar senkronize ediliyor")
+            processPendingSyncQueue() // Bağlantı geldiğinde bekleyen senkronizasyonları işle
+        }
+    }
+    
+    // Bekleyen senkronizasyon kuyruğu yükleme
+    private func loadPendingSyncQueue() {
+        if let data = userDefaults.data(forKey: pendingSyncKey),
+           let pendingQueue = try? JSONDecoder().decode([String].self, from: data) {
+            self.pendingSyncQueue = pendingQueue
+            print("⏱️ Bekleyen senkronizasyon kuyruğu yüklendi: \(pendingQueue.count) başarım")
+            
+            // İlk başlatmada bekleyen senkronizasyonları işlemeyi dene
+            if !pendingQueue.isEmpty {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                    self?.processPendingSyncQueue()
+                }
+            }
+        }
+    }
+    
+    // Başarım ID'sini bekleyen senkronizasyon kuyruğuna ekle
+    private func addToPendingSyncQueue(_ achievementID: String) {
+        // Zaten kuyrukta yoksa ekle
+        if !pendingSyncQueue.contains(achievementID) {
+            pendingSyncQueue.append(achievementID)
+            savePendingSyncQueue()
+            print("⏱️ Başarım senkronizasyon kuyruğuna eklendi: \(achievementID)")
+        }
+        
+        // Hemen işlemeyi dene
+        processPendingSyncQueue()
+    }
+    
+    // Kuyruk sistemini kullanarak senkronizasyon yapma
+    private func queueSyncWithFirebase() {
+        // Tüm başarımlar için genel bir ID kullan
+        addToPendingSyncQueue("ALL_ACHIEVEMENTS")
+    }
+    
+    // Bekleyen senkronizasyon kuyruğunu kaydet
+    private func savePendingSyncQueue() {
+        if let data = try? JSONEncoder().encode(pendingSyncQueue) {
+            userDefaults.set(data, forKey: pendingSyncKey)
+        }
+    }
+    
+    // Bekleyen başarımları senkronize etmeyi dene
+    private func processPendingSyncQueue() {
+        // Zaten işleniyorsa çık
+        if isCurrentlySync || pendingSyncQueue.isEmpty {
+            return
+        }
+        
+        // Kullanıcı oturum açmış mı kontrol et
+        guard Auth.auth().currentUser != nil else {
+            print("⚠️ Senkronizasyon yapılamıyor: Kullanıcı oturum açmamış")
+            return
+        }
+        
+        // İşleme durumunu ayarla
+        isCurrentlySync = true
+        print("🔄 Bekleyen senkronizasyonlar işleniyor: \(pendingSyncQueue.count) adet")
+        
+        // Firebase ile senkronize et - tüm başarımları bir kerede gönder
+        syncWithFirebase(completionHandler: { [weak self] success in
+            guard let self = self else { return }
+            self.isCurrentlySync = false
+            
+            if success {
+                // Başarılı ise kuyruğu temizle
+                self.pendingSyncQueue.removeAll()
+                self.savePendingSyncQueue()
+                print("✅ Bekleyen tüm başarımlar başarıyla senkronize edildi")
+            } else {
+                print("❌ Başarımlar senkronize edilemedi, daha sonra tekrar denenecek")
+            }
+        })
+    }
+    
+    // Ana senkronizasyon fonksiyonu - tamamlama işleyicisi eklendi
+    func syncWithFirebase(completionHandler: ((Bool) -> Void)? = nil) {
         guard let user = Auth.auth().currentUser else { 
             print("⚠️ Başarımlar kaydedilemiyor: Kullanıcı oturum açmamış")
+            completionHandler?(false)
             return 
         }
         
@@ -1248,12 +1356,12 @@ class AchievementManager: ObservableObject {
     
     // Firebase'e başarıyı kaydet
     private func saveAchievementToFirestore(achievementID: String) {
-        // Doğrudan tüm başarımları senkronize et, daha tutarlı bir yaklaşım
-        syncWithFirebase()
+        // Kuyruk sistemi üzerinden senkronize etmeyi dene
+        addToPendingSyncQueue(achievementID)
         
         // Log için
         if let achievement = achievements.first(where: { $0.id == achievementID }) {
-            print("🏆 Başarım Firebase'e kaydedildi: \(achievement.name)")
+            print("🏆 Başarım senkronizasyon kuyruğuna eklendi: \(achievement.name)")
         }
     }
     
@@ -1477,6 +1585,7 @@ class AchievementManager: ObservableObject {
     // Firebase'den gelen verilerle başarıları güncelle
     private func updateAchievementsFromFirebase(_ firebaseAchievements: [[String: Any]]) {
         var updatedCount = 0
+        let mergeDate = Date()
         
         for fbAchievement in firebaseAchievements {
             guard let id = fbAchievement["id"] as? String,
@@ -1488,12 +1597,28 @@ class AchievementManager: ObservableObject {
             let firebaseIsCompleted = fbAchievement["isCompleted"] as? Bool ?? false
             let localIsCompleted = achievements[index].isCompleted
             
-            // Eğer yerel başarım tamamlanmış ve Firebase başarımı tamamlanmamışsa, yerel başarımı üstün tut
-            if localIsCompleted && !firebaseIsCompleted {
+            // Çakışma çözümleme: Firebase zaman damgası ve yerel zaman damgası karşılaştırması
+            let firebaseTimestamp = fbAchievement["lastUpdated"] as? Timestamp
+            let firebaseDate = firebaseTimestamp?.dateValue() ?? Date(timeIntervalSince1970: 0)
+            let localDate = achievements[index].lastSyncDate ?? Date(timeIntervalSince1970: 0)
+            
+            // Eğer yerel başarım tamamlanmış ve Firebase başarımı tamamlanmamışsa
+            // VE yerel başarım daha yeniyse, yerel başarımı üstün tut
+            if localIsCompleted && !firebaseIsCompleted && localDate > firebaseDate {
+                print("🔄 Yerel başarım '\(id)' daha güncel, Firebase'e yüklenecek")
+                continue
+            }
+            
+            // Eğer Firebase başarımı daha eski ise güncelleme yapma
+            if firebaseDate < localDate {
+                print("⏭️ Firebase başarımı '\(id)' daha eski (\(firebaseDate) < \(localDate)), atlanıyor")
                 continue
             }
             
             // Firebase'de başarım tamamlanmışsa, yerel başarımı güncelle
+            // Zaman damgasını kaydet
+            achievements[index].lastSyncDate = mergeDate
+            
             switch statusStr {
             case "locked":
                 achievements[index].status = .locked

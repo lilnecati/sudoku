@@ -8,7 +8,7 @@ struct AchievementNotificationView: View {
     @State private var isDragging: Bool = false
     
     // Bildirim süresi
-    private let notificationDuration: TimeInterval = 10
+    private let notificationDuration: TimeInterval = 15
     
     var body: some View {
         Group {
