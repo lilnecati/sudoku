@@ -84,12 +84,12 @@ class AchievementManager: ObservableObject {
     
     // Kullanıcı giriş yaptığında çağrılan fonksiyon
     @objc private func handleUserLoggedIn() {
-        print("👤 Kullanıcı oturum açtı - Başarımlar yükleniyor")
+        logInfo("Kullanıcı oturum açtı - Başarımlar yükleniyor")
         if let user = Auth.auth().currentUser {
             // CoreData'dan önce başarımları yükle
             let coreDataAchievements = achievementCoreDataService.loadAchievements(for: user.uid)
             if !coreDataAchievements.isEmpty {
-                print("🗄️ CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
+                logInfo("CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
                 
                 // CoreData'daki verileri yerel başarımlara yükle
                 for coreDataAchievement in coreDataAchievements {
@@ -425,7 +425,7 @@ class AchievementManager: ObservableObject {
                 // Sudoku Zirve başarısını kontrol et
                 checkForMasterAchievement()
                 
-                print("🏆 BAŞARIM KAZANILDI: '\(achievements[index].name)' tamamlandı!")
+                logSuccess("BAŞARIM KAZANILDI: '\(achievements[index].name)' tamamlandı!")
                 
                 // NotificationCenter ile bildirimi hemen gönder
                 NotificationCenter.default.post(
@@ -452,21 +452,21 @@ class AchievementManager: ObservableObject {
         switch difficulty {
         case .easy:
             prefixId = "easy_"
-            print("🏆 DEBUG: Kolay seviye başarım kontrolü - prefix: \(prefixId)")
+            logInfo("Kolay seviye başarım kontrolü - prefix: \(prefixId)")
         case .medium:
             prefixId = "medium_"
-            print("🏆 DEBUG: Orta seviye başarım kontrolü - prefix: \(prefixId)")
+            logInfo("Orta seviye başarım kontrolü - prefix: \(prefixId)")
         case .hard:
             prefixId = "hard_"
-            print("🏆 DEBUG: Zor seviye başarım kontrolü - prefix: \(prefixId)")
+            logInfo("Zor seviye başarım kontrolü - prefix: \(prefixId)")
         case .expert:
             prefixId = "expert_"
-            print("🏆 DEBUG: Uzman seviye başarım kontrolü - prefix: \(prefixId)")
+            logInfo("Uzman seviye başarım kontrolü - prefix: \(prefixId)")
         }
         
         // İlgili prefixe sahip başarımları listele
         let relatedAchievements = achievements.filter { $0.id.hasPrefix(prefixId) }
-        print("🏆 DEBUG: \(prefixId) prefixli \(relatedAchievements.count) başarım bulundu")
+        logInfo("\(prefixId) prefixli \(relatedAchievements.count) başarım bulundu")
         
         // Her zorluk seviyesi başarısını kontrol et
         for achievement in achievements where achievement.id.hasPrefix(prefixId) {
@@ -478,27 +478,27 @@ class AchievementManager: ObservableObject {
             case .locked:
                 // Başlat
                 newStatus = .inProgress(currentValue: 1, requiredValue: achievement.targetValue)
-                print("🏆 DEBUG: '\(achievement.name)' başarımı başlatılıyor - 1/\(achievement.targetValue)")
+                logInfo("'\(achievement.name)' başarımı başlatılıyor - 1/\(achievement.targetValue)")
                 
                 // Eğer hedef değeri 1 ise, direkt tamamlandı olarak işaretle
                 if achievement.targetValue == 1 {
                     newStatus = .completed(unlockDate: Date())
-                    print("🏆 DEBUG: '\(achievement.name)' başarımı direkt tamamlandı - 1/1 (100%)")
+                    logInfo("'\(achievement.name)' başarımı direkt tamamlandı - 1/1 (100%)")
                 }
             case .inProgress(let current, let required):
                 let newCount = current + 1
                 if newCount >= required {
                     // Tamamla
                     newStatus = .completed(unlockDate: Date())
-                    print("🏆 DEBUG: '\(achievement.name)' başarımı tamamlandı - \(newCount)/\(required)")
+                    logInfo("'\(achievement.name)' başarımı tamamlandı - \(newCount)/\(required)")
                 } else {
                     // İlerlet
                     newStatus = .inProgress(currentValue: newCount, requiredValue: required)
-                    print("🏆 DEBUG: '\(achievement.name)' başarımı ilerledi - \(newCount)/\(required)")
+                    logInfo("'\(achievement.name)' başarımı ilerledi - \(newCount)/\(required)")
                 }
             case .completed:
                 // Zaten tamamlanmış
-                print("🏆 DEBUG: '\(achievement.name)' başarımı zaten tamamlanmış")
+                logInfo("'\(achievement.name)' başarımı zaten tamamlanmış")
                 continue
             }
             
@@ -558,19 +558,20 @@ class AchievementManager: ObservableObject {
         // Hatasız oyun
         if errorCount == 0 {
             updateAchievement(id: "no_errors", status: .completed(unlockDate: Date()))
-            print("🏆 DEBUG: 'Kusursuz' başarımı tamamlandı - hatasız oyun")
+            logDebug("Kusursuz başarımı tamamlandı - hatasız oyun")
         }
         
         // İpuçsuz oyun
         if hintCount == 0 {
             updateAchievement(id: "no_hints", status: .completed(unlockDate: Date()))
-            print("🏆 DEBUG: 'Yardımsız' başarımı tamamlandı - ipuçsuz oyun")
+            logDebug("Yardımsız başarımı tamamlandı - ipuçsuz oyun")
+            logDebug("'Yardımsız' başarımı tamamlandı - ipuçsuz oyun")
         }
     }
     
     // Oyun tamamlandığında tüm başarıları güncelle
     func processGameCompletion(difficulty: SudokuBoard.Difficulty, time: TimeInterval, errorCount: Int, hintCount: Int) {
-        print("🏆 BAŞARIM - Oyun tamamlandı: \(difficulty.rawValue) zorluk, \(time) süre, \(errorCount) hata, \(hintCount) ipucu")
+        logInfo("BAŞARIM - Oyun tamamlandı: \(difficulty.rawValue) zorluk, \(time) süre, \(errorCount) hata, \(hintCount) ipucu")
         
         // Zorluk başarıları
         updateDifficultyAchievements(difficulty: difficulty)
@@ -642,11 +643,11 @@ class AchievementManager: ObservableObject {
     
     // DEBUG: Başarım durumlarını yazdır
     private func printAchievementStatus() {
-        print("🏆 Mevcut başarım durumları:")
+        logInfo("Mevcut başarım durumları:")
         
         // Kategoriye göre başarımları grupla
         Dictionary(grouping: achievements, by: { $0.category }).sorted { $0.key.rawValue < $1.key.rawValue }.forEach { category, achievements in
-            print("  📋 Kategori: \(category.rawValue)")
+            logInfo("  Kategori: \(category.rawValue)")
             
             // Her başarım için durum göster
             achievements.sorted { $0.id < $1.id }.forEach { achievement in
@@ -661,7 +662,7 @@ class AchievementManager: ObservableObject {
                     formatter.dateStyle = .short
                     statusText = "✅ Tamamlandı: \(formatter.string(from: date))"
                 }
-                print("    - \(achievement.name): \(statusText)")
+                logInfo("    - \(achievement.name): \(statusText)")
             }
         }
     }
@@ -881,7 +882,7 @@ class AchievementManager: ObservableObject {
     // İnternet bağlantısı değişikliği bildirimi
     @objc private func handleNetworkConnectivityChange(_ notification: Notification) {
         if let isConnected = notification.userInfo?["isConnected"] as? Bool, isConnected {
-            print("🌐 İnternet bağlantısı tespit edildi - Bekleyen başarımlar senkronize ediliyor")
+            logInfo("İnternet bağlantısı tespit edildi - Bekleyen başarımlar senkronize ediliyor")
             processPendingSyncQueue() // Bağlantı geldiğinde bekleyen senkronizasyonları işle
         }
     }
@@ -891,7 +892,7 @@ class AchievementManager: ObservableObject {
         if let data = userDefaults.data(forKey: pendingSyncKey),
            let pendingQueue = try? JSONDecoder().decode([String].self, from: data) {
             self.pendingSyncQueue = pendingQueue
-            print("⏱️ Bekleyen senkronizasyon kuyruğu yüklendi: \(pendingQueue.count) başarım")
+            logInfo("Bekleyen senkronizasyon kuyruğu yüklendi: \(pendingQueue.count) başarım")
             
             // İlk başlatmada bekleyen senkronizasyonları işlemeyi dene
             if !pendingQueue.isEmpty {
@@ -908,7 +909,7 @@ class AchievementManager: ObservableObject {
         if !pendingSyncQueue.contains(achievementID) {
             pendingSyncQueue.append(achievementID)
             savePendingSyncQueue()
-            print("⏱️ Başarım senkronizasyon kuyruğuna eklendi: \(achievementID)")
+            logInfo("Başarım senkronizasyon kuyruğuna eklendi: \(achievementID)")
         }
         
         // Hemen işlemeyi dene
@@ -937,13 +938,13 @@ class AchievementManager: ObservableObject {
         
         // Kullanıcı oturum açmış mı kontrol et
         guard Auth.auth().currentUser != nil else {
-            print("⚠️ Senkronizasyon yapılamıyor: Kullanıcı oturum açmamış")
+            logWarning("Senkronizasyon yapılamıyor: Kullanıcı oturum açmamış")
             return
         }
         
         // İşleme durumunu ayarla
         isCurrentlySync = true
-        print("🔄 Bekleyen senkronizasyonlar işleniyor: \(pendingSyncQueue.count) adet")
+        logInfo("Bekleyen senkronizasyonlar işleniyor: \(pendingSyncQueue.count) adet")
         
         // Firebase ile senkronize et - tüm başarımları bir kerede gönder
         syncWithFirebase(completionHandler: { [weak self] success in
@@ -954,9 +955,9 @@ class AchievementManager: ObservableObject {
                 // Başarılı ise kuyruğu temizle
                 self.pendingSyncQueue.removeAll()
                 self.savePendingSyncQueue()
-                print("✅ Bekleyen tüm başarımlar başarıyla senkronize edildi")
+                logSuccess("Bekleyen tüm başarımlar başarıyla senkronize edildi")
             } else {
-                print("❌ Başarımlar senkronize edilemedi, daha sonra tekrar denenecek")
+                logError("Başarımlar senkronize edilemedi, daha sonra tekrar denenecek")
             }
         })
     }
@@ -964,12 +965,12 @@ class AchievementManager: ObservableObject {
     // Ana senkronizasyon fonksiyonu - tamamlama işleyicisi eklendi
     func syncWithFirebase(completionHandler: ((Bool) -> Void)? = nil) {
         guard let user = Auth.auth().currentUser else { 
-            print("⚠️ Başarımlar kaydedilemiyor: Kullanıcı oturum açmamış")
+            logWarning("Başarımlar kaydedilemiyor: Kullanıcı oturum açmamış")
             completionHandler?(false)
             return 
         }
         
-        print("🔄 Başarımlar Firebase'e senkronize ediliyor...")
+        logInfo("Başarımlar Firebase'e senkronize ediliyor...")
         
         // Tüm başarımlar için toplu veri hazırla
         let achievementsData = encodeAchievementsForFirebase()
@@ -980,7 +981,7 @@ class AchievementManager: ObservableObject {
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Firebase belgesi kontrol edilemedi: \(error.localizedDescription)")
+                logError("Firebase belgesi kontrol edilemedi: \(error.localizedDescription)")
                 return
             }
             
@@ -1003,7 +1004,7 @@ class AchievementManager: ObservableObject {
             for achievementData in achievementsData {
                 guard let id = achievementData["id"] as? String,
                       let categoryName = achievementData["category"] as? String else { 
-                    print("⚠️ Kategorileme hatası - kategori bilgisi eksik: \(achievementData["id"] ?? "bilinmeyen")")
+                    logWarning("Kategorileme hatası - kategori bilgisi eksik: \(achievementData["id"] ?? "bilinmeyen")")
                     continue 
                 }
                 
@@ -1022,11 +1023,11 @@ class AchievementManager: ObservableObject {
                 
                 if categorizedAchievements.keys.contains(firestoreCategory) {
                     categorizedAchievements[firestoreCategory]?.append(achievementData)
-                    print("✅ Başarım kategorisi eşleşti: \(id) -> \(firestoreCategory)")
+                    logDebug("Başarım kategorisi eşleşti: \(id) -> \(firestoreCategory)")
             } else {
                     // Bilinmeyen kategoriler için "special" kategorisini kullan
                     categorizedAchievements["special"]?.append(achievementData)
-                    print("⚠️ Bilinmeyen kategori: \(categoryName) -> 'special' kullanıldı")
+                    logWarning("Bilinmeyen kategori: \(categoryName) -> 'special' kullanıldı")
                 }
             }
             
@@ -1065,9 +1066,9 @@ class AchievementManager: ObservableObject {
             // Batch işlemini uygula
             batch.commit { error in
                 if let error = error {
-                    print("❌ Başarımlar Firestore'a kaydedilemedi: \(error.localizedDescription)")
+                    logError("Başarımlar Firestore'a kaydedilemedi: \(error.localizedDescription)")
                 } else {
-                    print("✅ Başarımlar Firestore'a kaydedildi (Kategori Modeli)")
+                    logSuccess("Başarımlar Firestore'a kaydedildi (Kategori Modeli)")
                 }
             }
             
@@ -1083,16 +1084,16 @@ class AchievementManager: ObservableObject {
                 
                 self.db.collection("users").document(user.uid).updateData(achievementUpdateData) { error in
                     if let error = error {
-                        print("❌ Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
+                        logError("Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
                     } else {
-                        print("✅ Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
+                        logSuccess("Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
                     }
                 }
             } else {
                 // Belge yoksa, önce kullanıcı profilini al, sonra başarımları ekle
                 Auth.auth().currentUser?.getIDTokenResult(forcingRefresh: true) { tokenResult, error in
                     if let error = error {
-                        print("❌ Token doğrulama hatası: \(error.localizedDescription)")
+                        logError("Token doğrulama hatası: \(error.localizedDescription)")
                         return
                     }
                     
@@ -1110,9 +1111,9 @@ class AchievementManager: ObservableObject {
                     // Belgeyi güncelle
                     self.db.collection("users").document(user.uid).setData(userProfile, merge: true) { error in
                         if let error = error {
-                            print("❌ Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
+                            logError("Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
                         } else {
-                            print("✅ Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
+                            logSuccess("Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
                         }
                     }
                 }
@@ -1124,11 +1125,11 @@ class AchievementManager: ObservableObject {
     func loadAchievementsFromFirebase() {
         // Giriş yapmış kullanıcı kontrolü
         guard let user = Auth.auth().currentUser else {
-            print("❌ Firebase başarımları yüklenemiyor - kullanıcı giriş yapmamış")
+            logError("Firebase başarımları yüklenemiyor - kullanıcı giriş yapmamış")
             return
         }
         
-        print("🔄 Firebase'den başarımlar yükleniyor...")
+        logInfo("Firebase'den başarımlar yükleniyor...")
         
         // Firestore'dan başarımları al - doğru koleksiyon adını kullan
         let userAchievementsRef = db.collection("userAchievements").document(user.uid)
@@ -1137,7 +1138,7 @@ class AchievementManager: ObservableObject {
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Firebase başarım yükleme hatası: \(error.localizedDescription)")
+                logError("Firebase başarım yükleme hatası: \(error.localizedDescription)")
                 return
             }
             
@@ -1146,11 +1147,11 @@ class AchievementManager: ObservableObject {
                 let categories = document.data()?["categories"] as? [String] ?? []
                 
                 if categories.isEmpty {
-                    print("⚠️ Kategorileri yok veya boş - Firebase başarımları bulunamadı")
+                    logWarning("Kategorileri yok veya boş - Firebase başarımları bulunamadı")
                     return
                 }
                 
-                print("📊 Firebase'de \(categories.count) başarım kategorisi bulundu")
+                logInfo("Firebase'de \(categories.count) başarım kategorisi bulundu")
                 
                 var loadedFirebaseAchievements: [[String: Any]] = []
                 let categoriesGroup = DispatchGroup()
@@ -1161,7 +1162,7 @@ class AchievementManager: ObservableObject {
                     
                     userAchievementsRef.collection("categories").document(category).getDocument { categoryDoc, categoryError in
                         if let categoryError = categoryError {
-                            print("❌ Kategori yükleme hatası: \(categoryError.localizedDescription)")
+                            logError("Kategori yükleme hatası: \(categoryError.localizedDescription)")
                             categoriesGroup.leave()
                             return
                         }
@@ -1181,39 +1182,39 @@ class AchievementManager: ObservableObject {
                     guard let self = self else { return }
                     
                     if loadedFirebaseAchievements.isEmpty {
-                        print("⚠️ Firebase'den yüklenen başarımlar yok veya boş")
+                        logWarning("Firebase'den yüklenen başarımlar yok veya boş")
                         return
                     }
                     
                     // Firebase'den gelen verilerle başarımları güncelle
                     self.updateAchievementsFromFirebase(loadedFirebaseAchievements)
-                    print("✅ Firebase'den \(loadedFirebaseAchievements.count) başarım yüklendi ve güncellendi")
+                    logSuccess("Firebase'den \(loadedFirebaseAchievements.count) başarım yüklendi ve güncellendi")
                     
                     // Başarımları CoreData'ya da kaydet
                     self.achievementCoreDataService.saveAchievements(self.achievements, for: user.uid)
-                    print("💾 Başarımlar CoreData'ya kaydedildi")
+                    logSuccess("Başarımlar CoreData'ya kaydedildi")
                 }
             } else {
-                print("⚠️ Firebase'de başarım belgesi bulunamadı (userAchievements koleksiyonunda)")
+                logWarning("Firebase'de başarım belgesi bulunamadı (userAchievements koleksiyonunda)")
                 
                 // Eski koleksiyondan (users) veri yüklemeyi dene
                 self.db.collection("users").document(user.uid).getDocument { [weak self] (document, error) in
                     guard let self = self else { return }
                     
                     if let error = error {
-                        print("❌ Users koleksiyonundan başarım yükleme hatası: \(error.localizedDescription)")
+                        logError("Users koleksiyonundan başarım yükleme hatası: \(error.localizedDescription)")
                         self.loadFromCoreDataBackup(for: user.uid)
                         return
                     }
                     
                     if let document = document, document.exists,
                        let achievementsData = document.data()?["achievements"] as? [[String: Any]], !achievementsData.isEmpty {
-                        print("📊 Eski yapıdan (users koleksiyonu) \(achievementsData.count) başarım yüklendi")
+                        logInfo("Eski yapıdan (users koleksiyonu) \(achievementsData.count) başarım yüklendi")
                         self.updateAchievementsFromFirebase(achievementsData)
-                        print("✅ Eski yapıdan başarımlar güncellendi, yeni yapıya senkronize ediliyor...")
+                        logSuccess("Eski yapıdan başarımlar güncellendi, yeni yapıya senkronize ediliyor...")
                         self.syncWithFirebase() // Yeni yapıya senkronize et
                     } else {
-                        print("⚠️ Eski yapıda da başarım bulunamadı, CoreData'dan yükleniyor")
+                        logWarning("Eski yapıda da başarım bulunamadı, CoreData'dan yükleniyor")
                         self.loadFromCoreDataBackup(for: user.uid)
                     }
                 }
@@ -1223,7 +1224,7 @@ class AchievementManager: ObservableObject {
     
     // Başarı verilerini sıfırlama fonksiyonu
     @objc private func resetAchievementsData() {
-        print("🧹 AchievementManager: Başarı verilerini sıfırlama bildirimi alındı")
+        logInfo("AchievementManager: Başarı verilerini sıfırlama bildirimi alındı")
         
         // Başarıları ilk durumlarına sıfırla
         setupAchievements()
@@ -1271,7 +1272,7 @@ class AchievementManager: ObservableObject {
     private func deleteAchievementsFromFirebase() {
         guard let user = Auth.auth().currentUser else { return }
         
-        print("🚮 Firebase'deki başarımlar siliniyor...")
+        logInfo("Firebase'deki başarımlar siliniyor...")
         
         // 1. Yeni yapıdan kategori verilerini sil
         let userAchievementsRef = db.collection("userAchievements").document(user.uid)
@@ -1281,7 +1282,7 @@ class AchievementManager: ObservableObject {
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Firebase kategori belgeleri alınamadı: \(error.localizedDescription)")
+                logError("Firebase kategori belgeleri alınamadı: \(error.localizedDescription)")
                 return
             }
             
@@ -1301,17 +1302,17 @@ class AchievementManager: ObservableObject {
             // Batch işlemini uygula
             batch.commit { error in
                 if let error = error {
-                    print("❌ Firebase kategori başarımları silinemedi: \(error.localizedDescription)")
+                    logError("Firebase kategori başarımları silinemedi: \(error.localizedDescription)")
                 } else {
-                    print("✅ Firebase'deki kategori başarımları başarıyla silindi")
+                    logSuccess("Firebase'deki kategori başarımları başarıyla silindi")
                 }
                 
                 // 3. Users koleksiyonundaki başarımları da sil
                 self.db.collection("users").document(user.uid).updateData(["achievements": FieldValue.delete()]) { error in
                     if let error = error {
-                        print("❌ Users koleksiyonundaki başarımlar silinemedi: \(error.localizedDescription)")
+                        logError("Users koleksiyonundaki başarımlar silinemedi: \(error.localizedDescription)")
                     } else {
-                        print("✅ Users koleksiyonundaki başarımlar başarıyla silindi")
+                        logSuccess("Users koleksiyonundaki başarımlar başarıyla silindi")
                     }
                 }
             }
@@ -1322,7 +1323,7 @@ class AchievementManager: ObservableObject {
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Firebase achievements koleksiyonu başarımları silinemedi: \(error.localizedDescription)")
+                logError("Firebase achievements koleksiyonu başarımları silinemedi: \(error.localizedDescription)")
                 // Hata olsa bile devam et, diğer koleksiyonları silmeye çalış
             }
             
@@ -1339,9 +1340,9 @@ class AchievementManager: ObservableObject {
             // Batch işlemini uygula
             batch.commit { error in
                 if let error = error {
-                    print("❌ Firebase başarımları silinemedi: \(error.localizedDescription)")
+                    logError("Firebase başarımları silinemedi: \(error.localizedDescription)")
                 } else {
-                    print("✅ Firebase'deki eski yapı başarımları başarıyla silindi")
+                    logSuccess("Firebase'deki eski yapı başarımları başarıyla silindi")
                 }
             }
         }
@@ -1391,7 +1392,7 @@ class AchievementManager: ObservableObject {
             lastUnlockedAchievement = updatedAchievement
             showAchievementAlert = true
             
-            print("🏆 Başarım açıldı: \(updatedAchievement.name)")
+            logSuccess("Başarım açıldı: \(updatedAchievement.name)")
             
             // Firebase'e kaydet
             saveAchievementToFirestore(achievementID: achievementID)
@@ -1405,7 +1406,7 @@ class AchievementManager: ObservableObject {
         
         // Log için
         if let achievement = achievements.first(where: { $0.id == achievementID }) {
-            print("🏆 Başarım senkronizasyon kuyruğuna eklendi: \(achievement.name)")
+            logInfo("Başarım senkronizasyon kuyruğuna eklendi: \(achievement.name)")
         }
     }
     
@@ -1631,7 +1632,7 @@ class AchievementManager: ObservableObject {
     private func loadFromCoreDataBackup(for userID: String) {
         let coreDataAchievements = self.achievementCoreDataService.loadAchievements(for: userID)
         if !coreDataAchievements.isEmpty {
-            print("🗄️ CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
+            logInfo("CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
             
             // Yerel başarımlarla birleştir
             for coreDataAchievement in coreDataAchievements {
@@ -1648,7 +1649,7 @@ class AchievementManager: ObservableObject {
             // Firebase'e senkronize et
             self.syncWithFirebase()
         } else {
-            print("⚠️ CoreData'da da başarım bulunamadı, varsayılan başarımlar kullanılacak")
+            logWarning("CoreData'da da başarım bulunamadı, varsayılan başarımlar kullanılacak")
         }
     }
     
@@ -1674,13 +1675,13 @@ class AchievementManager: ObservableObject {
             // Eğer yerel başarım tamamlanmış ve Firebase başarımı tamamlanmamışsa
             // VE yerel başarım daha yeniyse, yerel başarımı üstün tut
             if localIsCompleted && !firebaseIsCompleted && localDate > firebaseDate {
-                print("🔄 Yerel başarım '\(id)' daha güncel, Firebase'e yüklenecek")
+                logInfo("Yerel başarım '\(id)' daha güncel, Firebase'e yüklenecek")
                 continue
             }
             
             // Eğer Firebase başarımı daha eski ise güncelleme yapma
             if firebaseDate < localDate {
-                print("⏭️ Firebase başarımı '\(id)' daha eski (\(firebaseDate) < \(localDate)), atlanıyor")
+                logInfo("Firebase başarımı '\(id)' daha eski (\(firebaseDate) < \(localDate)), atlanıyor")
                 continue
             }
             
@@ -1721,7 +1722,7 @@ class AchievementManager: ObservableObject {
             }
         }
         
-        print("✅ Firebase'den \(updatedCount) başarım güncellendi")
+        logSuccess("Firebase'den \(updatedCount) başarım güncellendi")
         
         // Değişiklikleri kaydet ve toplam puanları güncelle
         calculateTotalPoints()

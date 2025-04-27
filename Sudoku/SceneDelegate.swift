@@ -15,12 +15,20 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
-        // Sahne serbest bırakıldığında çağrılır
-        // Bu, uygulamanın sonlandırıldığı veya bir sahnenin gizlendiği anlamına gelir
+        // Sahne bağlantısı kesildiğinde çağrılır
+        // Bu genellikle sistem tarafından kaynakları geri kazanmak için yapılır
+        // Sahne daha sonra yeniden bağlanabilir veya bağlanmayabilir
+        
+        // Ekran kararması yönetimi SudokuApp'a devredildi
+        
+        // Arka plan görevlerini duraklat
+        NotificationCenter.default.post(name: NSNotification.Name("PauseBackgroundTasks"), object: nil)
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
         // Sahne aktif duruma geçtiğinde çağrılır
+        
+        // ÇOK ÖNEMLİ: Ekran kararması yönetimi SudokuApp'a devredildi
         // CPU kullanımını azaltmak için Metal hızlandırmayı etkinleştir
         DispatchQueue.main.async {
             // GPU hızlandırmayı etkinleştir - CPU kullanımını düşürür
@@ -43,6 +51,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Sahne aktif olmaktan çıkacağı zaman çağrılır
         // Bu, geçici kesintiler nedeniyle olabilir (örneğin, gelen telefon çağrısı)
         
+        // ÇOK ÖNEMLİ: Ekran kararması yönetimi SudokuApp'a devredildi
         // Uygulamada görünürlükte yoksa, yüksek CPU kullanımını önlemek için ek önlemler al
         DispatchQueue.main.async {
             // Maksimum güç tasarrufunu zorla
@@ -62,6 +71,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Sahne ön plana geçecekken çağrılır
         // Örneğin, uygulamaya geri dönerken
         
+        // ÇOK ÖNEMLİ: Ekran kararması yönetimi SudokuApp'a devredildi
         // Ön plana geçerken GPU hızlandırmayı etkinleştir - CPU kullanımını düşürür
         DispatchQueue.main.async {
             PowerSavingManager.shared.enableGPUAcceleration = true
@@ -74,6 +84,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidEnterBackground(_ scene: UIScene) {
         // Sahne arka plana geçtiğinde çağrılır
         // Kullanıcı uygulamayı kapattığında
+        
+        // ÇOK ÖNEMLİ: Ekran kararmasını ZORLA ETKİNLEŞTİRME (GameView yönetecek)
+        // UIApplication.shared.isIdleTimerDisabled = false
+        // logInfo("SceneDelegate sceneDidEnterBackground - Ekran kararması ZORLA ETKİNLEŞTİRİLDİ (ekran kararabilir)")
         
         // Arka planda kalıcı depolama ve CPU kullanımını azalt
         DispatchQueue.main.async {

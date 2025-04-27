@@ -26,7 +26,7 @@ class AchievementCoreDataService {
                 context.delete(achievement)
             }
         } catch {
-            print("Error fetching existing achievements: \(error)")
+            logError("Error fetching existing achievements: \(error)")
         }
         
         // Create new achievement entities
@@ -97,7 +97,7 @@ class AchievementCoreDataService {
                 return achievement
             }
         } catch {
-            print("Error loading achievements from CoreData: \(error)")
+            logError("Error loading achievements from CoreData: \(error)")
             return []
         }
     }
@@ -113,7 +113,7 @@ class AchievementCoreDataService {
             let achievements = try context.fetch(fetchRequest)
             return achievements.first?.lastSyncTimestamp
         } catch {
-            print("Error fetching last sync timestamp: \(error)")
+            logError("Error fetching last sync timestamp: \(error)")
             return nil
         }
     }
@@ -149,7 +149,7 @@ class AchievementCoreDataService {
                 saveContext()
             }
         } catch {
-            print("Error updating achievement: \(error)")
+            logError("Error updating achievement: \(error)")
         }
     }
     
@@ -171,7 +171,7 @@ class AchievementCoreDataService {
                 return user
             }
         } catch {
-            print("Error fetching user: \(error)")
+            logError("Error fetching user: \(error)")
             let user = User(context: context)
             user.id = UUID()
             user.firebaseUID = uid
@@ -186,7 +186,7 @@ class AchievementCoreDataService {
             do {
                 try context.save()
             } catch {
-                print("Error saving context: \(error)")
+                logError("Error saving context: \(error)")
             }
         }
     }

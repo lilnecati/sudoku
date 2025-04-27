@@ -148,7 +148,7 @@ class SudokuViewModel: ObservableObject {
             // İlk çalıştırma ise, bayrağı ayarla ve otomatik kaydetme yapma
             UserDefaults.standard.set(true, forKey: isFirstLaunchKey)
             UserDefaults.standard.set(true, forKey: noAutoSaveKey) // Otomatik kaydetmeyi kapat
-            print("🆕 İlk çalıştırma, otomatik kaydetme devre dışı")
+            logInfo("İlk çalıştırma, otomatik kaydetme devre dışı")
             gameState = .ready // Oyunu ready durumunda başlat
         } else {
             // Normal çalıştırma
@@ -216,7 +216,7 @@ class SudokuViewModel: ObservableObject {
                 // Otomatik kaydetmeyi etkinleştir - kullanıcı bilinçli olarak yeni oyun başlattı
                 let noAutoSaveKey = "SudokuViewModel.noAutoSave"
                 UserDefaults.standard.set(false, forKey: noAutoSaveKey)
-                print("🔄 Yeni oyun başlatıldı, otomatik kaydetme etkinleştirildi")
+                logInfo("Yeni oyun başlatıldı, otomatik kaydetme etkinleştirildi")
                 
                 // Yükleme durumunu kapat
                 self.isLoading = false
@@ -310,7 +310,7 @@ class SudokuViewModel: ObservableObject {
     // Seçili hücreye değer atar - optimize edildi
     func setValueAtSelectedCell(_ value: Int?) {
         guard let selectedCell = selectedCell else { 
-            print("Hücre seçili değil!")
+            logWarning("Hücre seçili değil!")
             return 
         }
         
@@ -318,11 +318,11 @@ class SudokuViewModel: ObservableObject {
         let col = selectedCell.column
         
         // Debug log
-        print("setValueAtSelectedCell: \(value ?? 0) -> (\(row), \(col)), pencilMode: \(pencilMode)")
+        logDebug("setValueAtSelectedCell: \(value ?? 0) -> (\(row), \(col)), pencilMode: \(pencilMode)")
         
         // Eğer orijinal/sabit bir hücre ise, değişime izin verme
         if board.isFixed(at: row, col: col) {
-            print("Sabit hücre değiştirilemez: (\(row), \(col))")
+            logWarning("Sabit hücre değiştirilemez: (\(row), \(col))")
             return
         }
         
@@ -331,7 +331,7 @@ class SudokuViewModel: ObservableObject {
         
         // Eğer hücredeki mevcut değer doğruysa, değişime izin verme
         if currentValue == correctValue && currentValue != nil {
-            print("Hücre zaten doğru değere sahip: \(currentValue!)")
+            logDebug("Hücre zaten doğru değere sahip: \(currentValue!)")
             SoundManager.shared.playCorrectSound() // Doğru olduğunu bir daha hatırlat
             return
         }
@@ -474,7 +474,7 @@ class SudokuViewModel: ObservableObject {
                     
                     // Oyun kaybedildiğinde kayıtlı oyunu sil
                     deleteSavedGameIfExists()
-                    print("❌ Oyun kaybedildi! Kayıtlı oyun silindi.")
+                    logError("Oyun kaybedildi! Kayıtlı oyun silindi.")
                 }
                 
                 // Önbelleği güncelle - validateBoard() çağırmayacağız
@@ -495,7 +495,7 @@ class SudokuViewModel: ObservableObject {
     private func deleteSavedGameIfExists() {
         if let gameID = currentGameID {
             PersistenceController.shared.deleteSavedGameWithID(gameID)
-            print("✅ Tamamlanan oyun kayıtlardan silindi")
+            logSuccess("Tamamlanan oyun kayıtlardan silindi")
             currentGameID = nil
         }
     }
@@ -526,7 +526,7 @@ class SudokuViewModel: ObservableObject {
             // Oyun durumunu completed olarak ayarla - bu sayede tekrar çağrılmayı önleriz
             gameState = .completed
             
-            print("📱 Oyun tamamlandı! handleGameCompletion() çağrılıyor...")
+            logInfo("Oyun tamamlandı! handleGameCompletion() çağrılıyor...")
             // handleGameCompletion fonksiyonunu çağır - tüm tamamlanma işlemleri burada
             handleGameCompletion()
         }
@@ -1398,7 +1398,7 @@ class SudokuViewModel: ObservableObject {
     // Oyun tamamlandığında çağrılır
     private func handleGameCompletion() {
         // Oyunu zaten tamamlanmış olarak işaretledik, burada tekrar ayarlamıyoruz
-        print("Game completed!")
+        logInfo("Game completed!")
         
         // Timer'ı durdur
         if timer != nil && timer!.isValid {
@@ -1429,12 +1429,12 @@ class SudokuViewModel: ObservableObject {
             )
             
             // Oyun hem FireStore'a kaydedildi hem de Core Data'dan silindi
-            print("✅ Oyun tamamlandı olarak işaretlendi!")
+            logSuccess("Oyun tamamlandı olarak işaretlendi!")
             
             // Kaydedilmiş oyunları yeniden yükle - daha uzun bir gecikme
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
-                print("🔄 SavedGames yenileme bildirimi gönderildi")
+                logInfo("SavedGames yenileme bildirimi gönderildi")
             }
         }
         
@@ -1543,11 +1543,11 @@ class SudokuViewModel: ObservableObject {
     
     // Oyunu kaydet - yeni bir oyun veya mevcut bir oyunu güncelleme
     func saveGame(forceNewSave: Bool = false) {
-        print("saveGame fonksiyonu çalıştı")
+        logDebug("saveGame fonksiyonu çalıştı")
         
         // Oyun tamamlandıysa veya başarısız olduysa kaydetmeye gerek yok
         if gameState == .completed || gameState == .failed {
-            print("Oyun tamamlandığı veya başarısız olduğu için kaydedilmiyor")
+            logInfo("Oyun tamamlandığı veya başarısız olduğu için kaydedilmiyor")
             return
         }
         
@@ -1616,12 +1616,12 @@ class SudokuViewModel: ObservableObject {
             let jsonData = try JSONSerialization.data(withJSONObject: jsonDict)
             
             // Not: jsonData kullanıldığını belirtmek için geçici bir print
-            print("JSON veri boyutu: \(jsonData.count) byte")
+            logDebug("JSON veri boyutu: \(jsonData.count) byte")
             
             // Kaydetme işlemini gerçekleştir
             if let gameID = currentGameID, !forceNewSave {
                 // Mevcut bir oyun varsa güncelle
-                print("Mevcut oyun güncelleniyor, ID: \(gameID)")
+                logInfo("Mevcut oyun güncelleniyor, ID: \(gameID)")
                 
                 // PersistenceController üzerinden güncelleme yap
                 PersistenceController.shared.updateSavedGame(
@@ -1631,10 +1631,10 @@ class SudokuViewModel: ObservableObject {
                     elapsedTime: elapsedTime,
                     jsonData: jsonData
                 )
-                print("✅ Oyun başarıyla güncellendi, ID: \(gameID)")
+                logSuccess("Oyun başarıyla güncellendi, ID: \(gameID)")
         } else {
                 // Yeni bir oyun kaydet ve ID'sini kaydet
-                print("Yeni oyun kaydediliyor")
+                logInfo("Yeni oyun kaydediliyor")
                 let newGameID = UUID()
                 currentGameID = newGameID
                 
@@ -1646,13 +1646,13 @@ class SudokuViewModel: ObservableObject {
                     elapsedTime: elapsedTime,
                     jsonData: jsonData
                 )
-                print("✅ Yeni oyun başarıyla kaydedildi, ID: \(newGameID)")
+                logSuccess("Yeni oyun başarıyla kaydedildi, ID: \(newGameID)")
             }
             
-            print("Kaydetme işlemi tamamlandı")
+            logDebug("Kaydetme işlemi tamamlandı")
             loadSavedGames() // Kaydedilmiş oyunları yeniden yükle
         } catch {
-            print("❌ JSON oluşturma veya kaydetme hatası: \(error)")
+            logError("JSON oluşturma veya kaydetme hatası: \(error)")
         }
         
         // Geçici olarak kaldırılan hatalı değerleri geri ekle
@@ -1666,7 +1666,7 @@ class SudokuViewModel: ObservableObject {
         // Otomatik kaydetme devre dışı bırakılmışsa atla
         let noAutoSaveKey = "SudokuViewModel.noAutoSave"
         if UserDefaults.standard.bool(forKey: noAutoSaveKey) {
-            print("⏭️ Otomatik kaydetme devre dışı, işlem atlanıyor")
+            logInfo("Otomatik kaydetme devre dışı, işlem atlanıyor")
             return
         }
         
@@ -1676,16 +1676,16 @@ class SudokuViewModel: ObservableObject {
             // 1. Oyun süresi 5 saniyeden az ise (tamamen yeni başlamış oyun)
             // 2. Hiç hamle yapılmamışsa (henüz gerçek bir oyun değil)
             if elapsedTime < 5 || moveCount < 1 {
-                print("⏭️ Otomatik kaydetme atlandı (oyun çok yeni başladı veya hamle yapılmadı)")
+                logInfo("Otomatik kaydetme atlandı (oyun çok yeni başladı veya hamle yapılmadı)")
                 return
             }
             
             // Oyun ID'si varsa güncelle, yoksa yeni kaydet
-            print("💾 Otomatik kaydetme başladı...")
+            logInfo("Otomatik kaydetme başladı...")
             saveGame(forceNewSave: false) // Var olan kaydı güncelle
-            print("✅ Otomatik kaydetme tamamlandı.")
+            logSuccess("Otomatik kaydetme tamamlandı.")
         } else {
-            print("ℹ️ Oyun \(gameState) durumunda olduğu için otomatik kaydedilmedi.")
+            logInfo("Oyun \(gameState) durumunda olduğu için otomatik kaydedilmedi.")
         }
     }
     
@@ -1695,35 +1695,35 @@ class SudokuViewModel: ObservableObject {
     
     // Kaydedilmiş oyunu yükle
     func loadGame(from savedGame: NSManagedObject) {
-        print("Kayıtlı oyun yükleniyor: \(savedGame)")
+        logInfo("Kayıtlı oyun yükleniyor: \(savedGame)")
         
         // Otomatik kaydetmeyi etkinleştir - kullanıcı bilinçli olarak kayıtlı oyun yüklüyor
         let noAutoSaveKey = "SudokuViewModel.noAutoSave"
         UserDefaults.standard.set(false, forKey: noAutoSaveKey)
-        print("🔄 Kayıtlı oyun yükleniyor, otomatik kaydetme etkinleştirildi")
+        logInfo("Kayıtlı oyun yükleniyor, otomatik kaydetme etkinleştirildi")
         
         // Güvenli bir şekilde boardState'i al
         guard let boardData = savedGame.value(forKey: "boardState") as? Data else {
-            print("❌ Oyun verisi bulunamadı")
+            logError("Oyun verisi bulunamadı")
             return
         }
         
         // Kayıtlı oyunun ID'sini al ve mevcut oyun ID'si olarak ayarla
         if let gameID = savedGame.value(forKey: "id") as? UUID {
             self.currentGameID = gameID
-            print("Kaydedilmiş oyun ID'si ayarlandı: \(gameID)")
+            logDebug("Kaydedilmiş oyun ID'si ayarlandı: \(gameID)")
         } else if let gameIDString = savedGame.value(forKey: "id") as? String, 
                   let gameID = UUID(uuidString: gameIDString) {
             self.currentGameID = gameID
-            print("Kaydedilmiş oyun ID'si (string'den) ayarlandı: \(gameID)")
+            logDebug("Kaydedilmiş oyun ID'si (string'den) ayarlandı: \(gameID)")
         } else {
             // Eğer ID bulunamazsa, yeni bir ID oluştur
             self.currentGameID = UUID()
-            print("Kaydedilmiş oyun için yeni ID oluşturuldu: \(self.currentGameID!)")
+            logDebug("Kaydedilmiş oyun için yeni ID oluşturuldu: \(self.currentGameID!)")
         }
         
         let difficultyString = savedGame.value(forKey: "difficulty") as? String ?? "Kolay"
-        print("Kayıtlı oyun yükleniyor, zorluk seviyesi: \(difficultyString)")
+        logInfo("Kayıtlı oyun yükleniyor, zorluk seviyesi: \(difficultyString)")
         
         // Doğrudan oyun verilerinden SudokuBoard ve userEnteredValues oluşturuyoruz
         guard let (loadedBoard, userValues) = loadBoardFromData(boardData) else {
@@ -1740,7 +1740,7 @@ class SudokuViewModel: ObservableObject {
         // Eğer userEnteredValues JSON'dan düzgün bir şekilde yüklenmediyse, 
         // tahta üzerinden hesapla (yedek çözüm)
         if self.userEnteredValues.flatMap({ $0.filter { $0 } }).isEmpty {
-            print("⚠️ userEnteredValues boş, tahta üzerinden hesaplanıyor")
+            logWarning("userEnteredValues boş, tahta üzerinden hesaplanıyor")
             
             // Yeni bir userEnteredValues matrisi oluştur
             var computedValues = Array(repeating: Array(repeating: false, count: 9), count: 9)
@@ -1768,7 +1768,7 @@ class SudokuViewModel: ObservableObject {
         // Bu, görünümün güncellenmesini sağlar
         objectWillChange.send()
         
-        print("✅ Kullanıcı tarafından girilen değerler yüklendi ve işaretlendi: \(self.userEnteredValues.flatMap { $0.filter { $0 } }.count) değer")
+        logSuccess("Kullanıcı tarafından girilen değerler yüklendi ve işaretlendi: \(self.userEnteredValues.flatMap { $0.filter { $0 } }.count) değer")
         
         self.elapsedTime = savedGame.getDouble(key: "elapsedTime")
         self.pausedElapsedTime = self.elapsedTime
@@ -1791,15 +1791,15 @@ class SudokuViewModel: ObservableObject {
                     if let remainingVal = stats["remainingHints"] as? Int {
                         self.remainingHints = remainingVal
                     }
-                    print("✅ Oyun istatistikleri güncellendi")
+                    logSuccess("Oyun istatistikleri güncellendi")
                 }
                 
                 // Kullanıcı tarafından girilen değerler zaten yüklendi
                 // Bu kısmı atlıyoruz çünkü yeni fonksiyon imzasıyla doğrudan alıyoruz
-                print("ℹ️ userEnteredValues zaten loadBoardFromData fonksiyonundan alındı - tekrar yüklemeye gerek yok")
+                logInfo("userEnteredValues zaten loadBoardFromData fonksiyonundan alındı - tekrar yüklemeye gerek yok")
             }
         } catch {
-            print("⚠️ İstatistikleri yüklerken hata: \(error)")
+            logWarning("İstatistikleri yüklerken hata: \(error)")
         }
         
         // Seçili hücreyi sıfırla
@@ -1825,11 +1825,11 @@ class SudokuViewModel: ObservableObject {
                         
                         // userEnteredValues zaten yüklendiği için tekrar yüklemiyoruz
                         remainingHints = stats["remainingHints"] as? Int ?? 3
-                        print("✅ İstatistikler başarıyla yüklendi")
+                        logSuccess("İstatistikler başarıyla yüklendi")
                     }
                 }
             } catch {
-                print("⚠️ İstatistikler yüklenemedi: \(error)")
+                logWarning("İstatistikler yüklenemedi: \(error)")
                 // Hata durumunda varsayılan değerleri kullan
             }
         }
@@ -1841,19 +1841,19 @@ class SudokuViewModel: ObservableObject {
         startTime = Date()
         startTimer()
         
-        print("✅ Oyun başarıyla yüklendi, ID: \(currentGameID?.uuidString ?? "ID yok")")
+        logSuccess("Oyun başarıyla yüklendi, ID: \(currentGameID?.uuidString ?? "ID yok")")
     }
     
     // Veri objesinden SudokuBoard ve kullanıcı tarafından girilen değerleri oluştur
     private func loadBoardFromData(_ data: Data) -> (board: SudokuBoard, userValues: [[Bool]])? {
-        print("\n\n💻 KAYDEDILMIŞ OYUN YÜKLEME BAŞLADI 💻")
-        print("Veri boyutu: \(data.count) byte")
+        logInfo("KAYDEDILMIŞ OYUN YÜKLEME BAŞLADI")
+        logDebug("Veri boyutu: \(data.count) byte")
         
         // 1. Ana Json veri yapısını çözümlemeyi dene
         do {
             // Önce JSON'u dictionary'ye çevir
             guard let jsonDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                print("❌ JSON veri biçimi geçersiz")
+                logError("JSON veri biçimi geçersiz")
                 return nil
             }
             
@@ -1884,7 +1884,7 @@ class SudokuViewModel: ObservableObject {
             // Çözümü bul
             if let solution = jsonDict["solution"] as? [[Int]] {
                 solutionArray = solution
-                print("✅ JSON'dan çözüm dizisi başarıyla yüklendi")
+                logSuccess("JSON'dan çözüm dizisi başarıyla yüklendi")
             } else if let solution = jsonDict["solutionBoard"] as? [[Int]] {
                 solutionArray = solution
                 print("✅ JSON'dan solutionBoard başarıyla yüklendi")
@@ -2142,7 +2142,7 @@ class SudokuViewModel: ObservableObject {
     }
     
     // Zamanlayıcıyı durdur
-    private func stopTimer() {
+    func stopTimer() {
         timer?.invalidate()
         timer = nil
     }

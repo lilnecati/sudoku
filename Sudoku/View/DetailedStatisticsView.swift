@@ -207,7 +207,7 @@ struct DetailedStatisticsView: View {
                         
                         // Tümünü Sil butonu
                         Button(action: {
-                            print("📌 SIL BUTONUNA BASILDI")
+                            logInfo("SIL BUTONUNA BASILDI")
                             deleteAllCompletedGames()
                         }) {
                             HStack(spacing: 10) {
@@ -254,21 +254,21 @@ struct DetailedStatisticsView: View {
                 // await kullanmadan düz çağrı
                 setupLocalization()
             }
-            print("📱 DetailedStatisticsView görünümü açıldı")
+            logInfo("DetailedStatisticsView görünümü açıldı")
             // Gerçek veri yükle
             loadData()
             setupLanguageChangeListener()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshStatistics"))) { _ in
-            print("🔄 DetailedStatisticsView: İstatistikler yenileme bildirimi alındı")
+            logInfo("DetailedStatisticsView: İstatistikler yenileme bildirimi alındı")
             loadData()
         }
         .onChange(of: selectedTimeRange) { _, _ in
-            print("🔄 Zaman aralığı değişti: \(selectedTimeRange.rawValue)")
+            logInfo("Zaman aralığı değişti: \(selectedTimeRange.rawValue)")
             loadData()
         }
         .onChange(of: selectedDifficulty) { _, _ in
-            print("🔄 Zorluk seviyesi değişti: \(selectedDifficulty.rawValue)")
+            logInfo("Zorluk seviyesi değişti: \(selectedDifficulty.rawValue)")
             loadData()
         }
     }
@@ -294,7 +294,7 @@ struct DetailedStatisticsView: View {
                 }()
                 
                 Button {
-                    print("Zaman aralığı seçildi: \(range.rawValue)")
+                    logInfo("Zaman aralığı seçildi: \(range.rawValue)")
                     selectedTimeRange = range
                 } label: {
                     HStack(spacing: 8) {
@@ -358,7 +358,7 @@ struct DetailedStatisticsView: View {
                 let difficultyColor = getDifficultyColor(difficulty)
                 
                 Button {
-                    print("Zorluk seçildi: \(difficulty.rawValue)")
+                    logInfo("Zorluk seçildi: \(difficulty.rawValue)")
                     selectedDifficulty = difficulty
                 } label: {
                     HStack(spacing: 8) {
@@ -992,20 +992,20 @@ struct DetailedStatisticsView: View {
         performanceData = []
         
         // Refresh ettiğimizi bildir
-        print("📊 İSTATİSTİK YÜKLEME BAŞLADI 📊")
-        print("📝 Zorluk Seviyesi: \(selectedDifficulty.rawValue), Zaman Aralığı: \(selectedTimeRange.rawValue)")
+        logInfo("İSTATİSTİK YÜKLEME BAŞLADI")
+        logInfo("Zorluk Seviyesi: \(selectedDifficulty.rawValue), Zaman Aralığı: \(selectedTimeRange.rawValue)")
         
         // Kullanıcı giriş yapmış mı kontrol et
         guard let userID = Auth.auth().currentUser?.uid else {
-            print("⚠️ İstatistikler yüklenemedi: Kullanıcı giriş yapmamış")
+            logWarning("İstatistikler yüklenemedi: Kullanıcı giriş yapmamış")
             
             // Kullanıcı giriş yapmamışsa varsayılan dummy verileri kullan
-            print("🔄 Demo verileri yükleniyor (kullanıcı girişi yok)")
+            logInfo("Demo verileri yükleniyor (kullanıcı girişi yok)")
             loadDummyData()
             return
         }
         
-        print("👤 Kullanıcı ID: \(userID) - Gerçek veriler yükleniyor")
+        logInfo("Kullanıcı ID: \(userID) - Gerçek veriler yükleniyor")
         
         // Firestore'dan tamamlanmış oyunları çek
         let db = Firestore.firestore()
@@ -1030,25 +1030,25 @@ struct DetailedStatisticsView: View {
             fromDate = calendar.date(byAdding: .year, value: -10, to: today)! // Pratik olarak "tüm zamanlar"
         }
         
-        print("📅 Tarih filtresi: \(fromDate) - \(today)")
+        logInfo("Tarih filtresi: \(fromDate) - \(today)")
         
         // Sorgu çok basitleştirildi, sadece userID kullanılıyor. Diğer filtreleri kod içinde yapacağız.
-        print("🔍 Firestore sorgusu yapılıyor: highScores koleksiyonu")
+        logInfo("Firestore sorgusu yapılıyor: highScores koleksiyonu")
         
         // Verileri çek
         query.getDocuments { snapshot, error in
             if let error = error {
-                print("⚠️ Firestore'dan veriler alınamadı: \(error.localizedDescription)")
-                print("🔄 Firebase hatası nedeniyle demo veriler yükleniyor")
+                logWarning("Firestore'dan veriler alınamadı: \(error.localizedDescription)")
+                logInfo("Firebase hatası nedeniyle demo veriler yükleniyor")
                 self.loadDummyData()
                 return
             }
             
-            print("✅ Firestore sorgusu tamamlandı")
+            logSuccess("Firestore sorgusu tamamlandı")
             
             guard let documents = snapshot?.documents else {
-                print("⚠️ Dökümanlar bulunamadı veya boş")
-                print("🔄 Döküman bulunamadığı için demo veriler yükleniyor")
+                logWarning("Dökümanlar bulunamadı veya boş")
+                logInfo("Döküman bulunamadığı için demo veriler yükleniyor")
                 self.loadDummyData()
                 return
             }
@@ -1078,10 +1078,10 @@ struct DetailedStatisticsView: View {
             }
             
             if filteredDocuments.isEmpty {
-                print("ℹ️ Bu filtreye uygun tamamlanmış oyun bulunamadı")
+                logInfo("Bu filtreye uygun tamamlanmış oyun bulunamadı")
                 // Veri bulunamadıysa boş bırak
                 DispatchQueue.main.async {
-                    print("📊 Veri olmadığı için boş istatistikler gösteriliyor")
+                    logInfo("Veri olmadığı için boş istatistikler gösteriliyor")
                     self.statistics = StatisticsData.placeholder
                     self.completionData = []
                     self.performanceData = []
@@ -1089,7 +1089,7 @@ struct DetailedStatisticsView: View {
                 return
             }
             
-            print("📊 \(filteredDocuments.count) tamamlanmış oyun bulundu")
+            logInfo("\(filteredDocuments.count) tamamlanmış oyun bulundu")
             
             // İstatistik verileri için geçici diziler
             var tempCompletionData: [CompletionDataPoint] = []
@@ -1106,31 +1106,31 @@ struct DetailedStatisticsView: View {
                 
                 // Doküman ID
                 let docID = document.documentID
-                print("🔍 Oyun \(index+1)/\(filteredDocuments.count) işleniyor - ID: \(docID)")
+                logDebug("Oyun \(index+1)/\(filteredDocuments.count) işleniyor - ID: \(docID)")
                 
                 // Timestamp'i tarih olarak al
                 if let timestamp = data["date"] as? Timestamp {
                     let date = timestamp.dateValue()
-                    print("   📅 Tarih: \(date)")
+                    logDebug("   Tarih: \(date)")
                 } else if let timestamp = data["timestamp"] as? Timestamp {
                     let date = timestamp.dateValue()
-                    print("   📅 Tarih: \(date)")
+                    logDebug("   Tarih: \(date)")
                 } else {
-                    print("   ⚠️ Timestamp bulunamadı")
+                    logWarning("   Timestamp bulunamadı")
                 }
                 
                 // Süre
                 if let elapsedTime = data["elapsedTime"] as? TimeInterval {
-                    print("   ⏱️ Süre: \(elapsedTime) saniye")
+                    logDebug("   Süre: \(elapsedTime) saniye")
                 } else {
-                    print("   ⚠️ elapsedTime alanı bulunamadı")
+                    logWarning("   elapsedTime alanı bulunamadı")
                 }
                 
                 // Hatalar
                 if let errorCount = data["errorCount"] as? Int {
-                    print("   ❌ Hata sayısı: \(errorCount)")
+                    logDebug("   Hata sayısı: \(errorCount)")
                 } else {
-                    print("   ⚠️ errorCount alanı bulunamadı")
+                    logWarning("   errorCount alanı bulunamadı")
                 }
                 
                 // Verileri al - tarih bilgisini date veya timestamp alanından al
@@ -1174,9 +1174,9 @@ struct DetailedStatisticsView: View {
                 bestTime = 0
             }
             
-            print("✅ Veri işleme tamamlandı")
-            print("📈 Toplam süre: \(totalTime), Toplam hata: \(totalErrors)")
-            print("🏆 En iyi süre: \(bestTime)")
+            logSuccess("Veri işleme tamamlandı")
+            logInfo("Toplam süre: \(totalTime), Toplam hata: \(totalErrors)")
+            logInfo("En iyi süre: \(bestTime)")
             
             // Verileri zaman sırasına göre sırala
             tempCompletionData.sort { $0.date < $1.date }
@@ -1200,11 +1200,11 @@ struct DetailedStatisticsView: View {
                 trendDirection = .down
             }
             
-            print("📊 İstatistikler hesaplandı - Trend: \(trendDirection)")
+            logInfo("İstatistikler hesaplandı - Trend: \(trendDirection)")
             
             // Ana thread'de UI güncellemelerini yap
             DispatchQueue.main.async {
-                print("🔄 UI güncellemesi başladı")
+                logInfo("UI güncellemesi başladı")
                 
                 // Sonuçları uygula
                 self.completionData = tempCompletionData
@@ -1221,31 +1221,31 @@ struct DetailedStatisticsView: View {
                     trendDirection: trendDirection
                 )
                 
-                print("✅ UI güncellendi: \(filteredDocuments.count) oyun gösteriliyor")
-                print("📊 İSTATİSTİK YÜKLEME TAMAMLANDI 📊")
+                logSuccess("UI güncellendi: \(filteredDocuments.count) oyun gösteriliyor")
+                logSuccess("İSTATİSTİK YÜKLEME TAMAMLANDI")
             }
         }
     }
     
     // Örnek veriler oluştur (gerçek veri yoksa)
     private func loadDummyData() {
-        print("ℹ️ İstatistik verisi yok! Grafikleri boş gösteriyorum")
+        logInfo("İstatistik verisi yok! Grafikleri boş gösteriyorum")
         
         // Verileri sıfırla
         statistics = StatisticsData.placeholder
         completionData = []
         performanceData = []
         
-        print("✅ İstatistikler sıfırlandı - boş gösterilecek")
+        logSuccess("İstatistikler sıfırlandı - boş gösterilecek")
     }
     
     // Tüm tamamlanmış oyunları silme fonksiyonu
     private func deleteAllCompletedGames() {
-        print("🔍 deleteAllCompletedGames fonksiyonu çağrıldı")
+        logInfo("deleteAllCompletedGames fonksiyonu çağrıldı")
         
         // Kullanıcı giriş yapmış mı kontrol et
         if Auth.auth().currentUser == nil {
-            print("⚠️ Kullanıcı giriş yapmamış - uyarı gösterilecek")
+            logWarning("Kullanıcı giriş yapmamış - uyarı gösterilecek")
             // Kullanıcı giriş yapmamışsa uyarı göster
             let alertTitle = LocalizationManager.shared.localizedString(for: "Giriş Gerekli")
             let alertMessage = LocalizationManager.shared.localizedString(for: "Bu özelliği kullanmak için lütfen oturum açın.")
@@ -1258,7 +1258,7 @@ struct DetailedStatisticsView: View {
             return
         }
         
-        print("👤 Kullanıcı giriş yapmış: \(Auth.auth().currentUser?.uid ?? "bilinmiyor")")
+        logInfo("Kullanıcı giriş yapmış: \(Auth.auth().currentUser?.uid ?? "bilinmiyor")")
         
         // Onay isteyin
         let confirmAlert = UIAlertController(
@@ -1271,14 +1271,14 @@ struct DetailedStatisticsView: View {
             title: LocalizationManager.shared.localizedString(for: "İptal"),
             style: .cancel
         ) { _ in 
-            print("❌ Kullanıcı silme işlemini iptal etti")
+            logInfo("Kullanıcı silme işlemini iptal etti")
         })
         
         confirmAlert.addAction(UIAlertAction(
             title: LocalizationManager.shared.localizedString(for: "Sil"),
             style: .destructive
         ) { _ in
-            print("✅ Kullanıcı silme işlemini onayladı")
+            logSuccess("Kullanıcı silme işlemini onayladı")
             // Yükleme göstergesi
             let loadingAlert = UIAlertController(
                 title: LocalizationManager.shared.localizedString(for: "İşlem Sürüyor"),
@@ -1290,16 +1290,16 @@ struct DetailedStatisticsView: View {
             self.getTopViewController()?.present(loadingAlert, animated: true)
             
             // Core Data'dan skorları sil
-            print("🔄 deleteAllHighScores fonksiyonu çağrılıyor")
+            logInfo("deleteAllHighScores fonksiyonu çağrılıyor")
             self.deleteAllHighScores { success in
-                print("✅ deleteAllHighScores tamamlandı - başarı: \(success)")
+                logSuccess("deleteAllHighScores tamamlandı - başarı: \(success)")
                 
                 // Tamamlanmış oyunları sil
-                print("🔄 deleteAllCompletedGames fonksiyonu çağrılıyor")
+                logInfo("deleteAllCompletedGames fonksiyonu çağrılıyor")
                 PersistenceController.shared.deleteAllCompletedGames()
                 
                 // Veriyi hemen yenile
-                print("🔄 Veriler silindikten sonra yenileniyor")
+                logInfo("Veriler silindikten sonra yenileniyor")
                 DispatchQueue.main.async {
                     // Sayfayı yenile
                     self.refreshTrigger = UUID() // View ID'sini değiştirerek yeniden render et
@@ -1349,7 +1349,7 @@ struct DetailedStatisticsView: View {
         
         // Key window'u bulduk
         guard let keyWindow = windows.first else {
-            print("❌ Key window bulunamadı!")
+            logError("Key window bulunamadı!")
             return nil
         }
         
@@ -1359,14 +1359,14 @@ struct DetailedStatisticsView: View {
             topController = presentedController
         }
         
-        print("✅ Top view controller bulundu: \(String(describing: type(of: topController)))")
+        logSuccess("Top view controller bulundu: \(String(describing: type(of: topController)))")
         return topController
     }
     
     // Tüm yüksek skorları sil
     private func deleteAllHighScores(completion: @escaping (Bool) -> Void) {
         guard let userID = Auth.auth().currentUser?.uid else {
-            print("⚠️ Kullanıcı giriş yapmamış!")
+            logWarning("Kullanıcı giriş yapmamış!")
             completion(false)
             return
         }
@@ -1378,25 +1378,25 @@ struct DetailedStatisticsView: View {
             .whereField("userID", isEqualTo: userID)
             .getDocuments { snapshot, error in
                 if let error = error {
-                    print("❌ Firestore skor sorgulama hatası: \(error.localizedDescription)")
+                    logError("Firestore skor sorgulama hatası: \(error.localizedDescription)")
                     completion(false)
                     return
                 }
                 
                 guard let documents = snapshot?.documents, !documents.isEmpty else {
-                    print("ℹ️ Firestore'da yüksek skor bulunamadı")
+                    logInfo("Firestore'da yüksek skor bulunamadı")
                     // Firebase'de veri yoksa Core Data'dan silmeye devam et
                     self.deleteHighScoresFromCoreData(context: context, completion: completion)
                     return
                 }
                 
-                print("📊 Firebase'den silinecek skor sayısı: \(documents.count)")
+                logInfo("Firebase'den silinecek skor sayısı: \(documents.count)")
                 
                 // Batch işlemi oluştur
                 let batch = Firestore.firestore().batch()
                 
                 for document in documents {
-                    print("🗑️ Firebase'den siliniyor: \(document.documentID)")
+                    logInfo("Firebase'den siliniyor: \(document.documentID)")
                     let scoreRef = Firestore.firestore().collection("highScores").document(document.documentID)
                     batch.deleteDocument(scoreRef)
                 }
@@ -1404,10 +1404,10 @@ struct DetailedStatisticsView: View {
                 // Batch işlemini uygula
                 batch.commit { error in
                     if let error = error {
-                        print("❌ Firebase skor silme hatası: \(error.localizedDescription)")
+                        logError("Firebase skor silme hatası: \(error.localizedDescription)")
                         completion(false)
                     } else {
-                        print("✅ Firebase'den \(documents.count) skor silindi")
+                        logSuccess("Firebase'den \(documents.count) skor silindi")
                         // Firebase'den sildikten sonra Core Data'dan da sil
                         self.deleteHighScoresFromCoreData(context: context, completion: completion)
                     }
@@ -1423,23 +1423,23 @@ struct DetailedStatisticsView: View {
             let highScores = try context.fetch(fetchRequest)
             
             if highScores.isEmpty {
-                print("ℹ️ Core Data'da silinecek yüksek skor bulunamadı")
+                logInfo("Core Data'da silinecek yüksek skor bulunamadı")
                 completion(true)
                 return
             }
             
-            print("📊 Core Data'dan silinecek skor sayısı: \(highScores.count)")
+            logInfo("Core Data'dan silinecek skor sayısı: \(highScores.count)")
             
             for score in highScores {
                 context.delete(score)
-                print("🗑️ Core Data'dan silindi: \(score.id?.uuidString ?? "bilinmiyor")")
+                logInfo("Core Data'dan silindi: \(score.id?.uuidString ?? "bilinmiyor")")
             }
             
             try context.save()
-            print("✅ Tüm yüksek skorlar Core Data'dan silindi")
+            logSuccess("Tüm yüksek skorlar Core Data'dan silindi")
             completion(true)
         } catch {
-            print("❌ Core Data skor silme hatası: \(error.localizedDescription)")
+            logError("Core Data skor silme hatası: \(error.localizedDescription)")
             completion(false)
         }
     }

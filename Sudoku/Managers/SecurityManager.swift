@@ -32,7 +32,7 @@ class SecurityManager {
         
         // String'i data'ya çevir
         guard let combinedData = combinedString.data(using: .utf8) else {
-            print("❌ String veri dönüşümü başarısız")
+            logError("String veri dönüşümü başarısız")
             return ""
         }
         

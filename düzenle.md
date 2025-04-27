@@ -155,6 +155,46 @@ print("Yükleme hatası: \(error)") → logError("Yükleme hatası: \(error)")
 ### ContentView.swift
 ```swift
 print("📱 ContentView onAppear - Device: \(UIDevice.current.model), \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)") → logInfo("ContentView onAppear - Device: \(UIDevice.current.model), \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)")
+```
+
+### PersistenceController.swift
+```swift
+print("✅ [\(deviceID)] Profil resmi yerel veritabanına kaydedildi: \(dataHash)") → logSuccess("[\(deviceID)] Profil resmi yerel veritabanına kaydedildi: \(dataHash)")
+print("❌ [\(deviceID)] Profil resmi yerel olarak kaydedilemedi: \(error.localizedDescription)") → logError("[\(deviceID)] Profil resmi yerel olarak kaydedilemedi: \(error.localizedDescription)")
+print("❌ Kullanıcı e-postası aranırken hata: \(error.localizedDescription)") → logError("Kullanıcı e-postası aranırken hata: \(error.localizedDescription)")
+print("⚠️ Firebase Firestore devre dışı: Oyun sadece yerel veritabanına kaydedildi") → logWarning("Firebase Firestore devre dışı: Oyun sadece yerel veritabanına kaydedildi")
+print("⚠️ Firebase Firestore devre dışı: Oyun senkronizasyonu yapılamadı") → logWarning("Firebase Firestore devre dışı: Oyun senkronizasyonu yapılamadı")
+print("❌ ID ile oyun getirme hatası: \(error.localizedDescription)") → logError("ID ile oyun getirme hatası: \(error.localizedDescription)")
+print("⚠️ Firestore oyunları getirilemedi: Kullanıcı giriş yapmamış") → logWarning("Firestore oyunları getirilemedi: Kullanıcı giriş yapmamış")
+print("✅ Firestore'dan \(games.count) oyun yüklendi") → logSuccess("Firestore'dan \(games.count) oyun yüklendi")
+print("❌ Firestore yüksek skor sorgulama hatası: \(error.localizedDescription)") → logError("Firestore yüksek skor sorgulama hatası: \(error.localizedDescription)")
+print("ℹ️ Firestore'da \(difficulty) zorluğunda yüksek skor bulunamadı") → logInfo("Firestore'da \(difficulty) zorluğunda yüksek skor bulunamadı")
+print("✅ Firestore'dan \(scores.count) yüksek skor yüklendi") → logSuccess("Firestore'dan \(scores.count) yüksek skor yüklendi")
+print("⚠️ Firestore kullanıcı skorları getirilemedi: Kullanıcı ID'si yok") → logWarning("Firestore kullanıcı skorları getirilemedi: Kullanıcı ID'si yok")
+print("❌ Firestore kullanıcı skorları sorgulama hatası: \(error.localizedDescription)") → logError("Firestore kullanıcı skorları sorgulama hatası: \(error.localizedDescription)")
+print("ℹ️ Firestore'da kullanıcı için skor bulunamadı") → logInfo("Firestore'da kullanıcı için skor bulunamadı")
+print("✅ Firestore'dan \(scores.count) kullanıcı skoru yüklendi") → logSuccess("Firestore'dan \(scores.count) kullanıcı skoru yüklendi")
+print("⚠️ Yüksek skorlar getirilemedi: Kullanıcı giriş yapmamış") → logWarning("Yüksek skorlar getirilemedi: Kullanıcı giriş yapmamış")
+print("🔄 Yüksek skorlar Firestore'dan senkronize ediliyor...") → logInfo("Yüksek skorlar Firestore'dan senkronize ediliyor...")
+print("❌ Firestore skor sorgulama hatası: \(error.localizedDescription)") → logError("Firestore skor sorgulama hatası: \(error.localizedDescription)")
+print("❌ Firestore tamamlanmış oyun silme hatası: \(error.localizedDescription)") → logError("Firestore tamamlanmış oyun silme hatası: \(error.localizedDescription)")
+print("✅ \(documents.count) tamamlanmış oyun Firestore'dan silindi") → logSuccess("\(documents.count) tamamlanmış oyun Firestore'dan silindi")
+print("⚠️ Tamamlanmış oyunlar senkronize edilemedi: Kullanıcı giriş yapmamış") → logWarning("Tamamlanmış oyunlar senkronize edilemedi: Kullanıcı giriş yapmamış")
+print("🔄 Tamamlanmış oyunlar Firestore'dan senkronize ediliyor...") → logInfo("Tamamlanmış oyunlar Firestore'dan senkronize ediliyor...")
+print("❌ Firestore tamamlanmış oyun sorgulama hatası: \(error.localizedDescription)") → logError("Firestore tamamlanmış oyun sorgulama hatası: \(error.localizedDescription)")
+print("ℹ️ Firestore'da tamamlanmış oyun bulunamadı") → logInfo("Firestore'da tamamlanmış oyun bulunamadı")
+print("📊 Bulunan tamamlanmış oyun sayısı: \(documents.count)") → logInfo("Bulunan tamamlanmış oyun sayısı: \(documents.count)")
+print("⏭️ ID: \(documentID) olan tamamlanmış oyun yakın zamanda silinmiş. Atlanıyor.") → logInfo("ID: \(documentID) olan tamamlanmış oyun yakın zamanda silinmiş. Atlanıyor.")
+print("✅ Tamamlanmış oyun istatistikleri güncellendi: \(stats)") → logSuccess("Tamamlanmış oyun istatistikleri güncellendi: \(stats)")
+print("ℹ️ Doğrulanacak silinen belge yok") → logInfo("Doğrulanacak silinen belge yok")
+print("⚠️ Tamamlanmış oyun hala mevcut: \(documentID)") → logWarning("Tamamlanmış oyun hala mevcut: \(documentID)")
+print("✅ Tamamlanmış oyun başarıyla silindi: \(documentID)") → logSuccess("Tamamlanmış oyun başarıyla silindi: \(documentID)")
+print("🔄 \(gamesIDs.count) adet silinemeyen oyunu tekrar silmeyi deniyorum...") → logInfo("\(gamesIDs.count) adet silinemeyen oyunu tekrar silmeyi deniyorum...")
+print("❌ İkinci silme denemesi başarısız: \(error.localizedDescription)") → logError("İkinci silme denemesi başarısız: \(error.localizedDescription)")
+print("✅ İkinci silme denemesi başarılı!") → logSuccess("İkinci silme denemesi başarılı!")
+print("✅ Tüm tamamlanmış oyunlar başarıyla silindi!") → logSuccess("Tüm tamamlanmış oyunlar başarıyla silindi!")
+print("⚠️ \(failedDeletions.count) tamamlanmış oyun silinemedi: \(failedDeletions)") → logWarning("\(failedDeletions.count) tamamlanmış oyun silinemedi: \(failedDeletions)")
+```
 print("📢 Dil değişikliği algılandı - ContentView yenileniyor") → logInfo("Dil değişikliği algılandı - ContentView yenileniyor")
 ```
 

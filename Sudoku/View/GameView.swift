@@ -183,17 +183,18 @@ struct GameView: View {
         .onAppear {
             setupInitialAnimations()
             setupTimerUpdater()
-            
-            // Ekranın kapanmasını engelle - hem bildirim gönder hem de doğrudan ayarla
+
+            // Ekranın kapanmasını engelle
             UIApplication.shared.isIdleTimerDisabled = true
-            NotificationCenter.default.post(name: Notification.Name("GameScreenOpened"), object: nil)
-            print("🔆 GameView onAppear - Ekran kararması doğrudan engellendi")
+            logInfo("🔆 GameView onAppear - Ekran kararması engellendi (ayarlandı: true)")
         }
         .onDisappear {
-            // Ekranın kapanması engelini kaldır - hem bildirim gönder hem de doğrudan ayarla
+            // Ekranın kapanması engelini kaldır
             UIApplication.shared.isIdleTimerDisabled = false
-            NotificationCenter.default.post(name: Notification.Name("GameScreenClosed"), object: nil)
-            print("🔅 GameView onDisappear - Ekran kararması etkinleştirildi")
+            logInfo("🔅 GameView onDisappear - Ekran kararması etkinleştirildi (ayarlandı: false)")
+
+            // Zamanlayıcıyı temizle
+            viewModel.stopTimer()
         }
         .onChange(of: viewModel.gameState) { oldValue, newValue in
             if newValue == .completed && oldValue != .completed {
@@ -593,7 +594,7 @@ struct GameView: View {
                     .frame(maxWidth: .infinity)
                     .background(
                         Capsule()
-                            .strokeBorder(ColorManager.primaryRed, lineWidth: 1)
+                            .stroke(ColorManager.primaryRed, lineWidth: 1)
                     )
             }
             .padding(.horizontal, 30)

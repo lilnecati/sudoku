@@ -150,7 +150,7 @@ class SoundManager: ObservableObject {
             
             log("✅ Audio session başarıyla yapılandırıldı (Kategori: playback)")
         } catch {
-            logError("Audio session yapılandırılamadı: \(error.localizedDescription)")
+            logSoundError("Audio session yapılandırılamadı: \(error.localizedDescription)")
         }
     }
     
@@ -160,7 +160,7 @@ class SoundManager: ObservableObject {
             try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
             log("🔇 Audio session devre dışı bırakıldı")
         } catch {
-            logError("Audio session devre dışı bırakılamadı: \(error.localizedDescription)")
+            logSoundError("Audio session devre dışı bırakılamadı: \(error.localizedDescription)")
         }
     }
     
@@ -173,7 +173,7 @@ class SoundManager: ObservableObject {
             try audioSession.setActive(true)
             log("✅ Audio session başarıyla yapılandırıldı")
         } catch {
-            logError("Audio session yapılandırma hatası: \(error.localizedDescription)")
+            logSoundError("Audio session yapılandırma hatası: \(error.localizedDescription)")
         }
     }
     
@@ -241,7 +241,7 @@ class SoundManager: ObservableObject {
             log("✅ Ses yüklendi: \(name).\(type) - URL: \(result.url?.lastPathComponent ?? "bilinmeyen")")
             return result
         } catch {
-            logError("Ses dosyası yüklenirken hata: \(name).\(type) - \(error.localizedDescription)")
+            logSoundError("Ses dosyası yüklenirken hata: \(name).\(type) - \(error.localizedDescription)")
             return nil
         }
     }
@@ -295,19 +295,19 @@ class SoundManager: ObservableObject {
                                 log("✅ Ses oynatıcı başarıyla oluşturuldu: \(path).\(ext)")
                                 return player
                             } catch {
-                                logError("AVAudioPlayer oluşturulamadı: \(error.localizedDescription)")
+                                logSoundError("AVAudioPlayer oluşturulamadı: \(error.localizedDescription)")
                                 // Diğer uzantı veya yol ile devam et
                             }
                         }
                     } catch {
-                        logError("\(path).\(ext) yüklenirken hata: \(error.localizedDescription)")
+                        logSoundError("\(path).\(ext) yüklenirken hata: \(error.localizedDescription)")
                     }
                 }
             }
         }
         
         // Hiçbir şekilde yüklenemedi, hata fırlat
-        logError("Hiçbir şekilde yüklenemedi: \(name).\(fileExt)")
+        logSoundError("Hiçbir şekilde yüklenemedi: \(name).\(fileExt)")
         throw NSError(domain: "SoundManager", 
                      code: 1001, 
                      userInfo: [NSLocalizedDescriptionKey: "Ses dosyası bulunamadı veya yüklenemedi: \(name).\(fileExt)"])
@@ -363,12 +363,12 @@ class SoundManager: ObservableObject {
                                 let fileSize = attrs[.size] as? UInt64 ?? 0
                                 log("📊 '\(soundFile)' - Boyut: \(fileSize) bytes")
                             } catch {
-                                logError("'\(soundFile)' özellikleri okunamadı: \(error)")
+                                logSoundError("'\(soundFile)' özellikleri okunamadı: \(error)")
                             }
                         }
                     }
                 } catch {
-                    logError("\(path) içeriği okunamadı: \(error)")
+                    logSoundError("\(path) içeriği okunamadı: \(error)")
                 }
             } else {
                 log("⚠️ Dizin mevcut değil: \(path)")
@@ -398,10 +398,10 @@ class SoundManager: ObservableObject {
                             let testPlayer = try AVAudioPlayer(contentsOf: url)
                             log("✅ '\(soundName).\(ext)' AVAudioPlayer ile açılabildi - Süre: \(testPlayer.duration) sn")
                         } catch {
-                            logError("'\(soundName).\(ext)' AVAudioPlayer ile açılamadı: \(error)")
+                            logSoundError("'\(soundName).\(ext)' AVAudioPlayer ile açılamadı: \(error)")
                         }
                     } catch {
-                        logError("'\(soundName).\(ext)' dosya özellikleri okunamadı: \(error)")
+                        logSoundError("'\(soundName).\(ext)' dosya özellikleri okunamadı: \(error)")
                     }
                 } else {
                     log("❌ '\(soundName).\(ext)' bulunamadı")
@@ -476,7 +476,7 @@ class SoundManager: ObservableObject {
                 player.volume = Float(defaultVolume)
                 player.play()
             } else {
-                logError("tap.wav yüklenemedi, ses çalınamadı")
+                logSoundError("tap.wav yüklenemedi, ses çalınamadı")
             }
         }
     }
@@ -925,11 +925,12 @@ class SoundManager: ObservableObject {
     /// Basit log fonksiyonu
     private func log(_ message: String) {
         guard isLoggingEnabled else { return }
-        print("🔊 SoundManager: \(message)")
+        logInfo("SoundManager: \(message)")
     }
     
     /// Hata log fonksiyonu - her zaman gösterilir
-    private func logError(_ message: String) {
-        print("❌ SoundManager Hatası: \(message)")
+    private func logSoundError(_ message: String) {
+        // Global logError fonksiyonunu çağır, kendi kendini çağırmayı engelle
+        Sudoku.logError("SoundManager Hatası: \(message)")
     }
 } 

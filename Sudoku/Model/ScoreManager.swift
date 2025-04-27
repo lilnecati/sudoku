@@ -62,7 +62,7 @@ class ScoreManager {
                   hintCount: Int,
                   moveCount: Int = 0) {
         
-        print("📊 Skor kaydediliyor - Zorluk: \(difficulty.rawValue), Süre: \(timeElapsed), Hatalar: \(errorCount), İpuçları: \(hintCount)")
+        logInfo("Skor kaydediliyor - Zorluk: \(difficulty.rawValue), Süre: \(timeElapsed), Hatalar: \(errorCount), İpuçları: \(hintCount)")
         
         // Skor hesaplaması yap ve sonuçları kullan
         let scoreResults = calculateScore(
@@ -94,7 +94,7 @@ class ScoreManager {
         
         do {
             try context.save()
-            print("✅ Skor başarıyla kaydedildi: ID: \(scoreId), Toplam Puan: \(scoreResults.totalScore)")
+            logSuccess("Skor başarıyla kaydedildi: ID: \(scoreId), Toplam Puan: \(scoreResults.totalScore)")
             
             // Skoru doğrudan Firebase'e de kaydet
             PersistenceController.shared.saveHighScoreToFirestore(
@@ -110,7 +110,7 @@ class ScoreManager {
             // Kaydedilen skoru kontrol et
             validateScoreSaved(scoreId: scoreId)
         } catch {
-            print("❌ Skor kaydedilemedi: \(error.localizedDescription)")
+            logError("Skor kaydedilemedi: \(error.localizedDescription)")
         }
     }
     
@@ -123,17 +123,17 @@ class ScoreManager {
             let scores = try context.fetch(request)
             if let score = scores.first {
                 if let id = score.value(forKey: "id") as? UUID {
-                    print("✓ Skor doğrulandı: \(id.uuidString)")
+                    logDebug("Skor doğrulandı: \(id.uuidString)")
                 } else {
-                    print("✓ Skor doğrulandı: ID yok")
+                    logDebug("Skor doğrulandı: ID yok")
                 }
-                print("✓ Toplam Skor: \(score.value(forKey: "totalScore") as? Int ?? 0)")
-                print("✓ Zorluk: \(score.value(forKey: "difficulty") as? String ?? "Zorluk yok")")
+                logDebug("Toplam Skor: \(score.value(forKey: "totalScore") as? Int ?? 0)")
+                logDebug("Zorluk: \(score.value(forKey: "difficulty") as? String ?? "Zorluk yok")")
             } else {
-                print("❌ HATA: Skor kaydedildi ama veritabanında bulunamadı!")
+                logError("HATA: Skor kaydedildi ama veritabanında bulunamadı!")
             }
         } catch {
-            print("❌ Skor kontrolü sırasında hata: \(error.localizedDescription)")
+            logError("Skor kontrolü sırasında hata: \(error.localizedDescription)")
         }
     }
     
@@ -163,7 +163,7 @@ class ScoreManager {
             }
             return 0
         } catch {
-            print("⚠️ En yüksek skor alınamadı: \(error.localizedDescription)")
+            logWarning("En yüksek skor alınamadı: \(error.localizedDescription)")
             return 0
         }
     }
@@ -193,7 +193,7 @@ class ScoreManager {
             
             return scoreCount > 0 ? Double(totalScore) / Double(scoreCount) : 0
         } catch {
-            print("⚠️ Ortalama skor hesaplanamadı: \(error.localizedDescription)")
+            logWarning("Ortalama skor hesaplanamadı: \(error.localizedDescription)")
             return 0
         }
     }

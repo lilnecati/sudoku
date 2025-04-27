@@ -169,7 +169,7 @@ class SudokuBoard: ObservableObject, Codable {
     // Orijinal değeri al (çözüm)
     func getOriginalValue(at row: Int, col: Int) -> Int? {
         guard isValidIndex(row: row, column: col) else {
-            print("⚠️ SudokuBoard.getOriginalValue: Geçersiz indeks: (\(row), \(col))")
+            logWarning("SudokuBoard.getOriginalValue: Geçersiz indeks: (\(row), \(col))")
             return nil
         }
         return solution[row][col]
@@ -472,14 +472,14 @@ class SudokuBoard: ObservableObject, Codable {
             for col in 0..<9 {
                 if solution[row][col] == nil {
                     solutionHasNils = true
-                    print("HATA: Çözümde nil değer var: [\(row)][\(col)]")
+                    logError("Çözümde nil değer var: [\(row)][\(col)]")
                 }
             }
         }
         
         // Çözüm geçersizse tekrar oluştur
         if solutionHasNils {
-            print("Çözümde nil değerler var, tekrar deneniyor...")
+            logWarning("Çözümde nil değerler var, tekrar deneniyor...")
             return generateBoard()
         }
         
@@ -1473,7 +1473,7 @@ class SudokuBoard: ObservableObject, Codable {
                let difficultyString = boardDict["difficulty"] as? String,
                let difficulty = Difficulty(rawValue: difficultyString) {
                 
-                print("Yeni format tespit edildi")
+                logInfo("Yeni format tespit edildi")
                 // Yeni bir SudokuBoard oluştur
                 let sudokuBoard = SudokuBoard(difficulty: difficulty)
                 
@@ -1491,7 +1491,7 @@ class SudokuBoard: ObservableObject, Codable {
             } 
             // Eski format (düz array) kontrolü
             else if let boardArray = json as? [[Int]] {
-                print("Eski format tespit edildi")
+                logInfo("Eski format tespit edildi")
                 let sudokuBoard = SudokuBoard(difficulty: .easy)
                 
                 for row in 0..<9 {
@@ -1508,7 +1508,7 @@ class SudokuBoard: ObservableObject, Codable {
         }
         
         // Kaydedilmiş verileri temizleyelim
-        print("Format anlaşılabilir değil, kaydedilmiş verileri siliyor olabilirsiniz")
+        logWarning("Format anlaşılabilir değil, kaydedilmiş verileri siliyor olabilirsiniz")
         return nil
     }
     

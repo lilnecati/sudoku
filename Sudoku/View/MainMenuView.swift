@@ -119,7 +119,7 @@ struct MainMenuView: View {
             let count = try context.count(for: fetchRequest)
             hasSavedGame = count > 0
         } catch {
-            print("Kaydedilmiş oyun kontrolü başarısız: \(error)")
+            logError("Kaydedilmiş oyun kontrolü başarısız: \(error)")
             hasSavedGame = false
         }
     }
@@ -134,7 +134,7 @@ struct MainMenuView: View {
             let results = try context.fetch(fetchRequest)
             return results.first
         } catch {
-            print("Son oyun yüklenemedi: \(error)")
+            logError("Son oyun yüklenemedi: \(error)")
             return nil
         }
     }

@@ -108,19 +108,20 @@ struct ScoreboardView: View {
             loadData()
         }
         .onAppear {
-            // Firebase'den yüksek skorları senkronize et
-            isLoading = true
+            // Ekran kararması yönetimi SudokuApp'a devredildi
+            isLoading = true // Yükleme göstergesini başlat
+            logInfo("ScoreboardView onAppear - Veri yükleniyor...")
             PersistenceController.shared.refreshHighScores()
             isLoading = false
             loadData()
             setupLanguageChangeListener()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshStatistics"))) { _ in
-            print("🔄 ScoreboardView: İstatistikler yenileme bildirimi alındı")
+            logInfo("ScoreboardView: İstatistikler yenileme bildirimi alındı")
             loadData()
         }
         .onChange(of: selectedDifficulty) { _, newDifficulty in
-            print("🔄 Zorluk seviyesi değişti: \(newDifficulty.rawValue)")
+            logInfo("Zorluk seviyesi değişti: \(newDifficulty.rawValue)")
             loadData()
         }
         // Detaylı istatistik sayfasına geçiş
@@ -776,7 +777,7 @@ struct ScoreboardView: View {
     }
     
     private func loadData() {
-        print("📊 Skor tablosu yükleniyor - Zorluk seviyesi: \(selectedDifficulty.rawValue)")
+        logInfo("Skor tablosu yükleniyor - Zorluk seviyesi: \(selectedDifficulty.rawValue)")
         
         let bestScore = ScoreManager.shared.getBestScore(for: selectedDifficulty)
         let averageScore = ScoreManager.shared.getAverageScore(for: selectedDifficulty)
@@ -801,8 +802,8 @@ struct ScoreboardView: View {
             let allScores = try context.fetch(totalGamesRequest)
             let totalGames = allScores.count
             
-            print("📝 \(selectedDifficulty.rawValue) zorluk seviyesi için \(difficultyGames) skor bulundu")
-            print("📝 Tüm zorluk seviyeleri için toplam \(totalGames) skor bulundu")
+            logInfo("\(selectedDifficulty.rawValue) zorluk seviyesi için \(difficultyGames) skor bulundu")
+            logInfo("Tüm zorluk seviyeleri için toplam \(totalGames) skor bulundu")
             
             // Son oyunları kaydet
             recentScores = scores
@@ -814,10 +815,10 @@ struct ScoreboardView: View {
                     let date = firstScore.value(forKey: "date") as? Date
                     let totalScore = firstScore.value(forKey: "totalScore") as? Int ?? 0
                     let elapsedTime = firstScore.value(forKey: "elapsedTime") as? Double ?? 0
-                    print("📋 İlk skor - ID: \(id?.uuidString ?? "ID yok"), Tarih: \(date?.description ?? "Tarih yok"), Puan: \(totalScore), Süre: \(elapsedTime)")
+                    logDebug("İlk skor - ID: \(id?.uuidString ?? "ID yok"), Tarih: \(date?.description ?? "Tarih yok"), Puan: \(totalScore), Süre: \(elapsedTime)")
                 }
             } else {
-                print("⚠️ Bu zorluk seviyesi için kayıtlı skor bulunamadı")
+                logWarning("Bu zorluk seviyesi için kayıtlı skor bulunamadı")
             }
             
             var totalTime: TimeInterval = 0
@@ -860,7 +861,7 @@ struct ScoreboardView: View {
                 successRate: successRate
             )
         } catch {
-            print("❌ Oyun istatistikleri alınamadı: \(error.localizedDescription)")
+            logError("Oyun istatistikleri alınamadı: \(error.localizedDescription)")
             statistics = ScoreboardStatistics(
                 totalGames: 0,
                 difficultyGames: 0,

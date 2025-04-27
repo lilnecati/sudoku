@@ -425,8 +425,8 @@ struct ProfileEditView: View {
         username = user.username ?? ""
         
         // Debug bilgisi
-        print("DEBUG - ProfileEditView - Kullanıcı adı: \(username)")
-        print("DEBUG - ProfileEditView - E-posta: \(email)")
+        logDebug("ProfileEditView - Kullanıcı adı: \(username)")
+        logDebug("ProfileEditView - E-posta: \(email)")
         
         // Profil resmi varsa yükle
         if let imageData = user.profileImage, let image = UIImage(data: imageData) {
@@ -565,26 +565,26 @@ struct ProfileEditView: View {
     // URL'den resim yükleme
     private func loadImageFromURL(urlString: String) {
         guard let url = URL(string: urlString) else { 
-            print("⚠️ Geçersiz URL: \(urlString)")
+            logWarning("Geçersiz URL: \(urlString)")
             return 
         }
         
-        print("🔍 Cloudinary URL'den resim yükleniyor: \(urlString)")
+        logInfo("Cloudinary URL'den resim yükleniyor: \(urlString)")
         
         let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
-                print("❌ Profil resmi yüklenemedi: \(error)")
+                logError("Profil resmi yüklenemedi: \(error)")
                 return
             }
             
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
-                print("❌ Sunucu yanıtı hatalı: \(String(describing: response))")
+                logError("Sunucu yanıtı hatalı: \(String(describing: response))")
                 return
             }
             
             if let data = data, let image = UIImage(data: data) {
-                print("✅ URL'den resim başarıyla yüklendi")
+                logSuccess("URL'den resim başarıyla yüklendi")
                 DispatchQueue.main.async {
                     self.selectedImage = image
                     
@@ -594,16 +594,16 @@ struct ProfileEditView: View {
                     user.profileImage = data
                     do {
                         try PersistenceController.shared.container.viewContext.save()
-                        print("✅ Resim yerel olarak kaydedildi")
+                        logSuccess("Resim yerel olarak kaydedildi")
                         
                         // Profil resmi güncellendiği için bildirim gönder
                         NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
                     } catch {
-                        print("❌ Profil resmi yerel olarak kaydedilemedi: \(error)")
+                        logError("Profil resmi yerel olarak kaydedilemedi: \(error)")
                     }
                 }
             } else {
-                print("❌ Resim verisi dönüştürülemedi")
+                logError("Resim verisi dönüştürülemedi")
             }
         }
         
@@ -635,25 +635,25 @@ struct ProfileEditView: View {
         user.profileImage = imageData
         do {
             try PersistenceController.shared.container.viewContext.save()
-            print("✅ Resim yerel olarak kaydedildi")
+            logSuccess("Resim yerel olarak kaydedildi")
         } catch {
-            print("❌ Resim yerel olarak kaydedilemedi: \(error)")
+            logError("Resim yerel olarak kaydedilemedi: \(error)")
         }
         
         // Cloudinary URL'sini oluştur
         let uploadURL = "https://api.cloudinary.com/v1_1/\(cloudName)/image/upload"
         guard let url = URL(string: uploadURL) else {
             isUploadingImage = false
-            print("❌ Geçersiz Cloudinary URL: \(uploadURL)")
+            logError("Geçersiz Cloudinary URL: \(uploadURL)")
             alertTitle = "Hata"
             alertMessage = "Cloudinary bağlantısı oluşturulamadı."
             showAlert = true
             return
         }
         
-        print("🚀 Cloudinary'ye yükleme başlatılıyor: \(uploadURL)")
-        print("👤 Kullanıcı: \(userId)")
-        print("🔑 Preset: \(uploadPreset)")
+        logInfo("Cloudinary'ye yükleme başlatılıyor: \(uploadURL)")
+        logInfo("Kullanıcı: \(userId)")
+        logInfo("Preset: \(uploadPreset)")
         
         // MultipartFormData oluştur
         let boundary = UUID().uuidString
@@ -674,7 +674,7 @@ struct ProfileEditView: View {
         let randomString = UUID().uuidString.prefix(8)
         let uniquePublicId = "profile_\(userId)_\(timestamp)_\(randomString)"
         
-        print("🏷️ Benzersiz profil resmi ID: \(uniquePublicId)")
+        logInfo("Benzersiz profil resmi ID: \(uniquePublicId)")
         
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"public_id\"\r\n\r\n".data(using: .utf8)!)
@@ -696,7 +696,7 @@ struct ProfileEditView: View {
                 self.isUploadingImage = false
                 
                 if let error = error {
-                    print("❌ Cloudinary yükleme hatası: \(error.localizedDescription)")
+                    logError("Cloudinary yükleme hatası: \(error.localizedDescription)")
                     self.alertTitle = "Hata"
                     self.alertMessage = "Fotoğraf yüklenemedi: \(error.localizedDescription)"
                     self.showAlert = true
@@ -704,16 +704,16 @@ struct ProfileEditView: View {
                 }
                 
                 if let httpResponse = response as? HTTPURLResponse {
-                    print("📡 Cloudinary yanıt kodu: \(httpResponse.statusCode)")
+                    logInfo("Cloudinary yanıt kodu: \(httpResponse.statusCode)")
                     
                     // Yanıtın header'larını yazdır
-                    print("📋 Yanıt başlıkları:")
+                    logInfo("Yanıt başlıkları:")
                     for (key, value) in httpResponse.allHeaderFields {
-                        print("\(key): \(value)")
+                        logInfo("\(key): \(value)")
                     }
                     
                     guard (200...299).contains(httpResponse.statusCode) else {
-                        print("❌ Başarısız yanıt kodu: \(httpResponse.statusCode)")
+                        logError("Başarısız yanıt kodu: \(httpResponse.statusCode)")
                         self.alertTitle = "Hata"
                         self.alertMessage = "Sunucu yanıtı hatalı: HTTP \(httpResponse.statusCode)"
                         self.showAlert = true
@@ -722,7 +722,7 @@ struct ProfileEditView: View {
                 }
                 
                 guard let data = data else {
-                    print("❌ Yanıt verisi boş")
+                    logError("Yanıt verisi boş")
                     self.alertTitle = "Hata"
                     self.alertMessage = "Yanıt verisi alınamadı"
                     self.showAlert = true
@@ -731,16 +731,16 @@ struct ProfileEditView: View {
                 
                 // Yanıt verisini yazdır
                 if let responseString = String(data: data, encoding: .utf8) {
-                    print("📄 Cloudinary yanıtı: \(responseString)")
+                    logInfo("Cloudinary yanıtı: \(responseString)")
                 }
                 
                 // JSON yanıtını işle
                 do {
                     if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                        print("✅ JSON yanıtı alındı")
+                        logSuccess("JSON yanıtı alındı")
                         
                         if let secureUrl = json["secure_url"] as? String {
-                            print("🔗 Yüklenen resim URL: \(secureUrl)")
+                            logInfo("Yüklenen resim URL: \(secureUrl)")
                             
                             // URL'yi kullanıcı bilgilerine kaydet
                             let context = PersistenceController.shared.container.viewContext
@@ -748,25 +748,25 @@ struct ProfileEditView: View {
                             
                             do {
                                 try context.save()
-                                print("✅ Resim URL'si CoreData'ya kaydedildi")
+                                logSuccess("Resim URL'si CoreData'ya kaydedildi")
                                 
                                 // Firebase'e URL'yi kaydet
                                 if let firebaseUID = user.firebaseUID {
-                                    print("🔄 Profil resmi URL'si Firebase'e gönderiliyor...")
+                                    logInfo("Profil resmi URL'si Firebase'e gönderiliyor...")
                                     PersistenceController.shared.db.collection("users").document(firebaseUID).updateData([
                                         "photoURL": secureUrl
                                     ]) { error in
                                         if let error = error {
-                                            print("❌ Firebase profil resmi güncelleme hatası: \(error.localizedDescription)")
+                                            logError("Firebase profil resmi güncelleme hatası: \(error.localizedDescription)")
                                         } else {
-                                            print("✅ Profil resmi URL'si Firebase'e kaydedildi")
+                                            logSuccess("Profil resmi URL'si Firebase'e kaydedildi")
                                             
                                             // ProfileImageUpdated bildirimini gönder
                                             NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
                                         }
                                     }
                                 } else {
-                                    print("⚠️ Kullanıcının Firebase UID'si yok, Firebase güncellemesi yapılamadı")
+                                    logWarning("Kullanıcının Firebase UID'si yok, Firebase güncellemesi yapılamadı")
                                     
                                     // Firebase ID olmasa da profil resmi güncellendiğinde bildirim gönder
                                     NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
@@ -777,28 +777,28 @@ struct ProfileEditView: View {
                                 self.alertMessage = "Profil fotoğrafınız başarıyla güncellendi."
                                 self.showAlert = true
                             } catch {
-                                print("❌ CoreData kayıt hatası: \(error.localizedDescription)")
+                                logError("CoreData kayıt hatası: \(error.localizedDescription)")
                                 self.alertTitle = "Hata"
                                 self.alertMessage = "Profil fotoğrafı bilgisi kaydedilemedi: \(error.localizedDescription)"
                                 self.showAlert = true
                             }
                         } else {
-                            print("❌ JSON'da secure_url alanı bulunamadı")
+                            logError("JSON'da secure_url alanı bulunamadı")
                             if let error = json["error"] as? [String: Any] {
-                                print("❌ Cloudinary hata detayı: \(error)")
+                                logError("Cloudinary hata detayı: \(error)")
                             }
                             self.alertTitle = "Hata"
                             self.alertMessage = "Resim URL'si alınamadı"
                             self.showAlert = true
                         }
                     } else {
-                        print("❌ Yanıt JSON formatında değil")
+                        logError("Yanıt JSON formatında değil")
                         self.alertTitle = "Hata"
                         self.alertMessage = "Resim URL'si alınamadı"
                         self.showAlert = true
                     }
                 } catch {
-                    print("❌ JSON ayrıştırma hatası: \(error.localizedDescription)")
+                    logError("JSON ayrıştırma hatası: \(error.localizedDescription)")
                     self.alertTitle = "Hata"
                     self.alertMessage = "JSON işleme hatası: \(error.localizedDescription)"
                     self.showAlert = true

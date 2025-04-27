@@ -177,7 +177,7 @@ struct StartupView: View {
                     
                     // Yeniden açılma durumu mu, yoksa ilk açılış mı kontrol et
                     if forceShowSplash {
-                        print("🔄 Uygulama uzun süre arka planda kaldıktan sonra yeniden açılıyor")
+                        logInfo("Uygulama uzun süre arka planda kaldıktan sonra yeniden açılıyor")
                         
                         // Ana ekrana dön bildirimi gönder (ContentView'un doğru sayfaya gitmesi için)
                         NotificationCenter.default.post(name: Notification.Name("ReturnToMainMenu"), object: nil)
@@ -186,7 +186,7 @@ struct StartupView: View {
                         let resetDuration: Double = 4.0 // 4 saniye göster
                         
                         DispatchQueue.main.asyncAfter(deadline: .now() + resetDuration) {
-                            print("🔄 Splash ekranını kapatıp ana sayfaya dönülüyor")
+                            logInfo("Splash ekranını kapatıp ana sayfaya dönülüyor")
                             
                             // Kapanış animasyonunu uygula
                             withAnimation(.easeInOut(duration: 0.3)) {
@@ -204,7 +204,7 @@ struct StartupView: View {
                         }
                     } else {
                         // Normal açılış - belirtilen süre sonra ContentView'a geç
-                        print("🚀 StartupView \(displayDuration) saniye sonra ContentView'a geçecek...")
+                        logInfo("StartupView \(displayDuration) saniye sonra ContentView'a geçecek...")
                         DispatchQueue.main.asyncAfter(deadline: .now() + displayDuration) {
                             // ÖNCE kapanış animasyonunu uygula
                             withAnimation(.easeInOut(duration: 0.3)) {
@@ -217,7 +217,7 @@ struct StartupView: View {
                             
                             // Animasyon bittikten sonra ContentView'a geç
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                print("🚀 StartupView uygulamayı başlatıyor...")
+                                logInfo("StartupView uygulamayı başlatıyor...")
                                 isReady = true
                             }
                         }

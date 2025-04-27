@@ -147,7 +147,7 @@ struct ContentView: View {
             object: nil,
             queue: .main
         ) { _ in
-            print("📱 ReturnToMainMenu bildirimi alındı - Ana sayfaya dönülüyor")
+            logInfo("ReturnToMainMenu bildirimi alındı - Ana sayfaya dönülüyor")
             
             // Ana sayfaya dön ve oyun ekranlarını kapat
             DispatchQueue.main.async {
@@ -204,7 +204,7 @@ struct ContentView: View {
                     object: nil
                 )
                 
-                print("🔊 Ana sayfaya yönlendiriliyor (zaman aşımı sonrası)")
+                logInfo("Ana sayfaya yönlendiriliyor (zaman aşımı sonrası)")
                 
                 // İşlem tamamlandı, bayrağı sıfırla
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -327,7 +327,7 @@ struct ContentView: View {
                 if let lastGame = result.first {
                     // Yükleme işlemi başladı
                     isLoading = true
-                    print("Son kaydedilmiş oyun yükleniyor... ID: \(lastGame.value(forKey: "id") ?? "ID yok")")
+                    logInfo("Son kaydedilmiş oyun yükleniyor... ID: \(lastGame.value(forKey: "id") ?? "ID yok")")
                     
                     // Kaydedilmiş oyunu SudokuViewModel'e yükle
                     viewModel.loadGame(from: lastGame)
@@ -341,7 +341,7 @@ struct ContentView: View {
                         }
                     }
                 } else {
-                    print("Kaydedilmiş oyun bulunamadı, yeni oyun başlatılıyor")
+                    logInfo("Kaydedilmiş oyun bulunamadı, yeni oyun başlatılıyor")
                     // Kaydedilmiş oyun yoksa yeni oyun başlat
                     withAnimation(.spring()) {
                         // GameState'i temizle ve yeni oyun oluştur
@@ -355,7 +355,7 @@ struct ContentView: View {
                 // Hata durumunda
                 isLoading = false
                 loadError = error
-                print("Yükleme hatası: \(error)")
+                logError("Yükleme hatası: \(error)")
             }
         }) {
             HStack {
@@ -882,12 +882,15 @@ struct ContentView: View {
             // PowerSaving Manager'ı başlat
             _ = PowerSavingManager.shared
             
+            // Ekran kararmasını açıkça ETKİNLEŞTİR (GameView dışındaki tüm ekranlar için)
+            logInfo("ContentView onAppear - Ekran kararması durumu SudokuApp tarafından yönetiliyor.")
+            
             // Cihaz bilgilerini göster
-            print("📱 ContentView onAppear - Device: \(UIDevice.current.model), \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)")
+            logInfo("ContentView onAppear - Device: \(UIDevice.current.model), \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)")
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))) { _ in
             // Dil değiştiğinde tüm görünümü yenile
-            print("📢 Dil değişikliği algılandı - ContentView yenileniyor")
+            logInfo("Dil değişikliği algılandı - ContentView yenileniyor")
             
             // Görünümü zorla yenileme
             withAnimation {

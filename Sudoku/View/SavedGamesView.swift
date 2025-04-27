@@ -61,13 +61,13 @@ struct SavedGamesView: View {
     
     // Oyunları filtreleyen fonksiyon
     private func filterGames() {
-        print("🔍 Filtreleme başladı: \(savedGames.count) oyun mevcut")
+        logInfo("Filtreleme başladı: \(savedGames.count) oyun mevcut")
         
         // Önce tamamlanmamış oyunları filtrele (isCompleted == false veya nil)
         let uncompleted = savedGames.filter { savedGame in
             // Önce oyun verilerine eriş
             guard let boardStateData = savedGame.boardState else { 
-                print("⚠️ Oyun verisi (boardState) bulunamadı: \(savedGame.id?.uuidString ?? "ID yok")")
+                logWarning("Oyun verisi (boardState) bulunamadı: \(savedGame.id?.uuidString ?? "ID yok")")
                 return true 
             }
             
@@ -77,33 +77,33 @@ struct SavedGamesView: View {
                     // isCompleted anahtarını kontrol et
                     if let isCompleted = dict["isCompleted"] as? Bool, isCompleted {
                         // Tamamlanmış oyunları gösterme
-                        print("ℹ️ Tamamlanmış oyun filtrelendi: \(savedGame.id?.uuidString ?? "ID yok")")
+                        logInfo("Tamamlanmış oyun filtrelendi: \(savedGame.id?.uuidString ?? "ID yok")")
                         return false
                     }
                     return true
                 } else {
-                    print("⚠️ JSON ayrıştırma başarılı fakat dictionary değil: \(savedGame.id?.uuidString ?? "ID yok")")
+                    logWarning("JSON ayrıştırma başarılı fakat dictionary değil: \(savedGame.id?.uuidString ?? "ID yok")")
                     return true
                 }
             } catch {
-                print("❌ JSON ayrıştırma hatası: \(error), Oyun ID: \(savedGame.id?.uuidString ?? "ID yok")")
+                logError("JSON ayrıştırma hatası: \(error), Oyun ID: \(savedGame.id?.uuidString ?? "ID yok")")
                 return true
             }
         }
         
-        print("🔍 Tamamlanmamış oyun sayısı: \(uncompleted.count)")
+        logInfo("Tamamlanmamış oyun sayısı: \(uncompleted.count)")
         
         // Ardından zorluk seviyesine göre filtrele
         if selectedDifficulty == "Tümü" || selectedDifficulty == "All" || selectedDifficulty == "Tous" {
-            print("🔍 Tüm zorluk seviyeleri gösteriliyor. Toplam oyun sayısı: \(uncompleted.count)")
+            logInfo("Tüm zorluk seviyeleri gösteriliyor. Toplam oyun sayısı: \(uncompleted.count)")
             filteredGames = Array(uncompleted)
         } else {
             let filtered = uncompleted.filter { $0.difficulty == selectedDifficulty }
-            print("🔍 '\(selectedDifficulty)' zorluk seviyesine göre filtreleniyor. Oyun sayısı: \(filtered.count)")
+            logInfo("'\(selectedDifficulty)' zorluk seviyesine göre filtreleniyor. Oyun sayısı: \(filtered.count)")
             filteredGames = filtered
         }
         
-        print("🔄 UI güncellendi: \(filteredGames.count) oyun gösteriliyor")
+        logInfo("UI güncellendi: \(filteredGames.count) oyun gösteriliyor")
     }
     
     // Boş durum görünümü
@@ -179,7 +179,7 @@ struct SavedGamesView: View {
                             do {
                                 try viewContext.save()
                             } catch {
-                                print("❌ ViewContext yenileme hatası: \(error)")
+                                logError("ViewContext yenileme hatası: \(error)")
                             }
                         }) {
                             HStack(spacing: 4) {
@@ -238,33 +238,36 @@ struct SavedGamesView: View {
         }
         // Notification Center dinleyicisi ekle
         .onAppear {
+            // Ekran kararması yönetimi SudokuApp'a devredildi
+            // UIApplication.shared.isIdleTimerDisabled = false // Kaldırıldı
+            
             // Manuel olarak kayıtlı oyunları yükle
             loadSavedGames()
             
-            print("🔍 SavedGamesView - Bulunan kaydedilmiş oyun sayısı: \(savedGames.count)")
+            logInfo("SavedGamesView - Bulunan kaydedilmiş oyun sayısı: \(savedGames.count)")
             
             // Firebase senkronizasyonunu sadece kaydedilmiş oyunlar sayfasına ilk girişte çalıştır
             if Auth.auth().currentUser != nil {
                 // Eğer kullanıcı giriş yapmışsa senkronize et
                 PersistenceController.shared.syncSavedGamesFromFirestore { success in
                     if success {
-                        print("✅ Firebase senkronizasyonu başarılı")
+                        logSuccess("Firebase senkronizasyonu başarılı")
                         // Veriler güncellendiğinde otomatik olarak yüklenecek (NotificationCenter sayesinde)
                     }
                 }
             } else {
-                print("ℹ️ Firebase senkronizasyonu yapılmadı: Kullanıcı giriş yapmamış")
+                logInfo("Firebase senkronizasyonu yapılmadı: Kullanıcı giriş yapmamış")
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshSavedGames"))) { _ in
             // Manuel olarak oyunları tekrar yükle - Silinen oyunları hemen güncellemek için
-            print("🔄 SavedGamesView: Bildirim alındı - veri yenileniyor")
+            logInfo("SavedGamesView: Bildirim alındı - veri yenileniyor")
             
             // Doğrudan tüm oyunları yükleyelim
             let freshGames = PersistenceController.shared.getAllSavedGames()
             
             // Silinen oyunların güncel durumlarını görmek için çağırıyoruz
-            print("🔍 Güncel veritabanı durumu: \(freshGames.count) oyun mevcut")
+            logInfo("Güncel veritabanı durumu: \(freshGames.count) oyun mevcut")
             
             // UI güncelleme - silinen oyunlar varsa hemen gösterilecek
             DispatchQueue.main.async {
@@ -282,13 +285,13 @@ struct SavedGamesView: View {
         }
         // Kullanıcı giriş yaptığında senkronizasyon yap
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserLoggedIn"))) { _ in
-            print("👤 Kullanıcı giriş yaptı - Kayıtlı oyunları senkronize ediliyor")
+            logInfo("Kullanıcı giriş yaptı - Kayıtlı oyunları senkronize ediliyor")
             if Auth.auth().currentUser != nil {
                 // 1 saniye gecikme ile senkronizasyonu çalıştır (giriş işlemi tamamen tamamlansın diye)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     PersistenceController.shared.syncSavedGamesFromFirestore { success in
                         if success {
-                            print("✅ Giriş sonrası Firebase senkronizasyonu başarılı")
+                            logSuccess("Giriş sonrası Firebase senkronizasyonu başarılı")
                         }
                     }
                 }
@@ -304,7 +307,7 @@ struct SavedGamesView: View {
                         do {
                             try viewContext.save()
                         } catch {
-                            print("Error saving context: \(error)")
+                            logError("Error saving context: \(error)")
                         }
                     }
                 },
@@ -656,11 +659,11 @@ struct SavedGamesView: View {
                     Button(action: {
                         // Animasyon kaldırıldı
                         
-                        print("\n📌 SavedGamesView: Oyun yükleniyor ID: \(game.value(forKey: "id") ?? "ID yok")")
+                        logInfo("SavedGamesView: Oyun yükleniyor ID: \(game.value(forKey: "id") ?? "ID yok")")
                         
                         // Önce SudokuViewModel'e oyunu yükle
                         viewModel.loadGame(from: game)
-                        print("📌 SavedGamesView: Oyun yüklendi, callback çağrılıyor")
+                        logInfo("SavedGamesView: Oyun yüklendi, callback çağrılıyor")
                         
                         // Callback'i doğrudan çağır
                         gameSelected(game)
@@ -781,11 +784,11 @@ struct SavedGamesView: View {
                 return date1 > date2
             }
             
-            print("📊 Oyun yükleme: \(sortedGames.count) oyun bulundu")
+            logInfo("Oyun yükleme: \(sortedGames.count) oyun bulundu")
             
             // Log oyun ID'lerini
             for (index, game) in sortedGames.enumerated() {
-                print("🎮 Oyun \(index+1): ID = \(game.id?.uuidString ?? "ID yok"), difficulty = \(game.difficulty ?? "Bilinmeyen")")
+                logDebug("Oyun \(index+1): ID = \(game.id?.uuidString ?? "ID yok"), difficulty = \(game.difficulty ?? "Bilinmeyen")")
             }
             
             // UI güncellemesi

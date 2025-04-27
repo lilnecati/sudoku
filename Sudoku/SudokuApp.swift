@@ -127,7 +127,8 @@ struct SudokuApp: App {
     @State private var initializationError: Error? = nil
     @State private var isInitialized = false
     
-    // NOT: Ekran kararması kontrolü artık sadece GameView içinde yapılıyor
+    // Aktif oyun ekranı açık mı?
+    @State private var isGameViewActive = false
     
     private var textSizePreference: TextSizePreference {
         return TextSizePreference(rawValue: textSizeString) ?? .medium
@@ -138,9 +139,9 @@ struct SudokuApp: App {
     private let viewContext: NSManagedObjectContext
     
     init() {
-        print("📱 Sudoku app initializing...")
+        logInfo("Sudoku app initializing...")
         #if DEBUG
-        print("📊 Debug mode active")
+        logDebug("Debug mode active")
         #endif
         
         // Initialize view context
@@ -148,15 +149,77 @@ struct SudokuApp: App {
         viewContext.automaticallyMergesChangesFromParent = true
         viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
+        // Uygulama başlatıldığında ekran kararması yönetimi GameView'e bırakıldı
+        // UIApplication.shared.isIdleTimerDisabled = false
+        // logInfo("SudokuApp init - Ekran kararması GLOBAL olarak ETKİNLEŞTİRİLDİ (ekran kararabilir)")
+        
+        // setupGameScreenObservers() // Ekran kararması yönetimi GameView'e devredildi
+        
+        // Firestore'u başlat
+        FirebaseApp.configure()
+        
         // PowerSavingManager'ı başlat
         _ = PowerSavingManager.shared
-        print("🔋 Power Saving Manager initialized")
+        logInfo("Power Saving Manager initialized")
         
         // Başarım bildirimi köprüsünü başlat
         _ = AchievementNotificationBridge.shared
-        print("🏆 Achievement Notification Bridge initialized")
+        logInfo("Achievement Notification Bridge initialized")
     }
     
+    // MARK: - Firebase Token Validation
+    private func validateFirebaseToken() {
+        if let currentUser = Auth.auth().currentUser {
+            logInfo("Firebase token doğrulaması yapılıyor...")
+            currentUser.getIDTokenResult(forcingRefresh: true) { tokenResult, error in
+                if let error = error {
+                    logError("Token doğrulama hatası: \(error.localizedDescription)")
+                    // Token doğrulama hatası - kullanıcı hesabı silinmiş veya token geçersiz olabilir
+                    // Kullanıcıyı otomatik olarak çıkış yaptır
+                    do {
+                        try Auth.auth().signOut()
+                        logWarning("Geçersiz token nedeniyle kullanıcı çıkış yaptırıldı")
+                        // Kullanıcı çıkış bildirimi gönder
+                        NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
+                    } catch let signOutError {
+                        logError("Çıkış yapma hatası: \(signOutError.localizedDescription)")
+                    }
+                } else {
+                    logSuccess("Firebase token doğrulaması başarılı")
+                }
+            }
+        }
+    }
+
+    // MARK: - Game Screen Observers
+    private func setupGameScreenObservers() {
+        // Oyun ekranı açıldığında ekran kararmasını engelle - sadece Sudoku oyunu için
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("GameScreenOpened"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            logInfo("Notification alındı: GameScreenOpened. isIdleTimerDisabled ayarlanıyor...")
+            // let currentState = UIApplication.shared.isIdleTimerDisabled // Yorum satırı
+            // UIApplication.shared.isIdleTimerDisabled = true // Yorum satırı
+            // logInfo("GameScreenOpened: isIdleTimerDisabled ayarlandı: \\(currentState) -> true")
+            isGameViewActive = true // Bu satır kalabilir
+        }
+        
+        // Oyun ekranı kapandığında ekran kararmasını tekrar etkinleştir
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("GameScreenClosed"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            logInfo("Notification alındı: GameScreenClosed. isIdleTimerDisabled ayarlanıyor...")
+            // let currentState = UIApplication.shared.isIdleTimerDisabled // Yorum satırı
+            // UIApplication.shared.isIdleTimerDisabled = false // Yorum satırı
+            // logInfo("GameScreenClosed: isIdleTimerDisabled ayarlandı: \\(currentState) -> false")
+            isGameViewActive = false // Bu satır kalabilir
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             StartupView(forceShowSplash: showSplashOnResume)
@@ -167,49 +230,39 @@ struct SudokuApp: App {
                 .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
                 .accentColor(ColorManager.primaryBlue)
                 .achievementToastSystem()
-                .onAppear {
-                    // Firebase Auth'un hazır olması için bir gecikme ekleyelim
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        // Achievement manager'ı başlat
-                        let achievementManager = AchievementManager.shared
-                        print("✅ AchievementManager başlatıldı")
-                        
-                        // Eğer kullanıcı oturum açmışsa, başarımları Firebase'den yükle
-                        if Auth.auth().currentUser != nil {
-                            achievementManager.loadAchievementsFromFirebase()
-                        }
-                    }
-                }
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {
                     case .active:
                         // Firebase token doğrulaması yap
                         validateFirebaseToken()
                         
-                        // Uygulamanın arka plandan dönüş süresini kontrol et
+                        // Uygulama arka plandan ön plana geldiğinde
                         let currentTime = Date().timeIntervalSince1970
                         let timeSinceBackground = currentTime - lastBackgroundTime
                         
-                        // Eğer belirli bir süreden fazla arka planda kaldıysa splash ekranını göster
-                        if lastBackgroundTime > 0 && timeSinceBackground > gameResetTimeInterval {
-                            print("🔄 Uygulama \(Int(timeSinceBackground)) saniye sonra geri döndü - Splash ekranı gösterilecek")
+                        if timeSinceBackground > gameResetTimeInterval && lastBackgroundTime > 0 {
+                            // Uygulama uzun süre arka planda kaldıysa splash göster
                             showSplashOnResume = true
+                            logInfo("Uygulama \(Int(timeSinceBackground)) saniye arka planda kaldı, splash gösterilecek")
                         } else {
                             showSplashOnResume = false
                         }
                         
-                        // Uygulama aktif olduğunda verileri senkronize et
-                        PersistenceController.shared.syncSavedGamesFromFirestore { success in
-                            if success {
-                                print("✅ Oyunlar başarıyla senkronize edildi")
-                            } else {
-                                print("⚠️ Oyun senkronizasyonunda sorun oluştu")
+                        // Oyun verilerini senkronize et
+                        if Auth.auth().currentUser != nil {
+                            // Kullanıcı giriş yapmışsa, Firestore'dan verileri çek
+                            PersistenceController.shared.syncSavedGamesFromFirestore { success in
+                                if success {
+                                    logInfo("Oyun verileri başarıyla senkronize edildi")
+                                } else {
+                                    logWarning("Oyun senkronizasyonunda sorun oluştu")
+                                }
                             }
                         }
                     case .background:
                         // Arka plana geçiş zamanını kaydet
                         lastBackgroundTime = Date().timeIntervalSince1970
-                        print("🔄 Uygulama arka plana alındı: \(Date())")
+                        logInfo("Uygulama arka plana alındı: \(Date())")
                         
                         // Arka plana geçerken değişiklikleri kaydet
                         PersistenceController.shared.save()
@@ -229,9 +282,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Firebase konfigürasyonu
         if FirebaseApp.app() == nil {
             FirebaseApp.configure()
-            print("✅ Firebase yapılandırması başarıyla tamamlandı")
+            logSuccess("Firebase yapılandırması başarıyla tamamlandı")
         } else {
-            print("⚠️ Firebase zaten yapılandırılmış")
+            logWarning("Firebase zaten yapılandırılmış")
         }
         
         // Diğer ayarlar
@@ -244,7 +297,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 private func setupUserChangeObservers() {
     // Kullanıcı çıkış yaptığında dinleyici
     NotificationCenter.default.addObserver(forName: Notification.Name("UserLoggedOut"), object: nil, queue: .main) { _ in
-        print("👤 Kullanıcı çıkış yaptı")
+        logInfo("Kullanıcı çıkış yaptı")
         
         // Görüntüleri yenile
         NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
@@ -253,7 +306,7 @@ private func setupUserChangeObservers() {
     // Kullanıcı giriş yaptığında dinleyici
     NotificationCenter.default.addObserver(forName: Notification.Name("UserLoggedIn"), object: nil, queue: .main) { _ in
         if let user = PersistenceController.shared.getCurrentUser() {
-            print("👤 Kullanıcı giriş yaptı: \(user.username ?? "N/A")")
+            logInfo("Kullanıcı giriş yaptı: \(user.username ?? "N/A")")
             
             // Görüntüleri yenile
             NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
@@ -293,59 +346,5 @@ struct InitializationErrorView: View {
             }
         }
         .padding()
-    }
-}
-
-// MARK: - Firebase Token Validation
-private func validateFirebaseToken() {
-    if let currentUser = Auth.auth().currentUser {
-        print("🔑 Firebase token doğrulaması yapılıyor...")
-        currentUser.getIDTokenResult(forcingRefresh: true) { tokenResult, error in
-            if let error = error {
-                print("❌ Token doğrulama hatası: \(error.localizedDescription)")
-                // Token doğrulama hatası - kullanıcı hesabı silinmiş veya token geçersiz olabilir
-                // Kullanıcıyı otomatik olarak çıkış yaptır
-                do {
-                    try Auth.auth().signOut()
-                    print("🚪 Geçersiz token nedeniyle kullanıcı çıkış yaptırıldı")
-                    // Kullanıcı çıkış bildirimi gönder
-                    NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
-                } catch let signOutError {
-                    print("❌ Çıkış yapma hatası: \(signOutError.localizedDescription)")
-                }
-            } else {
-                print("✅ Firebase token doğrulaması başarılı")
-            }
-        }
-    }
-}
-
-// MARK: - Game Screen Observers
-private func setupGameScreenObservers() {
-    // Oyun ekranı açıldığında ekran kararmasını engelle - sadece Sudoku oyunu için
-    NotificationCenter.default.addObserver(
-        forName: Notification.Name("GameScreenOpened"),
-        object: nil,
-        queue: .main
-    ) { _ in
-        // Sadece Sudoku oyun ekranı için ekran kararmasını engelle
-        // Ana iş parçacığında işlemi yap
-        DispatchQueue.main.async {
-            // Burada başka bir işlem yapmıyoruz, GameView zaten kendi içinde idleTimerDisabled'ı ayarlıyor
-            print("🔆 GameScreenOpened bildirim alındı - GameView tarafından ekran kararması engelleniyor")
-        }
-    }
-    
-    // Oyun ekranı kapandığında ekran kararmasını tekrar etkinleştir
-    NotificationCenter.default.addObserver(
-        forName: Notification.Name("GameScreenClosed"),
-        object: nil,
-        queue: .main
-    ) { _ in
-        // Ana iş parçacığında ekran kararmasını tekrar etkinleştir
-        DispatchQueue.main.async {
-            // GameView kapandığında sistem otomatik olarak UIApplication.shared.isIdleTimerDisabled = false yapıyor
-            print("🔅 GameScreenClosed bildirim alındı - Ekran kararması GameView tarafından etkinleştirildi")
-        }
     }
 }

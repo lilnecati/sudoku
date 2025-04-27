@@ -348,6 +348,9 @@ struct SettingsView: View {
             RegisterViewContainer()
         }
         .onAppear {
+            // Ekran kararması yönetimi SudokuApp'a devredildi
+            // loadSettings() // Bu satır kaldırıldı
+
             // Bildirim dinleyicilerini ayarla
             setupObservers()
             
@@ -439,13 +442,13 @@ struct SettingsView: View {
         DispatchQueue.global(qos: .background).async {
             PersistenceController.shared.syncProfileImage { success in
                 if success {
-                    print("✅ Profil resmi başarıyla senkronize edildi")
+                    logSuccess("Profil resmi başarıyla senkronize edildi")
                     // Başarılı olduğunda ana thread'de UI güncellemesi yapabiliriz
                     DispatchQueue.main.async {
                         self.currentUser = PersistenceController.shared.getCurrentUser()
                     }
                 } else {
-                    print("⚠️ Profil resmi senkronizasyonu başarısız oldu veya gereksizdi")
+                    logWarning("Profil resmi senkronizasyonu başarısız oldu veya gereksizdi")
                 }
             }
         }
@@ -1340,7 +1343,7 @@ struct SettingsView: View {
             .padding(.horizontal, 8)
             
             // Telif hakkı ve yapım yılı
-            Text("© 2024 Necati Yıldırım")
+            Text(" 2024 Necati Yıldırım")
                 .scaledFont(size: 14, weight: .regular)
                 .foregroundColor(.secondary)
                 .padding(.top)
@@ -1408,7 +1411,7 @@ struct SettingsView: View {
             NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
         }
         
-        print("📱 Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)")
+        logInfo("Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)")
     }
     
     // Dil değişikliğini işleme fonksiyonu
@@ -1433,7 +1436,7 @@ struct SettingsView: View {
         // Önceki dil kodunu kullanarak dil ismini bul
         let previousLanguageName = AppLanguage.allLanguages.first(where: { $0.code == previousLanguageCode })?.name ?? previousLanguageCode
         
-        print("🌐 Dil değiştirildi: \(previousLanguageName) -> \(newValue.name)")
+        logInfo("Dil değiştirildi: \(previousLanguageName) -> \(newValue.name)")
     }
     
     // Profil resmi için eklenen URL'den yükleme fonksiyonu
@@ -1445,7 +1448,7 @@ struct SettingsView: View {
         
         let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
-                print("Profil resmi yüklenemedi: \(error)")
+                logError("Profil resmi yüklenemedi: \(error)")
                 completion(nil)
                 return
             }
@@ -1505,8 +1508,8 @@ struct SettingsView: View {
                         let displayUsername = user.username ?? ""
                         Text(displayUsername)
                             .onAppear {
-                                print("DEBUG - Kullanıcı adı: \(displayUsername)")
-                                print("DEBUG - E-posta: \(user.email ?? "")")
+                                logDebug("Kullanıcı adı: \(displayUsername)")
+                                logDebug("E-posta: \(user.email ?? "")")
                             }
                             .font(.system(size: 16))
                             .foregroundColor(.secondary)
@@ -1910,7 +1913,7 @@ struct SettingsView: View {
         // AchievementManager'ı yeniden başlatmak için bildirim gönder
         NotificationCenter.default.post(name: Notification.Name("ResetAchievements"), object: nil)
         
-        print("🧹 Tüm başarı verileri silindi")
+        logInfo("Tüm başarı verileri silindi")
     }
 }
 
@@ -2270,7 +2273,7 @@ struct ProfileImageView: View {
             loadProfileImage()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ProfileImageUpdated"))) { _ in
-            print("📢 Profil resmi güncelleme bildirimi alındı")
+            logInfo("Profil resmi güncelleme bildirimi alındı")
             loadProfileImage()
         }
     }
@@ -2278,7 +2281,7 @@ struct ProfileImageView: View {
     private func loadProfileImage() {
         // Resmin yüklenme zamanını ekle
         let loadTime = Date()
-        print("🕒 Profil resmi yükleme başladı: \(loadTime)")
+        logInfo("Profil resmi yükleme başladı: \(loadTime)")
         
         // Önbellekteki resimleri temizle (cihaz-simülatör arasındaki farklılıkları önlemek için)
         URLCache.shared.removeAllCachedResponses()
@@ -2286,18 +2289,18 @@ struct ProfileImageView: View {
         // Önce yerel depolamada kontrol et
         if let imageData = user.profileImage, let image = UIImage(data: imageData) {
             profileImage = image
-            print("✅ Profil resmi yerel depolamadan yüklendi - Boyut: \(imageData.count) byte, Hash: \(imageData.hashValue)")
+            logSuccess("Profil resmi yerel depolamadan yüklendi - Boyut: \(imageData.count) byte, Hash: \(imageData.hashValue)")
             return
         }
         
         // Yerel yoksa URL'den yüklemeyi dene
         if let photoURL = user.photoURL {
             isLoading = true
-            print("🔄 Profil resmi URL'den yükleniyor: \(photoURL)")
+            logInfo("Profil resmi URL'den yükleniyor: \(photoURL)")
             
             guard let url = URL(string: photoURL) else {
                 isLoading = false
-                print("❌ Geçersiz profil resmi URL'si: \(photoURL)")
+                logError("Geçersiz profil resmi URL'si: \(photoURL)")
                 return
             }
             
@@ -2310,16 +2313,16 @@ struct ProfileImageView: View {
                     isLoading = false
                     
                     if let error = error {
-                        print("❌ Profil resmi yükleme hatası: \(error)")
+                        logError("Profil resmi yükleme hatası: \(error)")
                         return
                     }
                     
                     if let response = response as? HTTPURLResponse {
-                        print("📡 URL yanıt kodu: \(response.statusCode)")
+                        logInfo("URL yanıt kodu: \(response.statusCode)")
                     }
                     
                     if let data = data, let image = UIImage(data: data) {
-                        print("✅ Profil resmi URL'den başarıyla yüklendi - Boyut: \(data.count) byte, Hash: \(data.hashValue)")
+                        logSuccess("Profil resmi URL'den başarıyla yüklendi - Boyut: \(data.count) byte, Hash: \(data.hashValue)")
                         self.profileImage = image
                         
                         // Resmi yerel olarak da kaydet
@@ -2328,20 +2331,20 @@ struct ProfileImageView: View {
                         do {
                             try PersistenceController.shared.container.viewContext.save()
                             UserDefaults.standard.synchronize() // Hemen senkronize et
-                            print("✅ Profil resmi yerel veritabanına kaydedildi")
+                            logSuccess("Profil resmi yerel veritabanına kaydedildi")
                             
                             // Tüm profil resmi görünümlerini güncellemek için bildirim gönder
                             NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
                         } catch {
-                            print("❌ Profil resmi yerel olarak kaydedilemedi: \(error)")
+                            logError("Profil resmi yerel olarak kaydedilemedi: \(error)")
                         }
                     } else {
-                        print("❌ Profil resmi verisi dönüştürülemedi")
+                        logError("Profil resmi verisi dönüştürülemedi")
                     }
                 }
             }.resume()
         } else {
-            print("ℹ️ Kullanıcının profil resmi URL'si yok")
+            logInfo("Kullanıcının profil resmi URL'si yok")
         }
     }
 }

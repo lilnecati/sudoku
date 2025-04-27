@@ -335,7 +335,8 @@ struct AchievementsSheet: View {
             )
         }
         .onAppear {
-            // AchievementManager kendi kendine yüklenir
+            // Ekran kararması yönetimi SudokuApp'a devredildi
+            // Başarımlar AchievementManager tarafından otomatik yüklenir.
         }
     }
 }
