@@ -973,12 +973,7 @@ class AchievementManager: ObservableObject {
         
         // Tüm başarımlar için toplu veri hazırla
         let achievementsData = encodeAchievementsForFirebase()
-        let userData: [String: Any] = [
-            "achievements": achievementsData,
-            "totalPoints": totalPoints,
-            "lastSyncDate": FieldValue.serverTimestamp(),
-            "lastUpdated": FieldValue.serverTimestamp()
-        ]
+        // Not: userData değişkeni kullanılmadığı için kaldırıldı
         
         // Önce kullanıcı belgesi var mı kontrol et
         db.collection("users").document(user.uid).getDocument { [weak self] document, error in
@@ -1078,21 +1073,47 @@ class AchievementManager: ObservableObject {
             
             // Eski yapıyı da desteklemek için kullanıcı belgesini güncelle
             if let document = document, document.exists {
-                // Belge varsa güncelle
-                self.db.collection("users").document(user.uid).updateData(userData) { error in
-                    if let error = error {
-                        print("❌ Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
-                } else {
-                        print("✅ Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
-                    }
-                }
-            } else {
-                // Belge yoksa oluştur
-                self.db.collection("users").document(user.uid).setData(userData) { error in
+                // Belge varsa sadece başarım alanlarını güncelle, diğer alanları koruyarak
+                let achievementUpdateData: [String: Any] = [
+                    "achievements": achievementsData,
+                    "totalPoints": totalPoints,
+                    "lastSyncDate": FieldValue.serverTimestamp(),
+                    "lastUpdated": FieldValue.serverTimestamp()
+                ]
+                
+                self.db.collection("users").document(user.uid).updateData(achievementUpdateData) { error in
                     if let error = error {
                         print("❌ Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
                     } else {
                         print("✅ Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
+                    }
+                }
+            } else {
+                // Belge yoksa, önce kullanıcı profilini al, sonra başarımları ekle
+                Auth.auth().currentUser?.getIDTokenResult(forcingRefresh: true) { tokenResult, error in
+                    if let error = error {
+                        print("❌ Token doğrulama hatası: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    // Kullanıcı profil bilgilerini al
+                    let userProfile: [String: Any] = [
+                        "email": Auth.auth().currentUser?.email ?? "",
+                        "name": Auth.auth().currentUser?.displayName ?? "",
+                        "isLoggedIn": true,
+                        "achievements": achievementsData,
+                        "totalPoints": self.totalPoints,
+                        "lastSyncDate": FieldValue.serverTimestamp(),
+                        "lastUpdated": FieldValue.serverTimestamp()
+                    ]
+                    
+                    // Belgeyi güncelle
+                    self.db.collection("users").document(user.uid).setData(userProfile, merge: true) { error in
+                        if let error = error {
+                            print("❌ Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
+                        } else {
+                            print("✅ Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
+                        }
                     }
                 }
             }
@@ -1109,8 +1130,8 @@ class AchievementManager: ObservableObject {
         
         print("🔄 Firebase'den başarımlar yükleniyor...")
         
-        // Firestore'dan başarımları al
-        let userAchievementsRef = db.collection("achievements").document(user.uid)
+        // Firestore'dan başarımları al - doğru koleksiyon adını kullan
+        let userAchievementsRef = db.collection("userAchievements").document(user.uid)
         
         userAchievementsRef.getDocument { [weak self] document, error in
             guard let self = self else { return }
@@ -1173,24 +1194,28 @@ class AchievementManager: ObservableObject {
                     print("💾 Başarımlar CoreData'ya kaydedildi")
                 }
             } else {
-                print("⚠️ Firebase'de başarım belgesi bulunamadı")
+                print("⚠️ Firebase'de başarım belgesi bulunamadı (userAchievements koleksiyonunda)")
                 
-                // Başarımları CoreData'dan kontrole çalış
-                let coreDataAchievements = self.achievementCoreDataService.loadAchievements(for: user.uid)
-                if !coreDataAchievements.isEmpty {
-                    print("🗄️ CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
+                // Eski koleksiyondan (users) veri yüklemeyi dene
+                self.db.collection("users").document(user.uid).getDocument { [weak self] (document, error) in
+                    guard let self = self else { return }
                     
-                    // Yerel başarımlarla birleştir
-                    for coreDataAchievement in coreDataAchievements {
-                        if let index = self.achievements.firstIndex(where: { $0.id == coreDataAchievement.id }) {
-                            if !self.achievements[index].isCompleted && coreDataAchievement.isCompleted {
-                                self.achievements[index] = coreDataAchievement
-                            }
-                        }
+                    if let error = error {
+                        print("❌ Users koleksiyonundan başarım yükleme hatası: \(error.localizedDescription)")
+                        self.loadFromCoreDataBackup(for: user.uid)
+                        return
                     }
                     
-                    // Toplam puanları güncelle
-                    self.calculateTotalPoints()
+                    if let document = document, document.exists,
+                       let achievementsData = document.data()?["achievements"] as? [[String: Any]], !achievementsData.isEmpty {
+                        print("📊 Eski yapıdan (users koleksiyonu) \(achievementsData.count) başarım yüklendi")
+                        self.updateAchievementsFromFirebase(achievementsData)
+                        print("✅ Eski yapıdan başarımlar güncellendi, yeni yapıya senkronize ediliyor...")
+                        self.syncWithFirebase() // Yeni yapıya senkronize et
+                    } else {
+                        print("⚠️ Eski yapıda da başarım bulunamadı, CoreData'dan yükleniyor")
+                        self.loadFromCoreDataBackup(for: user.uid)
+                    }
                 }
             }
         }
@@ -1246,7 +1271,7 @@ class AchievementManager: ObservableObject {
     private func deleteAchievementsFromFirebase() {
         guard let user = Auth.auth().currentUser else { return }
         
-        print("🗑️ Firebase'deki başarımlar siliniyor...")
+        print("🚮 Firebase'deki başarımlar siliniyor...")
         
         // 1. Yeni yapıdan kategori verilerini sil
         let userAchievementsRef = db.collection("userAchievements").document(user.uid)
@@ -1263,7 +1288,7 @@ class AchievementManager: ObservableObject {
             // Batch işlemi oluştur
             let batch = self.db.batch()
             
-            // Tüm kategori belgelerini silme işlemini batch'e ekle
+            // Tüm belgeleri silme işlemini batch'e ekle
             if let documents = snapshot?.documents {
                 for document in documents {
                     batch.deleteDocument(document.reference)
@@ -1280,16 +1305,25 @@ class AchievementManager: ObservableObject {
                 } else {
                     print("✅ Firebase'deki kategori başarımları başarıyla silindi")
                 }
+                
+                // 3. Users koleksiyonundaki başarımları da sil
+                self.db.collection("users").document(user.uid).updateData(["achievements": FieldValue.delete()]) { error in
+                    if let error = error {
+                        print("❌ Users koleksiyonundaki başarımlar silinemedi: \(error.localizedDescription)")
+                    } else {
+                        print("✅ Users koleksiyonundaki başarımlar başarıyla silindi")
+                    }
+                }
             }
         }
         
-        // 2. Eski koleksiyon verilerini de sil
-        userAchievementsRef.collection("achievements").getDocuments { [weak self] (snapshot, error) in
+        // 2. Eski koleksiyon verilerini de sil (achievements koleksiyonu)
+        db.collection("achievements").document(user.uid).collection("categories").getDocuments { [weak self] (snapshot, error) in
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Firebase başarımları silinemedi: \(error.localizedDescription)")
-                return
+                print("❌ Firebase achievements koleksiyonu başarımları silinemedi: \(error.localizedDescription)")
+                // Hata olsa bile devam et, diğer koleksiyonları silmeye çalış
             }
             
             // Batch işlemi oluştur
@@ -1593,6 +1627,31 @@ class AchievementManager: ObservableObject {
     }
     
     // Firebase'den gelen verilerle başarıları güncelle
+    // CoreData'dan yedek yükleme fonksiyonu
+    private func loadFromCoreDataBackup(for userID: String) {
+        let coreDataAchievements = self.achievementCoreDataService.loadAchievements(for: userID)
+        if !coreDataAchievements.isEmpty {
+            print("🗄️ CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
+            
+            // Yerel başarımlarla birleştir
+            for coreDataAchievement in coreDataAchievements {
+                if let index = self.achievements.firstIndex(where: { $0.id == coreDataAchievement.id }) {
+                    if !self.achievements[index].isCompleted && coreDataAchievement.isCompleted {
+                        self.achievements[index] = coreDataAchievement
+                    }
+                }
+            }
+            
+            // Toplam puanları güncelle
+            self.calculateTotalPoints()
+            
+            // Firebase'e senkronize et
+            self.syncWithFirebase()
+        } else {
+            print("⚠️ CoreData'da da başarım bulunamadı, varsayılan başarımlar kullanılacak")
+        }
+    }
+    
     private func updateAchievementsFromFirebase(_ firebaseAchievements: [[String: Any]]) {
         var updatedCount = 0
         let mergeDate = Date()

@@ -44,8 +44,9 @@ struct SettingsView: View {
     @AppStorage("enableNumberInputHaptic") private var enableNumberInputHaptic: Bool = true
     @AppStorage("enableCellTapHaptic") private var enableCellTapHaptic: Bool = true
     @AppStorage("enableSoundEffects") private var enableSoundEffects: Bool = true
-    @AppStorage("soundVolume") private var soundVolume: Double = 0.7
-    @AppStorage("textSizePreference") private var textSizeString: String = TextSizePreference.medium.rawValue
+    @AppStorage("soundVolume") private var soundVolume: Double = 0.5
+    @AppStorage("enableAchievementNotifications") private var enableAchievementNotifications: Bool = true
+    @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
     @AppStorage("prefersDarkMode") private var prefersDarkMode: Bool = false
     @AppStorage("powerSavingMode") private var powerSavingMode: Bool = false
     @AppStorage("autoPowerSaving") private var autoPowerSaving: Bool = true
@@ -243,6 +244,7 @@ struct SettingsView: View {
         enableNumberInputHaptic = true
         enableCellTapHaptic = true
         enableSoundEffects = true
+        enableAchievementNotifications = true
         textSizeString = TextSizePreference.medium.rawValue
         defaultDifficulty = SudokuBoard.Difficulty.easy.rawValue
         powerSavingMode = false
@@ -536,7 +538,7 @@ struct SettingsView: View {
                         .scaledFont(size: 16, weight: .semibold)
                         .foregroundColor(.primary)
                     
-                    Text("Oyun içi ses efektlerini aç/kapa")
+                    Text("Oyun içi ses efektlerini aç/kapat")
                         .scaledFont(size: 13)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
@@ -580,6 +582,69 @@ struct SettingsView: View {
             .padding(.horizontal, 8)
             
             // Ses seviyesi kaydırıcısı - eğer ses açıksa
+            // Başarım bildirimleri ayarı
+            HStack(spacing: 15) {
+                // İkon
+                ZStack {
+                    Circle()
+                        .fill(Color.purple.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.purple)
+                }
+                
+                // Başlık ve açıklama
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Başarım Bildirimleri")
+                        .scaledFont(size: 16, weight: .semibold)
+                        .foregroundColor(.primary)
+                    
+                    Text("Yeni başarımlar kazanıldığında bildirim göster")
+                        .scaledFont(size: 13)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                // Toggle butonu
+                Button(action: {
+                    // Titreşim kontrolü
+                    if enableHapticFeedback {
+                        SoundManager.shared.playNavigationSound()
+                    } else {
+                        SoundManager.shared.playNavigationSoundOnly()
+                    }
+                    
+                    enableAchievementNotifications.toggle()
+                    
+                    // Bildirim yöneticisine değişikliği bildir
+                    NotificationCenter.default.post(name: Notification.Name("AchievementNotificationSettingChanged"), object: nil)
+                }) {
+                    ZStack {
+                        Capsule()
+                            .fill(enableAchievementNotifications ? Color.purple : Color.gray.opacity(0.3))
+                            .frame(width: 55, height: 34)
+                        
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 30, height: 30)
+                            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                            .offset(x: enableAchievementNotifications ? 10 : -10)
+                    }
+                    .animation(.spring(response: 0.2, dampingFraction: 0.7), value: enableAchievementNotifications)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            )
+            
             if enableSoundEffects {
                 HStack(spacing: 15) {
                     // İkon

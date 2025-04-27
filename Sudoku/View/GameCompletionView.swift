@@ -101,6 +101,7 @@ struct GameCompletionView: View {
         .background(colorScheme == .dark ? Color(.systemBackground) : .white)
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 10)
+        .achievementToastSystem() 
     }
     
     private func formatTime(_ timeInterval: TimeInterval) -> String {

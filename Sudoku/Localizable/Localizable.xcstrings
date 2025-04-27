@@ -3064,6 +3064,9 @@
         }
       }
     },
+    "Başarım Bildirimleri" : {
+
+    },
     "Başarım Kazanıldı!" : {
 
     },
@@ -5371,6 +5374,7 @@
       }
     },
     "Oyun içi ses efektlerini aç/kapa" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5385,6 +5389,9 @@
           }
         }
       }
+    },
+    "Oyun içi ses efektlerini aç/kapat" : {
+
     },
     "Oyun içi titreşim efektlerini aç/kapa" : {
       "localizations" : {
@@ -7912,6 +7919,9 @@
       "comment" : "İpucu açıklaması"
     },
     "Yeni Başarım!" : {
+
+    },
+    "Yeni başarımlar kazanıldığında bildirim göster" : {
 
     },
     "Yeni Hesap Oluştur" : {

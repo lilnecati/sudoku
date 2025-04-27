@@ -456,7 +456,7 @@ class SudokuBoard: ObservableObject, Codable {
         // Mevcut değerleri temizle
         for row in 0..<9 {
             for col in 0..<9 {
-                board[row][col] = nil
+                 board[row][col] = nil
                 originalBoard[row][col] = nil
                 solution[row][col] = nil
             }
@@ -523,24 +523,47 @@ class SudokuBoard: ObservableObject, Codable {
     
     // Kolay seviye tahta oluştur
     private func generateEasyPuzzle(cluesToShow: Int) {
-        // Kolay seviye için 42-47 ipucu bırakılır
+        // Kolay seviye için 40-45 ipucu bırakılır
         let cellsToRemove = 81 - cluesToShow
         
-        // Kolay seviye için özel hücre kaldırma
-        let allCells = getAllCellsInRandomOrder()
+        // Hücreleri hem zorluk derecesine göre sırala hem de rastgele karıştır
+        var cellsWithDifficulty = getAllCellsWithDifficultyRating()
+        
+        // Aynı zorluk derecesine sahip hücreleri kendi aralarında karıştır
+        var startIndex = 0
+        
+        for i in 0..<cellsWithDifficulty.count {
+            if i == cellsWithDifficulty.count - 1 || cellsWithDifficulty[i].2 != cellsWithDifficulty[i+1].2 {
+                // Aynı zorluk seviyesindeki hücreleri karıştır
+                let endIndex = i
+                let range = startIndex...endIndex
+                let subArray = Array(cellsWithDifficulty[range])
+                let shuffled = subArray.shuffled()
+                
+                for j in 0..<shuffled.count {
+                    cellsWithDifficulty[startIndex + j] = shuffled[j]
+                }
+                
+                // Bir sonraki zorluk seviyesi için hazırlan
+                if i < cellsWithDifficulty.count - 1 {
+                    startIndex = i + 1
+                }
+            }
+        }
+        
         var removedCount = 0
         
-        // Rastgele seçilen hücreleri kaldır
-        for (row, col) in allCells {
+        // Önce en kolay kaldırılabilecek hücreleri kaldır
+        for (row, col, _) in cellsWithDifficulty {
             if removedCount >= cellsToRemove {
                 break
             }
             
             let originalValue = board[row][col]
-                    board[row][col] = nil
+            board[row][col] = nil
             
-            // Basit kontroller: Benzersiz çözüm ve dengeli dağılım
-            if maintainsSimpleSolving() && hasBalancedDistribution() {
+            // Benzersiz çözüm ve dengeli dağılım kontrolü
+            if hasUniqueSolution() && hasBalancedDistribution() {
                 removedCount += 1
             } else {
                 // Geri al
@@ -648,12 +671,148 @@ class SudokuBoard: ObservableObject, Codable {
         return allCells
     }
     
+    // Hücreleri kaldırma zorluğuna göre sırala
+    private func getAllCellsWithDifficultyRating() -> [(Int, Int, Int)] {
+        var cellsWithDifficulty = [(Int, Int, Int)]() // (row, col, difficulty)
+        
+        for row in 0..<9 {
+            for col in 0..<9 {
+                // Her hücre için bir zorluk derecesi hesapla
+                let difficulty = calculateCellRemovalDifficulty(row: row, col: col)
+                
+                // Rastgele bir varyasyon ekle (0-2 arası)
+                let randomVariation = Int.random(in: 0...2)
+                let adjustedDifficulty = difficulty + randomVariation
+                
+                cellsWithDifficulty.append((row, col, adjustedDifficulty))
+            }
+        }
+        
+        // Zorluk derecesine göre sırala (en kolay kaldırılabilecek önce)
+        return cellsWithDifficulty.sorted { $0.2 < $1.2 }
+    }
+    
+    // Bir hücrenin kaldırılma zorluğunu hesapla
+    private func calculateCellRemovalDifficulty(row: Int, col: Int) -> Int {
+        // Satır, sütun ve bloktaki dolu hücre sayısını hesapla
+        var rowCount = 0, colCount = 0, blockCount = 0
+        let blockRow = row / 3, blockCol = col / 3
+        
+        for i in 0..<9 {
+            if board[row][i] != nil { rowCount += 1 }
+            if board[i][col] != nil { colCount += 1 }
+            
+            let r = blockRow * 3 + i / 3
+            let c = blockCol * 3 + i % 3
+            if board[r][c] != nil { blockCount += 1 }
+        }
+        
+        // Daha fazla dolu hücre olan birimlerden hücre kaldırmak daha kolaydır
+        return -(rowCount + colCount + blockCount)
+    }
+    
+    // Benzersiz çözüm kontrolü
+    private func hasUniqueSolution() -> Bool {
+        // Mevcut tahtanın kopyasını oluştur
+        var tempBoard = Array(repeating: Array(repeating: 0, count: 9), count: 9)
+        for r in 0..<9 {
+            for c in 0..<9 {
+                tempBoard[r][c] = board[r][c] ?? 0
+            }
+        }
+        
+        // Çözüm sayacı
+        var solutionCount = 0
+        
+        // Backtracking ile çözüm sayısını bul
+        func solve(row: Int, col: Int) -> Bool {
+            // Eğer birden fazla çözüm bulunduysa, daha fazla aramaya gerek yok
+            if solutionCount > 1 {
+                return true
+            }
+            
+            // Tüm hücreler dolduysa, bir çözüm bulundu
+            if row == 9 {
+                solutionCount += 1
+                return solutionCount > 1 // Birden fazla çözüm bulunduysa true döndür
+            }
+            
+            // Bir sonraki hücreye geç
+            let nextRow = col == 8 ? row + 1 : row
+            let nextCol = col == 8 ? 0 : col + 1
+            
+            // Eğer hücre zaten doluysa, bir sonraki hücreye geç
+            if tempBoard[row][col] != 0 {
+                return solve(row: nextRow, col: nextCol)
+            }
+            
+            // Tüm olası değerleri dene
+            for num in 1...9 {
+                if isValidPlacement(row: row, column: col, value: num, board: tempBoard) {
+                    tempBoard[row][col] = num
+                    
+                    // Bir sonraki hücreye geç
+                    if solve(row: nextRow, col: nextCol) {
+                        // Birden fazla çözüm bulunduysa ve hala aranıyorsa
+                        if solutionCount > 1 {
+                            return true
+                        }
+                        // Backtrack - diğer olası çözümleri aramak için
+                        tempBoard[row][col] = 0
+                    } else {
+                        // Çözüm bulunamadıysa, backtrack
+                        tempBoard[row][col] = 0
+                    }
+                }
+            }
+            
+            return false
+        }
+        
+        // Çözüm aramaya başla
+        _ = solve(row: 0, col: 0)
+        
+        // Tam olarak bir çözüm varsa true döndür
+        return solutionCount == 1
+    }
+    
+    // Geçici tahta için yerleştirme kontrolü
+    private func isValidPlacement(row: Int, column: Int, value: Int, board: [[Int]]) -> Bool {
+        // Satır kontrolü
+        for i in 0..<9 {
+            if board[row][i] == value {
+                return false
+            }
+        }
+        
+        // Sütun kontrolü
+        for i in 0..<9 {
+            if board[i][column] == value {
+                return false
+            }
+        }
+        
+        // 3x3 blok kontrolü
+        let blockRow = (row / 3) * 3
+        let blockCol = (column / 3) * 3
+        
+        for r in 0..<3 {
+            for c in 0..<3 {
+                if board[blockRow + r][blockCol + c] == value {
+                    return false
+                }
+            }
+        }
+        
+        return true
+    }
+    
     // Basit çözülebilirlik kontrolü
     private func maintainsSimpleSolving() -> Bool {
         // Kolay seviye için: 
         // - Tahta çözülebilir olmalı
-        // - Denetimleri basit tutuyoruz, her şey tamam varsayıyoruz
-        return true
+        // - Benzersiz çözüm kontrolü
+        return hasUniqueSolution()
     }
     
     // Dengeli dağılım kontrolü
@@ -786,10 +945,10 @@ class SudokuBoard: ObservableObject, Codable {
     
     // Sudoku'yu tamamen karıştır
     private func mixSudokuCompletely() {
-        // 50 kez rastgele dönüşüm uygula
-        for _ in 0..<50 {
+        // Daha fazla karıştırma işlemi uygula (100 kez)
+        for _ in 0..<100 {
             // Rastgele bir dönüşüm seç
-            let transformation = Int.random(in: 0..<6)
+            let transformation = Int.random(in: 0..<8)
             
             switch transformation {
             case 0:
@@ -819,8 +978,22 @@ class SudokuBoard: ObservableObject, Codable {
                 }
                 swapValues(num1, num2)
             case 5:
-                // Tahtayı 90 derece döndür (opsiyonel)
+                // Tahtayı 90 derece döndür
                 rotateBoard()
+            case 6:
+                // Tüm satırları karıştır (blok yapısını koruyarak)
+                for blockRow in 0..<3 {
+                    let rows = [0, 1, 2].shuffled()
+                    swapRows(blockRow * 3 + rows[0], blockRow * 3 + rows[1])
+                    swapRows(blockRow * 3 + rows[1], blockRow * 3 + rows[2])
+                }
+            case 7:
+                // Tüm sütunları karıştır (blok yapısını koruyarak)
+                for blockCol in 0..<3 {
+                    let cols = [0, 1, 2].shuffled()
+                    swapColumns(blockCol * 3 + cols[0], blockCol * 3 + cols[1])
+                    swapColumns(blockCol * 3 + cols[1], blockCol * 3 + cols[2])
+                }
             default:
                 break
             }

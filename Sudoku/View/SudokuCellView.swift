@@ -21,7 +21,7 @@ struct SudokuCellView: View {
     let isMatchingValue: Bool
     let isInvalid: Bool
     let pencilMarks: Set<Int>
-    let isHintTarget: Bool // İpucu gösterildiğinde hedef olup olmadığı
+    let isHintTarget: Bool
     let onCellTapped: () -> Void
     
     @EnvironmentObject var themeManager: ThemeManager
@@ -30,16 +30,14 @@ struct SudokuCellView: View {
     @State private var animateValue = false
     
     private var effectiveColorScheme: ColorScheme {
-        return themeManager.colorScheme ?? .light // Varsayılan olarak light, ama ThemeManager'dan gelir
+        return themeManager.colorScheme ?? .light
     }
     
     var body: some View {
         GeometryReader { geometry in
-            // Perfomans için değerleri önbelleğe al
             let cellDimension = min(geometry.size.width, geometry.size.height)
             
             Button(action: {
-                // Daha etkileyici baskı hissi için pulsamayı kullan
                 withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
                     animateSelection = true
                 }

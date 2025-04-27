@@ -4,30 +4,26 @@ import Foundation
 class LogManager {
     static let shared = LogManager()
     
-    // Log seviyelerini tanımlayalım
     enum LogLevel: Int {
-        case none = 0    // Hiç log gösterme
-        case error = 1   // Sadece hatalar
-        case warning = 2 // Hatalar ve uyarılar
-        case info = 3    // Bilgi mesajları
-        case debug = 4   // Geliştirme aşamasında kullanılan detaylı loglar
-        case verbose = 5 // En detaylı loglar
+        case none = 0    // hiç log gösterme
+        case error = 1   //  hatalar
+        case warning = 2 // hatalar ve uyarılar
+        case info = 3    // bilgi mesajları
+        case debug = 4   // geliştirme aşamasında kullanılan detaylı loglar
+        case verbose = 5 // wn detaylı loglar
     }
     
-    // Geçerli log seviyesi - varsayılan olarak info
     private var currentLogLevel: LogLevel = .info
     
-    // Üretim modunda mı çalışıyoruz?
     private var isProduction: Bool = false
     
     private init() {
-        // Debug modunda mı çalışıyoruz?
         #if DEBUG
         isProduction = false
-        currentLogLevel = .debug // Debug modunda daha detaylı loglar
+        currentLogLevel = .debug
         #else
         isProduction = true
-        currentLogLevel = .info  // Üretim modunda sadece önemli loglar
+        currentLogLevel = .info  
         #endif
     }
     
@@ -68,28 +64,21 @@ class LogManager {
     
     /// Ana log fonksiyonu
     private func log(level: LogLevel, message: String, file: String, function: String, line: Int) {
-        // Eğer geçerli log seviyesi, gelen log seviyesinden düşükse, logu gösterme
         guard level.rawValue <= currentLogLevel.rawValue else { return }
         
-        // Üretim modunda sadece error ve info loglarını göster
         if isProduction && level.rawValue > LogLevel.info.rawValue {
             return
         }
         
-        // Dosya adını al
         let fileName = (file as NSString).lastPathComponent
         
-        // Log mesajını oluştur
         let logMessage = "[\(fileName):\(line)] \(function): \(message)"
         
-        // Konsola yazdır
         print(logMessage)
         
-        // Burada isterseniz dosyaya yazma, uzak sunucuya gönderme gibi işlemler ekleyebilirsiniz
     }
 }
 
-// Kolay erişim için global fonksiyonlar
 func logError(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
     LogManager.shared.error(message, file: file, function: function, line: line)
 }

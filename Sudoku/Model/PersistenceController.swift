@@ -600,7 +600,9 @@ class PersistenceController {
         
         // Firestore'da kayıt için döküman oluştur - UUID'yi uppercase olarak kullan
         let documentID = gameID.uuidString.uppercased()
-        let gameRef = db.collection("savedGames").document(documentID)
+        
+        // YENİ YAPI: userGames/[UID]/savedGames/[gameID]
+        let gameRef = db.collection("userGames").document(userID).collection("savedGames").document(documentID)
         
         let gameData: [String: Any] = [
             "userID": userID,
@@ -612,14 +614,22 @@ class PersistenceController {
             "isCompleted": isCompleted  // Oyunun tamamlanma durumunu kaydet
         ]
         
-        // Firestore'a kaydet
-        gameRef.setData(gameData) { error in
+        // Önce userGames belgesinin var olduğundan emin ol
+        db.collection("userGames").document(userID).setData(["lastPlayed": FieldValue.serverTimestamp()], merge: true) { error in
             if let error = error {
-                print("❌ Firestore oyun kaydı hatası: \(error.localizedDescription)")
-            } else {
-                print("✅ Oyun Firebase Firestore'a kaydedildi: \(documentID)")
-                if isCompleted {
-                    print("✅ Oyun tamamlandı olarak işaretlendi!")
+                print("❌ userGames belgesi oluşturma hatası: \(error.localizedDescription)")
+                return
+            }
+            
+            // Firestore'a oyunu kaydet
+            gameRef.setData(gameData) { error in
+                if let error = error {
+                    print("❌ Firestore oyun kaydı hatası: \(error.localizedDescription)")
+                } else {
+                    print("✅ Oyun Firebase Firestore'a kaydedildi: \(documentID)")
+                    if isCompleted {
+                        print("✅ Oyun tamamlandı olarak işaretlendi!")
+                    }
                 }
             }
         }
@@ -722,9 +732,8 @@ class PersistenceController {
             // Mevcut silinen ID'lerin son halini güncelle
             recentlyDeletedIDs = updatedDeletedIDs
             
-            // Kullanıcının kayıtlı oyunlarını getir
-            db.collection("savedGames")
-                .whereField("userID", isEqualTo: userID)
+            // YENİ YAPI: Kullanıcının kayıtlı oyunlarını getir - userGames/[UID]/savedGames
+            db.collection("userGames").document(userID).collection("savedGames")
                 .getDocuments { [weak self] snapshot, error in
                     guard let self = self else { return }
                     
@@ -1233,7 +1242,7 @@ class PersistenceController {
         print("🟠 SON ÇÖZÜM: Oyun silme işlemi başlıyor \(Date())")
         print("📍 Oyun: \(documentID)")
         
-        if Auth.auth().currentUser == nil {
+        guard let userID = Auth.auth().currentUser?.uid else {
             print("❌ Kullanıcı oturum açmamış")
             return
         }
@@ -1263,7 +1272,8 @@ class PersistenceController {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                 print("🟠 ADIM 2: Oyun Firestore'dan siliniyor...")
                 
-                self.db.collection("savedGames").document(documentID).delete { error in
+                // YENİ YAPI: userGames/[UID]/savedGames/[gameID]
+                self.db.collection("userGames").document(userID).collection("savedGames").document(documentID).delete { error in
                     if let error = error {
                         print("❌ Hata: \(error.localizedDescription)")
                     } else {
@@ -3078,4 +3088,3 @@ class PersistenceController {
             }
         }
     }
-

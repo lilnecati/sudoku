@@ -106,6 +106,7 @@ struct MainMenuView: View {
         .onAppear {
             checkForSavedGame()
         }
+        .achievementToastSystem()
     }
     
     private func checkForSavedGame() {

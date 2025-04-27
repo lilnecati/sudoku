@@ -422,14 +422,22 @@ struct GameView: View {
             }
             
             if showingGameComplete {
+                // Arka plan bulanıklaştırma ve karartma
                 Color.black.opacity(0.7)
                     .edgesIgnoringSafeArea(.all)
                     .onTapGesture {
                         // Dokunmayı yakala ama hiçbir şey yapma
                     }
                 
-                congratulationsView
-                    .zIndex(10)
+                // Bildirimler için özel bir alan bırakıyoruz
+                VStack {
+                    // Üst kısımda bildirimler için boşluk
+                    Spacer().frame(height: 100)
+                    
+                    // Tebrik ekranı
+                    congratulationsView()
+                }
+                .zIndex(10)
             }
             
             if viewModel.gameState == .failed {
@@ -439,7 +447,7 @@ struct GameView: View {
                         // Dokunmayı yakala ama hiçbir şey yapma
                     }
                 
-                gameOverView
+                gameOverView()
                     .zIndex(10)
             }
             
@@ -600,12 +608,42 @@ struct GameView: View {
             .padding(.bottom, 30)
         }
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                .shadow(color: Color.black.opacity(0.15), radius: 15, x: 0, y: 5)
+            ZStack {
+                // Arka plan
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        colorScheme == .dark ? 
+                        Color(.systemGray6) : 
+                        Color.white
+                    )
+                
+                // Üst kısım parıltı efekti
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.white.opacity(0.2), .clear]),
+                            startPoint: .topLeading,
+                            endPoint: .center
+                        )
+                    )
+                
+                // İnce kenarlık
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.white.opacity(0.5), .white.opacity(0.1)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+            .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 10)
         )
-        .frame(maxHeight: 550)
+        .frame(maxHeight: 600)
         .padding(.horizontal, 20)
+        // Bildirim sistemi için özel bir zIndex değeri ve modifier ekliyoruz
+        .zIndex(10)
         .achievementToastSystem()
     }
     
@@ -624,27 +662,28 @@ struct GameView: View {
     }
     
     // Tebrikler ekranı
-    private var congratulationsView: some View {
+    private func congratulationsView() -> some View {
         VStack(spacing: 20) {
-            // Başarı ikonu ve animasyonu
+            // Başarım ikonu ve parıltı efekti
             ZStack {
-                // Arka plan parıltısı
+                // Arka plan ışıma efekti
                 Circle()
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [.yellow.opacity(0.3), .clear]),
                             center: .center,
-                            startRadius: 5,
-                            endRadius: 80
+                            startRadius: 30,
+                            endRadius: 100
                         )
                     )
-                    .frame(width: 120, height: 120)
+                    .frame(width: 160, height: 160)
+                    .blur(radius: 10)
                 
-                // Parlak dış çember
+                // Parıltı halkası
                 Circle()
                     .stroke(
                         LinearGradient(
-                            colors: [.yellow.opacity(0.8), .yellow.opacity(0.2)],
+                            gradient: Gradient(colors: [.white.opacity(0.6), .white.opacity(0.1)]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -652,7 +691,7 @@ struct GameView: View {
                     )
                     .frame(width: 100, height: 100)
                 
-                // Kupa ikonu
+                // Trophy ikonu
                 Image(systemName: "trophy.fill")
                     .font(.system(size: 75))
                     .foregroundStyle(
@@ -663,34 +702,48 @@ struct GameView: View {
                         )
                     )
                     .shadow(color: .yellow.opacity(0.5), radius: 10, x: 0, y: 5)
-            }
             
             // Başlık ve açıklama
             VStack(spacing: 8) {
                 Text("Tebrikler!")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(colorScheme == .dark ? .white : .black)
+                    .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
                 
-                Text("Sudoku bulmacasını \(timeString(from: viewModel.elapsedTime)) sürede tamamladınız!")
+                Text("Sudoku bulmacasını")
                     .font(.headline)
                     .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+                
+                Text(timeString(from: viewModel.elapsedTime))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(ColorManager.primaryBlue)
+                    .padding(.vertical, 4)
+                
+                Text("sürede tamamladınız!")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
             }
+            .multilineTextAlignment(.center)
             
             // Performans istatistiği
             HStack(spacing: 20) {
+                // Zorluk kartı
                 performanceCard(
                     title: "Zorluk",
                     value: viewModel.board.difficulty.rawValue,
                     systemImage: "speedometer",
-                    color: difficultyColors[viewModel.board.difficulty] ?? .blue
+                    color: difficultyColors[viewModel.board.difficulty] ?? .blue,
+                    glowEffect: true
                 )
                 
+                // Skor kartı
                 performanceCard(
                     title: "Skor",
                     value: calculateScore(),
                     systemImage: "star.fill",
-                    color: .yellow
+                    color: .yellow,
+                    glowEffect: true,
+                    isHighScore: isNewHighScore()
                 )
             }
             .padding(.top, 5)
@@ -717,27 +770,14 @@ struct GameView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(
-                                LinearGradient(
-                                    colors: [ColorManager.primaryGreen, ColorManager.primaryBlue],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            LinearGradient(
+                                colors: [ColorManager.primaryGreen, ColorManager.primaryBlue],
+                                startPoint: .leading,
+                                endPoint: .trailing
                             )
-                        
-                        // Parlak üst kenar
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [.white.opacity(0.6), .clear],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ),
-                                lineWidth: 1.5
-                            )
-                    }
+                        )
                 )
                 .foregroundColor(.white)
                 .shadow(color: ColorManager.primaryBlue.opacity(0.4), radius: 5, x: 0, y: 3)
@@ -769,64 +809,98 @@ struct GameView: View {
         }
         .padding(25)
         .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(colorScheme == .dark ? Color(.systemGray6).opacity(0.95) : Color.white.opacity(0.95))
+                .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 8)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(
+                    LinearGradient(
+                        colors: [.white.opacity(0.6), .white.opacity(0.1)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: colorScheme == .dark ? 0.5 : 0
+                )
+        )
+        .padding(.horizontal, 20)
+    }
+    
+    // Performans istatistik kartı
+    private func performanceCard(title: String, value: String, systemImage: String, color: Color, glowEffect: Bool = false, isHighScore: Bool = false) -> some View {
+        VStack(spacing: 10) {
+            // İkon ve parıltı efekti
             ZStack {
-                // Ana arka plan
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(colorScheme == .dark ? 
-                          Color(.systemGray6).opacity(0.95) : 
-                          Color.white.opacity(0.95))
+                if glowEffect {
+                    // Arka plan ışıma
+                    Circle()
+                        .fill(color.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                        .blur(radius: 4)
+                }
                 
-                // Üst kısımda hafif gradyan efekti
-                RoundedRectangle(cornerRadius: 20)
+                // İkon
+                Image(systemName: systemImage)
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundColor(color)
+                    .shadow(color: color.opacity(0.5), radius: 2, x: 0, y: 1)
+            }
+            
+            // Değer
+            VStack(spacing: 2) {
+                Text(value)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                
+                // Yüksek skor ise özel etiket
+                if isHighScore {
+                    Text("Yeni Rekor!")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color.orange.opacity(0.2))
+                        )
+                }
+            }
+            
+            // Başlık
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(width: 110, height: 110)
+        .background(
+            ZStack {
+                // Arka plan
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                
+                // Üst kısım parıltı
+                RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            gradient: Gradient(colors: [
-                                (colorScheme == .dark ? Color(.systemGray5) : .white).opacity(0.5),
-                                (colorScheme == .dark ? Color(.systemGray6) : .white).opacity(0.0)
-                            ]),
-                            startPoint: .top,
+                            gradient: Gradient(colors: [.white.opacity(0.3), .clear]),
+                            startPoint: .topLeading,
                             endPoint: .center
                         )
                     )
                 
                 // İnce kenarlık
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
-                            colors: [.white.opacity(0.6), .white.opacity(0.1)],
+                            gradient: Gradient(colors: [.white.opacity(0.4), .white.opacity(0.1)]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: colorScheme == .dark ? 0.5 : 0.2
+                        lineWidth: 1
                     )
             }
-            .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 8)
-        )
-        .padding(.horizontal, 20)
-        .zIndex(20) // Bildirimlerin görünmesi için yüksek z-index değeri
-        // Doğrudan AchievementToastSystemModifier kullanarak bildirimlerin görünmesini sağlıyorum
-        .modifier(AchievementToastSystemModifier())
-    }
-    
-    // Performans istatistik kartı
-    private func performanceCard(title: String, value: String, systemImage: String, color: Color) -> some View {
-        VStack(spacing: 8) {
-            Image(systemName: systemImage)
-                .font(.system(size: 22))
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(width: 100, height: 90)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+            .shadow(color: isHighScore ? color.opacity(0.3) : Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         )
     }
     
@@ -837,7 +911,7 @@ struct GameView: View {
     }
     
     // Kaybedildi ekranı
-    private var gameOverView: some View {
+    private func gameOverView() -> some View {
         VStack(spacing: 20) {
             Image(systemName: "xmark.circle.fill")
                 .font(.system(size: 75))
@@ -1017,6 +1091,11 @@ struct StatRowView: View {
     }
 }
 
+}
+
+// Zorluk seviyesi butonu
+}
+
 // View uzantısı
 extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
@@ -1048,7 +1127,6 @@ struct DifficultyButton: View {
     let action: () -> Void
     
     @Environment(\.colorScheme) var colorScheme
-    
     var body: some View {
         Button(action: action) {
             HStack(spacing: 15) {

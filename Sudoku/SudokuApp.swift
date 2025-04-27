@@ -151,6 +151,10 @@ struct SudokuApp: App {
         // PowerSavingManager'ı başlat
         _ = PowerSavingManager.shared
         print("🔋 Power Saving Manager initialized")
+        
+        // Başarım bildirimi köprüsünü başlat
+        _ = AchievementNotificationBridge.shared
+        print("🏆 Achievement Notification Bridge initialized")
     }
     
     var body: some Scene {
@@ -158,9 +162,9 @@ struct SudokuApp: App {
             StartupView(forceShowSplash: showSplashOnResume)
                 .environmentObject(themeManager)
                 .environmentObject(localizationManager)
-                .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
-                .environment(\.textScale, textSizePreference.scaleFactor)
                 .environment(\.managedObjectContext, viewContext)
+                .environment(\.textScale, textSizePreference.scaleFactor)
+                .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
                 .accentColor(ColorManager.primaryBlue)
                 .achievementToastSystem()
                 .onAppear {
@@ -179,6 +183,9 @@ struct SudokuApp: App {
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {
                     case .active:
+                        // Firebase token doğrulaması yap
+                        validateFirebaseToken()
+                        
                         // Uygulamanın arka plandan dönüş süresini kontrol et
                         let currentTime = Date().timeIntervalSince1970
                         let timeSinceBackground = currentTime - lastBackgroundTime
@@ -286,6 +293,30 @@ struct InitializationErrorView: View {
             }
         }
         .padding()
+    }
+}
+
+// MARK: - Firebase Token Validation
+private func validateFirebaseToken() {
+    if let currentUser = Auth.auth().currentUser {
+        print("🔑 Firebase token doğrulaması yapılıyor...")
+        currentUser.getIDTokenResult(forcingRefresh: true) { tokenResult, error in
+            if let error = error {
+                print("❌ Token doğrulama hatası: \(error.localizedDescription)")
+                // Token doğrulama hatası - kullanıcı hesabı silinmiş veya token geçersiz olabilir
+                // Kullanıcıyı otomatik olarak çıkış yaptır
+                do {
+                    try Auth.auth().signOut()
+                    print("🚪 Geçersiz token nedeniyle kullanıcı çıkış yaptırıldı")
+                    // Kullanıcı çıkış bildirimi gönder
+                    NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
+                } catch let signOutError {
+                    print("❌ Çıkış yapma hatası: \(signOutError.localizedDescription)")
+                }
+            } else {
+                print("✅ Firebase token doğrulaması başarılı")
+            }
+        }
     }
 }
 

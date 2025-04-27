@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Foundation
 
 class AchievementNotificationManager: ObservableObject {
     static let shared = AchievementNotificationManager()
@@ -11,12 +12,26 @@ class AchievementNotificationManager: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var processingNotification = false
     
+    // Kullanıcı ayarları
+    @AppStorage("enableAchievementNotifications") private var enableAchievementNotifications: Bool = true
+    
+    // Kuyruk limiti - aşırı bellek kullanımını önlemek için
+    private let queueLimit = 10
+    
     private init() {
         // AchievementManager'dan başarım bildirimlerini dinle
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(showNewAchievements),
             name: NSNotification.Name("NewAchievementsUnlocked"),
+            object: nil
+        )
+        
+        // Başarım bildirimi ayarı değiştiğinde dinle
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleNotificationSettingChanged),
+            name: NSNotification.Name("AchievementNotificationSettingChanged"),
             object: nil
         )
         
@@ -34,10 +49,18 @@ class AchievementNotificationManager: ObservableObject {
             .store(in: &cancellables)
     }
     
+    // Bildirim ayarı değiştiğinde çağrılır
+    @objc private func handleNotificationSettingChanged() {
+        if !enableAchievementNotifications {
+            // Bildirimler kapatıldıysa tüm bildirimleri temizle
+            clearAllNotifications()
+        }
+    }
+    
     // AchievementManager'dan bildirilen başarımları göster
     @objc func showNewAchievements(_ notification: Notification) {
         if let achievements = notification.userInfo?["achievements"] as? [Achievement] {
-            print("📝 \(achievements.count) yeni başarım bildirimi bildirimi alındı")
+            logVerbose("\(achievements.count) yeni başarım bildirimi bildirimi alındı")
             
             // Özel sıralamaya göre başarımları sırala
             // Önce özel başarımlar, sonra zorluk başarımları
@@ -61,18 +84,18 @@ class AchievementNotificationManager: ObservableObject {
             for achievement in sortedAchievements {
                 showAchievementNotification(achievement: achievement)
             }
-            print("📝 \(sortedAchievements.count) yeni başarım bildirimi kuyruğa eklendi")
+            logVerbose("\(sortedAchievements.count) yeni başarım bildirimi kuyruğa eklendi")
         }
     }
     
     // Tüm kazanılan başarımları göstermek için fonksiyon
     func showAllUnlockedAchievements() {
         guard let unlockedAchievements = AchievementManager.shared.getNewlyUnlockedAchievements() else {
-            print("📝 Gösterilecek yeni başarım bulunamadı")
+            logInfo("Gösterilecek yeni başarım bulunamadı")
             return
         }
         
-        print("📝 Gösterilecek \(unlockedAchievements.count) başarım bulundu")
+        logVerbose("Gösterilecek \(unlockedAchievements.count) başarım bulundu")
         
         // Özel sıralamaya göre başarımları sırala
         let sortedAchievements = unlockedAchievements.sorted { (a1, a2) -> Bool in
@@ -94,27 +117,39 @@ class AchievementNotificationManager: ObservableObject {
     }
     
     func showAchievementNotification(achievement: Achievement) {
+        // Bildirimler kapalıysa hiçbir şey yapma
+        guard enableAchievementNotifications else {
+            return
+        }
+        
         // Geçersiz başarımları filtrele
         guard achievement.id.count > 0 else {
-            print("⚠️ Geçersiz başarım bildirimi: ID boş")
+            logWarning("Geçersiz başarım bildirimi: ID boş")
             return
         }
         
         // Eğer şu anda gösterilen başarım ile aynıysa yeniden gösterme
         if let currentAchievement = currentAchievement, currentAchievement.id == achievement.id {
-            print("⚠️ Aynı başarım şu anda gösteriliyor: \(achievement.name)")
+            logWarning("Aynı başarım şu anda gösteriliyor: \(achievement.name)")
             return
         }
         
         // Kuyrukta aynı başarım zaten var mı kontrol et
         guard !achievementQueue.contains(where: { $0.id == achievement.id }) else {
-            print("⚠️ Başarım zaten kuyrukta: \(achievement.name)")
+            logWarning("Başarım zaten kuyrukta: \(achievement.name)")
             return
+        }
+        
+        // Kuyruk limitini kontrol et
+        if achievementQueue.count >= queueLimit {
+            // En eski bildirimi çıkar
+            _ = achievementQueue.removeFirst()
+            logWarning("Bildirim kuyruğu limiti aşıldı, en eski bildirim çıkarıldı")
         }
         
         // Başarımı kuyruğa ekle
         achievementQueue.append(achievement)
-        print("📝 Başarım kuyruğa eklendi: \(achievement.name), Kuyruk uzunluğu: \(achievementQueue.count + 1)")
+        logVerbose("Başarım kuyruğa eklendi: \(achievement.name), Kuyruk uzunluğu: \(achievementQueue.count + 1)")
         
         // Eğer şu anda başka bir bildirim gösterilmiyorsa, bu bildirimi göster
         if !shouldShowNotification && !processingNotification {
@@ -125,11 +160,11 @@ class AchievementNotificationManager: ObservableObject {
     func processNextNotificationIfNeeded() {
         guard !achievementQueue.isEmpty, !shouldShowNotification, !processingNotification else {
             if achievementQueue.isEmpty {
-                print("📝 Bildirim kuyruğu boş, işlem yapılmadı")
+                logVerbose("Bildirim kuyruğu boş, işlem yapılmadı")
             } else if shouldShowNotification {
-                print("📝 Zaten bir bildirim gösteriliyor, bekleniyor")
+                logVerbose("Zaten bir bildirim gösteriliyor, bekleniyor")
             } else if processingNotification {
-                print("📝 Bildirim işlemde, bekleniyor")
+                logVerbose("Bildirim işlemde, bekleniyor")
             }
             return
         }
@@ -138,7 +173,7 @@ class AchievementNotificationManager: ObservableObject {
         
         // Kuyruktaki ilk başarımı al ve kuyruktan çıkar
         currentAchievement = achievementQueue.removeFirst()
-        print("📝 Bildirim gösteriliyor: \(currentAchievement?.name ?? "Bilinmeyen"), Kalan bildirim: \(achievementQueue.count)")
+        logVerbose("Bildirim gösteriliyor: \(currentAchievement?.name ?? "Bilinmeyen"), Kalan bildirim: \(achievementQueue.count)")
         
         // Bildirimi göster
         DispatchQueue.main.async { [weak self] in
@@ -169,9 +204,12 @@ class AchievementNotificationManager: ObservableObject {
     
     // Tüm bildirimleri temizle
     func clearAllNotifications() {
-        print("🧹 Tüm bildirimler temizleniyor")
+        logInfo("Tüm bildirimler temizleniyor")
         achievementQueue.removeAll()
         shouldShowNotification = false
         currentAchievement = nil
+        
+        // Timer'ları ve diğer kaynakları temizle
+        cancellables.removeAll()
     }
 } 
