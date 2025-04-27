@@ -149,10 +149,7 @@ struct SudokuApp: App {
         viewContext.automaticallyMergesChangesFromParent = true
         viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
-        // Uygulama başlatıldığında ekran kararması yönetimi GameView'e bırakıldı
-        // UIApplication.shared.isIdleTimerDisabled = false
-        // logInfo("SudokuApp init - Ekran kararması GLOBAL olarak ETKİNLEŞTİRİLDİ (ekran kararabilir)")
-        
+        // Ekran kararması yönetimi GameView'e bırakıldı.
         // setupGameScreenObservers() // Ekran kararması yönetimi GameView'e devredildi
         
         // Firestore'u başlat
@@ -192,33 +189,7 @@ struct SudokuApp: App {
     }
 
     // MARK: - Game Screen Observers
-    private func setupGameScreenObservers() {
-        // Oyun ekranı açıldığında ekran kararmasını engelle - sadece Sudoku oyunu için
-        NotificationCenter.default.addObserver(
-            forName: Notification.Name("GameScreenOpened"),
-            object: nil,
-            queue: .main
-        ) { _ in
-            logInfo("Notification alındı: GameScreenOpened. isIdleTimerDisabled ayarlanıyor...")
-            // let currentState = UIApplication.shared.isIdleTimerDisabled // Yorum satırı
-            // UIApplication.shared.isIdleTimerDisabled = true // Yorum satırı
-            // logInfo("GameScreenOpened: isIdleTimerDisabled ayarlandı: \\(currentState) -> true")
-            isGameViewActive = true // Bu satır kalabilir
-        }
-        
-        // Oyun ekranı kapandığında ekran kararmasını tekrar etkinleştir
-        NotificationCenter.default.addObserver(
-            forName: Notification.Name("GameScreenClosed"),
-            object: nil,
-            queue: .main
-        ) { _ in
-            logInfo("Notification alındı: GameScreenClosed. isIdleTimerDisabled ayarlanıyor...")
-            // let currentState = UIApplication.shared.isIdleTimerDisabled // Yorum satırı
-            // UIApplication.shared.isIdleTimerDisabled = false // Yorum satırı
-            // logInfo("GameScreenClosed: isIdleTimerDisabled ayarlandı: \\(currentState) -> false")
-            isGameViewActive = false // Bu satır kalabilir
-        }
-    }
+    // Bu fonksiyon artık kullanılmıyor ve kaldırıldı.
 
     var body: some Scene {
         WindowGroup {

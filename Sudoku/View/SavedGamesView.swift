@@ -239,7 +239,6 @@ struct SavedGamesView: View {
         // Notification Center dinleyicisi ekle
         .onAppear {
             // Ekran kararması yönetimi SudokuApp'a devredildi
-            // UIApplication.shared.isIdleTimerDisabled = false // Kaldırıldı
             
             // Manuel olarak kayıtlı oyunları yükle
             loadSavedGames()

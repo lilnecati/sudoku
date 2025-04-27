@@ -86,7 +86,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Kullanıcı uygulamayı kapattığında
         
         // ÇOK ÖNEMLİ: Ekran kararmasını ZORLA ETKİNLEŞTİRME (GameView yönetecek)
-        // UIApplication.shared.isIdleTimerDisabled = false
         // logInfo("SceneDelegate sceneDidEnterBackground - Ekran kararması ZORLA ETKİNLEŞTİRİLDİ (ekran kararabilir)")
         
         // Arka planda kalıcı depolama ve CPU kullanımını azalt
