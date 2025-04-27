@@ -54,7 +54,7 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            // ProfileEditView ile aynı arka plan
+            // Arka plan
             GridBackgroundView()
                 .ignoresSafeArea()
             
