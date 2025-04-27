@@ -120,6 +120,7 @@ struct SudokuApp: App {
     
     // Uygulama yeniden açılırken splash ekranını gösterecek durum
     @State private var showSplashOnResume = false
+    @State private var startupViewId = 0
     
     @Environment(\.colorScheme) var systemColorScheme
     
@@ -194,6 +195,7 @@ struct SudokuApp: App {
     var body: some Scene {
         WindowGroup {
             StartupView(forceShowSplash: showSplashOnResume)
+                .id(startupViewId)
                 .environmentObject(themeManager)
                 .environmentObject(localizationManager)
                 .environment(\.managedObjectContext, viewContext)
@@ -202,21 +204,30 @@ struct SudokuApp: App {
                 .accentColor(ColorManager.primaryBlue)
                 .achievementToastSystem()
                 .onChange(of: scenePhase) { oldPhase, newPhase in
+                    logInfo("Scene phase changed from \(oldPhase) to \(newPhase)")
                     switch newPhase {
                     case .active:
+                        logInfo("Scene became active")
                         // Firebase token doğrulaması yap
                         validateFirebaseToken()
                         
                         // Uygulama arka plandan ön plana geldiğinde
                         let currentTime = Date().timeIntervalSince1970
                         let timeSinceBackground = currentTime - lastBackgroundTime
+                        logInfo("Current time: \(currentTime), Last background time: \(lastBackgroundTime), Time since background: \(timeSinceBackground)")
                         
                         if timeSinceBackground > gameResetTimeInterval && lastBackgroundTime > 0 {
                             // Uygulama uzun süre arka planda kaldıysa splash göster
                             showSplashOnResume = true
-                            logInfo("Uygulama \(Int(timeSinceBackground)) saniye arka planda kaldı, splash gösterilecek")
+                            startupViewId += 1
+                            logInfo("Uygulama \(Int(timeSinceBackground)) saniye arka planda kaldı, splash gösterilecek. Setting showSplashOnResume = true, startupViewId = \(startupViewId)")
                         } else {
                             showSplashOnResume = false
+                            if lastBackgroundTime > 0 {
+                                logInfo("Uygulama \(Int(timeSinceBackground)) saniye arka planda kaldı, splash GÖSTERİLMEYECEK (limit: \(Int(gameResetTimeInterval)) sn). Setting showSplashOnResume = false")
+                            } else {
+                                logInfo("İlk açılış veya lastBackgroundTime sıfır, splash gösterilmeyecek. Setting showSplashOnResume = false")
+                            }
                         }
                         
                         // Oyun verilerini senkronize et
@@ -233,11 +244,12 @@ struct SudokuApp: App {
                     case .background:
                         // Arka plana geçiş zamanını kaydet
                         lastBackgroundTime = Date().timeIntervalSince1970
-                        logInfo("Uygulama arka plana alındı: \(Date())")
+                        logInfo("Uygulama arka plana alındı: \(Date()). Setting lastBackgroundTime = \(lastBackgroundTime)")
                         
                         // Arka plana geçerken değişiklikleri kaydet
                         PersistenceController.shared.save()
                     case .inactive:
+                        logInfo("Scene became inactive")
                         // Uygulama inaktif olduğunda değişiklikleri kaydet
                         PersistenceController.shared.save()
                     @unknown default:

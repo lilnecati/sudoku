@@ -183,7 +183,7 @@ struct GameView: View {
         .onAppear {
             setupInitialAnimations()
             setupTimerUpdater()
-
+            
             // Ekranın kapanmasını engelle
             UIApplication.shared.isIdleTimerDisabled = true
             logInfo("🔆 GameView onAppear - Ekran kararması engellendi (ayarlandı: true)")
@@ -192,7 +192,7 @@ struct GameView: View {
             // Ekranın kapanması engelini kaldır
             UIApplication.shared.isIdleTimerDisabled = false
             logInfo("🔅 GameView onDisappear - Ekran kararması etkinleştirildi (ayarlandı: false)")
-
+            
             // Zamanlayıcıyı temizle
             viewModel.stopTimer()
         }
