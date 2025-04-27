@@ -1759,7 +1759,16 @@ class SudokuViewModel: ObservableObject {
             self.userEnteredValues = computedValues
         }
         
-        print("✅ Kullanıcı tarafından girilen değerler yüklendi: \(self.userEnteredValues.flatMap { $0.filter { $0 } }.count) değer")
+        // Kullanıcı tarafından girilen değerlerin doğru şekilde işaretlendiğinden emin ol
+        // Bu, renk sorununu çözecek
+        // NOT: SudokuBoard sınıfında markAsUserEntered metodu yok, bu yüzden userEnteredValues'ı kullanıyoruz
+        // userEnteredValues zaten yüklendi, bu değerler SudokuCellView'da isUserEntered parametresi olarak kullanılacak
+        
+        // Hücre renklerinin doğru görüntülenmesi için, tüm hücreleri yeniden çizmeyi tetikle
+        // Bu, görünümün güncellenmesini sağlar
+        objectWillChange.send()
+        
+        print("✅ Kullanıcı tarafından girilen değerler yüklendi ve işaretlendi: \(self.userEnteredValues.flatMap { $0.filter { $0 } }.count) değer")
         
         self.elapsedTime = savedGame.getDouble(key: "elapsedTime")
         self.pausedElapsedTime = self.elapsedTime

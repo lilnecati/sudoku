@@ -209,7 +209,7 @@ struct ProfileEditView: View {
             }
             
             // Kullanıcı adı
-            Text("@\(username)")
+            Text(username)
                 .font(.headline)
                 .foregroundColor(.secondary)
         }

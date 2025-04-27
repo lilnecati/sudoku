@@ -1501,27 +1501,15 @@ struct SettingsView: View {
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.primary)
                         
-                        HStack(spacing: 4) {
-                            // Kullanıcı adını doğru şekilde göster
-                            let displayUsername = user.username ?? ""
-                            Text("@\(displayUsername)")
-                                .onAppear {
-                                    print("DEBUG - Kullanıcı adı: \(displayUsername)")
-                                    print("DEBUG - E-posta: \(user.email ?? "")")
-                                }
-                                .font(.system(size: 16))
-                                .foregroundColor(.secondary)
-                            
-                            Text("(Değiştirilemez)")
-                                .font(.system(size: 12))
-                                .foregroundColor(.secondary.opacity(0.7))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(Color.secondary.opacity(0.1))
-                                )
-                        }
+                        // Kullanıcı adını @ işareti ve değiştirilemez ibaresi olmadan göster
+                        let displayUsername = user.username ?? ""
+                        Text(displayUsername)
+                            .onAppear {
+                                print("DEBUG - Kullanıcı adı: \(displayUsername)")
+                                print("DEBUG - E-posta: \(user.email ?? "")")
+                            }
+                            .font(.system(size: 16))
+                            .foregroundColor(.secondary)
                     } else {
                         // Giriş yapılmamışsa giriş seçenekleri göster
                         Text.localizedSafe("Giriş Yapmadınız")
