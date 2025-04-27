@@ -244,19 +244,6 @@ struct SavedGamesView: View {
             loadSavedGames()
             
             logInfo("SavedGamesView - Bulunan kaydedilmiş oyun sayısı: \(savedGames.count)")
-            
-            // Firebase senkronizasyonunu sadece kaydedilmiş oyunlar sayfasına ilk girişte çalıştır
-            if Auth.auth().currentUser != nil {
-                // Eğer kullanıcı giriş yapmışsa senkronize et
-                PersistenceController.shared.syncSavedGamesFromFirestore { success in
-                    if success {
-                        logSuccess("Firebase senkronizasyonu başarılı")
-                        // Veriler güncellendiğinde otomatik olarak yüklenecek (NotificationCenter sayesinde)
-                    }
-                }
-            } else {
-                logInfo("Firebase senkronizasyonu yapılmadı: Kullanıcı giriş yapmamış")
-            }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshSavedGames"))) { _ in
             // Manuel olarak oyunları tekrar yükle - Silinen oyunları hemen güncellemek için
@@ -282,7 +269,6 @@ struct SavedGamesView: View {
                 // filterGames() savedGames didSet içinde otomatik çağrılacak
             }
         }
-        // Kullanıcı giriş yaptığında senkronizasyon yap
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserLoggedIn"))) { _ in
             logInfo("Kullanıcı giriş yaptı - Kayıtlı oyunları senkronize ediliyor")
             if Auth.auth().currentUser != nil {

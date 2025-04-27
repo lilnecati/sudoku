@@ -358,7 +358,7 @@ struct SettingsView: View {
             currentUser = PersistenceController.shared.getCurrentUser()
             
             // Profil resmini senkronize et
-            syncProfileImage()
+             syncProfileImage()
         }
         .onDisappear {
             // Bildirim dinleyicilerini temizle

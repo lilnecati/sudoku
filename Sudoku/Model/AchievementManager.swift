@@ -84,7 +84,7 @@ class AchievementManager: ObservableObject {
     
     // Kullanıcı giriş yaptığında çağrılan fonksiyon
     @objc private func handleUserLoggedIn() {
-        logInfo("Kullanıcı oturum açtı - Başarımlar yükleniyor")
+        logInfo("Kullanıcı oturum açtı - Başarımlar yükleniyor ve senkronize ediliyor") // Log güncellendi
         if let user = Auth.auth().currentUser {
             // CoreData'dan önce başarımları yükle
             let coreDataAchievements = achievementCoreDataService.loadAchievements(for: user.uid)
@@ -106,6 +106,12 @@ class AchievementManager: ObservableObject {
             
             // Firebase'den de başarımları yükle (en güncel versiyon olarak)
             loadAchievementsFromFirebase()
+            
+            // Bekleyen senkronizasyonları işle
+            processPendingSyncQueue()
+            
+            // Tam senkronizasyon yapmayı dene (handleUserLoggedIn içinde zaten yükleme yapılıyor, belki bu gereksiz? Şimdilik ekleyelim)
+            // syncWithFirebase() // Bu, loadAchievementsFromFirebase içinde zaten yapılıyor gibi görünüyor, şimdilik yoruma alalım.
         }
     }
     
@@ -348,8 +354,8 @@ class AchievementManager: ObservableObject {
         // Toplam puanları hesapla
         calculateTotalPoints()
         
-        // Yüklenen verileri Firebase ile senkronize et
-        syncWithFirebase()
+        // Yüklenen verileri Firebase ile senkronize et -> ARTIK BURADA ÇAĞIRMIYORUZ
+        // syncWithFirebase() // Bu çağrıyı kaldırıyoruz, UserLoggedIn ile tetiklenecek.
     }
     
     // Başarıları kaydet
@@ -894,12 +900,12 @@ class AchievementManager: ObservableObject {
             self.pendingSyncQueue = pendingQueue
             logInfo("Bekleyen senkronizasyon kuyruğu yüklendi: \(pendingQueue.count) başarım")
             
-            // İlk başlatmada bekleyen senkronizasyonları işlemeyi dene
-            if !pendingQueue.isEmpty {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                    self?.processPendingSyncQueue()
-                }
-            }
+            // İlk başlatmada bekleyen senkronizasyonları işlemeyi dene -> ARTIK BURADA ÇAĞIRMIYORUZ
+            // if !pendingQueue.isEmpty {
+            //     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            //         self?.processPendingSyncQueue()
+            //     }
+            // }
         }
     }
     
@@ -913,7 +919,7 @@ class AchievementManager: ObservableObject {
         }
         
         // Hemen işlemeyi dene
-        processPendingSyncQueue()
+       // processPendingSyncQueue()
     }
     
     // Kuyruk sistemini kullanarak senkronizasyon yapma

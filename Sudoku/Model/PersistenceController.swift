@@ -36,11 +36,12 @@ class PersistenceController {
             if let error = error {
                 logError("CoreData yüklenemedi: \(error.localizedDescription)")
             } else {
-                logInfo("CoreData yüklendi, Firebase dinleyicileri başlatılıyor...")
-                // CoreData yüklendikten hemen sonra Firebase dinleyicilerini başlat
-                DispatchQueue.main.async { [weak self] in
-                    self?.setupDeletedGamesListener()
-                }
+                logInfo("CoreData yüklendi, Firebase dinleyicileri kullanıcı giriş yaptığında başlatılacak.") // Log mesajı güncellendi
+                // CoreData yüklendikten hemen sonra Firebase dinleyicilerini başlatma
+                // Bunun yerine UserLoggedIn bildirimini bekleyeceğiz.
+                // DispatchQueue.main.async { [weak self] in
+                //     self?.setupDeletedGamesListener()
+                // }
             }
         }
         

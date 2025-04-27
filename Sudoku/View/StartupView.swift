@@ -51,8 +51,6 @@ struct StartupView: View {
         ColorManager.primaryOrange
     ]
     
-    @State private var scheduledWorkItem: DispatchWorkItem? = nil // <-- Zamanlayıcıyı tutmak için yeni state
-    
     var body: some View {
         Group {
             if isReady {
@@ -161,93 +159,47 @@ struct StartupView: View {
                     }
                     .frame(maxHeight: .infinity)
                 }
-                .onAppear {
-                    // Sadece ilk kurulum ve animasyonlar
-                    logInfo("StartupView onAppear - Initial setup. forceShowSplash=\(forceShowSplash)")
-                    startAnimations()
-                    generateRandomNumbers()
-
-                    // Görünümün başlangıç durumuna göre doğru süreyi başlat
+                .task(id: forceShowSplash) {
+                    logInfo("StartupView task started. forceShowSplash=\(forceShowSplash), isReady=\(isReady)")
+                    
                     if forceShowSplash {
-                        // Eğer ZORUNLU splash ile başlıyorsa, zorunlu süreyi başlat
-                        logInfo("StartupView onAppear: forceShowSplash true olduğu için zorunlu süre (5s) başlatılıyor.")
-                        handleDisplayDuration(5.0) 
-                    } else {
-                        // Eğer NORMAL açılış ise (forceShowSplash false), normal süreyi başlat
-                        logInfo("StartupView onAppear: forceShowSplash false olduğu için normal süre başlatılıyor.")
-                        handleDisplayDuration(displayDuration)
-                    }
-                }
-                .onChange(of: forceShowSplash) { oldValue, newValue in
-                    logInfo("StartupView onChange forceShowSplash: \(oldValue) -> \(newValue)")
-                    if newValue == true {
-                        // Splash gösterimini zorla, durumu sıfırla
-                        logInfo("forceShowSplash true oldu, splash tekrar gösterilecek.")
-                        
-                        // ÖNCE durumu sıfırla ki ZStack tekrar görünsün
                         isReady = false
-                        logInfo("StartupView onChange: isReady set to false. Current value: \(isReady)")
-                        
-                        // Mevcut zamanlayıcıyı iptal et!
-                        scheduledWorkItem?.cancel()
-                        logInfo("Önceki zamanlayıcı iptal edildi (varsa).")
-                        
-                        // Animasyonları yeniden başlat (opsiyonel, görsel feedback için)
-                        // Önceki animasyonları iptal etmeye gerek yok gibi, SwiftUI halleder.
-                        logoScale = 0.3 // Başlangıç değerlerine dön
-                        logoOpacity = 0
-                        textOpacity = 0
-                        backgroundOpacity = 0
-                        gridOpacity = 0
-                        showNumbers = false
-                        
+                        logInfo("StartupView task: forceShowSplash is true, setting isReady to false.")
+                    }
+                    
+                    if !isReady {
                         startAnimations()
-                        generateRandomNumbers() // Sayıları da yeniden oluşturabiliriz
+                        generateRandomNumbers()
+                    }
+                    
+                    let duration = forceShowSplash ? 5.0 : displayDuration
+                    logInfo("Splash \(duration) saniye gösterilecek...")
+                    
+                    do {
+                        try await Task.sleep(for: .seconds(duration))
                         
-                        // Özel bekleme süresini (örn. 8sn) başlat
-                        handleDisplayDuration(8.0)
+                        logInfo("Splash süresi (\(duration)s) doldu. ContentView'a geçiliyor.")
+                        
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            logoOpacity = 0
+                            textOpacity = 0
+                            backgroundOpacity = 0
+                            gridOpacity = 0
+                            showNumbers = false
+                        }
+                        
+                        try await Task.sleep(for: .seconds(0.3))
+                        isReady = true
+                        logInfo("StartupView task finished, isReady set to true.")
+                        
+                    } catch is CancellationError {
+                        logInfo("StartupView task cancelled.")
+                    } catch {
+                        logError("StartupView task error: \(error)")
                     }
                 }
             }
         }
-    }
-    
-    // Süre sonunda ContentView'a geçişi yöneten fonksiyon
-    private func handleDisplayDuration(_ duration: Double) {
-         logInfo("Splash \(duration) saniye gösterilecek... Yeni zamanlayıcı ayarlanıyor.")
-         
-         // Önce mevcut bir iş öğesi varsa iptal et
-         scheduledWorkItem?.cancel()
-
-         // Yeni iş öğesi oluştur
-         let workItem = DispatchWorkItem { [self] in // self'i yakala
-             // WorkItem çalıştığında isReady hala false ise devam et
-             // (Eğer başka bir yerden true yapıldıysa tekrar yapma)
-             guard !self.isReady else {
-                 logInfo("handleDisplayDuration: WorkItem çalıştı ama isReady zaten true. İptal ediliyor.")
-                 return
-             }
-             
-             logInfo("Splash süresi (\(duration)s) doldu. WorkItem çalışıyor. ContentView'a geçiliyor.")
-             
-             // ÖNCE kapanış animasyonunu uygula
-             withAnimation(.easeInOut(duration: 0.3)) {
-                 self.logoOpacity = 0
-                 self.textOpacity = 0
-                 self.backgroundOpacity = 0
-                 self.gridOpacity = 0
-                 self.showNumbers = false
-             }
-             
-             // Animasyon bittikten sonra ContentView'a geç
-             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                 self.isReady = true
-             }
-         }
-
-         // Yeni iş öğesini sakla ve zamanla
-         scheduledWorkItem = workItem
-         DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: workItem)
     }
     
     // Animasyonları başlat
