@@ -140,18 +140,23 @@ struct SudokuApp: App {
     private let viewContext: NSManagedObjectContext
     
     init() {
-        logInfo("Sudoku app initializing...")
+        // Log seviyesini ayarla (açık bir şekilde)
         #if DEBUG
-        logDebug("Debug mode active")
+        LogManager.shared.setLogLevel(.debug)
+        #else
+        LogManager.shared.setLogLevel(.warning)  // Sadece warning ve error logları göster
         #endif
+        
+        logInfo("Sudoku app initializing...")
         
         // Initialize view context
         viewContext = persistenceController.container.viewContext
         viewContext.automaticallyMergesChangesFromParent = true
         viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
-        // Ekran kararması yönetimi GameView'e bırakıldı.
-        // setupGameScreenObservers() // Ekran kararması yönetimi GameView'e devredildi
+        // Ekran kararması ayarını uygulama açılırken aktifleştir (sadece GameView'de kapatılacak)
+        UIApplication.shared.isIdleTimerDisabled = false
+        logInfo("🔅 SudokuApp init - Ekran kararması ayarı: AÇIK")
         
         // Firestore'u başlat
         FirebaseApp.configure()
@@ -206,7 +211,8 @@ struct SudokuApp: App {
                 .environment(\.textScale, textSizePreference.scaleFactor)
                 .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
                 .accentColor(ColorManager.primaryBlue)
-                .achievementToastSystem()
+                // .achievementToastSystem()  // Toast bildirimleri kapatıldı
+                .withAchievementNotifications()  // Yeni bildirim sistemini kullan
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     logInfo("Scene phase changed from \(oldPhase) to \(newPhase)")
                     switch newPhase {

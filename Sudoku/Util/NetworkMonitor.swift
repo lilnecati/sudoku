@@ -29,16 +29,21 @@ class NetworkMonitor: ObservableObject {
             // Update published property on the main thread
             DispatchQueue.main.async {
                 self.isConnected = newStatus
-                print("Ağ Durumu Güncellendi: \(newStatus ? "Bağlandı" : "Bağlantı Kesildi")")
                 
                 // Post notification only when status changes
                 if self.lastConnectionStatus != newStatus {
                     if newStatus {
-                         print("NetworkConnectedNotification gönderiliyor...")
-                         NotificationCenter.default.post(name: Self.NetworkConnectedNotification, object: nil)
+                        NotificationCenter.default.post(
+                            name: Self.NetworkConnectedNotification, 
+                            object: nil,
+                            userInfo: ["isConnected": true]
+                        )
                     } else {
-                         print("NetworkDisconnectedNotification gönderiliyor...")
-                         NotificationCenter.default.post(name: Self.NetworkDisconnectedNotification, object: nil)
+                        NotificationCenter.default.post(
+                            name: Self.NetworkDisconnectedNotification, 
+                            object: nil,
+                            userInfo: ["isConnected": false]
+                        )
                     }
                     self.lastConnectionStatus = newStatus
                 }
@@ -47,25 +52,28 @@ class NetworkMonitor: ObservableObject {
     }
 
     func startMonitoring() {
-        print("NetworkMonitor başlatılıyor...")
         // Check initial path status
         let initialPath = monitor.currentPath
         self.isConnected = initialPath.status == .satisfied
         self.lastConnectionStatus = self.isConnected
-         print("İlk Ağ Durumu: \(self.isConnected ? "Bağlandı" : "Bağlantı Kesildi")")
+        
          if self.isConnected {
-              // Post initial notification if connected at start
-              // DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // Small delay
-              //     print("Başlangıçta bağlı, NetworkConnectedNotification gönderiliyor...")
-              //     NotificationCenter.default.post(name: Self.NetworkConnectedNotification, object: nil)
-              // }
+            // Post initial notification if connected at start - delay a bit to let app prepare
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in // Delay 0.5 second
+                if self?.isConnected == true {
+                    NotificationCenter.default.post(
+                        name: Self.NetworkConnectedNotification,
+                        object: nil,
+                        userInfo: ["isConnected": true]
+                    )
+                }
+            }
          }
          
         monitor.start(queue: queue)
     }
 
     func stopMonitoring() {
-         print("NetworkMonitor durduruluyor...")
         monitor.cancel()
     }
 } 

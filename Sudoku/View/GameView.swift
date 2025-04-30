@@ -608,7 +608,6 @@ struct GameView: View {
         )
         .frame(maxHeight: 550)
         .padding(.horizontal, 20)
-        .achievementToastSystem()
     }
     
     // Zorluk seviyesi için ikon belirle
@@ -806,8 +805,6 @@ struct GameView: View {
         )
         .padding(.horizontal, 20)
         .zIndex(20) // Bildirimlerin görünmesi için yüksek z-index değeri
-        // Doğrudan AchievementToastSystemModifier kullanarak bildirimlerin görünmesini sağlıyorum
-        .modifier(AchievementToastSystemModifier())
     }
     
     // Performans istatistik kartı

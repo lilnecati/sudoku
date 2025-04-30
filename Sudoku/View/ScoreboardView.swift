@@ -72,15 +72,19 @@ struct ScoreboardView: View {
                         LazyVStack(spacing: 16) {
                             // Zorluk seviyesi seçici
                             difficultySelector(textScale: textScale)
+                                .drawingGroup() // Metal hızlandırma ekleyelim
                             
                             // İstatistik kartları
                             statisticsView(textScale: textScale)
+                                .drawingGroup() // Metal hızlandırma ekleyelim
                             
                             // Oyun istatistik kartları
                             gameStatsView(textScale: textScale)
+                                .drawingGroup() // Metal hızlandırma ekleyelim
                             
                             // Son oyunlar
                             recentGamesView(textScale: textScale)
+                                .drawingGroup() // Metal hızlandırma ekleyelim
                         }
                         .padding(.bottom)
                     }
@@ -90,9 +94,11 @@ struct ScoreboardView: View {
                         LazyVStack(spacing: 16) {
                             // Zorluk seviyesi seçici
                             difficultySelector(textScale: textScale)
+                                .drawingGroup() // Metal hızlandırma ekleyelim
                             
                             // Zorluk seviyesi karşılaştırma
                             difficultyComparisonView(textScale: textScale)
+                                .drawingGroup() // Metal hızlandırma ekleyelim
                         }
                         .padding(.bottom)
                     }
@@ -101,12 +107,19 @@ struct ScoreboardView: View {
             }
         }
         .animation(nil, value: selectedTab) // Tab içeriği değişimini animasyonsuz yap
+        .animation(nil, value: selectedDifficulty) // Zorluk seçimi değişimini animasyonsuz yap
         .onChange(of: selectedDifficulty) { oldValue, newValue in
-            loadData()
+            // Animasyonu kaldırmak için gecikmeli veri yükleme yapalım
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                loadData()
+            }
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             // Tab değiştirildiğinde verileri güncelle
-            loadData()
+            // Animasyonu kaldırmak için gecikmeli veri yükleme yapalım
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                loadData()
+            }
         }
         .onAppear {
             // Ekran kararması yönetimi SudokuApp'a devredildi
@@ -121,10 +134,6 @@ struct ScoreboardView: View {
             logInfo("ScoreboardView: İstatistikler yenileme bildirimi alındı")
             loadData()
         }
-        .onChange(of: selectedDifficulty) { _, newDifficulty in
-            logInfo("Zorluk seviyesi değişti: \(newDifficulty.rawValue)")
-            loadData()
-        }
         // Detaylı istatistik sayfasına geçiş
         .fullScreenCover(isPresented: $showDetailedStatistics) {
             DetailedStatisticsView()
@@ -137,9 +146,8 @@ struct ScoreboardView: View {
         HStack(spacing: 8) {
             ForEach(SudokuBoard.Difficulty.allCases) { difficulty in
                 Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selectedDifficulty = difficulty
-                    }
+                    // Daha performanslı bir geçiş için animasyonu kaldıralım
+                    selectedDifficulty = difficulty
                 }) {
                     VStack(spacing: 2) {
                         // Zorluk seviyesi ikonu
@@ -175,7 +183,7 @@ struct ScoreboardView: View {
                     .contentShape(Capsule())
                 }
                 .buttonStyle(PlainButtonStyle())
-                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedDifficulty)
+                // Animasyonu kaldırdık
             }
         }
         .padding(.horizontal, 4)

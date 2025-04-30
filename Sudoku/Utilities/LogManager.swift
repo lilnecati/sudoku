@@ -23,7 +23,7 @@ class LogManager {
         currentLogLevel = .debug
         #else
         isProduction = true
-        currentLogLevel = .info  
+        currentLogLevel = .warning  // Production modunda sadece warning ve error logları göster
         #endif
     }
     
@@ -66,16 +66,17 @@ class LogManager {
     private func log(level: LogLevel, message: String, file: String, function: String, line: Int) {
         guard level.rawValue <= currentLogLevel.rawValue else { return }
         
-        if isProduction && level.rawValue > LogLevel.info.rawValue {
+        // Production modunda sadece info ve altı logları tutuyoruz
+        if isProduction && level.rawValue > currentLogLevel.rawValue {
             return
         }
         
         let fileName = (file as NSString).lastPathComponent
         
-        let logMessage = "[\(fileName):\(line)] \(function): \(message)"
+        // Daha kısa log mesajları için sadece dosya adı ve satır numarasını göster
+        let logMessage = "[\(fileName):\(line)] \(message)"
         
         print(logMessage)
-        
     }
 }
 

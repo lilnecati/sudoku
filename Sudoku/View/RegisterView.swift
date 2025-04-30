@@ -24,6 +24,9 @@ struct RegisterView: View {
     @State private var showError = false
     @State private var isLoading = false
     
+    // Klavye çıkıp çıkmadığını izleyecek state
+    @State private var keyboardIsVisible = false
+    
     // Focus states
     @FocusState private var focusName: Bool
     @FocusState private var focusEmail: Bool
@@ -90,13 +93,18 @@ struct RegisterView: View {
     
     var body: some View {
         ZStack {
-            // Arka plan
-            GridBackgroundView()
+            // Arka plan - performans için optimize edildi
+            Color(UIColor.systemBackground)
                 .ignoresSafeArea()
+                .overlay(
+                    GridBackgroundView()
+                        .ignoresSafeArea()
+                        .opacity(0.5) // Arka planı hafifletelim
+                )
             
             ScrollView {
                 VStack(spacing: 20) {
-                    // Başlık - ProfileEditView ile aynı stil
+                    // Başlık
                     Text("Yeni Hesap Oluştur")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.primary)
@@ -104,36 +112,44 @@ struct RegisterView: View {
                         .padding(.bottom, 10)
                     
                     VStack(spacing: 16) {
-                        // Ad Soyad - basitleştirildi
+                        // Ad Soyad
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Ad Soyad")
                                 .font(.headline)
                             
                             TextField("Adınızı ve soyadınızı girin", text: $name)
                                 .padding()
-                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                                 .focused($focusName)
                                 .submitLabel(.next)
                                 .onSubmit { focusEmail = true }
+                                .onAppear {
+                                    NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { _ in
+                                        keyboardIsVisible = true
+                                    }
+                                    NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+                                        keyboardIsVisible = false
+                                    }
+                                }
                         }
                         
-                        // E-posta - basitleştirildi
+                        // E-posta
                         VStack(alignment: .leading, spacing: 6) {
                             Text("E-posta")
                                 .font(.headline)
                             
                             TextField("E-posta adresinizi girin", text: $email)
                                 .padding()
-                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                                 .keyboardType(.emailAddress)
                                 .autocapitalization(.none)
@@ -142,7 +158,7 @@ struct RegisterView: View {
                                 .onSubmit { focusUsername = true }
                         }
                         
-                        // Kullanıcı adı - Önemli alan
+                        // Kullanıcı adı
                         VStack(alignment: .leading, spacing: 6) {
                             HStack(spacing: 4) {
                                 Text("Kullanıcı Adı")
@@ -166,7 +182,7 @@ struct RegisterView: View {
                             
                             TextField("Benzersiz kullanıcı adı (en az 4 karakter)", text: $username)
                                 .padding()
-                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
@@ -174,29 +190,29 @@ struct RegisterView: View {
                                 .submitLabel(.next)
                                 .onSubmit { focusPassword = true }
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.blue, lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                         }
                         
-                        // Şifre - basitleştirildi
+                        // Şifre
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Şifre")
                                 .font(.headline)
                             
                             SecureField("Şifrenizi girin", text: $password)
                                 .padding()
-                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                                 .focused($focusPassword)
                                 .submitLabel(.next)
                                 .onSubmit { focusConfirmPassword = true }
                             
-                            // Parola gücü bilgisi - basitleştirildi
+                            // Parola gücü bilgisi
                             if !password.isEmpty {
                                 let passwordCheck = SecurityManager.shared.isStrongPassword(password)
                                 Text(passwordCheck.message)
@@ -219,18 +235,18 @@ struct RegisterView: View {
                             }
                         }
                         
-                        // Şifre onay - basitleştirildi
+                        // Şifre onay
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Şifre Onayı")
                                 .font(.headline)
                             
                             SecureField("Şifrenizi tekrar girin", text: $confirmPassword)
                                 .padding()
-                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                                 .focused($focusConfirmPassword)
                                 .submitLabel(.done)
@@ -241,7 +257,7 @@ struct RegisterView: View {
                                     }
                                 }
                             
-                            // Şifre eşleşme bilgisi - basitleştirildi
+                            // Şifre eşleşme bilgisi
                             if !confirmPassword.isEmpty {
                                 if password == confirmPassword {
                                     Text("Şifreler eşleşiyor")
@@ -249,13 +265,13 @@ struct RegisterView: View {
                                         .foregroundColor(.green)
                                 } else {
                                     Text("Şifreler eşleşmiyor")
-                                    .font(.caption)
+                                        .font(.caption)
                                         .foregroundColor(.red)
                                 }
                             }
                         }
                         
-                        // Kayıt Ol butonu - ProfileEditView stili ile
+                        // Kayıt Ol butonu
                         Button(action: registerUser) {
                             if isLoading {
                                 ProgressView()
@@ -289,7 +305,7 @@ struct RegisterView: View {
                         }
                         .padding(.vertical, 8)
                         
-                        // İptal butonu - basitleştirildi
+                        // İptal butonu
                         Button(action: {
                             dismissKeyboard()
                             presentationMode.wrappedValue.dismiss()
@@ -297,7 +313,7 @@ struct RegisterView: View {
                             Text("İptal")
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color(.systemGray6))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .foregroundColor(.primary)
                                 .cornerRadius(8)
                         }
@@ -305,23 +321,25 @@ struct RegisterView: View {
                     .padding(.horizontal)
                 }
                 .padding()
-                .frame(maxWidth: 500) // Ekran genişliğini sınırla
+                .frame(maxWidth: 500)
                 .padding(.bottom, 20)
             }
+            .scrollDismissesKeyboard(.automatic)
             
             // Hata mesajı
-        .alert(isPresented: $showError) {
+            .alert(isPresented: $showError) {
                 Alert(
                     title: Text("Hata"),
                     message: Text(errorMessage),
                     dismissButton: .default(Text("Tamam"))
                 )
+            }
+            
+            // Güçlü şifre bilgisi
+            .sheet(isPresented: $showStrongPasswordInfo) {
+                strongPasswordInfoView
+            }
         }
-        .sheet(isPresented: $showStrongPasswordInfo) {
-            passwordInfoSheet
-        }
-        }
-        .animation(nil, value: isLoading) // Animasyonu kaldır
     }
     
     // Klavyeyi kapat
@@ -445,7 +463,7 @@ struct RegisterView: View {
     }
     
     // Güçlü şifre bilgisi sayfası
-    var passwordInfoSheet: some View {
+    var strongPasswordInfoView: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Güçlü Şifre Gereksinimleri")
                 .font(.title)

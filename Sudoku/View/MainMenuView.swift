@@ -11,6 +11,7 @@ import Combine
 struct MainMenuView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var hasSavedGame: Bool = false
+    @State private var showSettings: Bool = false
     
     var body: some View {
         NavigationView {
@@ -86,8 +87,8 @@ struct MainMenuView: View {
                         }
                         
                         // Ayarlar butonu
-                        NavigationLink {
-                            SettingsView()
+                        Button {
+                            showSettings = true
                         } label: {
                             NeonMenuButton(
                                 title: "Ayarlar",
@@ -102,11 +103,13 @@ struct MainMenuView: View {
                     Spacer()
                 }
             }
+            .sheet(isPresented: $showSettings) {
+                SettingsView(showView: $showSettings)
+            }
         }
         .onAppear {
             checkForSavedGame()
         }
-        .achievementToastSystem()
     }
     
     private func checkForSavedGame() {

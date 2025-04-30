@@ -25,6 +25,9 @@ struct LoginView: View {
     @FocusState private var focusUsername: Bool
     @FocusState private var focusPassword: Bool
     
+    // Klavye çıkıp çıkmadığını izleyecek state
+    @State private var keyboardIsVisible = false
+    
     // View performansı için çıktıları önbelleğe alma
     @ViewBuilder private func loginButton(isDisabled: Bool) -> some View {
         Button(action: loginUser) {
@@ -54,14 +57,19 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            // Arka plan
-            GridBackgroundView()
+            // Arka plan - performans için sadece gerektiğinde güncelle
+            Color(UIColor.systemBackground)
                 .ignoresSafeArea()
+                .overlay(
+                    GridBackgroundView()
+                        .ignoresSafeArea()
+                        .opacity(0.5) // Arka planı hafifletelim
+                )
             
             // Ana içerik için ScrollView
             ScrollView {
                 VStack(spacing: 20) {
-                    // Logo ve başlık - ProfileEditView ile aynı stil
+                    // Logo ve başlık
                     VStack(spacing: 10) {
                         Image(systemName: "person.circle.fill")
                             .font(.system(size: 70))
@@ -75,7 +83,7 @@ struct LoginView: View {
                     .padding(.top, 30)
                     .padding(.bottom, 30)
                     
-                    // Giriş formu - Basitleştirildi
+                    // Giriş formu
                     VStack(spacing: 15) {
                         // Kullanıcı adı
                         VStack(alignment: .leading, spacing: 6) {
@@ -84,11 +92,11 @@ struct LoginView: View {
                             
                             TextField("Kullanıcı adınızı girin", text: $username)
                                 .padding()
-                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
@@ -97,6 +105,14 @@ struct LoginView: View {
                                     focusPassword = true
                                 }
                                 .focused($focusUsername)
+                                .onAppear {
+                                    NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { _ in
+                                        keyboardIsVisible = true
+                                    }
+                                    NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+                                        keyboardIsVisible = false
+                                    }
+                                }
                         }
                         
                         // Şifre
@@ -106,11 +122,11 @@ struct LoginView: View {
                             
                             SecureField("Şifrenizi girin", text: $password)
                                 .padding()
-                                .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                                 .submitLabel(.done)
                                 .onSubmit {
@@ -132,7 +148,7 @@ struct LoginView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         
-                        // Giriş butonu - ProfileEditView stili ile
+                        // Giriş butonu
                         Button(action: loginUser) {
                             if isLoading {
                                 ProgressView()
@@ -175,7 +191,7 @@ struct LoginView: View {
                             Text("İptal")
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color(.systemGray6))
+                                .background(Color(UIColor.secondarySystemBackground))
                                 .foregroundColor(.primary)
                                 .cornerRadius(8)
                         }
@@ -183,9 +199,10 @@ struct LoginView: View {
                     .padding(.horizontal)
                 }
                 .padding()
-                .frame(maxWidth: 500) // Ekran genişliğini sınırla
+                .frame(maxWidth: 500)
                 .padding(.bottom, 20)
             }
+            .scrollDismissesKeyboard(.automatic)
             // Hata mesajı gösterme
             .alert(isPresented: $showError) {
                 Alert(
@@ -199,8 +216,6 @@ struct LoginView: View {
                 forgotPasswordView
             }
         }
-        // Ekstra arka plan özelleştirmelerini kaldır
-        .animation(nil, value: isLoading) // Animasyonu kaldır
     }
     
     private func loginUser() {

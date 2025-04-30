@@ -116,10 +116,30 @@ class PersistenceController {
                                     self.saveBackgroundContext(context)
                                 } else {
                                     logError("Bekleyen \'update\' işlemi başarısız oldu (kalıcı hata veya deneme limiti?): \(opDataID)")
+                                    // İŞLEM SİLME DÜZELTME - Kritik işlemler için daha uzun deneme sayısı
                                     if operation.attemptCount >= 5 {
-                                        logError("Maksimum deneme sayısına ulaşıldı, işlem siliniyor: \(opDataID)")
+                                        // Veri türüne göre özel işlem yap
+                                        let isKritikVeri = opDataType == "achievement" || opDataType == "highScore"
+                                        
+                                        if isKritikVeri {
+                                            logWarning("KRİTİK VERİ: 5 deneme başarısız oldu, ama silmiyoruz: \(opDataType) - \(opDataID)")
+                                            // İşlem sayacını sıfırla, tekrar denenecek
+                                            operation.attemptCount = 1
+                                            self.saveBackgroundContext(context)
+                                            
+                                            // Kullanıcıya bildirim gönder
+                                            DispatchQueue.main.async {
+                                                NotificationCenter.default.post(
+                                                    name: NSNotification.Name("CriticalOperationFailure"),
+                                                    object: nil, 
+                                                    userInfo: ["dataType": opDataType, "dataID": opDataID]
+                                                )
+                                            }
+                                        } else {
+                                            logError("Kritik olmayan veri, maksimum deneme sayısına ulaşıldı, işlem siliniyor: \(opDataID)")
                                         context.delete(operation)
                                         self.saveBackgroundContext(context)
+                                        }
                                     } else {
                                         self.saveBackgroundContext(context)
                                     }
@@ -135,7 +155,10 @@ class PersistenceController {
                                     self.saveBackgroundContext(context)
                                 } else {
                                     logError("Bekleyen \'delete\' işlemi başarısız oldu (kalıcı hata veya deneme limiti?): \(opDataID)")
+                                    // İŞLEM SİLME DÜZELTME - Kritik işlemler için daha uzun deneme sayısı
                                     if operation.attemptCount >= 5 {
+                                        // Silme işlemleri için kritik veri kontrolü
+                                        // Başarım silme işlemi olmadığı için bu kısım daha basit kalabilir
                                         logError("Maksimum deneme sayısına ulaşıldı, işlem siliniyor: \(opDataID)")
                                         context.delete(operation)
                                         self.saveBackgroundContext(context)
@@ -2278,182 +2301,136 @@ class PersistenceController {
         }
     }
     
-    func loginUserWithFirebase(email: String, password: String, completion: @escaping (User?, Error?) -> Void) {
-        Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
+    // Firebase ile giriş yapma
+    func loginUserWithFirebase(email: String, password: String, completion: @escaping (NSManagedObject?, Error?) -> Void) {
+        // E-posta kontrolü
+        let isEmail = email.contains("@")
+        
+        // Önce kullanıcı adını e-posta adresine çevirmeye çalış (e-posta değilse)
+        if !isEmail {
+            // Kullanıcı adına karşılık gelen e-postayı bul
+            let context = container.viewContext
+            let request: NSFetchRequest<User> = User.fetchRequest()
+            request.predicate = NSPredicate(format: "username == %@", email)
+            
+            do {
+                let users = try context.fetch(request)
+                if let user = users.first, let userEmail = user.email, !userEmail.isEmpty {
+                    // Kullanıcı bulundu, e-posta ile giriş yap
+                    logInfo("Kullanıcı adı '\(email)' için e-posta bulundu: \(userEmail)")
+                    
+                    // Recursion yerine devam edebilmek için e-posta ile Firebase'e giriş yapalım
+                    Auth.auth().signIn(withEmail: userEmail, password: password) { [weak self] authResult, error in
+                        self?.handleFirebaseLoginResult(authResult: authResult, error: error, completion: completion)
+                    }
+                    return
+                } else {
+                    // Kullanıcı bulunamadı, direkt olarak giriş deneyelim (olası hata vereceğini biliyoruz)
+                    logWarning("'\(email)' kullanıcı adı için e-posta bulunamadı")
+                    
+                    // Yine de denemeye devam edelim, belki e-posta formatındadır
+                    Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
+                        self?.handleFirebaseLoginResult(authResult: authResult, error: error, completion: completion)
+                    }
+                    return
+                }
+            } catch {
+                logError("Kullanıcı adı sorgulama hatası: \(error.localizedDescription)")
+                
+                // Hata durumunda bilgi döndür
+                completion(nil, error)
+                return
+            }
+        } else {
+            // E-posta ile direkt olarak giriş yap
+            Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
+                self?.handleFirebaseLoginResult(authResult: authResult, error: error, completion: completion)
+            }
+        }
+    }
+    
+    // Firebase giriş sonucunu işleyen yardımcı metod
+    private func handleFirebaseLoginResult(authResult: AuthDataResult?, error: Error?, completion: @escaping (NSManagedObject?, Error?) -> Void) {
+        if let error = error {
+            logError("Firebase giriş hatası: \(error.localizedDescription)")
+            completion(nil, error)
+            return
+        }
+        
+        guard let user = authResult?.user else {
+            logError("Firebase kullanıcı verisi alınamadı")
+            completion(nil, nil)
+            return
+        }
+        
+        logSuccess("Firebase girişi başarılı: \(user.uid)")
+        
+        // Firestore'dan kullanıcı verilerini çek
+        db.collection("users").document(user.uid).getDocument { [weak self] document, error in
             guard let self = self else { return }
             
             if let error = error {
-                    logError("Firebase giriş hatası: \(error.localizedDescription)")
+                logError("Firestore kullanıcı bilgileri getirilemedi: \(error.localizedDescription)")
                 completion(nil, error)
                 return
             }
             
-            guard let firebaseUser = authResult?.user else {
-                    logError("Firebase kullanıcı verisi alınamadı")
+            guard let document = document, document.exists else {
+                logError("Firebase kullanıcısı Firestore'da bulunamadı")
                 completion(nil, nil)
                 return
             }
             
-            // Firestore'daki kullanıcı bilgilerini al ve güncelle
-            self.db.collection("users").document(firebaseUser.uid).getDocument { [weak self] (document, error) in
-                guard let self = self else { return }
+            logSuccess("Firestore kullanıcı bilgileri başarıyla getirildi")
+            
+            // Kullanıcı verilerini çıkart
+            let data = document.data() ?? [:]
+            let username = data["username"] as? String ?? ""
+            let email = data["email"] as? String ?? user.email ?? ""
+            let name = data["name"] as? String ?? ""
+            
+            // CoreData'da bu kullanıcıyı ara
+            let context = self.container.viewContext
+            let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "firebaseUID == %@", user.uid)
+            
+            do {
+                let users = try context.fetch(fetchRequest)
                 
-                var userProfile: [String: Any] = [
-                    "lastLoginDate": FieldValue.serverTimestamp(),
-                    "isLoggedIn": true
-                ]
-                
-                if let document = document, document.exists {
-                    // Kullanıcı zaten var, bilgileri alalım
-                    let userData = document.data() ?? [:]
+                if let existingUser = users.first {
+                    // Firebase'den bilgileri güncelle
+                    existingUser.isLoggedIn = true
+                    existingUser.lastLoginDate = Date()
                     
-                    // Profil resmi URL'sini al
-                    if let photoURL = userData["photoURL"] as? String {
-                            logInfo("📸 Kullanıcının Firestore'da kayıtlı profil resmi bulundu: \(photoURL)")
-                        userProfile["photoURL"] = photoURL
-                    } else if let photoURL = firebaseUser.photoURL?.absoluteString {
-                            logInfo("📸 Kullanıcının Firebase Auth'ta kayıtlı profil resmi bulundu: \(photoURL)")
-                        userProfile["photoURL"] = photoURL
+                    // Diğer bilgileri güncelle (opsiyonel)
+                    if existingUser.name == nil || existingUser.name?.isEmpty == true {
+                        existingUser.name = name
                     }
                     
-                    // Firestore'da profil bilgilerini güncelle
-                    self.db.collection("users").document(firebaseUser.uid).updateData(userProfile) { error in
-                        if let error = error {
-                                logWarning("Firestore giriş bilgisi güncellenemedi: \(error.localizedDescription)")
-                        } else {
-                                logSuccess("Firestore giriş bilgisi güncellendi")
-                        }
-                    }
-                } else {
-                    // Kullanıcı belki ilk kez Firebase ile giriş yapıyor, kayıt edelim
-                    if let photoURL = firebaseUser.photoURL?.absoluteString {
-                        userProfile["photoURL"] = photoURL
-                    }
-                    userProfile["email"] = email
-                    userProfile["name"] = firebaseUser.displayName ?? "Kullanıcı"
-                        // Kullanıcı adı olarak e-postanın @ işaretinden önceki kısmını kullanmak yerine
-                        // benzersiz bir kullanıcı adı oluşturuyoruz
-                        userProfile["username"] = "user_" + UUID().uuidString.prefix(8).lowercased()
-                    userProfile["registrationDate"] = FieldValue.serverTimestamp()
-                    
-                    self.db.collection("users").document(firebaseUser.uid).setData(userProfile) { error in
-                        if let error = error {
-                                logWarning("Firestore yeni kullanıcı kaydedilemedi: \(error.localizedDescription)")
-                        } else {
-                                logSuccess("Kullanıcı Firestore'a kaydedildi")
-                        }
-                    }
-                }
-                
-                // Firebase UID'ye göre yerel kullanıcıyı bulma
-                let context = self.container.viewContext
-                let request: NSFetchRequest<User> = User.fetchRequest()
-                request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUser.uid)
-                
-                do {
-                    let users = try context.fetch(request)
-                    if let existingUser = users.first {
-                        // Kullanıcı yerel veritabanında var, giriş durumunu ve profil resmi URL'sini güncelle
-                        existingUser.isLoggedIn = true
-                        
-                        // Profil resmi URL'sini güncelle
-                        if let photoURL = userProfile["photoURL"] as? String {
-                            existingUser.photoURL = photoURL
-                                logSuccess("Profil resmi URL'si güncellendi: \(photoURL)")
-                            
-                            // Profil resmini hemen indirmeyi başlat
-                            self.downloadProfileImage(forUser: existingUser, fromURL: photoURL)
-                        }
-                        
-                        try context.save()
-                            logSuccess("Firebase kullanıcısı yerel veritabanında güncellendi")
-                        
-                        // Giriş bildirimini gönder
-                        DispatchQueue.main.async {
-                            NotificationCenter.default.post(name: NSNotification.Name("UserLoggedIn"), object: nil)
-                        }
-                        
-                        completion(existingUser, nil)
-                        return
-                    }
-                } catch {
-                        logError("Firebase UID ile kullanıcı aranırken hata: \(error.localizedDescription)")
-                }
-                
-                // Email'e göre kullanıcıyı ara
-                request.predicate = NSPredicate(format: "email == %@", email)
-                
-                do {
-                    let users = try context.fetch(request)
-                    if let existingUser = users.first {
-                        // Kullanıcı var, firebase UID'sini güncelle
-                        existingUser.isLoggedIn = true
-                        existingUser.firebaseUID = firebaseUser.uid
-                        
-                        // Profil resmi URL'sini güncelle
-                        if let photoURL = userProfile["photoURL"] as? String {
-                            existingUser.photoURL = photoURL
-                                logSuccess("Varolan kullanıcının profil resmi URL'si güncellendi: \(photoURL)")
-                            
-                            // Profil resmini hemen indirmeyi başlat
-                            self.downloadProfileImage(forUser: existingUser, fromURL: photoURL)
-                        }
-                        
-                        try context.save()
-                            logSuccess("Kullanıcı firebase UID ile güncellendi")
-                        
-                        // Giriş bildirimini gönder
-                        DispatchQueue.main.async {
-                            NotificationCenter.default.post(name: NSNotification.Name("UserLoggedIn"), object: nil)
-                        }
-                        
-                        completion(existingUser, nil)
-                        return
-                    }
-                    
-                    // Kullanıcı yerel veritabanında yok, oluştur
-                    let newUser = User(context: context)
-                    
-                    // Kullanıcı bilgilerini ayarla
-                    newUser.id = UUID()
-                        
-                        // Firebase'den kullanıcı adını al veya benzersiz bir kullanıcı adı oluştur
-                        if let username = document?.data()?["username"] as? String, !username.isEmpty {
-                            newUser.username = username
-                            logSuccess("Firebase'den kullanıcı adı alındı: \(username)")
-                        } else {
-                            // Benzersiz bir kullanıcı adı oluştur
-                            newUser.username = "user_" + UUID().uuidString.prefix(8).lowercased()
-                            logSuccess("E-postadan kullanıcı adı oluşturuldu: \(newUser.username ?? "")")
-                        }
-                    newUser.email = email
-                    newUser.name = firebaseUser.displayName ?? newUser.username
-                    newUser.registrationDate = Date()
-                    newUser.isLoggedIn = true
-                    newUser.firebaseUID = firebaseUser.uid
-                    
-                    // Profil resmi URL'sini ayarla
-                    if let photoURL = userProfile["photoURL"] as? String {
-                        newUser.photoURL = photoURL
-                            logSuccess("Yeni kullanıcının profil resmi URL'si ayarlandı: \(photoURL)")
-                        
-                        // Profil resmini hemen indirmeyi başlat
-                        self.downloadProfileImage(forUser: newUser, fromURL: photoURL)
+                    if existingUser.email == nil || existingUser.email?.isEmpty == true {
+                        existingUser.email = email
                     }
                     
                     try context.save()
-                        logSuccess("Firebase kullanıcısı yerel veritabanına kaydedildi")
+                    completion(existingUser, nil)
+                } else {
+                    // Kullanıcıyı CoreData'ya kaydet
+                    let newUser = User(context: context)
+                    newUser.id = UUID()
+                    newUser.username = username
+                    newUser.email = email
+                    newUser.name = name
+                    newUser.firebaseUID = user.uid
+                    newUser.isLoggedIn = true
+                    newUser.registrationDate = Date()
+                    newUser.lastLoginDate = Date()
                     
-                    // Profil resmi olmasa bile giriş bildirimini gönder
-                    DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: NSNotification.Name("UserLoggedIn"), object: nil)
-                    }
-                    
+                    try context.save()
                     completion(newUser, nil)
-                } catch {
-                        logError("Firebase kullanıcısı yerel veritabanına kaydedilemedi: \(error.localizedDescription)")
-                    completion(nil, error)
                 }
+            } catch {
+                logError("CoreData kullanıcı oluşturma/güncelleme hatası: \(error.localizedDescription)")
+                completion(nil, error)
             }
         }
     }

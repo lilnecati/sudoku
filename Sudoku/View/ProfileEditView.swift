@@ -13,6 +13,16 @@ struct ProfileEditView: View {
     @State private var newPassword: String = ""
     @State private var confirmPassword: String = ""
     
+    // Klavye durumunu takip edecek state
+    @State private var keyboardIsVisible = false
+    
+    // Focus states
+    @FocusState private var focusName: Bool
+    @FocusState private var focusEmail: Bool
+    @FocusState private var focusCurrentPassword: Bool
+    @FocusState private var focusNewPassword: Bool
+    @FocusState private var focusConfirmPassword: Bool
+    
     // Yeni eklenen state değişkenleri
     @State private var selectedImage: UIImage?
     @State private var isShowingImagePicker = false
@@ -39,11 +49,26 @@ struct ProfileEditView: View {
         return PersistenceController.shared.getCurrentUser()
     }
     
+    // Klavyeyi kapat
+    private func dismissKeyboard() {
+        focusName = false
+        focusEmail = false
+        focusCurrentPassword = false
+        focusNewPassword = false
+        focusConfirmPassword = false
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+    
     var body: some View {
         ZStack {
-            // Arka plan
-            GridBackgroundView()
+            // Arka plan - performans için optimize edildi
+            Color(UIColor.systemBackground)
                 .ignoresSafeArea()
+                .overlay(
+                    GridBackgroundView()
+                        .ignoresSafeArea()
+                        .opacity(0.5) // Arka planı hafifletelim
+                )
             
             ScrollView {
                 VStack(spacing: 25) {
@@ -73,8 +98,19 @@ struct ProfileEditView: View {
                     Spacer()
                 }
                 .padding()
-                .onAppear(perform: loadUserData)
+                .onAppear {
+                    // Klavyeyi takip et
+                    NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { _ in
+                        keyboardIsVisible = true
+                    }
+                    NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+                        keyboardIsVisible = false
+                    }
+                    
+                    loadUserData()
+                }
             }
+            .scrollDismissesKeyboard(.automatic) // Sürüm uyumluluğu için .automatic kullanıyoruz
         }
         .navigationTitle("Profil Düzenle")
         .navigationBarTitleDisplayMode(.inline)
@@ -227,12 +263,17 @@ struct ProfileEditView: View {
                 
                 TextField("Adınızı ve soyadınızı girin", text: $name)
                     .padding()
-                    .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                    .background(Color(UIColor.secondarySystemBackground))
                     .cornerRadius(10)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                     )
+                    .focused($focusName)
+                    .submitLabel(.next)
+                    .onSubmit {
+                        focusEmail = true
+                    }
             }
             
             // E-posta
@@ -245,12 +286,17 @@ struct ProfileEditView: View {
                     .padding()
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
-                    .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                    .background(Color(UIColor.secondarySystemBackground))
                     .cornerRadius(10)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                     )
+                    .focused($focusEmail)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        dismissKeyboard()
+                    }
             }
             
             // Kullanıcı Adı
@@ -272,7 +318,7 @@ struct ProfileEditView: View {
                     Text(displayUsername)
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(colorScheme == .dark ? Color.white.opacity(0.05) : Color.gray.opacity(0.1))
+                        .background(Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
@@ -291,6 +337,8 @@ struct ProfileEditView: View {
             // Şifre değiştir butonu
             Button(action: {
                 showPasswordChange.toggle()
+                // Şifre değiştirme formunu açarken klavyeyi kapat
+                dismissKeyboard()
             }) {
                 HStack {
                     Image(systemName: "lock.fill")
@@ -309,7 +357,7 @@ struct ProfileEditView: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                        .fill(Color(UIColor.secondarySystemBackground))
                 )
             }
             
@@ -319,32 +367,50 @@ struct ProfileEditView: View {
                     // Mevcut şifre
                     SecureField("Mevcut Şifre", text: $currentPassword)
                         .padding()
-                        .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                        .background(Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                         )
+                        .focused($focusCurrentPassword)
+                        .submitLabel(.next)
+                        .onSubmit {
+                            focusNewPassword = true
+                        }
                     
                     // Yeni şifre
                     SecureField("Yeni Şifre", text: $newPassword)
                         .padding()
-                        .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                        .background(Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                         )
+                        .focused($focusNewPassword)
+                        .submitLabel(.next)
+                        .onSubmit {
+                            focusConfirmPassword = true
+                        }
                     
                     // Yeni şifre onay
                     SecureField("Yeni Şifre (Tekrar)", text: $confirmPassword)
                         .padding()
-                        .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                        .background(Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.blue.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                         )
+                        .focused($focusConfirmPassword)
+                        .submitLabel(.done)
+                        .onSubmit {
+                            dismissKeyboard()
+                            if isPasswordChangeValid {
+                                changePassword()
+                            }
+                        }
                     
                     // Şifre gücü bilgisi
                     if !newPassword.isEmpty {
@@ -378,11 +444,8 @@ struct ProfileEditView: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(colorScheme == .dark ? Color.black.opacity(0.2) : Color.white.opacity(0.9))
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        .fill(Color.clear)
                 )
-                .transition(.opacity)
-                .animation(.easeInOut, value: showPasswordChange)
             }
         }
         .padding(.vertical, 10)

@@ -38,6 +38,20 @@ struct SettingsView: View {
     // ThemeManager
     @EnvironmentObject var themeManager: ThemeManager
     
+    // Dismiss için Binding
+    @Binding var showView: Bool
+    
+    // Init fonksiyonu ekleyelim
+    init(showView: Binding<Bool>) {
+        self._showView = showView
+    }
+    
+    // Default initializer (mevcut showView Binding olmadan)
+    init() {
+        // Geçici bir @State değişkeni oluştur çünkü Binding gerekli
+        self._showView = .constant(true)
+    }
+    
     // App Storage
     @AppStorage("defaultDifficulty") private var defaultDifficulty: String = SudokuBoard.Difficulty.easy.rawValue
     @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
@@ -1879,7 +1893,8 @@ struct SettingsView: View {
     
     private var closeButton: some View {
         Button(action: {
-            self.presentationMode.wrappedValue.dismiss()
+            // presentationMode çağrısı yerine doğrudan showView'ı false yapıyoruz
+            self.showView = false
         }) {
             Text("Tamam")
                 .fontWeight(.semibold)
