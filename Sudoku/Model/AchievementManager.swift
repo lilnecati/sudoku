@@ -10,7 +10,6 @@ class AchievementManager: ObservableObject {
     
     private let userDefaults = UserDefaults.standard
     private let achievementsKey = "user_achievements"
-    private let streakKey = "user_streak_data"
     private let pendingSyncKey = "pending_sync_achievements"
     
     @Published private(set) var achievements: [Achievement] = []
@@ -27,18 +26,12 @@ class AchievementManager: ObservableObject {
     // CoreData servis referansı
     private let achievementCoreDataService = AchievementCoreDataService()
     
+    // PersistenceController referansı (yeni eklendi)
+    private let persistenceController = PersistenceController.shared
+    
     private var db: Firestore {
         return Firestore.firestore()
     }
-    
-    // Günlük giriş izleme için yapı
-    private struct StreakData: Codable {
-        var lastLoginDate: Date
-        var currentStreak: Int
-        var highestStreak: Int
-    }
-    
-    private var streakData: StreakData?
     
     private func setupNotifications() {
         // Başarı sıfırlama bildirimi için dinleyici ekle
@@ -70,14 +63,14 @@ class AchievementManager: ObservableObject {
         setupAchievements()
         loadAchievements()
         loadPendingSyncQueue()
-        checkDailyLogin()
         checkDailyAchievementsStatus()
         setupNotifications()
         
         // Eğer kullanıcı giriş yapmışsa, Firebase'den başarımları yükle
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             if Auth.auth().currentUser != nil {
-                self?.loadAchievementsFromFirebase()
+                // init sırasında çağrıldığında completion ile işimiz yok, sadece yüklemeyi denesin.
+                self?.loadAchievementsFromFirebase { _ in /* Init sırasında sonuçla ilgilenmiyoruz */ } // <<< DÜZELTME: Boş completion eklendi
             }
         }
     }
@@ -85,34 +78,45 @@ class AchievementManager: ObservableObject {
     // Kullanıcı giriş yaptığında çağrılan fonksiyon
     @objc private func handleUserLoggedIn() {
         logInfo("Kullanıcı oturum açtı - Başarımlar yükleniyor ve senkronize ediliyor") // Log güncellendi
-        if let user = Auth.auth().currentUser {
-            // CoreData'dan önce başarımları yükle
-            let coreDataAchievements = achievementCoreDataService.loadAchievements(for: user.uid)
-            if !coreDataAchievements.isEmpty {
-                logInfo("CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
-                
-                // CoreData'daki verileri yerel başarımlara yükle
-                for coreDataAchievement in coreDataAchievements {
-                    if let index = achievements.firstIndex(where: { $0.id == coreDataAchievement.id }) {
-                        if !achievements[index].isCompleted && coreDataAchievement.isCompleted {
-                            achievements[index] = coreDataAchievement
-                        }
+        guard let user = Auth.auth().currentUser else {
+            logError("handleUserLoggedIn: Kullanıcı bulunamadı.")
+            return
+        }
+        
+        // CoreData'dan önce başarımları yükle (Bu kısım senkron çalışır)
+        let coreDataAchievements = achievementCoreDataService.loadAchievements(for: user.uid)
+        if !coreDataAchievements.isEmpty {
+            logInfo("CoreData\'dan \(coreDataAchievements.count) başarım yüklendi")
+            // CoreData\'daki verileri yerel başarımlara yükle
+            for coreDataAchievement in coreDataAchievements {
+                if let index = achievements.firstIndex(where: { $0.id == coreDataAchievement.id }) {
+                    // Sadece yerel tamamlanmamış ve CoreData tamamlanmışsa veya ilerleme daha yüksekse güncelle
+                    if (!achievements[index].isCompleted && coreDataAchievement.isCompleted) ||
+                        (coreDataAchievement.currentValue > achievements[index].currentValue && !achievements[index].isCompleted) {
+                        achievements[index] = coreDataAchievement
                     }
                 }
-                
-                // Toplam puanları hesapla
-                calculateTotalPoints()
             }
-            
-            // Firebase'den de başarımları yükle (en güncel versiyon olarak)
-            loadAchievementsFromFirebase()
-            
-            // Bekleyen senkronizasyonları işle
-            processPendingSyncQueue()
-            
-            // Tam senkronizasyon yapmayı dene (handleUserLoggedIn içinde zaten yükleme yapılıyor, belki bu gereksiz? Şimdilik ekleyelim)
-            // syncWithFirebase() // Bu, loadAchievementsFromFirebase içinde zaten yapılıyor gibi görünüyor, şimdilik yoruma alalım.
+            calculateTotalPoints()
         }
+        
+        // Firebase\'den başarımları yükle ve BİTTİĞİNDE bekleyenleri işle
+        loadAchievementsFromFirebase { [weak self] success in
+            guard let self = self else { return }
+            DispatchQueue.main.async { // Ana thread'e dön
+                if success {
+                    logInfo("Firebase\'den yükleme başarılı, şimdi bekleyen senkronizasyonlar işleniyor.")
+                    self.processPendingSyncQueue()
+                } else {
+                    logError("Firebase\'den başarım yükleme başarısız oldu. Bekleyen senkronizasyonlar şimdilik işlenmeyecek.")
+                    // Başarısız yükleme durumunda senkronizasyonu tetiklememek,
+                    // sunucudaki verinin üzerine yanlışlıkla yazmayı önler.
+                }
+            }
+        }
+        
+        // Tam senkronizasyon yapmayı dene (handleUserLoggedIn içinde zaten yükleme yapılıyor, belki bu gereksiz? Şimdilik ekleyelim)
+        // syncWithFirebase() // Bu, loadAchievementsFromFirebase içinde zaten yapılıyor gibi görünüyor, şimdilik yoruma alalım.
     }
     
     // Yeni başarımları almak için metod (bildirimler için)
@@ -338,42 +342,151 @@ class AchievementManager: ObservableObject {
             achievements = updatedAchievements
         }
         
-        // Streak verilerini yükle
-        if let data = userDefaults.data(forKey: streakKey),
-           let savedStreakData = try? JSONDecoder().decode(StreakData.self, from: data) {
-            streakData = savedStreakData
-        } else {
-            // İlk kez oluştur
-            streakData = StreakData(
-                lastLoginDate: Date(),
-                currentStreak: 1,
-                highestStreak: 1
-            )
-        }
-        
         // Toplam puanları hesapla
         calculateTotalPoints()
-        
-        // Yüklenen verileri Firebase ile senkronize et -> ARTIK BURADA ÇAĞIRMIYORUZ
-        // syncWithFirebase() // Bu çağrıyı kaldırıyoruz, UserLoggedIn ile tetiklenecek.
     }
     
     // Başarıları kaydet
     private func saveAchievements() {
-        if let data = try? JSONEncoder().encode(achievements) {
-            userDefaults.set(data, forKey: achievementsKey)
+        
+        // --- YENİ: KODLAMADAN ÖNCE TİP KONTROLÜ ---
+        logDebug("Kodlamadan önce zorunlu tarih tipi kontrolü yapılıyor...")
+        for (_, achievement) in achievements.enumerated() {
+            // completionDate kontrolü
+            if case .completed(let date) = achievement.status {
+                // date'in Date olup olmadığını kontrol etmenin en sağlam yolu `is` operatörüdür.
+                // Ancak doğrudan FSTServerTimestampFieldValue tipini kontrol edemeyiz.
+                // Farklı bir tip olup olmadığını anlamak için Date olmadığını kontrol edebiliriz.
+                // Aslında Swift'in tip sistemi burada Date olmasını garantilemeli,
+                // ama bir şekilde Timestamp sızıyorsa bu kontrol yakalayabilir.
+                if type(of: date) != Date.self {
+                    let errorMessage = "!!! KRİTİK TİP HATASI !!! Başarım ID: \\(achievement.id) (index: \\(index)) - completionDate BEKLENMEDİK TÜR: \\(type(of: date))"
+                    logError(errorMessage)
+                    // Gerekirse burada fatalError ile uygulamayı durdurabiliriz:
+                    // fatalError(errorMessage)
+                } else {
+                    // logDebug("Ach ID: \\(achievement.id) - completionDate Tipi: OK (Date)") // Çok fazla log olmasın diye kapalı
+                }
+            }
+            
+            // lastSyncDate kontrolü
+            if let syncDate = achievement.lastSyncDate {
+                if type(of: syncDate) != Date.self {
+                    let errorMessage = "!!! KRİTİK TİP HATASI !!! Başarım ID: \\(achievement.id) (index: \\(index)) - lastSyncDate BEKLENMEDİK TÜR: \\(type(of: syncDate))"
+                    logError(errorMessage)
+                    // fatalError(errorMessage)
+                } else {
+                    // logDebug("Ach ID: \\(achievement.id) - lastSyncDate Tipi: OK (Date)") // Çok fazla log olmasın diye kapalı
+                }
+            }
+        }
+        logDebug("Zorunlu tarih tipi kontrolü tamamlandı.")
+        // --- YENİ KONTROL SONU ---
+        
+        
+        // --- DEBUG KONTROLÜ BAŞLANGICI ---
+        logDebug("UserDefaults'a kaydetmeden önce achievement tarih türleri kontrol ediliyor...")
+        for achievement in achievements {
+            // completionDate kontrolü (status içinden)
+            if case .completed = achievement.status { // <<< DÜZELTME: Sadece case kontrolü
+                // logDebug("Ach ID: \(achievement.id), completionDate type: \(type(of: date))") // logDebug kaldırıldı/yorumlandı
+            }
+            
+            // lastSyncDate kontrolü
+            if achievement.lastSyncDate != nil { // <<< DÜZELTME: `syncDate` yerine `!= nil` kontrolü
+                // logDebug("Ach ID: \(achievement.id), lastSyncDate type: \(type(of: syncDate))") // logDebug kaldırıldı/yorumlandı
+            } else {
+                // logDebug("Ach ID: \(achievement.id), lastSyncDate: nil") // logDebug kaldırıldı/yorumlandı
+            }
+        }
+        logDebug("Tarih türü kontrolü tamamlandı.")
+        // --- DEBUG KONTROLÜ SONU ---
+        
+        // UserDefaults'a kaydetme - TEK TEK KODLAMA DENEMESİ
+        let encoder = JSONEncoder()
+        // encoder.dateEncodingStrategy = .iso8601 // Artık özel encode kullandığımız için bu stratejiye gerek yok
+        
+        var encodedAchievementsData: [Data] = [] // Başarılı kodlananları tutalım
+        var encodingErrorOccurred = false
+        
+        for achievement in achievements { // <<< LOOP START >>>
+            logError("### Kodlama Başlıyor: \(achievement.id)") // <<< YENİ LOG >>>
+            do {
+                // --- Here's the critical part ---
+                // logDebug("Başarım kodlamaya başlıyor: \(achievement.id)") // REMOVED this logDebug
+                
+                let data = try encoder.encode(achievement)
+                encodedAchievementsData.append(data)
+                logDebug("Başarım başarıyla kodlandı: \\(achievement.id)")
+            } catch {
+                // Hata durumunda hangi başarımın sorun çıkardığını logla
+                logError("!!! JSON ENCODE HATASI !!! Başarım UserDefaults'a kaydedilemedi: \\(achievement.id)")
+                logError("Hata Detayı: \\(error)")
+                // Hatanın hangi alandan kaynaklandığını anlamak için achievement objesini de loglayabiliriz (dikkatli kullanılmalı)
+                // logError("Sorunlu Başarım Verisi: \\(achievement)") // Yorumu kaldırarak detaylı inceleme yapabilirsiniz
+                
+                // Sadece ilk hatayı raporlamak için flag ayarla ve döngüden çıkabiliriz veya devam edebiliriz
+                encodingErrorOccurred = true
+                // break // İlk hatada durmak isterseniz bu satırı açın
+            }
         }
         
-        // Streak verilerini kaydet
-        if let streakData = streakData, let data = try? JSONEncoder().encode(streakData) {
-            userDefaults.set(data, forKey: streakKey)
+        // Eğer hiç hata olmadıysa tüm başarımları kaydet
+        if !encodingErrorOccurred {
+            // Başarılı kodlanan verileri birleştirip kaydet
+            // Not: Tek tek kodlanmış verileri doğrudan bir dizi olarak kaydedemeyiz.
+            // Tüm başarımları içeren diziyi tekrar kodlamamız gerekiyor.
+            // Bu yüzden yukarıdaki tek tek kodlama sadece hata tespiti içindi.
+            // Asıl kaydetme işlemi yine tüm dizi üzerinden yapılacak.
+            do {
+                // --- YENİ: DETAYLI TİP KONTROLÜ (KODLAMADAN HEMEN ÖNCE) ---
+                logError("--- Kodlama Öncesi Detaylı Tip Kontrolü Başlıyor ---")
+                for (_, achievement) in achievements.enumerated() { // <<< KONTROL: `index` yerine `_` zaten uygulanmış olmalı
+                    var statusDateType: String = "Yok/Kilitli/İlerlemede"
+                    if case .completed(let date) = achievement.status {
+                        let mirror = Mirror(reflecting: date)
+                        statusDateType = String(describing: mirror.subjectType)
+                        if statusDateType != "Date" {
+                            logError("!!! Kodlama Öncesi TİP UYARISI (status.date) !!! ID: \\(achievement.id) (Index: \\(index)), Tip: \\(statusDateType)")
+                        }
+                    }
+                    
+                    var syncDateType: String = "nil"
+                    if let syncDate = achievement.lastSyncDate {
+                        let mirror = Mirror(reflecting: syncDate)
+                        syncDateType = String(describing: mirror.subjectType)
+                        // Optional<Date> is fine if it wraps a nil or a Date, but not if it wraps something else unexpected.
+                        // However, Mirror might just show Optional<Date>. Let's log non-"Date" types within Optional too.
+                        // A more robust check might involve unwrapping, but let's start simple.
+                        if !syncDateType.contains("Date") && syncDateType != "nil" { // Check if "Date" is part of the type description
+                            logError("!!! Kodlama Öncesi TİP UYARISI (lastSyncDate) !!! ID: \\(achievement.id) (Index: \\(index)), Tip: \\(syncDateType)")
+                        }
+                    }
+                    // Debug: Her başarımı logla
+                    // logDebug("Kontrol ID: \(achievement.id), StatusDateType: \(statusDateType), SyncDateType: \(syncDateType)")
+                }
+                logError("--- Kodlama Öncesi Detaylı Tip Kontrolü Tamamlandı ---")
+                // --- KONTROL SONU ---
+                
+                logError("### TÜM BAŞARIMLAR DİZİSİ USERDEFAULTS İÇİN KODLANMAYA BAŞLIYOR ###") // <<< YENİ LOG >>>
+                let finalData = try encoder.encode(achievements) // Tüm diziyi kodla
+                logError("### TÜM BAŞARIMLAR DİZİSİ USERDEFAULTS İÇİN BAŞARIYLA KODLANDI ###") // <<< YENİ LOG >>>
+                userDefaults.set(finalData, forKey: achievementsKey)
+                logDebug("Tüm başarımlar UserDefaults'a başarıyla kodlandı ve kaydedildi.")
+            } catch {
+                // Bu noktada hata olmaması lazım ama olursa loglayalım.
+                logError("!!! KRİTİK JSON ENCODE HATASI !!! Tüm başarımlar dizisi kaydedilemedi: \\(error)")
+            }
+        } else {
+            logError("JSON kodlama sırasında en az bir hata oluştuğu için UserDefaults'a kaydetme işlemi atlandı.")
+            // Hatalı durumda ne yapılacağına karar verilebilir (örn. eski veriyi koru, vs.)
         }
+        
         
         // Toplam puanları hesapla
         calculateTotalPoints()
         
         // Senkronizasyon kuyruk sistemini kullanarak Firebase ile senkronize et
-        // syncWithFirebase() yerine queueSyncWithFirebase() kullan
         queueSyncWithFirebase()
         
         // CoreData'ya kaydet
@@ -400,23 +513,70 @@ class AchievementManager: ObservableObject {
     // Başarı durumunu güncelle
     private func updateAchievement(id: String, status: AchievementStatus) {
         guard let index = achievements.firstIndex(where: { $0.id == id }) else {
+            logError("updateAchievement: Başarım bulunamadı - ID: \\(id)") // Hata logu eklendi
             return
         }
         
         let previousStatus = achievements[index].status
+        let originalAchievement = achievements[index] // Değişiklikleri takip için orijinali sakla
+        
+        // --- YENİ: TÜR KONTROLÜ (status atamasından önce) ---
+        var assignedDate: Date? = nil // Atanan tarihi saklamak için
+        if case .completed(let date) = status {
+            assignedDate = date // Date'i değişkene al
+            if type(of: date) != Date.self {
+                logError("!!! updateAchievement TİP HATASI (status ataması ÖNCESİ) !!! ID: \\(id), Beklenen: Date, Gelen: \\(type(of: date))")
+                // Hata durumunda belki varsayılan bir Date kullan? Şimdilik log yeterli.
+                // status = .completed(unlockDate: Date()) // Güvenliğe almak için?
+            } else {
+                // logDebug("updateAchievement: Status ataması öncesi tip OK (Date): \(id)")
+            }
+        }
+        // --- KONTROL SONU ---
+        
+        // Durumu ata
+        achievements[index].status = status
+        
+        // --- YENİ: TÜR KONTROLÜ (lastSyncDate atamasından önce) ---
+        let currentDateForSync = Date()
+        if type(of: currentDateForSync) != Date.self { // Bu kontrol gereksiz gibi görünse de ekleyelim
+            logError("!!! updateAchievement TİP HATASI (lastSyncDate ataması ÖNCESİ) !!! ID: \\(id), Beklenen: Date, Gelen: \\(type(of: currentDateForSync))")
+        }
+        // --- KONTROL SONU ---
         
         // Zaman damgası güncelleme - senkronizasyon çakışması çözümlemesi için
-        achievements[index].lastSyncDate = Date()
+        achievements[index].lastSyncDate = currentDateForSync // Artık hep Date() atanıyor
         
-        // Sadece tamamlanmadıysa güncelle
-        if !previousStatus.isCompleted {
-            achievements[index].status = status
+        // Sadece tamamlanmadıysa ve durum değiştiyse veya ilk kez tamamlandıysa devam et
+        // (Durum aynı kalmışsa (örn. ilerleme aynı) gereksiz işlemler yapmayalım)
+        let statusChanged = achievements[index].status != previousStatus
+        
+        if (!originalAchievement.isCompleted || statusChanged) { // Önceden tamamlanmamışsa VEYA durum değişmişse
             
-            // Tamamlandıysa bildirim göster
-            if status.isCompleted && !previousStatus.isCompleted {
-                // Başarımın tamamlandığını göster
+            // Tamamlandıysa özel işlemleri yap
+            if status.isCompleted && !originalAchievement.isCompleted {
                 achievements[index].isUnlocked = true
-                achievements[index].completionDate = Date()
+                
+                // --- YENİ: TÜR KONTROLÜ (completionDate atamasından ÖNCE ve SONRA) ---
+                if let finalDate = assignedDate { // Yukarıda sakladığımız date'i kullan
+                    if type(of: finalDate) != Date.self {
+                        logError("!!! updateAchievement TİP HATASI (completionDate ataması ÖNCESİ) !!! ID: \\(id), Beklenen: Date, Gelen: \\(type(of: finalDate))")
+                        achievements[index].completionDate = Date() // Güvenliğe al
+                    } else {
+                        achievements[index].completionDate = finalDate // Doğru tipi ata
+                    }
+                } else {
+                    // Eğer status .completed değilse veya date nil ise (bu durum olmamalı)
+                    logError("!!! updateAchievement Mantık Hatası !!! Status completed ama assignedDate nil: \(id)")
+                    achievements[index].completionDate = Date() // Güvenliğe al
+                }
+                
+                // Atamadan sonra tekrar kontrol et
+                if let compDate = achievements[index].completionDate, type(of: compDate) != Date.self {
+                    logError("!!! updateAchievement TİP HATASI (completionDate ataması SONRASI) !!! ID: \\(id), Beklenen: Date, Gelen: \\(type(of: compDate))")
+                }
+                // --- KONTROL SONU ---
+                
                 
                 lastUnlockedAchievement = achievements[index]
                 showAchievementAlert = true
@@ -426,12 +586,14 @@ class AchievementManager: ObservableObject {
                 generator.notificationOccurred(.success)
                 
                 // Yeni kazanılan başarımı listeye ekle
-                newlyUnlockedAchievements.append(achievements[index])
+                if !newlyUnlockedAchievements.contains(where: { $0.id == achievements[index].id }) {
+                    newlyUnlockedAchievements.append(achievements[index])
+                }
                 
                 // Sudoku Zirve başarısını kontrol et
                 checkForMasterAchievement()
                 
-                logSuccess("BAŞARIM KAZANILDI: '\(achievements[index].name)' tamamlandı!")
+                logSuccess("BAŞARIM KAZANILDI: '\\(achievements[index].name)' tamamlandı!")
                 
                 // NotificationCenter ile bildirimi hemen gönder
                 NotificationCenter.default.post(
@@ -440,14 +602,22 @@ class AchievementManager: ObservableObject {
                     userInfo: ["achievement": achievements[index]]
                 )
                 
-                // CoreData'ya da kaydet
-                if let user = Auth.auth().currentUser {
-                    achievementCoreDataService.updateAchievement(achievements[index], for: user.uid)
-                }
+                // CoreData'ya da kaydet (Artık saveAchievements içinde yapılıyor, burada gerek yok)
+                // if let user = Auth.auth().currentUser {
+                //     achievementCoreDataService.updateAchievement(achievements[index], for: user.uid)
+                // }
+                logDebug("updateAchievement: \(id) tamamlandı işlemleri bitti.") // Debug log
+            } else if !status.isCompleted {
+                // Eğer durum tamamlandı değilse completionDate'i nil yapalım
+                achievements[index].completionDate = nil
             }
             
-            // Değişiklikleri kaydet
-            saveAchievements()
+            // Değişiklikleri kaydet (Sadece status değiştiyse veya tamamlandıysa)
+            // saveAchievements() // !!! BU ÇAĞRIYI KALDIRIYORUZ !!! - processGameCompletion sonunda çağrılacak
+            logDebug("updateAchievement: \(id) için değişiklikler yapıldı (veya zaten günceldi). Kaydetme işlemi processGameCompletion sonunda yapılacak.")
+            
+        } else {
+            logDebug("updateAchievement: \(id) için durum değişmedi veya zaten tamamlanmıştı, işlem atlandı.")
         }
     }
     
@@ -594,7 +764,7 @@ class AchievementManager: ObservableObject {
         // Gün zamanına göre başarımlar
         updateTimeOfDayAchievements()
         
-        // Hafta sonu başarıları
+        // Hafta sonu başarımları
         updateWeekendAchievements()
         
         // Toplam tamamlanan oyun sayısı başarımları
@@ -645,6 +815,9 @@ class AchievementManager: ObservableObject {
         
         // Tüm başarımların durumunu göster
         printAchievementStatus()
+        
+        // Tüm güncellemeler bittikten sonra değişiklikleri kaydet
+        saveAchievements()
     }
     
     // DEBUG: Başarım durumlarını yazdır
@@ -675,71 +848,44 @@ class AchievementManager: ObservableObject {
     
     // Günlük oyun sayısını takip etme
     private func updateDailyCompletionAchievements() {
+        // Artık User entity'sindeki dailyCompletionCount ve lastCompletionDateForDailyCount kullanılacak.
+        guard let firebaseUID = Auth.auth().currentUser?.uid else { return }
+        
         let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
+        let today = Date()
+        // let todayStart = calendar.startOfDay(for: today) // Removed unused variable
         
-        // Bugünün tarihini al
-        let todayKey = "games_completed_date"
-        let todayCountKey = "games_completed_today"
+        // Core Data'dan mevcut verileri al
+        let dailyData = persistenceController.getUserDailyCompletionData(for: firebaseUID)
+        let lastCompletionDate = dailyData?.lastDate
+        var currentCount = dailyData?.count ?? 0
         
-        // Kayıtlı tarihi kontrol et
-        let savedDateTimeInterval = userDefaults.double(forKey: todayKey)
-        if savedDateTimeInterval > 0 {
-            let savedDate = Date(timeIntervalSince1970: savedDateTimeInterval)
-        
-            // Eğer bugün aynı gün ise, sayacı artır
-            if calendar.isDate(savedDate, inSameDayAs: today) {
-                // Aynı gündeyiz, sayacı artır
-                let currentCount = userDefaults.integer(forKey: todayCountKey) + 1
-                userDefaults.set(currentCount, forKey: todayCountKey)
-                
-                // Günlük başarımları kontrol et
-                checkDailyGameCountAchievements(count: currentCount)
-            } else {
-                // Yeni tarih, sayacı sıfırla
-                userDefaults.set(1, forKey: todayCountKey)
-                
-                // Yeni tarihi kaydet
-                userDefaults.set(today.timeIntervalSince1970, forKey: todayKey)
-            }
+        if let lastDate = lastCompletionDate, calendar.isDate(lastDate, inSameDayAs: today) {
+            // Aynı gün, sayacı artır
+            currentCount += 1
         } else {
-            // İlk kez kaydediliyorsa
-            userDefaults.set(1, forKey: todayCountKey)
-        
-            // Bugünün tarihini kaydet
-            userDefaults.set(today.timeIntervalSince1970, forKey: todayKey)
+            // Yeni gün veya ilk oyun, sayacı sıfırla
+            currentCount = 1
         }
+        
+        // Core Data'yı güncelle
+        persistenceController.updateUserDailyCompletionData(for: firebaseUID, count: currentCount, date: today)
+        logInfo("Günlük Tamamlama Sayacı (Core Data): \(currentCount) (Tarih: \(today))")
+        
+        // Günlük başarımları kontrol et (Bu fonksiyon zaten currentValue kullanıyor)
+        checkDailyGameCountAchievements(count: currentCount)
     }
     
     // Günlük oyun sayısı başarımlarını kontrol et
     private func checkDailyGameCountAchievements(count: Int) {
         // Günlük 5 oyun
-        if count >= 5 {
-            updateAchievement(id: "daily_5", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "daily_5", status: .inProgress(currentValue: count, requiredValue: 5))
-        }
-        
+        updateAchievementProgress(id: "daily_5", currentProgress: count)
         // Günlük 10 oyun
-        if count >= 10 {
-            updateAchievement(id: "daily_10", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "daily_10", status: .inProgress(currentValue: count, requiredValue: 10))
-        }
-        
+        updateAchievementProgress(id: "daily_10", currentProgress: count)
         // Günlük 20 oyun
-        if count >= 20 {
-            updateAchievement(id: "daily_20", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "daily_20", status: .inProgress(currentValue: count, requiredValue: 20))
-        }
-        
+        updateAchievementProgress(id: "daily_20", currentProgress: count)
         // Günlük 30 oyun
-        if count >= 30 {
-            updateAchievement(id: "daily_30", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "daily_30", status: .inProgress(currentValue: count, requiredValue: 30))
-        }
+        updateAchievementProgress(id: "daily_30", currentProgress: count)
     }
     
     // Hafta sonu başarımlarını güncelle
@@ -752,83 +898,62 @@ class AchievementManager: ObservableObject {
         let isWeekend = weekday == 1 || weekday == 7
         
         if isWeekend {
-            // Hafta sonu başarı sayacını güncelle
-            let weekendCountKey = "weekend_games_count"
-            let currentCount = userDefaults.integer(forKey: weekendCountKey) + 1
-            userDefaults.set(currentCount, forKey: weekendCountKey)
+            // Artık User entity'sindeki weekendCompletionCount ve lastCompletionDateForWeekendCount kullanılacak.
+            guard let firebaseUID = Auth.auth().currentUser?.uid else { return }
             
-            // Hafta sonu başarımları kontrol et
-            if currentCount >= 5 {
-                updateAchievement(id: "weekend_5", status: .completed(unlockDate: Date()))
+            // Core Data'dan mevcut verileri al
+            let weekendData = persistenceController.getUserWeekendCompletionData(for: firebaseUID)
+            let lastCompletionDate = weekendData?.lastDate
+            var currentWeekendCount = weekendData?.count ?? 0
+            
+            let currentWeekOfYear = calendar.component(.weekOfYear, from: today)
+            let currentYear = calendar.component(.year, from: today)
+            
+            var lastWeekOfYear = 0
+            var lastYear = 0
+            if let lastDate = lastCompletionDate {
+                lastWeekOfYear = calendar.component(.weekOfYear, from: lastDate)
+                lastYear = calendar.component(.year, from: lastDate)
+            }
+            
+            // Aynı hafta sonu mu kontrol et (yıl ve hafta numarası aynı olmalı)
+            if lastCompletionDate != nil && currentYear == lastYear && currentWeekOfYear == lastWeekOfYear {
+                // Aynı hafta sonu, sayacı artır
+                currentWeekendCount += 1
             } else {
-                updateAchievement(id: "weekend_5", status: .inProgress(currentValue: currentCount, requiredValue: 5))
+                // Yeni hafta sonu veya ilk oyun, sayacı sıfırla
+                currentWeekendCount = 1
             }
             
-            if currentCount >= 10 {
-                updateAchievement(id: "weekend_10", status: .completed(unlockDate: Date()))
-            } else {
-                updateAchievement(id: "weekend_10", status: .inProgress(currentValue: currentCount, requiredValue: 10))
-            }
+            // Core Data'yı güncelle
+            persistenceController.updateUserWeekendCompletionData(for: firebaseUID, count: currentWeekendCount, date: today)
+            logInfo("Hafta Sonu Tamamlama Sayacı (Core Data): \(currentWeekendCount) (Yıl: \(currentYear), Hafta: \(currentWeekOfYear))")
             
-            if currentCount >= 20 {
-                updateAchievement(id: "weekend_20", status: .completed(unlockDate: Date()))
-        } else {
-                updateAchievement(id: "weekend_20", status: .inProgress(currentValue: currentCount, requiredValue: 20))
-            }
+            // Hafta sonu başarımları kontrol et (Bu fonksiyon zaten currentValue kullanıyor)
+            updateAchievementProgress(id: "weekend_warrior", currentProgress: currentWeekendCount) // 15 oyun
+            updateAchievementProgress(id: "weekend_master", currentProgress: currentWeekendCount) // 30 oyun
+            updateAchievementProgress(id: "holiday_weekend", currentProgress: currentWeekendCount) // 20 oyun (Özel gün başarımı)
         }
     }
     
-    // Günlük giriş kontrolü
-    private func checkDailyLogin() {
-        guard var streakData = streakData else { return }
-        
-        let calendar = Calendar.current
-        let today = Date()
-        let lastLoginDay = calendar.startOfDay(for: streakData.lastLoginDate)
-        let todayDay = calendar.startOfDay(for: today)
-        
-        if let daysBetween = calendar.dateComponents([.day], from: lastLoginDay, to: todayDay).day {
-            if daysBetween == 1 {
-                // Ardışık gün
-                streakData.currentStreak += 1
-                streakData.highestStreak = max(streakData.currentStreak, streakData.highestStreak)
-                
-                // Streak başarılarını kontrol et
-                updateStreakAchievements(streak: streakData.currentStreak)
-                
-                // Yeni gün başladığında günlük görevleri sıfırla
-                resetDailyAchievements()
-            } else if daysBetween > 1 {
-                // Streak bozuldu
-                streakData.currentStreak = 1
-                
-                // Günlük görevleri sıfırla
-                resetDailyAchievements()
-            } else if daysBetween == 0 {
-                // Aynı gün, bir şey yapma
-            }
-        }
-        
-        // Son giriş tarihini güncelle ve kaydet
-        streakData.lastLoginDate = today
-        self.streakData = streakData
-        saveAchievements()
-    }
     
     // Günlük görevleri sıfırla
     private func resetDailyAchievements() {
-        // Önceki günün verilerini temizle
-        let calendar = Calendar.current
-        let yesterday = calendar.date(byAdding: .day, value: -1, to: Date()) ?? Date()
-        let yesterdayKey = "daily_completions_\(calendar.startOfDay(for: yesterday).timeIntervalSince1970)"
-        userDefaults.removeObject(forKey: yesterdayKey)
-        
-        // Günlük görevleri kilitli olarak ayarla, halihazırda tamamlanmış değilse
-        for id in ["daily_5", "daily_10", "daily_20"] {
+        // Günlük başarımların AchievementEntity.currentValue'larını sıfırlıyoruz.
+        logInfo("Günlük başarım ilerlemeleri sıfırlanıyor...")
+        for id in ["daily_5", "daily_10", "daily_20", "daily_30"] {
             if let achievement = achievements.first(where: { $0.id == id }), !achievement.isCompleted {
-                updateAchievement(id: id, status: .inProgress(currentValue: 0, requiredValue: achievement.targetValue))
+                logInfo("Sıfırlanıyor: \(id)")
+                updateAchievementProgress(id: id, currentProgress: 0)
             }
         }
+        // Artık User entity'sindeki sayaç burada sıfırlanmıyor.
+        // Sayaç, yeni bir güne girildiğinde updateDailyCompletionAchievements içinde otomatik sıfırlanacak.
+        // UserDefaults temizliği kaldırıldı.
+        // userDefaults.removeObject(forKey: "games_completed_today_count")
+        // userDefaults.removeObject(forKey: "games_completed_date_str")
+        
+        logInfo("Günlük başarım ilerlemeleri sıfırlandı.")
     }
     
     // Streak başarılarını güncelle
@@ -873,9 +998,36 @@ class AchievementManager: ObservableObject {
             case .completed(let date):
                 achievementDict["status"] = "completed"
                 achievementDict["progress"] = 1.0
-                achievementDict["unlockDate"] = date
+                
+                // Date nesnesini Firebase Timestamp'e çevir
+                // Eğer date varsa, düzgün bir Timestamp oluştur
+                // NOT: Firestore dokümanına göre Date nesneleri Firebase SDK tarafından otomatik olarak 
+                // Timestamp'e çevrilir, ancak bu doğru çalışmıyor olabilir
+                
+                // Çözüm 1: FieldValue.serverTimestamp() - şu anki zaman kullanılır
+                // achievementDict["unlockDate"] = FieldValue.serverTimestamp()
+                
+                // Çözüm 2: Timestamp'e dönüştür:
+                let timestamp = Timestamp(date: date) 
+                achievementDict["unlockDate"] = timestamp
+                
+                // Hata ayıklama için
+                logDebug("Başarım \(achievement.id) için tarih Timestamp'e çevrildi: \(date) -> \(timestamp)")
+                
                 achievementDict["currentValue"] = achievement.targetValue
                 achievementDict["requiredValue"] = achievement.targetValue
+            }
+            
+            // lastSyncDate alanını da ekleyelim (firebase için)
+            if let lastSyncDate = achievement.lastSyncDate {
+                let syncTimestamp = Timestamp(date: lastSyncDate)
+                achievementDict["lastSyncDate"] = syncTimestamp
+            }
+            
+            // completionDate alanını da ekleyelim (firebase için) 
+            if let completionDate = achievement.completionDate {
+                let completionTimestamp = Timestamp(date: completionDate)
+                achievementDict["completionDate"] = completionTimestamp
             }
             
             return achievementDict
@@ -919,7 +1071,7 @@ class AchievementManager: ObservableObject {
         }
         
         // Hemen işlemeyi dene
-       // processPendingSyncQueue()
+        processPendingSyncQueue() // Eğer internet varsa ve sync çalışmıyorsa hemen senkronize etmeyi dene
     }
     
     // Kuyruk sistemini kullanarak senkronizasyon yapma
@@ -948,6 +1100,12 @@ class AchievementManager: ObservableObject {
             return
         }
         
+        // İnternet bağlantısı var mı kontrol et
+        if !NetworkMonitor.shared.isConnected {
+            logError("Senkronizasyon yapılamıyor: İnternet bağlantısı yok")
+            return
+        }
+        
         // İşleme durumunu ayarla
         isCurrentlySync = true
         logInfo("Bekleyen senkronizasyonlar işleniyor: \(pendingSyncQueue.count) adet")
@@ -959,35 +1117,55 @@ class AchievementManager: ObservableObject {
             
             if success {
                 // Başarılı ise kuyruğu temizle
+                logSuccess("🔥 Firebase senkronizasyonu BAŞARILI oldu! Kuyruk temizleniyor.")
                 self.pendingSyncQueue.removeAll()
                 self.savePendingSyncQueue()
                 logSuccess("Bekleyen tüm başarımlar başarıyla senkronize edildi")
+                
+                // UI'ın güncellenmesi için genel bir bildirim gönder
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: NSNotification.Name("AchievementsSyncCompleted"), object: nil, userInfo: ["success": true])
+                }
             } else {
+                logError("❌ Firebase senkronizasyonu BAŞARISIZ oldu! Daha sonra tekrar denenecek.")
                 logError("Başarımlar senkronize edilemedi, daha sonra tekrar denenecek")
+                
+                // UI'ın güncellenmesi için genel bir bildirim gönder
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: NSNotification.Name("AchievementsSyncCompleted"), object: nil, userInfo: ["success": false])
+                }
             }
         })
     }
     
     // Ana senkronizasyon fonksiyonu - tamamlama işleyicisi eklendi
     func syncWithFirebase(completionHandler: ((Bool) -> Void)? = nil) {
-        guard let user = Auth.auth().currentUser else { 
+        guard let user = Auth.auth().currentUser else {
             logWarning("Başarımlar kaydedilemiyor: Kullanıcı oturum açmamış")
             completionHandler?(false)
-            return 
+            return
         }
         
         logInfo("Başarımlar Firebase'e senkronize ediliyor...")
         
         // Tüm başarımlar için toplu veri hazırla
         let achievementsData = encodeAchievementsForFirebase()
-        // Not: userData değişkeni kullanılmadığı için kaldırıldı
+        
+        // ÖNEMLİ: Senkronizasyon başarı takibi için yeni değişkenler
+        var batchSuccess = false
+        var legacySuccess = false
+        var legacyCompleted = false
         
         // Önce kullanıcı belgesi var mı kontrol et
         db.collection("users").document(user.uid).getDocument { [weak self] document, error in
-            guard let self = self else { return }
+            guard let self = self else { 
+                completionHandler?(false)
+                return
+            }
             
             if let error = error {
                 logError("Firebase belgesi kontrol edilemedi: \(error.localizedDescription)")
+                completionHandler?(false)
                 return
             }
             
@@ -1009,9 +1187,9 @@ class AchievementManager: ObservableObject {
             // Başarımları kategorilere ayır
             for achievementData in achievementsData {
                 guard let id = achievementData["id"] as? String,
-                      let categoryName = achievementData["category"] as? String else { 
+                      let categoryName = achievementData["category"] as? String else {
                     logWarning("Kategorileme hatası - kategori bilgisi eksik: \(achievementData["id"] ?? "bilinmeyen")")
-                    continue 
+                    continue
                 }
                 
                 // Achievement.swift'teki kategori adları ile Firestore kategori anahtarları eşleşmiyor, eşleştirme yapalım
@@ -1030,7 +1208,7 @@ class AchievementManager: ObservableObject {
                 if categorizedAchievements.keys.contains(firestoreCategory) {
                     categorizedAchievements[firestoreCategory]?.append(achievementData)
                     logDebug("Başarım kategorisi eşleşti: \(id) -> \(firestoreCategory)")
-            } else {
+                } else {
                     // Bilinmeyen kategoriler için "special" kategorisini kullan
                     categorizedAchievements["special"]?.append(achievementData)
                     logWarning("Bilinmeyen kategori: \(categoryName) -> 'special' kullanıldı")
@@ -1042,8 +1220,8 @@ class AchievementManager: ObservableObject {
                 if !achievements.isEmpty {
                     // Kategori adını Firestore için güvenli hale getir
                     let safeCategory = category.replacingOccurrences(of: " ", with: "_")
-                                      .replacingOccurrences(of: "/", with: "_")
-                                      .replacingOccurrences(of: ".", with: "_")
+                        .replacingOccurrences(of: "/", with: "_")
+                        .replacingOccurrences(of: ".", with: "_")
                     
                     let categoryRef = userAchievementsRef.collection("categories").document(safeCategory)
                     batch.setData([
@@ -1073,8 +1251,21 @@ class AchievementManager: ObservableObject {
             batch.commit { error in
                 if let error = error {
                     logError("Başarımlar Firestore'a kaydedilemedi: \(error.localizedDescription)")
+                    batchSuccess = false
+                    
+                    // Her iki yazma işlemi tamamlanmışsa completion handler'ı çağır
+                    if legacyCompleted {
+                        completionHandler?(false)
+                    }
                 } else {
                     logSuccess("Başarımlar Firestore'a kaydedildi (Kategori Modeli)")
+                    batchSuccess = true
+                    
+                    // Eğer legacy kısım completion handler'ı çağırdıysa (veya atlandıysa), 
+                    // final completion handler'ı burada çağır
+                    if legacyCompleted {
+                        completionHandler?(batchSuccess && legacySuccess)
+                    }
                 }
             }
             
@@ -1083,16 +1274,30 @@ class AchievementManager: ObservableObject {
                 // Belge varsa sadece başarım alanlarını güncelle, diğer alanları koruyarak
                 let achievementUpdateData: [String: Any] = [
                     "achievements": achievementsData,
-                    "totalPoints": totalPoints,
+                    "totalPoints": self.totalPoints,
                     "lastSyncDate": FieldValue.serverTimestamp(),
                     "lastUpdated": FieldValue.serverTimestamp()
                 ]
                 
                 self.db.collection("users").document(user.uid).updateData(achievementUpdateData) { error in
+                    legacyCompleted = true
+                    
                     if let error = error {
                         logError("Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
+                        legacySuccess = false
+                        
+                        // Eğer batch işlemi tamamlandıysa ve hata verdiyse, false dön
+                        if batchSuccess == true {
+                            completionHandler?(false)
+                        }
                     } else {
                         logSuccess("Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
+                        legacySuccess = true
+                        
+                        // Eğer batch işlemi tamamlandıysa, her ikisinin başarı durumunu değerlendir
+                        if batchSuccess == true {
+                            completionHandler?(true)
+                        }
                     }
                 }
             } else {
@@ -1100,6 +1305,12 @@ class AchievementManager: ObservableObject {
                 Auth.auth().currentUser?.getIDTokenResult(forcingRefresh: true) { tokenResult, error in
                     if let error = error {
                         logError("Token doğrulama hatası: \(error.localizedDescription)")
+                        legacyCompleted = true
+                        legacySuccess = false
+                        
+                        if batchSuccess == true {
+                            completionHandler?(false)
+                        }
                         return
                     }
                     
@@ -1116,10 +1327,24 @@ class AchievementManager: ObservableObject {
                     
                     // Belgeyi güncelle
                     self.db.collection("users").document(user.uid).setData(userProfile, merge: true) { error in
+                        legacyCompleted = true
+                        
                         if let error = error {
                             logError("Başarımlar Firestore kullanıcı belgesine kaydedilemedi: \(error.localizedDescription)")
+                            legacySuccess = false
+                            
+                            // Batch işlemi tamamlandıysa, genel durumu bildir
+                            if batchSuccess == true {
+                                completionHandler?(false)
+                            }
                         } else {
                             logSuccess("Başarımlar Firestore kullanıcı belgesine de kaydedildi (Geriye uyumluluk)")
+                            legacySuccess = true
+                            
+                            // Batch işlemi tamamlandıysa, genel durumu bildir
+                            if batchSuccess == true {
+                                completionHandler?(true)
+                            }
                         }
                     }
                 }
@@ -1127,24 +1352,32 @@ class AchievementManager: ObservableObject {
         }
     }
     
-    // Firebase'den başarımları yükle
-    func loadAchievementsFromFirebase() {
+    // Firebase'den başarımları yükle - Completion Handler Eklendi
+    func loadAchievementsFromFirebase(completion: @escaping (Bool) -> Void) { // <<< Completion eklendi
         // Giriş yapmış kullanıcı kontrolü
         guard let user = Auth.auth().currentUser else {
             logError("Firebase başarımları yüklenemiyor - kullanıcı giriş yapmamış")
+            completion(false) // <<< Başarısızlık bildir
             return
         }
         
-        logInfo("Firebase'den başarımlar yükleniyor...")
+        logInfo("Firebase\'den başarımlar yükleniyor...")
         
-        // Firestore'dan başarımları al - doğru koleksiyon adını kullan
+        // Firestore\'dan başarımları al - doğru koleksiyon adını kullan
         let userAchievementsRef = db.collection("userAchievements").document(user.uid)
         
         userAchievementsRef.getDocument { [weak self] document, error in
-            guard let self = self else { return }
+            guard let self = self else {
+                completion(false) // Self yoksa başarısız
+                return
+            }
             
             if let error = error {
                 logError("Firebase başarım yükleme hatası: \(error.localizedDescription)")
+                // Eski veriyi yüklemeyi dene ama yine de başarısız bildir?
+                // Ya da sadece CoreData'dan yüklemeyi dene ve başarılı bildir? Şimdilik başarısız.
+                self.loadFromCoreDataBackup(for: user.uid) // CoreData'yı dene
+                completion(false) // <<< Hata durumunda başarısızlık bildir
                 return
             }
             
@@ -1154,76 +1387,102 @@ class AchievementManager: ObservableObject {
                 
                 if categories.isEmpty {
                     logWarning("Kategorileri yok veya boş - Firebase başarımları bulunamadı")
-                    return
+                    // Eski veriyi yüklemeyi dene
+                    self.tryLoadingOldFirebaseStructure(userID: user.uid, completion: completion)
+                    return // Eski yapı yüklemesi kendi completion'ını çağıracak
                 }
                 
-                logInfo("Firebase'de \(categories.count) başarım kategorisi bulundu")
+                logInfo("Firebase\'de \(categories.count) başarım kategorisi bulundu")
                 
                 var loadedFirebaseAchievements: [[String: Any]] = []
                 let categoriesGroup = DispatchGroup()
+                var categoryLoadErrors = 0
                 
                 // Her kategori için yükleme işlemi
                 for category in categories {
                     categoriesGroup.enter()
-                    
                     userAchievementsRef.collection("categories").document(category).getDocument { categoryDoc, categoryError in
+                        defer { categoriesGroup.leave() } // Her durumda leave çağrılmasını garantile
                         if let categoryError = categoryError {
                             logError("Kategori yükleme hatası: \(categoryError.localizedDescription)")
-                            categoriesGroup.leave()
+                            categoryLoadErrors += 1
                             return
                         }
                         
                         if let categoryDoc = categoryDoc, categoryDoc.exists,
                            let achievements = categoryDoc.data()?["achievements"] as? [[String: Any]] {
-                            // Başarımları listeye ekle
                             loadedFirebaseAchievements.append(contentsOf: achievements)
                         }
-                        
-                        categoriesGroup.leave()
                     }
                 }
                 
                 // Tüm kategoriler yüklendiğinde
                 categoriesGroup.notify(queue: .main) { [weak self] in
-                    guard let self = self else { return }
-                    
-                    if loadedFirebaseAchievements.isEmpty {
-                        logWarning("Firebase'den yüklenen başarımlar yok veya boş")
+                    guard let self = self else {
+                        completion(false)
                         return
                     }
                     
-                    // Firebase'den gelen verilerle başarımları güncelle
+                    if loadedFirebaseAchievements.isEmpty && categoryLoadErrors == 0 {
+                        logWarning("Firebase\'den yüklenen başarımlar yok veya boş (kategori belgeleri boştu)")
+                        // Başarılı ama boş yüklendi olarak kabul edebiliriz.
+                        self.achievementCoreDataService.saveAchievements(self.achievements, for: user.uid)
+                        completion(true) // <<< Başarılı (ama boş) yükleme
+                        return
+                    } else if categoryLoadErrors > 0 && loadedFirebaseAchievements.isEmpty {
+                        logError("Tüm kategori yüklemeleri başarısız oldu.")
+                        self.loadFromCoreDataBackup(for: user.uid)
+                        completion(false) // <<< Kategori yükleme hataları nedeniyle başarısız
+                        return
+                    } else if categoryLoadErrors > 0 {
+                        logWarning("Bazı kategoriler yüklenirken hata oluştu, ancak yine de devam ediliyor.")
+                    }
+                    
+                    // Firebase\'den gelen verilerle başarımları güncelle
                     self.updateAchievementsFromFirebase(loadedFirebaseAchievements)
-                    logSuccess("Firebase'den \(loadedFirebaseAchievements.count) başarım yüklendi ve güncellendi")
+                    logSuccess("Firebase\'den \(loadedFirebaseAchievements.count) başarım yüklendi ve güncellendi")
                     
                     // Başarımları CoreData'ya da kaydet
                     self.achievementCoreDataService.saveAchievements(self.achievements, for: user.uid)
-                    logSuccess("Başarımlar CoreData'ya kaydedildi")
+                    logSuccess("Başarımlar CoreData\'ya kaydedildi")
+                    completion(true) // <<< Başarılı yükleme ve güncelleme
                 }
             } else {
-                logWarning("Firebase'de başarım belgesi bulunamadı (userAchievements koleksiyonunda)")
-                
+                logWarning("Firebase\'de başarım belgesi bulunamadı (userAchievements koleksiyonunda)")
                 // Eski koleksiyondan (users) veri yüklemeyi dene
-                self.db.collection("users").document(user.uid).getDocument { [weak self] (document, error) in
-                    guard let self = self else { return }
-                    
-                    if let error = error {
-                        logError("Users koleksiyonundan başarım yükleme hatası: \(error.localizedDescription)")
-                        self.loadFromCoreDataBackup(for: user.uid)
-                        return
-                    }
-                    
-                    if let document = document, document.exists,
-                       let achievementsData = document.data()?["achievements"] as? [[String: Any]], !achievementsData.isEmpty {
-                        logInfo("Eski yapıdan (users koleksiyonu) \(achievementsData.count) başarım yüklendi")
-                        self.updateAchievementsFromFirebase(achievementsData)
-                        logSuccess("Eski yapıdan başarımlar güncellendi, yeni yapıya senkronize ediliyor...")
-                        self.syncWithFirebase() // Yeni yapıya senkronize et
-                    } else {
-                        logWarning("Eski yapıda da başarım bulunamadı, CoreData'dan yükleniyor")
-                        self.loadFromCoreDataBackup(for: user.uid)
-                    }
+                self.tryLoadingOldFirebaseStructure(userID: user.uid, completion: completion)
+            }
+        }
+    }
+    
+    // Yardımcı fonksiyon: Eski Firebase yapısını yüklemeyi dene
+    private func tryLoadingOldFirebaseStructure(userID: String, completion: @escaping (Bool) -> Void) {
+        self.db.collection("users").document(userID).getDocument { [weak self] (document, error) in
+            guard let self = self else {
+                completion(false)
+                return
+            }
+            
+            if let error = error {
+                logError("Users koleksiyonundan başarım yükleme hatası: \(error.localizedDescription)")
+                self.loadFromCoreDataBackup(for: userID)
+                completion(false) // Eski yapı yüklenemedi
+                return
+            }
+            
+            if let document = document, document.exists,
+               let achievementsData = document.data()?["achievements"] as? [[String: Any]], !achievementsData.isEmpty {
+                logInfo("Eski yapıdan (users koleksiyonu) \(achievementsData.count) başarım yüklendi")
+                self.updateAchievementsFromFirebase(achievementsData)
+                logSuccess("Eski yapıdan başarımlar güncellendi, yeni yapıya senkronize ediliyor...")
+                // Yeni yapıya senkronize et ve sonucu bildir
+                self.syncWithFirebase { success in
+                    completion(success) // Yeni yapıya senkronizasyonun sonucunu bildir
                 }
+            } else {
+                logWarning("Eski yapıda da başarım bulunamadı, CoreData\'dan yükleniyor")
+                self.loadFromCoreDataBackup(for: userID)
+                completion(true) // CoreData'dan yüklendiği için 'başarılı' kabul edilebilir?
             }
         }
     }
@@ -1235,40 +1494,50 @@ class AchievementManager: ObservableObject {
         // Başarıları ilk durumlarına sıfırla
         setupAchievements()
         
-        // Streak verisini sıfırla
-        streakData = StreakData(
-            lastLoginDate: Date(),
-            currentStreak: 1,
-            highestStreak: 1
-        )
-        
         // Toplam puanları sıfırla
         totalPoints = 0
         
-        // UserDefaults'taki tüm başarım verilerini temizle
-        let domainName = Bundle.main.bundleIdentifier!
-        userDefaults.removePersistentDomain(forName: domainName)
-        userDefaults.synchronize()
+        // UserDefaults'taki sayaçları temizle (ilgili anahtarları silerek)
+        let counterKeys = [
+            "games_completed_date_str", "games_completed_today_count",
+            "weekend_games_date_str", "weekend_games_count",
+            "perfect_combo_count", "last_game_time", "speed_combo_count",
+            "total_cells_completed",
+            "weekend_warrior_date", "weekend_warrior_count"
+            // Özel zaman/gün sayaçları
+        ] + achievements.filter { $0.category == .special || $0.category == .time }.map { "\($0.id)_count" }
+        + achievements.filter { $0.category == .special || $0.category == .time }.map { "\($0.id)_progress" }
+        + ["weekday_monday_count", "weekday_wednesday_count", "weekday_friday_count"]
         
-        // Gün zamanı başarımları için tüm sayaçları temizle
-        let timeOfDayAchievementIds = ["night_owl", "night_hunter", "early_bird", "morning_champion", "lunch_break", "commuter"]
-        for id in timeOfDayAchievementIds {
-            userDefaults.removeObject(forKey: "\(id)_count")
+        
+        logInfo("UserDefaults sayaçları temizleniyor...")
+        for key in counterKeys {
+            userDefaults.removeObject(forKey: key)
+            // logDebug("Removed UserDefaults key: \(key)") // Debug için
         }
+        // Not: userDefaults.removePersistentDomain çok geniş kapsamlıydı, kaldırdık.
+        // achievementsKey'i de silelim
+        userDefaults.removeObject(forKey: achievementsKey)
         
-        // Yerel değişiklikleri kaydet
-        saveAchievements()
+        userDefaults.synchronize()
+        logInfo("UserDefaults sayaçları temizlendi.")
         
-        // Firebase'deki verileri sıfırla (eğer kullanıcı giriş yapmışsa)
+        
+        // Firebase'deki verileri sıfırla
         deleteAchievementsFromFirebase()
         
-        // CoreData'daki verileri de sıfırla
+        // CoreData'daki verileri sıfırla
         if let user = Auth.auth().currentUser {
-            // Boş bir başarım listesi göndererek CoreData'dan silinmesini sağla
+            logInfo("Resetting Core Data achievements for user \(user.uid)")
             achievementCoreDataService.saveAchievements([], for: user.uid)
+            logInfo("Resetting Core Data streak data for user \(user.uid)")
+            persistenceController.updateUserStreakData(for: user.uid, lastLogin: nil, currentStreak: 0, highestStreak: 0)
+            // Combo verilerini de sıfırla
+            logInfo("Resetting Core Data combo data for user \(user.uid)")
+            persistenceController.updateUserComboData(for: user.uid, perfectCombo: 0, lastGameTime: 0, speedCombo: 0)
         }
         
-        // Uygulamaya bildir - yeniden yükleme gerekebilir
+        // Uygulamaya bildir
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
         }
@@ -1356,24 +1625,24 @@ class AchievementManager: ObservableObject {
     
     // Günlük başarımların durumunu kontrol et
     private func checkDailyAchievementsStatus() {
-        let calendar = Calendar.current
-        let today = Date()
-        let todayKey = "daily_completions_\(calendar.startOfDay(for: today).timeIntervalSince1970)"
+        // Bu fonksiyonun mantığı resetDailyAchievements ve updateDailyCompletionAchievements içinde
+        // ele alındığı için artık gereksiz olabilir.
+        // Şimdilik boş bırakalım veya kaldıralım.
+        logInfo("checkDailyAchievementsStatus çağrıldı (içi boş).")
         
-        // Bugün için zaten kaydedilmiş tamamlanan oyun sayısını al
-        let dailyCompletions = userDefaults.integer(forKey: todayKey)
-        
-        // Eğer bugün için hiç oyun tamamlanmamışsa ve önceki günün verileri duruyorsa, günlük görevleri sıfırla
-        if dailyCompletions == 0 {
-            for id in ["daily_5", "daily_10", "daily_20"] {
-                if let achievement = achievements.first(where: { $0.id == id }) {
-                    // Eğer başarım tamamlanmamışsa, sıfırla
-                    if !achievement.isCompleted {
-                        updateAchievement(id: id, status: .inProgress(currentValue: 0, requiredValue: achievement.targetValue))
-                    }
-                }
-            }
-        }
+        // let calendar = Calendar.current
+        // let today = Date()
+        // let todayKey = "daily_completions_\(calendar.startOfDay(for: today).timeIntervalSince1970)"
+        // let dailyCompletions = userDefaults.integer(forKey: todayKey)
+        // if dailyCompletions == 0 {
+        //     for id in ["daily_5", "daily_10", "daily_20"] {
+        //         if let achievement = achievements.first(where: { $0.id == id }) {
+        //             if !achievement.isCompleted {
+        //                 updateAchievement(id: id, status: .inProgress(currentValue: 0, requiredValue: achievement.targetValue))
+        //             }
+        //         }
+        //     }
+        // }
     }
     
     // Başarımı güncelle ve durumunu değiştir
@@ -1418,105 +1687,78 @@ class AchievementManager: ObservableObject {
     
     // Toplam tamamlanan oyun sayısı başarımlarını kontrol et
     private func updateTotalCompletionAchievements() {
-        // Tüm zorluk seviyelerindeki tamamlanmış oyun sayısını hesapla
-        let totalCompleted = calculateTotalCompletedGames()
+        // Toplam tamamlanan oyun sayısını `calculateTotalCompletedGames` ile alıp ilgili başarımları günceller.
+        // Bu fonksiyon `AchievementEntity.currentValue` kullanacak şekilde güncellenmeli.
+        // `calculateTotalCompletedGames` fonksiyonunun güncellenmesi gerekiyor.
         
-        // Başarımlar kontrol et
-        if totalCompleted >= 100 {
-            updateAchievement(id: "total_100", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "total_100", status: .inProgress(currentValue: totalCompleted, requiredValue: 100))
-        }
+        let totalCompleted = calculateTotalCompletedGames() // Bu fonksiyon güncellenecek
         
-        if totalCompleted >= 500 {
-            updateAchievement(id: "total_500", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "total_500", status: .inProgress(currentValue: totalCompleted, requiredValue: 500))
-        }
-        
-        if totalCompleted >= 1000 {
-            updateAchievement(id: "total_1000", status: .completed(unlockDate: Date()))
-            } else {
-            updateAchievement(id: "total_1000", status: .inProgress(currentValue: totalCompleted, requiredValue: 1000))
-        }
-        
-        if totalCompleted >= 5000 {
-            updateAchievement(id: "total_5000", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "total_5000", status: .inProgress(currentValue: totalCompleted, requiredValue: 5000))
-        }
+        updateAchievementProgress(id: "total_100", currentProgress: totalCompleted)
+        updateAchievementProgress(id: "total_500", currentProgress: totalCompleted)
+        updateAchievementProgress(id: "total_1000", currentProgress: totalCompleted)
+        updateAchievementProgress(id: "total_5000", currentProgress: totalCompleted)
     }
     
-    // Toplam tamamlanmış oyun sayısını hesapla
+    // Toplam tamamlanmış oyun sayısını hesapla (GÜNCELLENDİ)
     private func calculateTotalCompletedGames() -> Int {
-        // Bu değerleri Firebase/LocalStorage'dan almalıyız
-        // Not: Bu örnek için varsayılan bir değer kullanıyoruz
-        // Gerçek uygulamada bu değer kalıcı olarak saklanmalı
-        let easyCount = getCompletionCountForPrefix("easy_")
-        let mediumCount = getCompletionCountForPrefix("medium_")
-        let hardCount = getCompletionCountForPrefix("hard_")
-        let expertCount = getCompletionCountForPrefix("expert_")
+        // Tüm zorluk seviyelerindeki tamamlanmış oyun sayısını Achievement listesinden hesapla.
+        var totalCount = 0
+        let difficultyPrefixes = ["easy_", "medium_", "hard_", "expert_"]
         
-        return easyCount + mediumCount + hardCount + expertCount
+        for prefix in difficultyPrefixes {
+            // İlgili zorluk seviyesindeki en yüksek tamamlanmış veya ilerlemedeki başarımı bul
+            let relevantAchievements = achievements.filter { $0.id.hasPrefix(prefix) }
+                .sorted(by: { ach1, ach2 in
+                    // ID'nin sonundaki sayıyı alarak sırala
+                    let num1 = Int(ach1.id.split(separator: "_").last ?? "0") ?? 0
+                    let num2 = Int(ach2.id.split(separator: "_").last ?? "0") ?? 0
+                    return num1 > num2 // Büyükten küçüğe sırala
+                })
+            
+            // Önce tamamlanmış en yüksek gereksinimli başarımı ara
+            if let completedMax = relevantAchievements.first(where: { $0.isCompleted }) {
+                totalCount += completedMax.targetValue
+            }
+            // Tamamlanmış yoksa, ilerlemedeki en yüksek gereksinimli başarımın ilerlemesini al
+            else if let inProgressMax = relevantAchievements.first {
+                totalCount += inProgressMax.currentValue
+            }
+            // Debug log
+            // logDebug("Difficulty \(prefix): Max progress/completion = \(relevantAchievements.first?.currentValue ?? 0) (Completed: \(relevantAchievements.first?.isCompleted ?? false))")
+            
+        }
+        logInfo("Toplam Tamamlanan Oyun Sayısı (Hesaplanan): \(totalCount)")
+        return totalCount
     }
     
-    // Belirli bir önek (prefix) ile başlayan başarımlardaki tamamlanan oyun sayısını hesapla
-    private func getCompletionCountForPrefix(_ prefix: String) -> Int {
-        // İlgili başarımlar
-        let relevantAchievements = achievements.filter { $0.id.hasPrefix(prefix) }
+    
+    // Belirli bir önek (prefix) ile başlayan başarımlardaki tamamlanan oyun sayısını hesapla (Artık kullanılmıyor, calculateTotalCompletedGames içinde benzer mantık var)
+    // private func getCompletionCountForPrefix(_ prefix: String) -> Int { ... }
+    
+    
+    // Çeşitlilik başarımını kontrol et (GÜNCELLENDİ)
+    private func checkPuzzleVarietyAchievement() {
+        // Her zorluk seviyesinden en az 5 oyun tamamlanıp tamamlanmadığını kontrol eder.
+        // getCompletionCountForDifficulty fonksiyonunu kullanır.
         
-        // Tamamlanmış en yüksek başarımı bul
-        for achievement in relevantAchievements.sorted(by: { 
-            Int($0.id.split(separator: "_")[1]) ?? 0 > Int($1.id.split(separator: "_")[1]) ?? 0 
-        }) {
-            if achievement.isCompleted {
-                if let requiredStr = achievement.id.split(separator: "_").last, 
-                   let requiredValue = Int(requiredStr) {
-                    return requiredValue
-                }
+        let minCompletionsPerDifficulty = 5
+        let difficulties: [SudokuBoard.Difficulty] = [.easy, .medium, .hard, .expert]
+        var difficultiesMeetingRequirement = 0
+        
+        for difficulty in difficulties {
+            if getCompletionCountForDifficulty(difficulty) >= minCompletionsPerDifficulty {
+                difficultiesMeetingRequirement += 1
             }
         }
         
-        // Hiçbir başarım tamamlanmadıysa, ilerleme durumundaki başarımı kontrol et
-        if let firstAchievement = relevantAchievements.first(where: { $0.id == "\(prefix)1" || $0.id == "\(prefix.dropLast())_1" }) {
-            return firstAchievement.currentValue
-        }
-        
-        return 0
+        let totalRequired = difficulties.count // Toplam 4 zorluk seviyesi
+        // Başarımın ilerlemesini, gereksinimi karşılayan zorluk sayısı olarak kaydedelim.
+        updateAchievementProgress(id: "puzzle_variety", currentProgress: difficultiesMeetingRequirement, requiredOverride: totalRequired)
     }
     
-    // Çeşitlilik başarımını kontrol et
-    private func checkPuzzleVarietyAchievement() {
-        var completedDifficulties: [SudokuBoard.Difficulty: Int] = [:]
-        
-        // Her zorluk seviyesi için tamamlanan oyun sayısını kontrol et
-        let difficulties: [SudokuBoard.Difficulty] = [.easy, .medium, .hard, .expert]
-        
-        for difficulty in difficulties {
-            let count = getCompletionCountForDifficulty(difficulty)
-            completedDifficulties[difficulty] = count
-        }
-        
-        // Her zorluk seviyesinden en az 5 oyun
-        let minCompletionsPerDifficulty = 5
-        
-        let difficulitesWithMinimumCompletions = completedDifficulties.filter { $0.value >= minCompletionsPerDifficulty }.count
-        
-        if difficulitesWithMinimumCompletions >= difficulties.count {
-            updateAchievement(id: "puzzle_variety", status: .completed(unlockDate: Date()))
-        } else {
-            // İlerleme güncellemesi
-            updateAchievement(id: "puzzle_variety", status: .inProgress(
-                currentValue: difficulitesWithMinimumCompletions * minCompletionsPerDifficulty,
-                requiredValue: difficulties.count * minCompletionsPerDifficulty
-            ))
-        }
-    }
-    
-    // Bir zorluk seviyesinde tamamlanmış oyun sayısını hesapla
+    // Bir zorluk seviyesinde tamamlanmış oyun sayısını hesapla (GÜNCELLENDİ)
     private func getCompletionCountForDifficulty(_ difficulty: SudokuBoard.Difficulty) -> Int {
         var prefix: String
-        
         switch difficulty {
         case .easy: prefix = "easy_"
         case .medium: prefix = "medium_"
@@ -1524,10 +1766,27 @@ class AchievementManager: ObservableObject {
         case .expert: prefix = "expert_"
         }
         
-        return getCompletionCountForPrefix(prefix)
+        // İlgili zorluk seviyesindeki en yüksek tamamlanmış veya ilerlemedeki başarımı bul
+        let relevantAchievements = achievements.filter { $0.id.hasPrefix(prefix) }
+            .sorted(by: { ach1, ach2 in
+                let num1 = Int(ach1.id.split(separator: "_").last ?? "0") ?? 0
+                let num2 = Int(ach2.id.split(separator: "_").last ?? "0") ?? 0
+                return num1 > num2 // Büyükten küçüğe
+            })
+        
+        // Önce tamamlanmış en yüksek gereksinimli başarımı ara
+        if let completedMax = relevantAchievements.first(where: { $0.isCompleted }) {
+            return completedMax.targetValue
+        }
+        // Tamamlanmış yoksa, ilerlemedeki en yüksek gereksinimli başarımın ilerlemesini al
+        else if let inProgressMax = relevantAchievements.first {
+            return inProgressMax.currentValue
+        }
+        return 0
     }
     
-    // Özel saat başarımlarını kontrol et
+    
+    // Özel saat başarımlarını kontrol et (GÜNCELLENDİ)
     private func checkSpecialTimeAchievements() {
         let calendar = Calendar.current
         let now = Date()
@@ -1536,36 +1795,25 @@ class AchievementManager: ObservableObject {
         
         // Gece yarısı çözücüsü (23:45-00:15)
         if (hour == 23 && minute >= 45) || (hour == 0 && minute <= 15) {
+            // Bu tek seferlik bir başarım, doğrudan tamamlandı yapalım.
             updateAchievement(id: "midnight_solver", status: .completed(unlockDate: Date()))
         }
         
         // Öğle arası (12:00-14:00)
         if hour >= 12 && hour < 14 {
-            incrementSpecialTimeAchievement(id: "lunch_break")
+            incrementAchievementProgress(id: "lunch_break")
         }
         
         // Yolcu (07:00-09:00 veya 17:00-19:00)
         if (hour >= 7 && hour < 9) || (hour >= 17 && hour < 19) {
-            incrementSpecialTimeAchievement(id: "commuter")
+            incrementAchievementProgress(id: "commuter")
         }
     }
     
-    // Özel zaman dilimlerine göre başarı sayısını artır
-    private func incrementSpecialTimeAchievement(id: String) {
-        let key = "\(id)_progress"
-        let progress = userDefaults.integer(forKey: key) + 1
-        userDefaults.set(progress, forKey: key)
-        
-        let requiredValue = id == "lunch_break" ? 10 : 20
-        
-        if progress >= requiredValue {
-            updateAchievement(id: id, status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: id, status: .inProgress(currentValue: progress, requiredValue: requiredValue))
-        }
-    }
+    // Özel zaman dilimlerine göre başarı sayısını artır (Artık Kullanılmıyor, incrementAchievementProgress kullanılacak)
+    // private func incrementSpecialTimeAchievement(id: String) { ... }
     
-    // Gün zamanına göre başarımları güncelle
+    // Gün zamanına göre başarımları güncelle (GÜNCELLENDİ)
     private func updateTimeOfDayAchievements() {
         let calendar = Calendar.current
         let now = Date()
@@ -1573,27 +1821,279 @@ class AchievementManager: ObservableObject {
         
         // Gece kuşu (22:00-06:00 arası)
         if hour >= 22 || hour < 6 {
-            incrementTimeOfDayAchievement(id: "night_owl", requiredValue: 10)
-            incrementTimeOfDayAchievement(id: "night_hunter", requiredValue: 30)
+            incrementAchievementProgress(id: "night_owl")
+            incrementAchievementProgress(id: "night_hunter")
         }
         
         // Erken kuş (06:00-09:00 arası)
         if hour >= 6 && hour < 9 {
-            incrementTimeOfDayAchievement(id: "early_bird", requiredValue: 10)
-            incrementTimeOfDayAchievement(id: "morning_champion", requiredValue: 30)
+            incrementAchievementProgress(id: "early_bird")
+            incrementAchievementProgress(id: "morning_champion")
         }
     }
     
-    // Gün zamanı başarımları için sayaç arttırma
-    private func incrementTimeOfDayAchievement(id: String, requiredValue: Int) {
-        let key = "\(id)_count"
-        let count = userDefaults.integer(forKey: key) + 1
-        userDefaults.set(count, forKey: key)
+    // Gün zamanı başarımları için sayaç arttırma (Artık Kullanılmıyor, incrementAchievementProgress kullanılacak)
+    // private func incrementTimeOfDayAchievement(id: String, requiredValue: Int) { ... }
+    
+    // Sudoku Zirve başarısını kontrol et (Aynı kalabilir, isCompleted kontrolü yapıyor)
+    // func checkForMasterAchievement() { ... }
+    
+    // ... (loadFromCoreDataBackup, updateAchievementsFromFirebase aynı kalır) ...
+    
+    // YENİ: Mevsimsel başarımları kontrol et (GÜNCELLENDİ)
+    private func checkSeasonalAchievements() {
+        let calendar = Calendar.current
+        let today = Date()
+        let month = calendar.component(.month, from: today)
         
-        if count >= requiredValue {
-            updateAchievement(id: id, status: .completed(unlockDate: Date()))
+        var seasonAchievementId: String?
+        switch month {
+        case 3, 4, 5: seasonAchievementId = "seasonal_spring"
+        case 6, 7, 8: seasonAchievementId = "seasonal_summer"
+        case 9, 10, 11: seasonAchievementId = "seasonal_autumn"
+        case 12, 1, 2: seasonAchievementId = "seasonal_winter"
+        default: break
+        }
+        
+        if let id = seasonAchievementId {
+            incrementAchievementProgress(id: id)
+        }
+    }
+    
+    // Mevsimsel başarımlar için tamamlanan oyun sayısını artır (Artık Kullanılmıyor, incrementAchievementProgress kullanılacak)
+    // private func incrementSeasonalAchievement(id: String) { ... }
+    
+    // YENİ: Saat dilimi başarımları (GÜNCELLENDİ)
+    private func checkClockBasedAchievements() {
+        let calendar = Calendar.current
+        let now = Date()
+        let hour = calendar.component(.hour, from: now)
+        
+        if hour >= 7 && hour < 9 { incrementAchievementProgress(id: "clock_morning_rush") }
+        if hour >= 12 && hour < 14 { incrementAchievementProgress(id: "clock_lunch_break") }
+        if hour >= 15 && hour < 17 { incrementAchievementProgress(id: "clock_tea_time") }
+        if hour >= 20 && hour < 22 { incrementAchievementProgress(id: "clock_prime_time") }
+    }
+    
+    // Saat dilimi başarımlarını artır (Artık Kullanılmıyor, incrementAchievementProgress kullanılacak)
+    // private func incrementClockBasedAchievement(id: String) { ... }
+    
+    // ... (checkSpeedAchievements aynı kalır, updateAchievement çağırıyor) ...
+    
+    // YENİ: Hatasız seri başarımları (GÜNCELLENDİ - Core Data Kullanacak)
+    private func checkPerfectComboAchievements(errorCount: Int) {
+        guard let firebaseUID = Auth.auth().currentUser?.uid else { return }
+        
+        // Core Data'dan mevcut kombo sayısını al
+        let comboData = persistenceController.getUserComboData(for: firebaseUID)
+        var currentPerfectCombo = comboData?.perfectCombo ?? 0
+        
+        if errorCount == 0 {
+            // Hata yok, seriyi artır
+            currentPerfectCombo += 1
+            logInfo("Hatasız Seri Arttı: \(currentPerfectCombo)")
+            persistenceController.updateUserComboData(for: firebaseUID, perfectCombo: currentPerfectCombo)
+            
+            // Başarımları kontrol et/güncelle
+            updateAchievementProgress(id: "combo_perfect_5", currentProgress: currentPerfectCombo)
+            updateAchievementProgress(id: "combo_perfect_10", currentProgress: currentPerfectCombo)
         } else {
-            updateAchievement(id: id, status: .inProgress(currentValue: count, requiredValue: requiredValue))
+            // Hata var, seriyi sıfırla
+            if currentPerfectCombo > 0 { // Sadece sıfırdan büyükse sıfırla ve logla
+                logInfo("Hatasız Seri Sıfırlandı (Önceki: \(currentPerfectCombo))")
+                currentPerfectCombo = 0
+                persistenceController.updateUserComboData(for: firebaseUID, perfectCombo: currentPerfectCombo)
+                // Başarımların ilerlemesini de sıfırlayalım mı? Hayır, sadece seri sıfırlanır.
+                // updateAchievementProgress(id: "combo_perfect_5", currentProgress: 0) // Bu yanlış olur
+                // updateAchievementProgress(id: "combo_perfect_10", currentProgress: 0) // Bu yanlış olur
+            }
+        }
+    }
+    
+    
+    // YENİ: Hız seri başarımları (GÜNCELLENDİ - Core Data Kullanacak)
+    private func checkSpeedComboAchievements(time: TimeInterval) {
+        guard let firebaseUID = Auth.auth().currentUser?.uid else { return }
+        
+        // Core Data'dan verileri al
+        let comboData = persistenceController.getUserComboData(for: firebaseUID)
+        let lastGameTime = comboData?.lastGameTime ?? 0.0
+        var currentSpeedCombo = comboData?.speedCombo ?? 0
+        
+        var needsUpdate = false
+        
+        if lastGameTime > 0 && time < lastGameTime {
+            // Kendi rekorunu kırdı, seriyi artır
+            currentSpeedCombo += 1
+            logInfo("Hız Rekoru Serisi Arttı: \(currentSpeedCombo) (Süre: \(time) < \(lastGameTime))")
+            needsUpdate = true
+            // Başarımı güncelle
+            updateAchievementProgress(id: "combo_speed_5", currentProgress: currentSpeedCombo)
+            
+        } else if time >= lastGameTime && currentSpeedCombo > 0 { // Sadece 0'dan büyükse sıfırla
+            // Rekor kırılmadı veya ilk oyun, seriyi sıfırla
+            logInfo("Hız Rekoru Serisi Sıfırlandı (Önceki: \(currentSpeedCombo), Süre: \(time) >= \(lastGameTime))")
+            currentSpeedCombo = 0
+            needsUpdate = true
+            // Başarım ilerlemesini sıfırlama (combo_speed_5 zaten currentValue alıyor)
+        }
+        
+        // Yeni oyun süresini ve güncellenmiş seri sayısını Core Data'ya kaydet
+        // Sadece gerçekten bir değişiklik olduğunda veya yeni süre kaydedilmesi gerektiğinde güncelle.
+        if needsUpdate || time != lastGameTime {
+            persistenceController.updateUserComboData(for: firebaseUID, lastGameTime: time, speedCombo: currentSpeedCombo)
+        }
+    }
+    
+    
+    // YENİ: Hafta içi başarımları (GÜNCELLENDİ)
+    private func checkWeekdayAchievements() {
+        let calendar = Calendar.current
+        let today = Date()
+        let weekday = calendar.component(.weekday, from: today)
+        
+        switch weekday {
+        case 2: incrementAchievementProgress(id: "weekday_monday") // Pazartesi
+        case 4: incrementAchievementProgress(id: "weekday_wednesday") // Çarşamba
+        case 6: incrementAchievementProgress(id: "weekday_friday") // Cuma
+        default: break
+        }
+    }
+    
+    // Belirli gün başarımlarını artır (Artık Kullanılmıyor, incrementAchievementProgress kullanılacak)
+    // private func incrementWeekdayAchievement(id: String) { ... }
+    
+    // YENİ: Oyun stili başarımları (GÜNCELLENDİ - UserDefaults kaldırıldı)
+    private func checkGameStyleAchievements(hintCount: Int, errorCount: Int /*, notesUsed: Bool, allNotesUsed: Bool */) {
+        // TODO: `notesUsed` ve `allNotesUsed` bilgileri oyun görünümünden (ViewModel?) gelmeli.
+        // Bu bilgiler olmadan 'style_methodical' ve 'style_perfectionist' çalışmaz.
+        // Şimdilik bu iki başarımı kontrol etmiyoruz.
+        
+        // Metodolojik Çözücü (Not almadan oyunu tamamlama)
+        // if !notesUsed {
+        //     updateAchievement(id: "style_methodical", status: .completed(unlockDate: Date()))
+        // }
+        
+        // Mükemmeliyetçi (Tüm notları kullanma)
+        // if allNotesUsed {
+        //     updateAchievement(id: "style_perfectionist", status: .completed(unlockDate: Date()))
+        // }
+        
+        // Hızlı Girişçi (30 saniye içinde 30 hücre)
+        // Bu başarımın mantığı oyun sırasında gerçek zamanlı olarak kontrol edilmeli ve
+        // AchievementManager'a sadece tamamlandığında bilgi verilmeli.
+        // Örneğin: AchievementManager.shared.completeAchievement(id: "style_fast_input")
+        // Bu yüzden buradaki kontrolü kaldırıyoruz.
+    }
+    
+    // YENİ: Tamamlanan hücre sayısı başarımları (GÜNCELLENDİ - Core Data Kullanacak)
+    private func updateCellsCompletedAchievements() {
+        // Artık User entity'sindeki totalCellsCompleted kullanılacak.
+        guard let firebaseUID = Auth.auth().currentUser?.uid else { return }
+        
+        // Core Data'dan mevcut toplamı al
+        let currentCells = persistenceController.getUserTotalCellsCompleted(for: firebaseUID) ?? 0
+        let newTotal = currentCells + 81 // Her tamamlanan oyun 81 hücre ekler
+        
+        // Core Data'yı güncelle
+        persistenceController.updateUserTotalCellsCompleted(for: firebaseUID, total: newTotal)
+        logInfo("Toplam Tamamlanan Hücre (Core Data): \(newTotal)")
+        
+        // Başarımları kontrol et (Bu fonksiyon zaten currentValue kullanıyor)
+        updateAchievementProgress(id: "stats_500_cells", currentProgress: newTotal)
+        updateAchievementProgress(id: "stats_1000_cells", currentProgress: newTotal)
+        updateAchievementProgress(id: "stats_5000_cells", currentProgress: newTotal)
+    }
+    
+    
+    // YENİ: Özel gün başarımları (GÜNCELLENDİ)
+    private func checkSpecialDayAchievements() {
+        let calendar = Calendar.current
+        let today = Date()
+        let day = calendar.component(.day, from: today)
+        let month = calendar.component(.month, from: today)
+        
+        // Yeni yıl kontrolü
+        if day == 1 && month == 1 {
+            updateAchievement(id: "holiday_new_year", status: .completed(unlockDate: Date()))
+        }
+        
+        // Doğum günü başarımı (Örnek: 15 Temmuz)
+        if day == 15 && month == 7 {
+            updateAchievement(id: "birthday_player", status: .completed(unlockDate: Date()))
+        }
+        
+        // Hafta sonu canavarı - Bir hafta sonunda 20 oyun
+        checkWeekendWarriorAchievement() // Bu fonksiyon da güncellendi
+    }
+    
+    // Hafta sonu canavarı başarımını kontrol et (GÜNCELLENDİ)
+    private func checkWeekendWarriorAchievement() {
+        // Bu başarımın sayacını ("holiday_weekend") diğer hafta sonu sayaçları gibi
+        // updateWeekendAchievements içinde yönetelim. Bu ayrı fonksiyon gereksiz.
+        // updateWeekendAchievements zaten ilgili ID'leri kontrol ediyor.
+        logDebug("checkWeekendWarriorAchievement çağrıldı, mantık updateWeekendAchievements'a taşındı.")
+    }
+    
+    // --- YENİ Yardımcı Fonksiyonlar ---
+    
+    // Bir başarımın ilerlemesini currentValue kullanarak günceller
+    private func updateAchievementProgress(id: String, currentProgress: Int, requiredOverride: Int? = nil) {
+        guard let index = achievements.firstIndex(where: { $0.id == id }) else {
+            logWarning("updateAchievementProgress: Başarım bulunamadı - ID: \(id)")
+            return
+        }
+        
+        // Eğer başarım zaten tamamlanmışsa işlem yapma
+        if achievements[index].isCompleted {
+            // logDebug("updateAchievementProgress: Başarım zaten tamamlanmış - ID: \(id)")
+            return
+        }
+        
+        let requiredValue = requiredOverride ?? achievements[index].targetValue
+        let newProgress = min(currentProgress, requiredValue) // İlerleme hedef değeri geçemez
+        
+        // Sadece ilerleme değiştiyse veya ilk kez ayarlanıyorsa güncelle
+        if achievements[index].currentValue != newProgress {
+            if newProgress >= requiredValue {
+                // Tamamlandı
+                updateAchievement(id: id, status: .completed(unlockDate: Date()))
+                logInfo("Başarım tamamlandı (Progress): \(id) - \(newProgress)/\(requiredValue)")
+            } else {
+                // İlerliyor
+                updateAchievement(id: id, status: .inProgress(currentValue: newProgress, requiredValue: requiredValue))
+                logInfo("Başarım ilerledi (Progress): \(id) - \(newProgress)/\(requiredValue)")
+            }
+        } else {
+            //logDebug("updateAchievementProgress: İlerleme değişmedi - ID: \(id), Progress: \(newProgress)")
+        }
+    }
+    
+    // Bir başarımın sayacını 1 artırır
+    private func incrementAchievementProgress(id: String) {
+        guard let index = achievements.firstIndex(where: { $0.id == id }) else {
+            logWarning("incrementAchievementProgress: Başarım bulunamadı - ID: \(id)")
+            return
+        }
+        
+        // Eğer başarım zaten tamamlanmışsa işlem yapma
+        if achievements[index].isCompleted {
+            //logDebug("incrementAchievementProgress: Başarım zaten tamamlanmış - ID: \(id)")
+            return
+        }
+        
+        let currentCount = achievements[index].currentValue
+        let newCount = currentCount + 1
+        let requiredValue = achievements[index].targetValue
+        
+        if newCount >= requiredValue {
+            // Tamamlandı
+            updateAchievement(id: id, status: .completed(unlockDate: Date()))
+            logInfo("Başarım tamamlandı (Increment): \(id) - \(newCount)/\(requiredValue)")
+        } else {
+            // İlerliyor
+            updateAchievement(id: id, status: .inProgress(currentValue: newCount, requiredValue: requiredValue))
+            logInfo("Başarım ilerledi (Increment): \(id) - \(newCount)/\(requiredValue)")
         }
     }
     
@@ -1601,15 +2101,36 @@ class AchievementManager: ObservableObject {
     func checkForMasterAchievement() {
         // Tamamlanmış başarıları kategorilere göre say
         var completedByCategory: [AchievementCategory: Int] = [:]
-        
         for achievement in achievements where achievement.isCompleted {
             completedByCategory[achievement.category, default: 0] += 1
         }
         
-        // Her kategoride en az 3 başarı var mı?
+        // Her kategoride en az 3 veya 5 başarı olup olmadığını hesapla
         let categoriesWithThreeOrMore = completedByCategory.filter { $0.value >= 3 }.count
         let categoriesWithFiveOrMore = completedByCategory.filter { $0.value >= 5 }.count
+        // Toplam kategori sayısını al (AchievementCategory enum'ındaki tüm case'ler)
         let totalCategories = AchievementCategory.allCases.count
+        
+        // Durumlara göre başarımları güncelle
+        if categoriesWithFiveOrMore >= totalCategories {
+            // Grandmaster tamamlandıysa, master da tamamlanmıştır.
+            updateAchievement(id: "sudoku_grandmaster", status: .completed(unlockDate: Date()))
+            updateAchievement(id: "sudoku_master", status: .completed(unlockDate: Date()))
+        } else if categoriesWithThreeOrMore >= totalCategories {
+            // Master tamamlandı ama Grandmaster tamamlanmadı.
+            updateAchievement(id: "sudoku_master", status: .completed(unlockDate: Date()))
+            // Grandmaster ilerlemesini güncelle
+            let grandmasterStatus = AchievementStatus.inProgress(currentValue: categoriesWithFiveOrMore, requiredValue: totalCategories)
+            updateAchievement(id: "sudoku_grandmaster", status: grandmasterStatus)
+        } else {
+            // İkisi de tamamlanmadı, ilerlemeleri güncelle.
+            let masterStatus = AchievementStatus.inProgress(currentValue: categoriesWithThreeOrMore, requiredValue: totalCategories)
+            updateAchievement(id: "sudoku_master", status: masterStatus)
+            let grandmasterStatus = AchievementStatus.inProgress(currentValue: categoriesWithFiveOrMore, requiredValue: totalCategories)
+            updateAchievement(id: "sudoku_grandmaster", status: grandmasterStatus)
+        }
+    
+
         
         if categoriesWithFiveOrMore >= totalCategories {
             // Tüm kategorilerde en az 5 başarı varsa Grandmaster başarısını da ver
@@ -1633,429 +2154,274 @@ class AchievementManager: ObservableObject {
         }
     }
     
-    // Firebase'den gelen verilerle başarıları güncelle
+    
     // CoreData'dan yedek yükleme fonksiyonu
     private func loadFromCoreDataBackup(for userID: String) {
         let coreDataAchievements = self.achievementCoreDataService.loadAchievements(for: userID)
         if !coreDataAchievements.isEmpty {
-            logInfo("CoreData'dan \(coreDataAchievements.count) başarım yüklendi")
+            logInfo("CoreData'dan \\(coreDataAchievements.count) başarım yüklendi")
             
             // Yerel başarımlarla birleştir
             for coreDataAchievement in coreDataAchievements {
                 if let index = self.achievements.firstIndex(where: { $0.id == coreDataAchievement.id }) {
+                    // Sadece yerel olan tamamlanmamışsa ve CoreData'daki tamamlanmışsa güncelle
                     if !self.achievements[index].isCompleted && coreDataAchievement.isCompleted {
                         self.achievements[index] = coreDataAchievement
+                        logInfo("CoreData'dan güncellenen başarım: \(coreDataAchievement.id)")
+                    } else if self.achievements[index].isCompleted && !coreDataAchievement.isCompleted {
+                        // Yerel tamamlanmış, CoreData değilse? Bu durum olmamalı ama loglayalım.
+                        logWarning("Yerel başarım (\(self.achievements[index].id)) tamamlanmış ama CoreData versiyonu değil.")
+                    } else if !self.achievements[index].isCompleted && !coreDataAchievement.isCompleted {
+                        // İkisi de tamamlanmamışsa, ilerlemesi daha yüksek olanı al
+                        if coreDataAchievement.currentValue > self.achievements[index].currentValue {
+                            self.achievements[index].status = coreDataAchievement.status // CoreData'daki status'u kullan
+                            logInfo("CoreData'dan daha yüksek ilerlemeli başarım güncellendi: \(coreDataAchievement.id)")
+                        }
                     }
+                } else {
+                    // Yerelde olmayan bir başarım CoreData'da varsa, ekle (bu olmamalı)
+                    logWarning("CoreData'da bulunan ancak yerelde olmayan başarım: \(coreDataAchievement.id)")
+                    // self.achievements.append(coreDataAchievement) // Gerekirse ekle
                 }
             }
             
             // Toplam puanları güncelle
             self.calculateTotalPoints()
             
-            // Firebase'e senkronize et
-            self.syncWithFirebase()
+            // UI'ı güncellemek için bildirim gönder
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("AchievementsUpdated"), object: nil)
+            }
+            
+            // Firebase'e senkronize et (opsiyonel, loadFromFirebase sonrası zaten senkronize edilebilir)
+            // self.syncWithFirebase()
         } else {
             logWarning("CoreData'da da başarım bulunamadı, varsayılan başarımlar kullanılacak")
         }
     }
     
-    private func updateAchievementsFromFirebase(_ firebaseAchievements: [[String: Any]]) {
+    
+    private func updateAchievementsFromFirebase(_ firebaseAchievements: [[String: Any]]) { // Uncommented function
         var updatedCount = 0
-        let mergeDate = Date()
+        let mergeDate = Date() // Tüm güncellemeler için ortak zaman damgası
         
-        for fbAchievement in firebaseAchievements {
-            guard let id = fbAchievement["id"] as? String,
-                  let index = achievements.firstIndex(where: { $0.id == id }) else {
+        for fbAchievementData in firebaseAchievements {
+            guard let id = fbAchievementData["id"] as? String,
+                  let _ = achievements.firstIndex(where: { $0.id == id }) else { // <<< DÜZELTME: `index` yerine `_`
+                logWarning("updateAchievementsFromFirebase: Bilinmeyen veya geçersiz başarım ID\'si: \(fbAchievementData["id"] ?? "yok")")
                 continue
             }
             
-            let statusStr = fbAchievement["status"] as? String ?? "locked"
-            let firebaseIsCompleted = fbAchievement["isCompleted"] as? Bool ?? false
-            let localIsCompleted = achievements[index].isCompleted
+            let localAchievement = achievements[achievements.firstIndex(where: { $0.id == id })!] // Re-fetch using the ID guaranteed to exist
+            var updatedAchievement = localAchievement // Değişiklikleri yapmak için kopya oluştur
             
-            // Çakışma çözümleme: Firebase zaman damgası ve yerel zaman damgası karşılaştırması
-            let firebaseTimestamp = fbAchievement["lastUpdated"] as? Timestamp
-            let firebaseDate = firebaseTimestamp?.dateValue() ?? Date(timeIntervalSince1970: 0)
-            let localDate = achievements[index].lastSyncDate ?? Date(timeIntervalSince1970: 0)
+            // Firebase'den gelen temel veriler
+            let firebaseStatusStr = fbAchievementData["status"] as? String ?? "locked"
+            // let firebaseIsCompleted = fbAchievementData["isCompleted"] as? Bool ?? (firebaseStatusStr == "completed") // Removed unused variable
+            let firebaseCurrentValue = fbAchievementData["currentValue"] as? Int ?? 0
+            let firebaseRequiredValue = fbAchievementData["requiredValue"] as? Int ?? updatedAchievement.targetValue // Firebase'de yoksa yerelden al
             
-            // Eğer yerel başarım tamamlanmış ve Firebase başarımı tamamlanmamışsa
-            // VE yerel başarım daha yeniyse, yerel başarımı üstün tut
-            if localIsCompleted && !firebaseIsCompleted && localDate > firebaseDate {
-                logInfo("Yerel başarım '\(id)' daha güncel, Firebase'e yüklenecek")
-                continue
+            // Zaman damgaları
+            let firebaseTimestamp = fbAchievementData["lastUpdated"] as? Timestamp ?? fbAchievementData["unlockDate"] as? Timestamp // lastUpdated yoksa unlockDate kullan
+            let firebaseDate = firebaseTimestamp?.dateValue() ?? Date(timeIntervalSince1970: 0) // Firebase tarihi
+            let localDate = localAchievement.lastSyncDate ?? Date(timeIntervalSince1970: 0) // Yerel son senkronizasyon tarihi
+            
+            // ---- Çakışma Çözümleme Mantığı ----
+            
+            // 1. Yerel daha yeniyse Firebase'i görmezden gel (lastSyncDate ile karşılaştır)
+            // Not: == durumunda Firebase'i tercih et (sunucu otorite)
+            if localDate > firebaseDate {
+                logDebug("Yerel başarım '\(id)' daha güncel (\(localDate) > \(firebaseDate)), Firebase verisi atlanıyor.")
+                continue // Bu başarım için Firebase güncellemesini atla
             }
             
-            // Eğer Firebase başarımı daha eski ise güncelleme yapma
-            if firebaseDate < localDate {
-                logInfo("Firebase başarımı '\(id)' daha eski (\(firebaseDate) < \(localDate)), atlanıyor")
-                continue
+            // 2. Firebase daha yeni veya aynı ise, Firebase verisini uygula
+            logDebug("Firebase başarım '\(id)' daha güncel veya aynı (\(firebaseDate) >= \(localDate)), güncelleniyor...")
+            
+            var needsSave = false // Sadece gerçekten değişiklik olursa kaydet
+            
+            // Yeni status'u belirle
+            var newStatus: AchievementStatus = localAchievement.status // Başlangıç değeri yerel
+            var unlockDateToUse: Date? = nil // Kullanılacak unlock tarihi
+            
+            if let fbUnlockTimestamp = fbAchievementData["unlockDate"] as? Timestamp {
+                unlockDateToUse = fbUnlockTimestamp.dateValue()
             }
             
-            // Firebase'de başarım tamamlanmışsa, yerel başarımı güncelle
-            // Zaman damgasını kaydet
-            achievements[index].lastSyncDate = mergeDate
-            
-            switch statusStr {
-            case "locked":
-                achievements[index].status = .locked
-            case "inProgress":
-                if let current = fbAchievement["currentValue"] as? Int,
-                   let required = fbAchievement["requiredValue"] as? Int {
-                    // Eğer Firebase'deki ilerleme değeri yerel ilerlemeden daha fazlaysa, güncelle
-                    let localProgress = achievements[index].currentValue
-                    if localProgress > current {
-                        // Yerel ilerleme daha iyi, değiştirme
-                    } else {
-                        achievements[index].status = .inProgress(currentValue: current, requiredValue: required)
-                        updatedCount += 1
+            switch firebaseStatusStr {
+            case "completed":
+                // Firebase'de tamamlanmışsa
+                if !localAchievement.isCompleted { // Yerelde tamamlanmamışsa güncelle
+                    // unlockDateToUse zaten Date? olmalı, ?? ile Date sağlıyoruz.
+                    newStatus = .completed(unlockDate: unlockDateToUse ?? mergeDate)
+                    needsSave = true
+                    logInfo("Firebase -> Yerel Güncelleme (Tamamlandı): \\(id)")
+                } else {
+                    // İkisi de tamamlanmışsa, unlockDate Firebase'den daha eski olamaz (genelde)
+                    // Ama yine de kontrol edelim ve Firebase'deki tarihi alalım (sunucu otorite)
+                    if let localUnlockDate = localAchievement.completionDate, let fbUnlockDate = unlockDateToUse {
+                        if fbUnlockDate < localUnlockDate {
+                            // Firebase'deki tarih daha eskiyse bir sorun olabilir, ama yine de Firebase'i alalım
+                            logWarning("Firebase'deki unlockDate (\\(fbUnlockDate)) yerel unlockDate'den (\\(localUnlockDate)) daha eski: \\(id). Firebase tarihi kullanılıyor.")
+                            // fbUnlockDate zaten Date olmalı.
+                            newStatus = .completed(unlockDate: fbUnlockDate)
+                            needsSave = true // Tarih değiştiği için kaydet
+                        } else if fbUnlockDate > localUnlockDate {
+                            // Firebase tarihi daha yeniyse güncelle
+                            // fbUnlockDate zaten Date olmalı.
+                            newStatus = .completed(unlockDate: fbUnlockDate)
+                            needsSave = true // Tarih değiştiği için kaydet
+                        }
+                        // Eşitse bir şey yapma
+                    } else if let definiteUnlockDate = unlockDateToUse, localAchievement.completionDate == nil {
+                        // Yerelde tarih yoksa Firebase'dekini al (definiteUnlockDate zaten Date)
+                        newStatus = .completed(unlockDate: definiteUnlockDate)
+                        needsSave = true
                     }
                 }
-            case "completed":
-                // Başarım tamamlanmışsa, Firebase'deki tarihi kullan
-                if let unlockTimestamp = fbAchievement["unlockDate"] as? Timestamp {
-                    achievements[index].status = .completed(unlockDate: unlockTimestamp.dateValue())
-                    achievements[index].isUnlocked = true
-                    achievements[index].completionDate = unlockTimestamp.dateValue()
-                    updatedCount += 1
+            case "inProgress":
+                // Firebase'de ilerlemede
+                if !localAchievement.isCompleted { // Yerelde tamamlanmamışsa
+                    // Firebase ilerlemesi yerelden daha yüksekse veya eşitse Firebase'i al
+                    if firebaseCurrentValue >= localAchievement.currentValue {
+                        if localAchievement.currentValue != firebaseCurrentValue {
+                            newStatus = .inProgress(currentValue: firebaseCurrentValue, requiredValue: firebaseRequiredValue)
+                            needsSave = true
+                            logInfo("Firebase -> Yerel Güncelleme (İlerleme): \(id) - \(firebaseCurrentValue)/\(firebaseRequiredValue)")
+                        }
+                    } else {
+                        // Yerel ilerleme daha yüksekse DOKUNMA (bu durum normalde olmamalı, yerel daha yeniyse başta atlanmalıydı)
+                        logWarning("Yerel ilerleme (\(localAchievement.currentValue)) Firebase'den (\(firebaseCurrentValue)) daha yüksek: \(id). Yerel korunuyor.")
+                    }
                 } else {
-                    achievements[index].status = .completed(unlockDate: Date())
-                    achievements[index].isUnlocked = true
-                    achievements[index].completionDate = Date()
-                    updatedCount += 1
+                    // Yerel tamamlanmış ama Firebase ilerlemede? Bu bir çakışma. Yerel kazanır.
+                    logWarning("Çakışma: Yerel tamamlanmış (\(id)) ama Firebase ilerlemede. Yerel durum korunuyor.")
+                }
+            case "locked":
+                // Firebase'de kilitli
+                if localAchievement.status != .locked && !localAchievement.isCompleted { // Yerel kilitli değilse ve tamamlanmamışsa
+                    newStatus = .locked
+                    needsSave = true
+                    logInfo("Firebase -> Yerel Güncelleme (Kilitlendi): \(id)")
+                } else if localAchievement.isCompleted {
+                    // Yerel tamamlanmış ama Firebase kilitli? Yerel kazanır.
+                    logWarning("Çakışma: Yerel tamamlanmış (\(id)) ama Firebase kilitli. Yerel durum korunuyor.")
                 }
             default:
-                break
+                logWarning("Bilinmeyen Firebase başarım durumu: \(firebaseStatusStr) for ID: \(id)")
+                break // Bilinmeyen durumu görmezden gel
+            }
+            
+            
+            // Değişiklik varsa uygula
+            if needsSave {
+                updatedAchievement.status = newStatus
+                updatedAchievement.lastSyncDate = mergeDate // Son senkronizasyon tarihini güncelle
+
+                // Atamayı değiştir: Önce sil, sonra ekle
+                if let actualIndex = self.achievements.firstIndex(where: { $0.id == id }) {
+                    self.achievements.remove(at: actualIndex)
+                    self.achievements.insert(updatedAchievement, at: actualIndex)
+                } else {
+                    // Bu normalde olmamalı ama olursa loglayalım
+                    logError("Atama sırasında index tekrar bulunamadı: \(id)")
+                }
+
+                updatedCount += 1
+                logDebug("Başarım güncellendi (Firebase'den): \(id)")
             }
         }
         
-        logSuccess("Firebase'den \(updatedCount) başarım güncellendi")
-        
-        // Değişiklikleri kaydet ve toplam puanları güncelle
-        calculateTotalPoints()
-        saveAchievements()
-        
-        // UI güncellemesi yap
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: NSNotification.Name("AchievementsUpdated"), object: nil)
-        }
-    }
-    
-    // YENİ: Mevsimsel başarımları kontrol et (Yeni eklendi)
-    private func checkSeasonalAchievements() {
-        let calendar = Calendar.current
-        let today = Date()
-        let month = calendar.component(.month, from: today)
-        
-        // Hangi mevsimdeyiz?
-        var season = ""
-        switch month {
-        case 3, 4, 5:
-            season = "spring" // İlkbahar: Mart, Nisan, Mayıs
-        case 6, 7, 8:
-            season = "summer" // Yaz: Haziran, Temmuz, Ağustos
-        case 9, 10, 11:
-            season = "autumn" // Sonbahar: Eylül, Ekim, Kasım
-        case 12, 1, 2:
-            season = "winter" // Kış: Aralık, Ocak, Şubat
-        default:
-            season = "unknown"
-        }
-        
-        if season != "unknown" {
-            let achievementId = "seasonal_\(season)"
-            incrementSeasonalAchievement(id: achievementId)
-        }
-    }
-    
-    // Mevsimsel başarımlar için tamamlanan oyun sayısını artır
-    private func incrementSeasonalAchievement(id: String) {
-        let key = "\(id)_count"
-        let count = userDefaults.integer(forKey: key) + 1
-        userDefaults.set(count, forKey: key)
-        
-        var requiredValue = 10 // Varsayılan değer
-        
-        // Başarıma göre gerekli değeri ayarla
-        switch id {
-        case "seasonal_spring":
-            requiredValue = 10
-        case "seasonal_summer":
-            requiredValue = 15
-        case "seasonal_autumn":
-            requiredValue = 12
-        case "seasonal_winter":
-            requiredValue = 20
-        default:
-            break
-        }
-        
-        if count >= requiredValue {
-            updateAchievement(id: id, status: .completed(unlockDate: Date()))
+        if updatedCount > 0 {
+            logSuccess("Firebase'den \(updatedCount) başarım güncellendi")
+            
+            // Değişiklikleri kaydet ve toplam puanları güncelle
+            calculateTotalPoints()
+            saveAchievements() // Hem UserDefaults hem CoreData'ya kaydeder
+            
+            // UI güncellemesi yap
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("AchievementsUpdated"), object: nil)
+            }
         } else {
-            updateAchievement(id: id, status: .inProgress(currentValue: count, requiredValue: requiredValue))
+            logInfo("Firebase'den gelen verilerle yerel başarımlarda bir değişiklik yapılmadı.")
         }
     }
     
-    // YENİ: Saat dilimi başarımları (Yeni eklendi)
-    private func checkClockBasedAchievements() {
-        let calendar = Calendar.current
-        let now = Date()
-        let hour = calendar.component(.hour, from: now)
-        
-        // Sabah koşuşturması (7-9)
-        if hour >= 7 && hour < 9 {
-            incrementClockBasedAchievement(id: "clock_morning_rush")
-        }
-        
-        // Öğle arası (12-14)
-        if hour >= 12 && hour < 14 {
-            incrementClockBasedAchievement(id: "clock_lunch_break")
-        }
-        
-        // Çay saati (15-17)
-        if hour >= 15 && hour < 17 {
-            incrementClockBasedAchievement(id: "clock_tea_time")
-        }
-        
-        // Altın saatler (20-22)
-        if hour >= 20 && hour < 22 {
-            incrementClockBasedAchievement(id: "clock_prime_time")
-        }
-    }
-    
-    // Saat dilimi başarımlarını artır
-    private func incrementClockBasedAchievement(id: String) {
-        let key = "\(id)_count"
-        let count = userDefaults.integer(forKey: key) + 1
-        userDefaults.set(count, forKey: key)
-        
-        let requiredValue = 5 // Tüm saat bazlı başarımlar için 5
-        
-        if count >= requiredValue {
-            updateAchievement(id: id, status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: id, status: .inProgress(currentValue: count, requiredValue: requiredValue))
-        }
-    }
-    
-    // YENİ: Hızlı tamamlama başarımları (Yeni eklendi)
+    // YENİ: Hızlı tamamlama başarımları (Yeni eklendi) - Uncommented
     private func checkSpeedAchievements(difficulty: SudokuBoard.Difficulty, time: TimeInterval) {
         let timeInSeconds = time
         
         switch difficulty {
         case .easy:
-            if timeInSeconds < 20.0 {
+            if timeInSeconds < 20.0 { // speed_easy_20
                 updateAchievement(id: "speed_easy_20", status: .completed(unlockDate: Date()))
             }
+            if timeInSeconds < 60.0 { // time_easy_1
+                updateAchievement(id: "time_easy_1", status: .completed(unlockDate: Date()))
+            }
+            if timeInSeconds < 30.0 { // time_easy_30s
+                updateAchievement(id: "time_easy_30s", status: .completed(unlockDate: Date()))
+            }
+            if timeInSeconds < 120.0 { // time_easy_2
+                updateAchievement(id: "time_easy_2", status: .completed(unlockDate: Date()))
+            }
+            if timeInSeconds < 180.0 { // time_easy_3
+                updateAchievement(id: "time_easy_3", status: .completed(unlockDate: Date()))
+            }
         case .medium:
-            if timeInSeconds < 45.0 {
+            if timeInSeconds < 45.0 { // speed_medium_45
                 updateAchievement(id: "speed_medium_45", status: .completed(unlockDate: Date()))
             }
+            if timeInSeconds < 60.0 { // time_medium_1
+                updateAchievement(id: "time_medium_1", status: .completed(unlockDate: Date()))
+            }
+            if timeInSeconds < 120.0 { // time_medium_2
+                updateAchievement(id: "time_medium_2", status: .completed(unlockDate: Date()))
+            }
+             if timeInSeconds < 180.0 { // time_easy_3
+                 // Derleyici hatasını çözmek için durumu ayrı değişkene ata
+                 let newStatus: AchievementStatus = .completed(unlockDate: Date())
+                 updateAchievement(id: "time_easy_3", status: newStatus)
+             }
+            if timeInSeconds < 300.0 { // time_medium_5
+                updateAchievement(id: "time_medium_5", status: .completed(unlockDate: Date()))
+            }
         case .hard:
-            if timeInSeconds < 90.0 {
+            if timeInSeconds < 90.0 { // speed_hard_90
                 updateAchievement(id: "speed_hard_90", status: .completed(unlockDate: Date()))
             }
-        default:
-            break
-        }
-    }
-    
-    // YENİ: Hatasız seri başarımları (Yeni eklendi)
-    private func checkPerfectComboAchievements(errorCount: Int) {
-        if errorCount == 0 {
-            // Art arda hatasız oyunları takip et
-            let key = "perfect_combo_count"
-            var count = userDefaults.integer(forKey: key)
-            count += 1
-            userDefaults.set(count, forKey: key)
-            
-            if count >= 5 {
-                updateAchievement(id: "combo_perfect_5", status: .completed(unlockDate: Date()))
-            } else {
-                updateAchievement(id: "combo_perfect_5", status: .inProgress(currentValue: count, requiredValue: 5))
+            if timeInSeconds < 120.0 { // time_hard_2
+                updateAchievement(id: "time_hard_2", status: .completed(unlockDate: Date()))
             }
-            
-            if count >= 10 {
-                updateAchievement(id: "combo_perfect_10", status: .completed(unlockDate: Date()))
-            } else {
-                updateAchievement(id: "combo_perfect_10", status: .inProgress(currentValue: count, requiredValue: 10))
+            if timeInSeconds < 180.0 { // time_hard_3
+                updateAchievement(id: "time_hard_3", status: .completed(unlockDate: Date()))
             }
-        } else {
-            // Hata yapılmış, seriyi sıfırla
-            userDefaults.set(0, forKey: "perfect_combo_count")
-        }
-    }
-    
-    // YENİ: Hız seri başarımları (Yeni eklendi)
-    private func checkSpeedComboAchievements(time: TimeInterval) {
-        // Son oyunun süresini kaydet
-        let key = "last_game_time"
-        let lastGameTime = userDefaults.double(forKey: key)
-        
-        if lastGameTime > 0 && time < lastGameTime {
-            // Kendi rekorunu kırdı, art arda rekor kırma sayısını artır
-            let comboKey = "speed_combo_count"
-            var count = userDefaults.integer(forKey: comboKey)
-            count += 1
-            userDefaults.set(count, forKey: comboKey)
-            
-            if count >= 5 {
-                updateAchievement(id: "combo_speed_5", status: .completed(unlockDate: Date()))
-            } else {
-                updateAchievement(id: "combo_speed_5", status: .inProgress(currentValue: count, requiredValue: 5))
+            if timeInSeconds < 300.0 { // time_hard_5
+                updateAchievement(id: "time_hard_5", status: .completed(unlockDate: Date()))
             }
-        } else if time >= lastGameTime {
-            // Rekor kırılmadı, seriyi sıfırla
-            userDefaults.set(0, forKey: "speed_combo_count")
-        }
-        
-        // Bu oyunun süresini kaydet
-        userDefaults.set(time, forKey: key)
-    }
-    
-    // YENİ: Hafta içi başarımları (Yeni eklendi)
-    private func checkWeekdayAchievements() {
-        let calendar = Calendar.current
-        let today = Date()
-        let weekday = calendar.component(.weekday, from: today)
-        
-        // Hafta içi günleri
-        switch weekday {
-        case 2: // Pazartesi
-            incrementWeekdayAchievement(id: "weekday_monday")
-        case 4: // Çarşamba
-            incrementWeekdayAchievement(id: "weekday_wednesday")
-        case 6: // Cuma
-            incrementWeekdayAchievement(id: "weekday_friday")
-        default:
-            break
-        }
-    }
-    
-    // Belirli gün başarımlarını artır
-    private func incrementWeekdayAchievement(id: String) {
-        let key = "\(id)_count"
-        let count = userDefaults.integer(forKey: key) + 1
-        userDefaults.set(count, forKey: key)
-        
-        let requiredValue = 10 // Tüm gün bazlı başarımlar için 10
-        
-        if count >= requiredValue {
-            updateAchievement(id: id, status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: id, status: .inProgress(currentValue: count, requiredValue: requiredValue))
-        }
-    }
-    
-    // YENİ: Oyun stili başarımları (Yeni eklendi)
-    private func checkGameStyleAchievements(hintCount: Int, errorCount: Int) {
-        // Metodolojik Çözücü (Not almadan oyunu tamamlama)
-        let notesUsed = userDefaults.bool(forKey: "notes_used_in_current_game")
-        if !notesUsed {
-            updateAchievement(id: "style_methodical", status: .completed(unlockDate: Date()))
-        }
-        
-        // Mükemmeliyetçi (Tüm notları kullanma)
-        let allNotesUsed = userDefaults.bool(forKey: "all_notes_used_in_current_game")
-        if allNotesUsed {
-            updateAchievement(id: "style_perfectionist", status: .completed(unlockDate: Date()))
-        }
-        
-        // Hızlı Girişçi (30 saniye içinde 30 hücre) - Bu başarım için ana oyun kodunda lojik eklenmesi gerekebilir
-        // Bu başarım için ayrı bir fonksiyon kullanılabilir
-    }
-    
-    // YENİ: Tamamlanan hücre sayısı başarımları (Yeni eklendi)
-    private func updateCellsCompletedAchievements() {
-        // Her Sudoku 81 hücreye sahip, bu yüzden her oyun tamamlandığında 81 hücre ekliyoruz
-        let key = "total_cells_completed"
-        let currentCells = userDefaults.integer(forKey: key)
-        let newTotal = currentCells + 81
-        userDefaults.set(newTotal, forKey: key)
-        
-        // Başarımları kontrol et
-        if newTotal >= 500 {
-            updateAchievement(id: "stats_500_cells", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "stats_500_cells", status: .inProgress(currentValue: newTotal, requiredValue: 500))
-        }
-        
-        if newTotal >= 1000 {
-            updateAchievement(id: "stats_1000_cells", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "stats_1000_cells", status: .inProgress(currentValue: newTotal, requiredValue: 1000))
-        }
-        
-        if newTotal >= 5000 {
-            updateAchievement(id: "stats_5000_cells", status: .completed(unlockDate: Date()))
-        } else {
-            updateAchievement(id: "stats_5000_cells", status: .inProgress(currentValue: newTotal, requiredValue: 5000))
-        }
-    }
-    
-    // YENİ: Özel gün başarımları (Yeni eklendi)
-    private func checkSpecialDayAchievements() {
-        let calendar = Calendar.current
-        let today = Date()
-        let day = calendar.component(.day, from: today)
-        let month = calendar.component(.month, from: today)
-        
-        // Yeni yıl kontrolü
-        if day == 1 && month == 1 {
-            updateAchievement(id: "holiday_new_year", status: .completed(unlockDate: Date()))
-        }
-        
-        // Doğum günü başarımını yılın belirli bir gününde (örn: 15 Temmuz) herkes için otomatik olarak aç
-        // Bu sabit tarih seçimi ile oyuncular belirli bir günde oynadıklarında başarımı kazanır
-        if day == 15 && month == 7 {  // 15 Temmuz - örnek tarih
-            updateAchievement(id: "birthday_player", status: .completed(unlockDate: Date()))
-        }
-        
-        // Hafta sonu canavarı - Bir hafta sonunda 20 oyun
-        // Bu başarım için ekstra bir fonksiyon gerekebilir
-        checkWeekendWarriorAchievement()
-    }
-    
-    // Hafta sonu canavarı başarımını kontrol et
-    private func checkWeekendWarriorAchievement() {
-        let calendar = Calendar.current
-        let today = Date()
-        let weekday = calendar.component(.weekday, from: today)
-        
-        // Cumartesi (7) veya Pazar (1) günü mü?
-        if weekday == 1 || weekday == 7 {
-            // Bugünün tarihini al
-            let todayKey = "weekend_warrior_date"
-            let todayCountKey = "weekend_warrior_count"
-            
-            // Kayıtlı tarihi kontrol et
-            let savedDateTimeInterval = userDefaults.double(forKey: todayKey)
-            let savedDate = Date(timeIntervalSince1970: savedDateTimeInterval)
-            
-            // Bugün aynı hafta sonu mu kontrol et
-            let isSameWeekend = calendar.isDate(savedDate, equalTo: today, toGranularity: .weekOfYear) &&
-                               (calendar.component(.weekday, from: savedDate) == 1 || 
-                                calendar.component(.weekday, from: savedDate) == 7)
-            
-            if isSameWeekend || savedDateTimeInterval == 0 {
-                // Sayacı artır
-                let currentCount = userDefaults.integer(forKey: todayCountKey) + 1
-                userDefaults.set(currentCount, forKey: todayCountKey)
-                
-                // Başarım kontrolü
-                if currentCount >= 20 {
-                    updateAchievement(id: "holiday_weekend", status: .completed(unlockDate: Date()))
-                } else {
-                    updateAchievement(id: "holiday_weekend", status: .inProgress(currentValue: currentCount, requiredValue: 20))
-                }
-                
-                // Tarihi kaydet
-                userDefaults.set(today.timeIntervalSince1970, forKey: todayKey)
-            } else {
-                // Yeni hafta sonu, sayacı sıfırla
-                userDefaults.set(1, forKey: todayCountKey)
-                userDefaults.set(today.timeIntervalSince1970, forKey: todayKey)
+            if timeInSeconds < 600.0 { // time_hard_10
+                updateAchievement(id: "time_hard_10", status: .completed(unlockDate: Date()))
+            }
+        case .expert:
+            if timeInSeconds < 180.0 { // time_expert_3
+                updateAchievement(id: "time_expert_3", status: .completed(unlockDate: Date()))
+            }
+            if timeInSeconds < 300.0 { // time_expert_5
+                updateAchievement(id: "time_expert_5", status: .completed(unlockDate: Date()))
+            }
+            if timeInSeconds < 480.0 { // time_expert_8
+                updateAchievement(id: "time_expert_8", status: .completed(unlockDate: Date()))
+            }
+            if timeInSeconds < 900.0 { // time_expert_15
+                updateAchievement(id: "time_expert_15", status: .completed(unlockDate: Date()))
             }
         }
+        // Loglama eklenebilir
+        // logDebug("Hız başarımları kontrol edildi: \(difficulty), Süre: \(timeInSeconds)s")
     }
-} 
+    
+}// AchievementManager SINIFININ KAPANIS PARANTEZİ
+
+
+

@@ -40,7 +40,9 @@ struct MainContentView: View {
             }
             .accentColor(.blue)
             .onAppear {
-                AchievementManager.shared.loadAchievementsFromFirebase()
+                // Başarımları yüklemeyi dene (eğer henüz yüklenmediyse veya güncelleme gerekiyorsa)
+                // Bu çağrı artık completion bekliyor, ancak burada sonuçla işimiz yok.
+                AchievementManager.shared.loadAchievementsFromFirebase { _ in /* ContentView içinde sonuçla ilgilenmiyoruz */ }
             }
             
             // Başarım bildirimlerini birleştir

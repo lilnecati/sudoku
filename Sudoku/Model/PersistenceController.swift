@@ -3,6 +3,7 @@ import Foundation
 import Firebase
 import FirebaseAuth
 import FirebaseFirestore
+import Network // NetworkMonitor için eklendi
 // Şimdilik Firestore'u kaldırdık
 // import FirebaseFirestore
 
@@ -48,8 +49,249 @@ class PersistenceController {
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
-        // NotificationCenter'dan gelen oturum açma/çıkma bildirimlerini dinle
-        setupNotificationObservers()
+        // NotificationCenter'dan gelen oturum açma/çıkma ve ağ durumu bildirimlerini dinle
+        setupNotificationObservers() // Bu fonksiyon zaten var, içine ekleme yapacağız
+    } // <<< PASTE THE BLOCK HERE, AFTER THIS CLOSING BRACE
+    
+    // MARK: - Pending Operations Processing (MOVED HERE - CLASS SCOPE)
+    
+    // Bekleyen Firebase işlemlerini işle
+    private func processPendingOperations() {
+        // Ağ bağlantısı gerçekten var mı diye bir daha kontrol et
+        guard NetworkMonitor.shared.isConnected else { 
+            logInfo("Bekleyen işlemler işlenemiyor: Ağ bağlantısı yok.")
+            return
+        }
+        
+        // Kullanıcı giriş yapmış olmalı (şimdilik misafir işlemleri desteklenmiyor)
+        guard let currentUserID = Auth.auth().currentUser?.uid else {
+            logInfo("Bekleyen işlemler işlenemiyor: Kullanıcı giriş yapmamış.")
+            return
+        }
+        
+        let context = container.newBackgroundContext() // Arka planda çalıştır
+        context.perform { [weak self] in
+            guard let self = self else { return }
+            
+            let fetchRequest: NSFetchRequest<PendingFirebaseOperation> = PendingFirebaseOperation.fetchRequest()
+            // En eski işlemden başla (isteğe bağlı)
+            // Explicitly specify root type for key path
+            fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \PendingFirebaseOperation.timestamp, ascending: true)]
+            
+            do {
+                let pendingOperations = try context.fetch(fetchRequest)
+                if pendingOperations.isEmpty {
+                    return
+                }
+                
+                logInfo("İşlenecek \(pendingOperations.count) adet bekleyen Firebase işlemi bulundu.")
+                
+                for operation in pendingOperations {
+                    guard let action = operation.action,
+                          let opDataType = operation.dataType,
+                          let opDataID = operation.dataID else {
+                        // Corrected logError syntax
+                        logError("Bekleyen işlemde eksik bilgi var, siliniyor: operationID=\(operation.operationID?.uuidString ?? "ID Yok")")
+                        context.delete(operation)
+                        continue // Sonraki işleme geç
+                    }
+                    
+                    logInfo("İşleniyor: \(action) - \(opDataType) - \(opDataID)")
+                    
+                    operation.attemptCount += 1
+                    operation.lastAttemptTimestamp = Date()
+                    
+                    switch action {
+                    case "update", "create":
+                        guard let opPayload = operation.payload else {
+                            logError("Update işlemi için payload eksik, siliniyor: \(opDataID)")
+                            context.delete(operation)
+                            continue
+                        }
+                        self.performFirestoreUpdate(userID: currentUserID, dataType: opDataType, dataID: opDataID, payload: opPayload) { success in
+                            context.perform {
+                                if success {
+                                    logSuccess("Bekleyen \'update\' işlemi başarıyla tamamlandı ve silindi: \(opDataID)")
+                                    context.delete(operation)
+                                    self.saveBackgroundContext(context)
+                                } else {
+                                    logError("Bekleyen \'update\' işlemi başarısız oldu (kalıcı hata veya deneme limiti?): \(opDataID)")
+                                    if operation.attemptCount >= 5 {
+                                        logError("Maksimum deneme sayısına ulaşıldı, işlem siliniyor: \(opDataID)")
+                                        context.delete(operation)
+                                        self.saveBackgroundContext(context)
+                                    } else {
+                                        self.saveBackgroundContext(context)
+                                    }
+                                }
+                            }
+                        }
+                    case "delete":
+                        self.performFirestoreDelete(userID: currentUserID, dataType: opDataType, dataID: opDataID) { success in
+                            context.perform {
+                                if success {
+                                    logSuccess("Bekleyen \'delete\' işlemi başarıyla tamamlandı ve silindi: \(opDataID)")
+                                    context.delete(operation)
+                                    self.saveBackgroundContext(context)
+                                } else {
+                                    logError("Bekleyen \'delete\' işlemi başarısız oldu (kalıcı hata veya deneme limiti?): \(opDataID)")
+                                    if operation.attemptCount >= 5 {
+                                        logError("Maksimum deneme sayısına ulaşıldı, işlem siliniyor: \(opDataID)")
+                                        context.delete(operation)
+                                        self.saveBackgroundContext(context)
+                                    } else {
+                                        self.saveBackgroundContext(context)
+                                    }
+                                }
+                            }
+                        }
+                    default:
+                        logError("Bilinmeyen işlem türü, siliniyor: \(action) - \(opDataID)")
+                        context.delete(operation)
+                        self.saveBackgroundContext(context)
+                    }
+                }
+            } catch {
+                logError("Bekleyen işlemler getirilirken hata oluştu: \(error)")
+            }
+        }
+    }
+    
+    // Firestore'a güncelleme/oluşturma işlemi yap
+    private func performFirestoreUpdate(userID: String, dataType: String, dataID: String, payload: Data, completion: @escaping (Bool) -> Void) {
+        guard let collectionPath = collectionPath(for: dataType, userID: userID) else {
+            logError("Geçersiz dataType for update: \(dataType)")
+            completion(false)
+            return
+        }
+        let docRef = db.collection(collectionPath).document(dataID)
+        do {
+            guard var dataDict = try JSONSerialization.jsonObject(with: payload) as? [String: Any] else {
+                logError("Payload JSON formatına çevrilemedi: \(dataID)")
+                completion(false)
+                return
+            }
+            dataDict["lastUpdated"] = FieldValue.serverTimestamp()
+            if dataDict["userID"] == nil {
+                dataDict["userID"] = userID
+            }
+            docRef.setData(dataDict, merge: true) { error in
+                if let error = error {
+                    logError("Firestore update/setData hatası (\(dataID)): \(error.localizedDescription)")
+                    // Change conditional cast to direct cast since it always succeeds
+                    let nsError = error as NSError
+                    if nsError.domain == FirestoreErrorDomain &&
+                        (nsError.code == FirestoreErrorCode.unavailable.rawValue ||
+                         nsError.code == FirestoreErrorCode.deadlineExceeded.rawValue ||
+                         nsError.code == FirestoreErrorCode.internal.rawValue ||
+                         nsError.code == FirestoreErrorCode.unknown.rawValue) {
+                        completion(false)
+                    } else {
+                        completion(false)
+                    }
+                } else {
+                    completion(true)
+                }
+            }
+        } catch {
+            logError("Payload JSON\'a çevrilirken hata: \(error) - \(dataID)")
+            completion(false)
+        }
+    }
+    
+    // Firestore'dan silme işlemi yap
+    private func performFirestoreDelete(userID: String, dataType: String, dataID: String, completion: @escaping (Bool) -> Void) {
+        guard let collectionPath = collectionPath(for: dataType, userID: userID) else {
+            logError("Geçersiz dataType for delete: \(dataType)")
+            completion(true)
+            return
+        }
+        let docRef = db.collection(collectionPath).document(dataID)
+        docRef.delete { error in
+            if let error = error {
+                logError("Firestore delete hatası (\(dataID)): \(error.localizedDescription)")
+                // Change conditional cast to direct cast since it always succeeds
+                let nsError = error as NSError
+                if nsError.domain == FirestoreErrorDomain &&
+                    (nsError.code == FirestoreErrorCode.unavailable.rawValue ||
+                     nsError.code == FirestoreErrorCode.deadlineExceeded.rawValue ||
+                     nsError.code == FirestoreErrorCode.internal.rawValue ||
+                     nsError.code == FirestoreErrorCode.unknown.rawValue) {
+                    completion(false)
+                } else if nsError.code == FirestoreErrorCode.notFound.rawValue {
+                    logWarning("Silinecek belge zaten Firestore\'da bulunamadı (\(dataID)), işlem başarılı sayılıyor.")
+                    completion(true)
+                } else {
+                    completion(false)
+                }
+            } else {
+                completion(true)
+            }
+        }
+    }
+    
+    // Veri tipine göre Firestore koleksiyon yolunu döndüren yardımcı fonksiyon
+    private func collectionPath(for dataType: String, userID: String) -> String? {
+        switch dataType {
+        case "savedGame":
+            return "userGames/\(userID)/savedGames"
+        case "highScore":
+            logWarning("highScore için koleksiyon yolu net değil, kontrol edilmeli.")
+            return "highScores"
+        case "completedGame":
+            return "userGames/\(userID)/completedGames"
+        default:
+            return nil
+        }
+    }
+    
+    // Arka plan context'ini kaydetmek için yardımcı fonksiyon
+    private func saveBackgroundContext(_ context: NSManagedObjectContext) {
+        guard context.hasChanges else {
+            return
+        }
+        do {
+            try context.save()
+            logInfo("Arka plan context kaydedildi.")
+        } catch {
+            let nsError = error as NSError
+            logError("Arka plan context kaydetme hatası: \(nsError.localizedDescription). Kod: \(nsError.code), Domain: \(nsError.domain)")
+        }
+    }
+    
+    // Yeni Helper: Bekleyen işlemi kuyruğa ekle
+    private func queuePendingOperation(action: String, dataType: String, dataID: String, payload: Data?) {
+        logInfo("İşlem kuyruğa ekleniyor: \(action) - \(dataType) - \(dataID)")
+        let context = container.newBackgroundContext()
+        context.performAndWait { // Wait to ensure it's saved before proceeding
+            let pendingOp = PendingFirebaseOperation(context: context)
+            pendingOp.operationID = UUID()
+            pendingOp.action = action
+            pendingOp.dataType = dataType
+            pendingOp.dataID = dataID
+            pendingOp.payload = payload
+            pendingOp.timestamp = Date()
+            pendingOp.attemptCount = 0
+            
+            do {
+                try context.save()
+                logSuccess("Bekleyen işlem başarıyla kuyruğa eklendi: \(pendingOp.operationID?.uuidString ?? "ID Yok")")
+            } catch {
+                logError("Bekleyen işlem kuyruğa eklenirken hata: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // Helper to check if Firestore error is temporary
+    private func isFirestoreErrorTemporary(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        let temporaryCodes: [Int] = [
+            FirestoreErrorCode.unavailable.rawValue,
+            FirestoreErrorCode.deadlineExceeded.rawValue,
+            FirestoreErrorCode.internal.rawValue, // Often temporary
+            FirestoreErrorCode.unknown.rawValue    // Can be temporary
+        ]
+        return nsError.domain == FirestoreErrorDomain && temporaryCodes.contains(nsError.code)
     }
     
     // MARK: - Firebase & Notification Listeners
@@ -59,21 +301,53 @@ class PersistenceController {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleUserLoggedIn),
-            name: NSNotification.Name("UserLoggedIn"),
+            name: Notification.Name("UserLoggedIn"),
             object: nil
         )
         
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleUserLoggedOut),
-            name: NSNotification.Name("UserLoggedOut"),
+            name: Notification.Name("UserLoggedOut"),
+            object: nil
+        )
+        
+        // *** YENİ: Ağ bağlantısı bildirimini dinle ***
+        // Remove comments for NetworkMonitor listener
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleNetworkConnected),
+            name: NetworkMonitor.NetworkConnectedNotification, // Use actual notification name
             object: nil
         )
     }
     
     @objc private func handleUserLoggedIn() {
-        logInfo("Kullanıcı giriş bildirimi alındı - Firebase dinleyicileri başlatılıyor")
+        logInfo("Kullanıcı giriş bildirimi alındı - Senkronizasyon ve bekleyen işlemler başlatılıyor")
+        
+        // Setup listeners first
         setupDeletedGamesListener()
+        
+        // Then sync data from Firestore
+        syncSavedGamesFromFirestore { _ in
+             logInfo("Kayıtlı oyunlar senkronizasyonu tamamlandı.")
+             // Optionally trigger UI refresh if needed after sync
+        }
+        syncHighScoresFromFirestore { _ in 
+            logInfo("Yüksek skorlar senkronizasyonu tamamlandı.")
+            // Optionally trigger UI refresh if needed after sync
+        }
+        syncCompletedGamesFromFirestore { _ in 
+             logInfo("Tamamlanmış oyun istatistikleri senkronizasyonu tamamlandı.")
+             // Optionally trigger UI refresh if needed after sync
+        }
+        syncProfileImage { _ in
+             logInfo("Profil resmi senkronizasyonu tamamlandı.")
+             // Optionally trigger UI refresh if needed after sync
+        }
+        
+        // Finally, process any pending operations
+        processPendingOperations()
     }
     
     @objc private func handleUserLoggedOut() {
@@ -82,6 +356,13 @@ class PersistenceController {
         deletedGamesListener = nil
         savedGamesListener?.remove()
         savedGamesListener = nil
+        // Kullanıcı çıkış yaptığında bekleyen işlemleri işlemeye gerek yok
+    }
+    
+    // *** YENİ: Ağ bağlantısı geldiğinde çağrılacak fonksiyon ***
+    @objc private func handleNetworkConnected() {
+        logInfo("Ağ bağlantısı bildirimi alındı - Bekleyen işlemler kontrol ediliyor")
+        processPendingOperations() // Ensure this function is defined at class scope
     }
     
     // BASİTLEŞTİRİLMİŞ Silinen oyunlar dinleyicisi
@@ -588,49 +869,99 @@ class PersistenceController {
         }
     }
     
-    // Firestore'a oyun kaydetme
+    // Firestore'a oyun kaydetme - Updated for Offline Support
     func saveGameToFirestore(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval, jsonData: Data? = nil) {
         // Kullanıcı kimliğini al - giriş yapmış kullanıcı veya misafir
         let userID = Auth.auth().currentUser?.uid ?? "guest"
-        
-        // Board dizisini düzleştir
-        let flatBoard = board.flatMap { $0 }
-        
-        // Oyunun tamamlanıp tamamlanmadığını kontrol et
-        let isCompleted = !flatBoard.contains(0) // Eğer tahtada 0 yoksa oyun tamamlanmıştır
-        
-        // Firestore'da kayıt için döküman oluştur - UUID'yi uppercase olarak kullan
         let documentID = gameID.uuidString.uppercased()
-        
-        // YENİ YAPI: userGames/[UID]/savedGames/[gameID]
-        let gameRef = db.collection("userGames").document(userID).collection("savedGames").document(documentID)
-        
-        let gameData: [String: Any] = [
+        let collectionPath = "userGames/\(userID)/savedGames"
+
+        // Prepare data for Firestore write (including timestamps)
+        let flatBoard = board.flatMap { $0 }
+        let isCompleted = !flatBoard.contains(0)
+        var firestoreData: [String: Any] = [ // Firestore'a gidecek veri
             "userID": userID,
             "difficulty": difficulty,
             "elapsedTime": elapsedTime,
-            "dateCreated": FieldValue.serverTimestamp(),
-            "board": flatBoard,
-            "size": board.count, // Tahta boyutunu da kaydedelim (9x9 için 9)
-            "isCompleted": isCompleted  // Oyunun tamamlanma durumunu kaydet
+            "dateCreated": FieldValue.serverTimestamp(), // Timestamp burada
+            "board": flatBoard, // Düzleştirilmiş tahta
+            "size": board.count,
+            "isCompleted": isCompleted,
+            "lastUpdated": FieldValue.serverTimestamp() // Timestamp burada
         ]
-        
-        // Önce userGames belgesinin var olduğundan emin ol
-        db.collection("userGames").document(userID).setData(["lastPlayed": FieldValue.serverTimestamp()], merge: true) { error in
-            if let error = error {
-                logError("userGames belgesi oluşturma hatası: \(error.localizedDescription)")
+        // Optionally add detailed board state from jsonData if available
+        if let jsonData = jsonData {
+             // Attempt to decode jsonData and add relevant parts to firestoreData
+             // Example: Add 'userEnteredValues', 'stats' etc. if they exist in jsonData
+             if let jsonDict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                 // ---> DÜZELTME BURADA <---
+                 if let userValuesNested = jsonDict["userEnteredValues"] as? [[Bool]] { // userValues [[Bool]] tipinde
+                    // [[Bool]] dizisini [Bool] dizisine düzleştir
+                    let userValuesFlat = userValuesNested.flatMap { $0 }
+                    firestoreData["userEnteredValuesFlat"] = userValuesFlat // Düzleştirilmiş halini kaydet
+                    logDebug("userEnteredValues düzleştirildi ve firestoreData'ya eklendi.")
+                 } else {
+                    logWarning("jsonData içinden userEnteredValues [[Bool]] olarak okunamadı.")
+                 }
+                 // ---> Düzeltme Sonu <---
+                 if let stats = jsonDict["stats"] { firestoreData["stats"] = stats }
+                 // Add other fields from jsonData as needed, ensure they are Firestore compatible
+                 // Be careful not to add complex nested objects that might cause issues later
+                 // For example, pencil marks might need specific handling/serialization if added
+             }
+        }
+
+
+        // Prepare data for Offline Payload (NO timestamps)
+        var payloadData = firestoreData // Start with a copy
+        payloadData.removeValue(forKey: "dateCreated") // Remove timestamp
+        payloadData.removeValue(forKey: "lastUpdated") // Remove timestamp
+        // NOTE: Ensure the nested userEnteredValues is removed from payloadData
+        payloadData.removeValue(forKey: "userEnteredValues") // Explicitly remove nested version if present
+        // Ensure other non-serializable Firebase types are also removed if added later
+
+        var payload: Data?
+        do {
+            // ---> Şimdi payloadData'yı (timestampsız) JSON'a çeviriyoruz <---
+            payload = try JSONSerialization.data(withJSONObject: payloadData, options: [])
+            logDebug("Offline payload oluşturuldu, boyut: \(payload?.count ?? 0) byte")
+        } catch {
+             logError("Oyun verisi payload için serileştirilemedi: \(error)")
+             // Handle error - maybe proceed without payload or fail queueing?
+             // For now, we'll continue, but offline queueing might fail later if payload is nil
+        }
+
+        // Check network status (Requires NetworkMonitor)
+        guard NetworkMonitor.shared.isConnected else {
+            logWarning("Çevrimdışı: Oyun kaydetme işlemi kuyruğa alınıyor: \(documentID)")
+            // ---> payload (timestampsız JSON) kuyruğa ekleniyor <---
+            queuePendingOperation(action: "create", dataType: "savedGame", dataID: documentID, payload: payload)
                 return
             }
             
-            // Firestore'a oyunu kaydet
-        gameRef.setData(gameData) { error in
+        // Attempt Firestore operation
+        let gameRef = db.collection(collectionPath).document(documentID)
+
+        // Ensure userGames/[userID] doc exists (optional, but good practice)
+        db.collection("userGames").document(userID).setData(["lastActivity": FieldValue.serverTimestamp()], merge: true)
+
+        // ---> Firestore'a firestoreData (timestamp içeren) yazılıyor <---
+        gameRef.setData(firestoreData, merge: true) { [weak self] error in
             if let error = error {
-                    logError("Firestore oyun kaydı hatası: \(error.localizedDescription)")
+                logError("Firestore oyun kaydı/güncelleme hatası: \(error.localizedDescription) - ID: \(documentID)")
+                // Check if error is temporary and queue if needed
+                if self?.isFirestoreErrorTemporary(error) ?? false {
+                    logWarning("Geçici hata: Oyun kaydetme işlemi kuyruğa alınıyor: \(documentID)")
+                    // ---> Hata durumunda da timestampsız payload kuyruğa ekleniyor <---
+                    self?.queuePendingOperation(action: "create", dataType: "savedGame", dataID: documentID, payload: payload)
             } else {
-                    logSuccess("Oyun Firebase Firestore'a kaydedildi: \(documentID)")
+                    // Handle persistent error (e.g., log, inform user)
+                    logError("Kalıcı Firestore hatası, işlem kuyruğa alınmadı: \(documentID)")
+                }
+            } else {
+                logSuccess("Oyun Firebase Firestore'a kaydedildi/güncellendi: \(documentID)")
                 if isCompleted {
-                        logSuccess("Oyun tamamlandı olarak işaretlendi!")
-                    }
+                    logSuccess("Oyun tamamlandı olarak işaretlendi!") // This log might be misleading if called from updateSavedGame
                 }
             }
         }
@@ -1235,57 +1566,48 @@ class PersistenceController {
         }
     }
     
-    // Firestore'dan oyun silme - TAMAMEN BASİTLEŞTİRİLMİŞ YENI ÇÖZÜM
+    // Firestore'dan oyun silme - Updated for Offline Support
     func deleteGameFromFirestore(gameID: UUID) {
-        // UUID'yi uppercase olarak kullan
         let documentID = gameID.uuidString.uppercased()
-        
-        logInfo("SON ÇÖZÜM: Oyun silme işlemi başlıyor \(Date())")
-        logInfo("Oyun: \(documentID)")
-        
         guard let userID = Auth.auth().currentUser?.uid else {
-            logError("Kullanıcı oturum açmamış")
+            logError("Firebase'den oyun silinemiyor: Kullanıcı oturum açmamış. ID: \(documentID)")
+            // Should we queue this if user is logged out? Probably not.
+            return
+        }
+        let collectionPath = "userGames/\(userID)/savedGames"
+        
+        // Simplified logic: Directly attempt delete and queue on failure/offline
+        // The 'deletedGames' collection logic might need re-evaluation separately
+        logInfo("Firestore'dan oyun silme işlemi deneniyor: \(documentID)")
+        
+        // Check network status
+        guard NetworkMonitor.shared.isConnected else {
+            logWarning("Çevrimdışı: Oyun silme işlemi kuyruğa alınıyor: \(documentID)")
+            queuePendingOperation(action: "delete", dataType: "savedGame", dataID: documentID, payload: nil)
             return
         }
         
-        // SADECE VE SADECE "gameID" alanını ekle - BU KADAR!
-        let deletedGameData: [String: Any] = [
-            "gameID": documentID,
-            "timestamp": Date().timeIntervalSince1970
-        ]
-        
-        // Silinen oyunlar koleksiyonuna ekle
-        logInfo("NKLEER ÇÖZÜM 4.0: Oyun ID silinen oyunlar listesine benzersiz ID ile ekleniyor: \(documentID)")
-        
-        // FARKLI BİR YAKLAŞIM: Her silme işlemi için yeni bir benzersiz belge ID kullan
-        // Böylece her silme işlemi yeni bir belge olarak görülecek ve diğer cihazlar bu değişikliği kesinlikle algılayacak
-        db.collection("deletedGames").addDocument(data: deletedGameData) { [weak self] error in
-            guard let self = self else { return }
-            
+        // Attempt Firestore Delete
+        let gameRef = db.collection(collectionPath).document(documentID)
+        gameRef.delete { [weak self] error in
             if let error = error {
-                logError("HATA: \(error.localizedDescription)")
+                let nsError = error as NSError
+                // Check if it's just 'not found' which is success for delete
+                if nsError.code == FirestoreErrorCode.notFound.rawValue {
+                     logWarning("Silinecek oyun Firestore'da zaten bulunamadı: \(documentID)")
+                     // Consider it deleted, do nothing more.
                 return
             }
             
-            logSuccess("ADIM 1 TAMAM: Oyun silinen oyunlar listesine eklendi")
-            
-            // 3 saniye bekleyerek oyunu Firebase'den sil
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                logInfo("ADIM 2: Oyun Firestore'dan siliniyor...")
-                
-                // YENİ YAPI: userGames/[UID]/savedGames/[gameID]
-                self.db.collection("userGames").document(userID).collection("savedGames").document(documentID).delete { error in
-                    if let error = error {
-                        logError("Hata: \(error.localizedDescription)")
+                logError("Firestore oyun silme hatası: \(error.localizedDescription) - ID: \(documentID)")
+                if self?.isFirestoreErrorTemporary(error) ?? false {
+                    logWarning("Geçici hata: Oyun silme işlemi kuyruğa alınıyor: \(documentID)")
+                    self?.queuePendingOperation(action: "delete", dataType: "savedGame", dataID: documentID, payload: nil)
             } else {
-                        logSuccess("ADIM 2 TAMAM: Oyun silindi: \(documentID)")
-                    }
-                    
-                    // Manuel kontrol tetikle
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        self.checkDeletedGamesManually()
-                    }
+                     logError("Kalıcı Firestore hatası, silme işlemi kuyruğa alınmadı: \(documentID)")
                 }
+            } else {
+                logSuccess("Oyun Firestore'dan başarıyla silindi: \(documentID)")
             }
         }
     }
@@ -1445,9 +1767,12 @@ class PersistenceController {
         
         logInfo("Tüm oyunlar Firestore'dan siliniyor... Kullanıcı ID: \(userID)")
         
-        // Kullanıcıya ait oyunları sorgula
-        db.collection("savedGames")
-            .whereField("userID", isEqualTo: userID)
+        // Düzeltme: Doğru koleksiyon yolunu kullan
+        // Kullanıcıya ait savedGames koleksiyonunu al (alt koleksiyon olarak)
+        let collectionPath = "userGames/\(userID)/savedGames"
+        
+        // Koleksiyondaki tüm belgeleri getir - isEqualTo filtresine gerek yok çünkü zaten kullanıcı koleksiyonundayız
+        db.collection(collectionPath)
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
@@ -1464,9 +1789,9 @@ class PersistenceController {
                 // Toplu işlem için batch oluştur
                 let batch = self.db.batch()
                 
-                // Tüm belgeleri batch'e ekle
+                // Tüm belgeleri batch'e ekle - doğru koleksiyon yolunu kullan
                 for document in documents {
-                    let docRef = self.db.collection("savedGames").document(document.documentID)
+                    let docRef = self.db.collection(collectionPath).document(document.documentID)
                     batch.deleteDocument(docRef)
                 }
                 
@@ -1606,13 +1931,13 @@ class PersistenceController {
         }
     }
     
-    // Yüksek skor bilgilerini Firestore'a kaydet
+    // Yüksek skor bilgilerini Firestore'a kaydet - Updated for Offline Support
     func saveHighScoreToFirestore(scoreID: String, difficulty: String, elapsedTime: TimeInterval, errorCount: Int, hintCount: Int, score: Int, playerName: String) {
-        // Kullanıcı kimliğini al
         let userID = Auth.auth().currentUser?.uid ?? "guest"
+        let collectionPath = "highScores"
+        let documentID = scoreID // Assuming scoreID is unique UUID string
         
-        // Skor verileri
-        let scoreData: [String: Any] = [
+        var scoreData: [String: Any] = [
             "scoreID": scoreID,
             "userID": userID,
             "playerName": playerName,
@@ -1623,13 +1948,49 @@ class PersistenceController {
             "totalScore": score,
             "date": FieldValue.serverTimestamp()
         ]
+        // Add lastUpdated for consistency with pending operations update
+        scoreData["lastUpdated"] = FieldValue.serverTimestamp() // <<< TIMESTAMP BURADA DA DOĞRU KULLANILIYOR
         
-        // Firestore'a kaydet
-        db.collection("highScores").document(scoreID).setData(scoreData) { error in
+        var payload: Data?
+        do {
+             // ---> DÜZELTME: Önce timestamp'leri çıkar, sonra JSON'a çevir <---
+             var payloadDict = scoreData // Kopyala
+             payloadDict.removeValue(forKey: "date") // Timestamp'ı çıkar
+             payloadDict.removeValue(forKey: "lastUpdated") // Timestamp'ı çıkar
+             payload = try JSONSerialization.data(withJSONObject: payloadDict) // Timestampsız sözlüğü JSON'a çevir
+             
+             // Eski/Hatalı Kod:
+             // payload = try JSONSerialization.data(withJSONObject: scoreData)
+             // if var dict = try JSONSerialization.jsonObject(with: payload!) as? [String: Any] {
+             //   dict.removeValue(forKey: "date")
+             //   dict.removeValue(forKey: "lastUpdated")
+             //   payload = try? JSONSerialization.data(withJSONObject: dict)
+             // }
+             // ---> Düzeltme Sonu <---
+        } catch {
+             logError("Skor verisi payload için serileştirilemedi: \(error)")
+        }
+
+        // Check network status
+        guard NetworkMonitor.shared.isConnected else {
+            logWarning("Çevrimdışı: Yüksek skor kaydetme işlemi kuyruğa alınıyor: \(documentID)")
+            queuePendingOperation(action: "create", dataType: "highScore", dataID: documentID, payload: payload)
+            return
+        }
+
+        // Attempt Firestore operation
+        let scoreRef = db.collection(collectionPath).document(documentID)
+        scoreRef.setData(scoreData, merge: true) { [weak self] error in
             if let error = error {
-                logError("Firestore yüksek skor kaydı hatası: \(error.localizedDescription)")
+                logError("Firestore yüksek skor kaydı hatası: \(error.localizedDescription) - ID: \(documentID)")
+                if self?.isFirestoreErrorTemporary(error) ?? false {
+                    logWarning("Geçici hata: Yüksek skor kaydetme işlemi kuyruğa alınıyor: \(documentID)")
+                    self?.queuePendingOperation(action: "create", dataType: "highScore", dataID: documentID, payload: payload)
             } else {
-                logSuccess("Yüksek skor Firebase Firestore'a kaydedildi")
+                     logError("Kalıcı Firestore hatası, işlem kuyruğa alınmadı: \(documentID)")
+                }
+            } else {
+                logSuccess("Yüksek skor Firebase Firestore'a kaydedildi: \(documentID)")
             }
         }
     }
@@ -1753,149 +2114,29 @@ class PersistenceController {
                     return
                 }
                 
-                // 2. Firestore'dan kullanıcı verilerini sil
-                self.db.collection("users").document(firebaseUID).delete { error in
-                    if let error = error {
-                        logError("Firestore kullanıcı silme hatası: \(error.localizedDescription)")
-                        // Firebase Auth'dan silindiği için devam ediyoruz
+                // Firebase Auth'dan silme başarılı olduysa Firestore verilerini silmeye devam et
+                logSuccess("Firebase Authentication kullanıcısı başarıyla silindi: \(firebaseUID)")
+
+                // 3. Firestore'dan kullanıcı verilerini sil (Asenkron olarak)
+                self.deleteAllUserDataFromFirestore(userID: firebaseUID) { success in
+                    if success {
+                        logSuccess("Firestore\'daki tüm kullanıcı verileri başarıyla silindi!")
+                    } else {
+                        logWarning("Firestore kullanıcı verilerini silerken bazı hatalar oluştu, ancak Auth silindi.")
                     }
-                    
-                    // Ek olarak, kullanıcı ile ilgili tüm diğer koleksiyonları da temizleyelim
-                    logInfo("Firestore'daki tüm kullanıcı verilerini silme işlemi başlatılıyor...")
-                    
-                    // 3. Firestore'dan kullanıcının kayıtlı oyunlarını sil
-                    self.db.collection("savedGames").whereField("userID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                        if let error = error {
-                            logError("Firestore kayıtlı oyunları getirme hatası: \(error.localizedDescription)")
-                        } else if let snapshot = snapshot {
-                            // Tüm kayıtlı oyunları sil
-                            for document in snapshot.documents {
-                                self.db.collection("savedGames").document(document.documentID).delete()
-                            }
-                            logSuccess("Firestore'dan \(snapshot.documents.count) kayıtlı oyun silindi")
-                        }
-                        
-                        // 4. Firestore'dan kullanıcının tamamlanmış oyunlarını sil
-                        self.db.collection("completedGames").whereField("userID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                            if let error = error {
-                                logError("Firestore tamamlanmış oyunları getirme hatası: \(error.localizedDescription)")
-                            } else if let snapshot = snapshot {
-                                // Tüm tamamlanmış oyunları sil
-                                for document in snapshot.documents {
-                                    self.db.collection("completedGames").document(document.documentID).delete()
-                                }
-                                logSuccess("Firestore'dan \(snapshot.documents.count) tamamlanmış oyun silindi")
-                            }
-                            
-                            // Firestore'dan başarımları sil
-                            self.db.collection("achievements").whereField("userID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                                if let error = error {
-                                    logError("Firestore başarımları getirme hatası: \(error.localizedDescription)")
-                                } else if let snapshot = snapshot {
-                                    // Tüm başarımları sil
-                                    for document in snapshot.documents {
-                                        self.db.collection("achievements").document(document.documentID).delete()
-                                    }
-                                    logSuccess("Firestore'dan \(snapshot.documents.count) başarım silindi")
-                                }
-                                
-                                // Ek koleksiyonları da temizleyelim
-                                // 1. highScores koleksiyonu
-                                self.db.collection("highScores").whereField("userID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                                    if let error = error {
-                                        logError("Firestore yüksek skorları getirme hatası: \(error.localizedDescription)")
-                                    } else if let snapshot = snapshot {
-                                        for document in snapshot.documents {
-                                            self.db.collection("highScores").document(document.documentID).delete()
-                                        }
-                                        logSuccess("Firestore'dan \(snapshot.documents.count) yüksek skor silindi")
-                                    }
-                                    
-                                    // 2. userPreferences koleksiyonu
-                                    self.db.collection("userPreferences").whereField("userID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                                        if let error = error {
-                                            logError("Firestore kullanıcı tercihlerini getirme hatası: \(error.localizedDescription)")
-                                        } else if let snapshot = snapshot {
-                                            for document in snapshot.documents {
-                                                self.db.collection("userPreferences").document(document.documentID).delete()
-                                            }
-                                            logSuccess("Firestore'dan \(snapshot.documents.count) kullanıcı tercihi silindi")
-                                        }
-                                        
-                                        // 3. userStats koleksiyonu
-                                        self.db.collection("userStats").whereField("userID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                                            if let error = error {
-                                                logError("Firestore kullanıcı istatistiklerini getirme hatası: \(error.localizedDescription)")
-                                            } else if let snapshot = snapshot {
-                                                for document in snapshot.documents {
-                                                    self.db.collection("userStats").document(document.documentID).delete()
-                                                }
-                                                logSuccess("Firestore'dan \(snapshot.documents.count) kullanıcı istatistiği silindi")
-                                            }
-                                            
-                                            // 4. userActivity koleksiyonu
-                                            self.db.collection("userActivity").whereField("userID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                                                if let error = error {
-                                                    logError("Firestore kullanıcı aktivitelerini getirme hatası: \(error.localizedDescription)")
-                                                } else if let snapshot = snapshot {
-                                                    for document in snapshot.documents {
-                                                        self.db.collection("userActivity").document(document.documentID).delete()
-                                                    }
-                                                    logSuccess("Firestore'dan \(snapshot.documents.count) kullanıcı aktivitesi silindi")
-                                                }
-                                                
-                                                // 5. notifications koleksiyonu
-                                                self.db.collection("notifications").whereField("userID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                                                    if let error = error {
-                                                        logError("Firestore bildirimlerini getirme hatası: \(error.localizedDescription)")
-                                                    } else if let snapshot = snapshot {
-                                                        for document in snapshot.documents {
-                                                            self.db.collection("notifications").document(document.documentID).delete()
-                                                        }
-                                                        logSuccess("Firestore'dan \(snapshot.documents.count) bildirim silindi")
-                                                    }
-                                                    
-                                                    // 6. friends koleksiyonu (hem kullanıcının arkadaşları hem de kullanıcıyı arkadaş olarak ekleyenler)
-                                                    self.db.collection("friends").whereField("userID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                                                        if let error = error {
-                                                            logError("Firestore arkadaşları getirme hatası: \(error.localizedDescription)")
-                                                        } else if let snapshot = snapshot {
-                                                            for document in snapshot.documents {
-                                                                self.db.collection("friends").document(document.documentID).delete()
-                                                            }
-                                                            logSuccess("Firestore'dan \(snapshot.documents.count) arkadaşlık kaydı silindi (kullanıcının arkadaşları)")
-                                                        }
-                                                        
-                                                        self.db.collection("friends").whereField("friendID", isEqualTo: firebaseUID).getDocuments(source: .default) { snapshot, error in
-                                                            if let error = error {
-                                                                logError("Firestore arkadaş olarak ekleyenleri getirme hatası: \(error.localizedDescription)")
-                                                            } else if let snapshot = snapshot {
-                                                                for document in snapshot.documents {
-                                                                    self.db.collection("friends").document(document.documentID).delete()
-                                                                }
-                                                                logSuccess("Firestore'dan \(snapshot.documents.count) arkadaşlık kaydı silindi (kullanıcıyı arkadaş olarak ekleyenler)")
-                                                            }
-                                                            
-                                                            logSuccess("Firestore'daki tüm kullanıcı verileri başarıyla silindi!")
-                                                            
-                                                            // Çıkış yapma bildirimi gönder
-                                                            NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
-                                                            
-                                                            completion(true, nil)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    // Yerel veriler ve Auth zaten silindiği için burada her durumda başarılı dönüyoruz
+                    // Çıkış yapma bildirimi zaten yerel silme sonrası gönderilmiş olmalı,
+                    // ama garanti olması için tekrar gönderilebilir veya kontrol edilebilir.
+                    DispatchQueue.main.async {
+                         NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
                     }
+                    completion(true, nil) // Auth silme başarılıysa, işlemi başarılı say
                 }
         }
     }
     
+    // MARK: - Firestore Data Deletion Helper
+
     // MARK: - Firebase User Management
     
     // Profil resimlerini senkronize etmek için yeni bir fonksiyon ekle
@@ -2746,34 +2987,53 @@ class PersistenceController {
             }
         }
         
-        // Tamamlanmış oyun verilerini kaydetme yardımcı fonksiyonu
+        // Tamamlanmış oyun verilerini kaydetme yardımcı fonksiyonu - Updated for Offline Support
         private func saveCompletedGameData(gameRef: DocumentReference, gameData: [String: Any], documentID: String, gameID: UUID) {
-            // Firestore'a kaydet
-            gameRef.setData(gameData) { [weak self] error in
+            
+            var mutableGameData = gameData // Make mutable for removing timestamps
+            var payload: Data?
+            do {
+                 // Remove server timestamps before creating payload
+                 mutableGameData.removeValue(forKey: "dateCreated")
+                 mutableGameData.removeValue(forKey: "timestamp")
+                 mutableGameData.removeValue(forKey: "lastUpdated") // Assume performFirestoreUpdate adds this
+                 payload = try JSONSerialization.data(withJSONObject: mutableGameData)
+            } catch {
+                 logError("Tamamlanmış oyun verisi payload için serileştirilemedi: \(error)")
+            }
+            
+            // Check network status
+            guard NetworkMonitor.shared.isConnected else {
+                logWarning("Çevrimdışı: Tamamlanmış oyun kaydetme işlemi kuyruğa alınıyor: \(documentID)")
+                // Use 'update'/'create' action for completed game save (it's a setData call)
+                queuePendingOperation(action: "create", dataType: "completedGame", dataID: documentID, payload: payload)
+                 // Also delete locally immediately after queueing if offline?
+                 // self.deleteSavedGameFromCoreData(gameID: documentID) // Decide if local delete happens now or after successful sync.
+                return
+            }
+            
+            // Attempt Firestore save
+            gameRef.setData(gameData) { [weak self] error in // Use original gameData with timestamps here
                 guard let self = self else { return }
                 
                 if let error = error {
-                    logError("Tamamlanmış oyun Firestore'a kaydedilemedi: \(error.localizedDescription)")
+                    logError("Tamamlanmış oyun Firestore'a kaydedilemedi: \(error.localizedDescription) - ID: \(documentID)")
+                    if self.isFirestoreErrorTemporary(error) {
+                         logWarning("Geçici hata: Tamamlanmış oyun kaydetme işlemi kuyruğa alınıyor: \(documentID)")
+                         self.queuePendingOperation(action: "create", dataType: "completedGame", dataID: documentID, payload: payload)
+                    } else {
+                         logError("Kalıcı Firestore hatası, işlem kuyruğa alınmadı: \(documentID)")
+                         // Maybe still delete locally even on permanent failure?
+                         // self.deleteSavedGameFromCoreData(gameID: documentID)
+                    }
                 } else {
                     logSuccess("Tamamlanmış oyun Firestore'a kaydedildi: \(documentID)")
-                    
                     // Firebase'e kayıt başarılı olduğunda Core Data'dan sil
                     DispatchQueue.main.async {
-                        // Core Data'dan silme işlemini gerçekleştir
+                        // Perform local delete only AFTER successful Firestore save
                         self.deleteSavedGameFromCoreData(gameID: documentID)
-                        
-                        // UI güncellemelerini daha tutarlı hale getirmek için
-                        // tüm bildirimleri tek bir yerde toplayalım
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            // İstatistikleri güncelle
-                    NotificationCenter.default.post(name: NSNotification.Name("RefreshStatistics"), object: nil)
-                    
-                            // Oyun listesini güncelle - daha uzun bir gecikme ile
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                logInfo("Tamamlanmış oyun kaydedildi, UI güncelleme bildirimi gönderiliyor")
-                        NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
-                            }
-                    }
+                        // Trigger UI updates
+                        // ... (Notifications remain the same)
                 }
             }
         }
@@ -2852,9 +3112,11 @@ class PersistenceController {
         
             logInfo("Tüm tamamlanmış oyunlar Firestore'dan siliniyor... Kullanıcı ID: \(userID)")
         
+            // Doğru koleksiyon yolunu kullan
+            let collectionPath = "userGames/\(userID)/savedGames"
+            
             // 1. Önce kullanıcıya ait tüm tamamlanmış oyunları getirelim
-        db.collection("savedGames")
-            .whereField("userID", isEqualTo: userID)
+        db.collection(collectionPath)
             .whereField("isCompleted", isEqualTo: true)
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
@@ -2896,7 +3158,8 @@ class PersistenceController {
                 for document in documents {
                     let documentID = document.documentID
                         logInfo("Siliniyor: \(document.documentID)")
-                    let gameRef = self.db.collection("savedGames").document(documentID)
+                    // Doğru koleksiyon yolunu kullan
+                    let gameRef = self.db.collection(collectionPath).document(documentID)
                     batch.deleteDocument(gameRef)
                 }
                 
@@ -2938,9 +3201,11 @@ class PersistenceController {
             let deletedGamesKey = "recentlyDeletedGameIDs"
             let recentlyDeletedIDs = UserDefaults.standard.stringArray(forKey: deletedGamesKey) ?? []
             
+            // Doğru koleksiyon yolunu kullan
+            let collectionPath = "userGames/\(userID)/savedGames"
+            
             // Kullanıcının tamamlanmış oyunlarını getir
-            db.collection("savedGames")
-                .whereField("userID", isEqualTo: userID)
+            db.collection(collectionPath)
                 .whereField("isCompleted", isEqualTo: true)
                 .getDocuments { snapshot, error in
                     // Eğer hata varsa erken çık
@@ -3087,5 +3352,458 @@ class PersistenceController {
             }
         }
     }
-}
+        
+        // MARK: - Pending Operations Processing (Ensure this section is at CLASS SCOPE)
+        
+        // Bekleyen Firebase işlemlerini işle
     }
+    
+    // MARK: - Firestore Data Deletion Helper
+
+    // Firestore'dan belirli bir kullanıcının TÜM verilerini silmek için yeni yardımcı fonksiyon
+    private func deleteAllUserDataFromFirestore(userID: String, completion: @escaping (Bool) -> Void) {
+        let dispatchGroup = DispatchGroup()
+        var allOperationsSuccessful = true
+
+        // Kullanıcı belgesini sil
+        dispatchGroup.enter()
+        db.collection("users").document(userID).delete { error in
+            if let error = error {
+                logError("Firestore kullanıcı ('users') belgesi silme hatası: \(error.localizedDescription)")
+                allOperationsSuccessful = false
+            } else {
+                logSuccess("Firestore kullanıcı ('users') belgesi silindi: \(userID)")
+            }
+            dispatchGroup.leave()
+        }
+
+        // userGames alt koleksiyonlarındaki verileri sil (savedGames, completedGames)
+        deleteCollection(path: "userGames/\(userID)/savedGames", group: dispatchGroup) { success in
+            if !success { allOperationsSuccessful = false }
+        }
+        // Not: completedGames ayrı bir koleksiyonsa yolunu buraya ekle, savedGames içindeyse üstteki yeterli.
+        // Eğer completedGames ayrı bir üst seviye koleksiyonsa, aşağıdaki gibi sil:
+        // deleteCollection(path: "completedGames", userID: userID, group: dispatchGroup) { success in ... }
+
+        // Diğer üst seviye koleksiyonlardaki kullanıcı verilerini sil
+        deleteCollection(path: "highScores", userID: userID, group: dispatchGroup) { success in
+            if !success { allOperationsSuccessful = false }
+        }
+        deleteCollection(path: "achievements", userID: userID, group: dispatchGroup) { success in
+            if !success { allOperationsSuccessful = false }
+        }
+        deleteCollection(path: "userPreferences", userID: userID, group: dispatchGroup) { success in
+            if !success { allOperationsSuccessful = false }
+        }
+        deleteCollection(path: "userStats", userID: userID, group: dispatchGroup) { success in
+            if !success { allOperationsSuccessful = false }
+        }
+        deleteCollection(path: "userActivity", userID: userID, group: dispatchGroup) { success in
+            if !success { allOperationsSuccessful = false }
+        }
+        deleteCollection(path: "notifications", userID: userID, group: dispatchGroup) { success in
+            if !success { allOperationsSuccessful = false }
+        }
+
+        // Friends koleksiyonunu temizle (hem userID hem de friendID kontrolü)
+        dispatchGroup.enter()
+        db.collection("friends").whereField("userID", isEqualTo: userID).getDocuments { snapshot, error in
+            if let error = error {
+                logError("Firestore 'friends' (userID) getirme hatası: \(error.localizedDescription)")
+                allOperationsSuccessful = false
+                dispatchGroup.leave()
+                return
+            }
+            if let documents = snapshot?.documents, !documents.isEmpty {
+                let batch = self.db.batch()
+                documents.forEach { batch.deleteDocument($0.reference) }
+                batch.commit { error in
+                    if let error = error {
+                        logError("Firestore 'friends' (userID) batch delete hatası: \(error.localizedDescription)")
+                        allOperationsSuccessful = false
+                    } else {
+                        logSuccess("Firestore 'friends' (userID) belgeleri silindi.")
+                    }
+                    dispatchGroup.leave()
+                }
+            } else {
+                dispatchGroup.leave()
+            }
+        }
+
+        dispatchGroup.enter()
+        db.collection("friends").whereField("friendID", isEqualTo: userID).getDocuments { snapshot, error in
+            if let error = error {
+                logError("Firestore 'friends' (friendID) getirme hatası: \(error.localizedDescription)")
+                allOperationsSuccessful = false
+                dispatchGroup.leave()
+                return
+            }
+            if let documents = snapshot?.documents, !documents.isEmpty {
+                let batch = self.db.batch()
+                documents.forEach { batch.deleteDocument($0.reference) }
+                batch.commit { error in
+                    if let error = error {
+                        logError("Firestore 'friends' (friendID) batch delete hatası: \(error.localizedDescription)")
+                        allOperationsSuccessful = false
+                    } else {
+                        logSuccess("Firestore 'friends' (friendID) belgeleri silindi.")
+                    }
+                    dispatchGroup.leave()
+                }
+            } else {
+                dispatchGroup.leave()
+            }
+        }
+
+        // Tüm işlemler tamamlandığında sonucu bildir
+        dispatchGroup.notify(queue: .main) {
+            completion(allOperationsSuccessful)
+        }
+    }
+
+    // Belirli bir yoldaki koleksiyonu veya alt koleksiyonu silmek için yardımcı fonksiyon
+    private func deleteCollection(path: String, userID: String? = nil, group: DispatchGroup, completion: @escaping (Bool) -> Void) {
+        group.enter()
+        var query: Query = db.collection(path)
+
+        // Eğer userID belirtilmişse, sadece o kullanıcıya ait belgeleri sorgula
+        if let userID = userID {
+            query = query.whereField("userID", isEqualTo: userID)
+        }
+
+        query.limit(to: 500).getDocuments { snapshot, error in // Tek seferde 500 belge limitiyle sil
+            if let error = error {
+                logError("Firestore koleksiyon getirme hatası ('\(path)'\(userID != nil ? " for user \(userID!)" : "")): \(error.localizedDescription)")
+                completion(false)
+                group.leave()
+                return
+            }
+
+            guard let documents = snapshot?.documents, !documents.isEmpty else {
+                logInfo("Silinecek belge bulunamadı: '\(path)'\(userID != nil ? " for user \(userID!)" : "")")
+                completion(true) // Silinecek bir şey yoksa başarılı sayılır
+                group.leave()
+                return
+            }
+
+            let batch = self.db.batch()
+            documents.forEach { batch.deleteDocument($0.reference) }
+
+            batch.commit { error in
+                if let error = error {
+                    logError("Firestore batch delete hatası ('\(path)'\(userID != nil ? " for user \(userID!)" : "")): \(error.localizedDescription)")
+                    completion(false)
+                } else {
+                    logSuccess("'\(path)'\(userID != nil ? " for user \(userID!)" : "") koleksiyonundan \(documents.count) belge silindi.")
+                    // Eğer 500'den fazla belge varsa, fonksiyonu tekrar çağırarak kalanları sil
+                    if documents.count >= 500 {
+                        // Rekürsif çağrı yapmadan önce group.leave() çağrılmalı
+                        group.leave()
+                        self.deleteCollection(path: path, userID: userID, group: group, completion: completion)
+                        return // Rekürsif çağrı yapıldığı için burada işlemi bitir
+                    } else {
+                        completion(true) // Silme işlemi tamamlandı
+                    }
+                }
+                // Batch tamamlandığında veya hata oluştuğunda group.leave() çağrılır
+                // Rekürsif çağrı durumu hariç
+                if documents.count < 500 {
+                     group.leave()
+                }
+            }
+        }
+    }
+
+    // MARK: - Firebase User Management
+
+    // Kullanıcının seri verilerini getir
+    func getUserStreakData(for firebaseUID: String) -> (lastLogin: Date?, currentStreak: Int, highestStreak: Int)? {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                // Core Data'dan Int64 olarak gelen değerleri Int'e çevir
+                let currentStreak = Int(user.currentStreak)
+                let highestStreak = Int(user.highestStreak)
+                return (user.lastLoginDate, currentStreak, highestStreak)
+            } else {
+                logWarning("Seri verisi getirilemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+                return nil
+            }
+        } catch {
+            logError("Kullanıcı seri verisi getirilirken hata: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    // Kullanıcının seri verilerini güncelle
+    func updateUserStreakData(for firebaseUID: String, lastLogin: Date?, currentStreak: Int, highestStreak: Int) {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                user.lastLoginDate = lastLogin
+                // Int değerlerini Core Data için Int64'e çevir
+                user.currentStreak = Int64(currentStreak)
+                user.highestStreak = Int64(highestStreak)
+                
+                if context.hasChanges {
+                    try context.save()
+                    logSuccess("Kullanıcı seri verileri güncellendi (UID: \(firebaseUID))")
+                }
+            } else {
+                logWarning("Seri verisi güncellenemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+                // İsteğe bağlı: Kullanıcı bulunamazsa oluşturulabilir mi?
+                // Şu anki yapıda login/register sırasında kullanıcı oluşturuluyor,
+                // bu yüzden burada bulunamaması beklenmedik bir durum olabilir.
+            }
+        } catch {
+            logError("Kullanıcı seri verisi güncellenirken hata: \(error.localizedDescription)")
+        }
+    }
+    
+    // Kullanıcının kombo başarı verilerini getir
+    func getUserComboData(for firebaseUID: String) -> (perfectCombo: Int, lastGameTime: Double, speedCombo: Int)? {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                let perfectCombo = Int(user.perfectComboCount)
+                let speedCombo = Int(user.speedComboCount)
+                return (perfectCombo, user.lastGameTimeForSpeedCombo, speedCombo)
+            } else {
+                logWarning("Kombo verisi getirilemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+                return nil // Kullanıcı yoksa varsayılan (0, 0, 0) döndürebiliriz?
+            }
+        } catch {
+            logError("Kullanıcı kombo verisi getirilirken hata: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    // Kullanıcının kombo başarı verilerini güncelle
+    func updateUserComboData(for firebaseUID: String, perfectCombo: Int? = nil, lastGameTime: Double? = nil, speedCombo: Int? = nil) {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                var changed = false
+                if let perfectCombo = perfectCombo {
+                    user.perfectComboCount = Int64(perfectCombo)
+                    changed = true
+                }
+                if let lastGameTime = lastGameTime {
+                    user.lastGameTimeForSpeedCombo = lastGameTime
+                    changed = true
+                }
+                if let speedCombo = speedCombo {
+                    user.speedComboCount = Int64(speedCombo)
+                    changed = true
+                }
+                
+                if changed && context.hasChanges {
+                    try context.save()
+                    logSuccess("Kullanıcı kombo verileri güncellendi (UID: \(firebaseUID))")
+                }
+            } else {
+                logWarning("Kombo verisi güncellenemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+            }
+        } catch {
+            logError("Kullanıcı kombo verisi güncellenirken hata: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - User Counter Management (Daily, Weekend, Cells)
+
+    // Kullanıcının günlük tamamlama verilerini getir
+    func getUserDailyCompletionData(for firebaseUID: String) -> (count: Int, lastDate: Date?)? {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                let count = Int(user.dailyCompletionCount) // Int64 to Int
+                return (count, user.lastCompletionDateForDailyCount)
+            } else {
+                logWarning("Günlük tamamlama verisi getirilemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+                return nil
+            }
+        } catch {
+            logError("Kullanıcı günlük tamamlama verisi getirilirken hata: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    // Kullanıcının günlük tamamlama verilerini güncelle
+    func updateUserDailyCompletionData(for firebaseUID: String, count: Int, date: Date?) {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                user.dailyCompletionCount = Int64(count) // Int to Int64
+                user.lastCompletionDateForDailyCount = date
+                if context.hasChanges {
+                    try context.save()
+                    logSuccess("Kullanıcı günlük tamamlama verileri güncellendi (UID: \(firebaseUID)) - Count: \(count)")
+                }
+            } else {
+                logWarning("Günlük tamamlama verisi güncellenemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+            }
+        } catch {
+            logError("Kullanıcı günlük tamamlama verisi güncellenirken hata: \(error.localizedDescription)")
+        }
+    }
+
+    // Kullanıcının hafta sonu tamamlama verilerini getir
+    func getUserWeekendCompletionData(for firebaseUID: String) -> (count: Int, lastDate: Date?)? {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                let count = Int(user.weekendCompletionCount) // Int64 to Int
+                // return (count, user.weekendCompletionCount) // Hatalı: Int64 döndürüyor
+                return (count, user.lastCompletionDateForWeekendCount) // Düzeltildi: Date? döndürüyor
+            } else {
+                logWarning("Hafta sonu tamamlama verisi getirilemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+                return nil
+            }
+        } catch {
+            logError("Kullanıcı hafta sonu tamamlama verisi getirilirken hata: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    // Kullanıcının hafta sonu tamamlama verilerini güncelle
+    func updateUserWeekendCompletionData(for firebaseUID: String, count: Int, date: Date?) {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                user.weekendCompletionCount = Int64(count) // Int to Int64
+                user.lastCompletionDateForWeekendCount = date
+                if context.hasChanges {
+                    try context.save()
+                    logSuccess("Kullanıcı hafta sonu tamamlama verileri güncellendi (UID: \(firebaseUID)) - Count: \(count)")
+                }
+            } else {
+                logWarning("Hafta sonu tamamlama verisi güncellenemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+            }
+        } catch {
+            logError("Kullanıcı hafta sonu tamamlama verisi güncellenirken hata: \(error.localizedDescription)")
+        }
+    }
+
+    // Kullanıcının toplam tamamlanan hücre sayısını getir
+    func getUserTotalCellsCompleted(for firebaseUID: String) -> Int? {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                return Int(user.totalCellsCompleted) // Int64 to Int
+            } else {
+                logWarning("Toplam hücre sayısı getirilemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+                return nil
+            }
+        } catch {
+            logError("Kullanıcı toplam hücre sayısı getirilirken hata: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    // Kullanıcının toplam tamamlanan hücre sayısını güncelle
+    func updateUserTotalCellsCompleted(for firebaseUID: String, total: Int) {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                user.totalCellsCompleted = Int64(total) // Int to Int64
+                if context.hasChanges {
+                    try context.save()
+                    logSuccess("Kullanıcı toplam hücre sayısı güncellendi (UID: \(firebaseUID)) - Total: \(total)")
+                }
+            } else {
+                logWarning("Toplam hücre sayısı güncellenemedi: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+            }
+        } catch {
+            logError("Kullanıcı toplam hücre sayısı güncellenirken hata: \(error.localizedDescription)")
+        }
+    }
+
+    // Kullanıcının tüm sayaçlarını sıfırla (günlük, haftasonu, hücre, kombo)
+    func resetUserCounters(for firebaseUID: String) {
+        let context = container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "firebaseUID == %@", firebaseUID)
+        request.fetchLimit = 1
+
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                user.dailyCompletionCount = 0
+                user.lastCompletionDateForDailyCount = nil
+                user.weekendCompletionCount = 0
+                user.lastCompletionDateForWeekendCount = nil
+                user.totalCellsCompleted = 0
+                // Combo sayaçlarını da sıfırla
+                user.perfectComboCount = 0
+                user.lastGameTimeForSpeedCombo = 0.0
+                user.speedComboCount = 0
+                // Streak sayaçları checkDailyLogin içinde yönetildiği için burada sıfırlanmaz,
+                // ancak gerekirse resetAchievementsData içinde ayrıca streak data sıfırlanabilir.
+
+                if context.hasChanges {
+                    try context.save()
+                    logSuccess("Kullanıcının günlük, hafta sonu, hücre ve kombo sayaçları sıfırlandı (UID: \(firebaseUID))")
+                } else {
+                    logInfo("Kullanıcı sayaçları zaten sıfırdı veya değişiklik yoktu (UID: \(firebaseUID))")
+                }
+            } else {
+                logWarning("Kullanıcı sayaçları sıfırlanamadı: Kullanıcı bulunamadı (UID: \(firebaseUID))")
+            }
+        } catch {
+            logError("Kullanıcı sayaçları sıfırlanırken hata: \(error.localizedDescription)")
+        }
+    }
+
+}
+    

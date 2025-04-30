@@ -12,6 +12,8 @@ import FirebaseFirestore
 
 struct SavedGamesView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.textScale) var textScale
     
     // FetchRequest'i kaldırıp State değişkenine geçiyoruz
     //@FetchRequest(
@@ -43,8 +45,6 @@ struct SavedGamesView: View {
     var gameSelected: (NSManagedObject) -> Void
     
     // Animasyonları kaldırmak için önce dosyanın içeriğini okumam gerekiyor
-    
-    @Environment(\.colorScheme) var colorScheme
     
     var difficultyLevels: [String] {
         // Dile göre zorluk seviyelerini ayarla
@@ -114,12 +114,12 @@ struct SavedGamesView: View {
                 .foregroundColor(Color.blue.opacity(0.5))
             
             Text.localizedSafe("Kaydedilmiş oyun bulunamadı")
-                .font(.title2.bold())
+                .font(.system(size: Font.TextStyle.title2.defaultSize * textScale).bold())
                 .foregroundColor(Color.textColor(for: colorScheme))
             
             if selectedDifficulty == "Tümü" || selectedDifficulty == "All" || selectedDifficulty == "Tous" {
                 Text.localizedSafe("Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın.")
-                    .font(.subheadline)
+                    .font(.system(size: Font.TextStyle.subheadline.defaultSize * textScale))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
@@ -138,7 +138,7 @@ struct SavedGamesView: View {
                 let formattedText = String(format: localizedFormat, difficultyText)
                 
                 Text(formattedText)
-                    .font(.subheadline)
+                    .font(.system(size: Font.TextStyle.subheadline.defaultSize * textScale))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
@@ -163,7 +163,7 @@ struct SavedGamesView: View {
                 // Başlık ve Temizle butonu yan yana
                 HStack {
                     Text.localizedSafe("Kaydedilmiş Oyunlar")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.system(size: 28 * textScale, weight: .bold, design: .rounded))
                         .foregroundColor(Color.textColor(for: colorScheme))
                     
                     Spacer()
@@ -171,22 +171,22 @@ struct SavedGamesView: View {
                     // Tümünü Temizle butonu
                     if !filteredGames.isEmpty {
                         Button(action: {
-                            // Tüm oyunları sil
+                            // Sadece PersistenceController üzerinden silme işlemini tetikle.
+                            // Arayüz güncellemesi "RefreshSavedGames" bildirimi ile yapılacak.
                             PersistenceController.shared.deleteAllSavedGames()
-                            // ViewContext'i yenile
-                            viewContext.reset()
-                            // FetchRequest'i yenile
-                            do {
-                                try viewContext.save()
-                            } catch {
-                                logError("ViewContext yenileme hatası: \(error)")
-                            }
+                            // ViewContext'i yenileme ve kaydetme adımları kaldırıldı.
+                            // viewContext.reset()
+                            // do {
+                            //     try viewContext.save()
+                            // } catch {
+                            //     logError("ViewContext yenileme hatası: \\(error)")
+                            // }
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "trash")
                                 Text.localizedSafe("Tümünü Sil")
                             }
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 14 * textScale, weight: .medium))
                             .foregroundColor(.red)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
@@ -306,47 +306,38 @@ struct SavedGamesView: View {
     
     // Özelleştirilmiş zorluk seviyesi seçici
     private func customDifficultyPicker() -> some View {
-        HStack(spacing: 6) {
-            ForEach(difficultyLevels, id: \.self) { level in
-                Button(action: {
-                    // Animasyon kaldırıldı
-                    selectedDifficulty = level
-                }) {
-                    VStack(spacing: 2) {
-                        // Zorluk seviyesi ikonu
-                        Image(systemName: difficultyIcon(for: level))
-                            .font(.system(size: 16))
-                            .padding(.top, 2)
-                        
-                        // Kısaltılmış yazı
-                        Text.localizedSafe(shortenedText(for: level))
-                            .font(.system(size: 10, weight: .medium))
-                            .lineLimit(1)
-                            .padding(.bottom, 2)
-                    }
-                    .frame(minWidth: 0, maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(
-                        ZStack {
-                            if selectedDifficulty == level {
-                                Capsule()
-                                    .fill(difficultyColorForLevel(level))
-                                    .shadow(color: difficultyColorForLevel(level).opacity(0.4), radius: 4, x: 0, y: 2)
-                            } else {
-                                Capsule()
-                                    .fill(colorScheme == .dark ? Color.gray.opacity(0.2) : Color.gray.opacity(0.1))
-                                    .overlay(
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(difficultyLevels, id: \.self) { level in
+                    Button(action: {
+                        selectedDifficulty = level
+                        SoundManager.shared.playNavigationSound()
+                    }) {
+                        Text(level)
+                            .font(.system(size: 14 * textScale, weight: selectedDifficulty == level ? .bold : .medium))
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background(
+                                ZStack {
+                                    if selectedDifficulty == level {
                                         Capsule()
-                                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                                    )
-                            }
-                        }
-                    )
-                    .foregroundColor(selectedDifficulty == level ? .white : Color.primary.opacity(0.8))
-                    .contentShape(Capsule())
+                                            .fill(difficultyColorForLevel(level))
+                                            .shadow(color: difficultyColorForLevel(level).opacity(0.4), radius: 4, x: 0, y: 2)
+                                    } else {
+                                        Capsule()
+                                            .fill(colorScheme == .dark ? Color.gray.opacity(0.2) : Color.gray.opacity(0.1))
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                            )
+                                    }
+                                }
+                            )
+                            .foregroundColor(selectedDifficulty == level ? .white : Color.primary.opacity(0.8))
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .buttonStyle(PlainButtonStyle())
-                .animation(nil, value: selectedDifficulty) // Animasyon kaldırıldı
             }
         }
         .padding(.horizontal, 4)

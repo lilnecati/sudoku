@@ -163,6 +163,10 @@ struct SudokuApp: App {
         // Başarım bildirimi köprüsünü başlat
         _ = AchievementNotificationBridge.shared
         logInfo("Achievement Notification Bridge initialized")
+
+        // *** YENİ: Ağ izleyiciyi başlat ***
+        NetworkMonitor.shared.startMonitoring()
+        logInfo("Network Monitor initialized and started")
     }
     
     // MARK: - Firebase Token Validation

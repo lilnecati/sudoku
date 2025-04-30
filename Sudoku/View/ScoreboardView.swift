@@ -9,6 +9,7 @@ import CoreData
 
 struct ScoreboardView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.textScale) var textScale
     @State private var selectedDifficulty: SudokuBoard.Difficulty = .easy
     @State private var statistics: ScoreboardStatistics = ScoreboardStatistics()
     @State private var recentScores: [NSManagedObject] = []
@@ -30,7 +31,7 @@ struct ScoreboardView: View {
                 // Başlık
                 HStack {
                     Text.localizedSafe("Skor Tablosu")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.system(size: 28 * textScale, weight: .bold, design: .rounded))
                         .foregroundColor(Color.textColor(for: colorScheme))
                     
                     Spacer()
@@ -55,8 +56,8 @@ struct ScoreboardView: View {
                 
                 // Sekme kontrolü - Picker yerine butonlar kullanalım
                 HStack(spacing: 0) {
-                    tabButton(title: "Genel", tag: 0)
-                    tabButton(title: "Zorluk", tag: 1)
+                    tabButton(title: "Genel", tag: 0, textScale: textScale)
+                    tabButton(title: "Zorluk", tag: 1, textScale: textScale)
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 16)
@@ -70,16 +71,16 @@ struct ScoreboardView: View {
                     ScrollView {
                         LazyVStack(spacing: 16) {
                             // Zorluk seviyesi seçici
-                            difficultySelector
+                            difficultySelector(textScale: textScale)
                             
                             // İstatistik kartları
-                            statisticsView
+                            statisticsView(textScale: textScale)
                             
                             // Oyun istatistik kartları
-                            gameStatsView
+                            gameStatsView(textScale: textScale)
                             
                             // Son oyunlar
-                            recentGamesView
+                            recentGamesView(textScale: textScale)
                         }
                         .padding(.bottom)
                     }
@@ -88,10 +89,10 @@ struct ScoreboardView: View {
                     ScrollView {
                         LazyVStack(spacing: 16) {
                             // Zorluk seviyesi seçici
-                            difficultySelector
+                            difficultySelector(textScale: textScale)
                             
                             // Zorluk seviyesi karşılaştırma
-                            difficultyComparisonView
+                            difficultyComparisonView(textScale: textScale)
                         }
                         .padding(.bottom)
                     }
@@ -132,7 +133,7 @@ struct ScoreboardView: View {
     }
     
     // Zorluk seviyesi seçici
-    private var difficultySelector: some View {
+    private func difficultySelector(textScale: CGFloat) -> some View {
         HStack(spacing: 8) {
             ForEach(SudokuBoard.Difficulty.allCases) { difficulty in
                 Button(action: {
@@ -148,7 +149,7 @@ struct ScoreboardView: View {
                         
                         // Kısaltılmış yazı
                         Text(difficulty.localizedName)
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 10 * textScale, weight: .medium))
                             .lineLimit(1)
                             .padding(.bottom, 2)
                     }
@@ -201,11 +202,11 @@ struct ScoreboardView: View {
         }
     }
 
-    private var statisticsView: some View {
+    private func statisticsView(textScale: CGFloat) -> some View {
         VStack(spacing: 12) {
             HStack {
                 Text.localizedSafe("Performans İstatistikleri")
-                    .font(.headline)
+                    .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
                     .foregroundColor(.primary)
                 
                 Spacer()
@@ -224,7 +225,8 @@ struct ScoreboardView: View {
                     value: "\(statistics.bestScore)",
                     icon: "star.fill",
                     color: .yellow,
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    textScale: textScale
                 )
                 
                 StatCard(
@@ -232,7 +234,8 @@ struct ScoreboardView: View {
                     value: String(format: "%.0f", statistics.averageScore),
                     icon: "chart.line.uptrend.xyaxis",
                     color: .green,
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    textScale: textScale
                 )
             }
             .padding(.horizontal)
@@ -271,11 +274,11 @@ struct ScoreboardView: View {
         .padding(.horizontal)
     }
     
-    private var gameStatsView: some View {
+    private func gameStatsView(textScale: CGFloat) -> some View {
         VStack(spacing: 12) {
             HStack {
                 Text.localizedSafe("Oyun İstatistikleri")
-                    .font(.headline)
+                    .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
                     .foregroundColor(.primary)
                 
                 Spacer()
@@ -294,7 +297,8 @@ struct ScoreboardView: View {
                     value: "\(statistics.totalGames)",
                     icon: "checkmark.circle.fill",
                     color: .blue,
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    textScale: textScale
                 )
                 
                 StatCard(
@@ -302,7 +306,8 @@ struct ScoreboardView: View {
                     value: "\(statistics.difficultyGames)",
                     icon: getDifficultyIcon(selectedDifficulty),
                     color: getDifficultyColor(selectedDifficulty),
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    textScale: textScale
                 )
                 
                 StatCard(
@@ -310,7 +315,8 @@ struct ScoreboardView: View {
                     value: formatTime(statistics.averageTime),
                     icon: "clock.fill",
                     color: .orange,
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    textScale: textScale
                 )
                 
                 StatCard(
@@ -318,7 +324,8 @@ struct ScoreboardView: View {
                     value: formatTime(statistics.bestTime),
                     icon: "bolt.fill",
                     color: .purple,
-                    colorScheme: colorScheme
+                    colorScheme: colorScheme,
+                    textScale: textScale
                 )
             }
             .padding(.horizontal)
@@ -357,11 +364,11 @@ struct ScoreboardView: View {
         .padding(.horizontal)
     }
     
-    private var recentGamesView: some View {
+    private func recentGamesView(textScale: CGFloat) -> some View {
         VStack(spacing: 12) {
             HStack {
                 Text.localizedSafe("Son Oyunlar")
-                    .font(.headline)
+                    .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
                     .foregroundColor(.primary)
                 
                 Spacer()
@@ -667,11 +674,13 @@ struct ScoreboardView: View {
         }
     }
     
-    private var difficultyComparisonView: some View {
+    // Change difficultyComparisonView to a function accepting textScale
+    private func difficultyComparisonView(textScale: CGFloat) -> some View {
         VStack(spacing: 12) {
             HStack {
                 Text("Zorluk Seviyesi Karşılaştırma")
-                    .font(.headline)
+                    // Apply textScale to the headline font
+                    .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
                     .foregroundColor(.primary)
                 
                 Spacer()
@@ -892,28 +901,40 @@ struct ScoreboardView: View {
         }
     }
     
-    // Tab butonları
-    private func tabButton(title: String, tag: Int) -> some View {
+    // Sekme butonu
+    // textScale parametresi eklendi
+    private func tabButton(title: String, tag: Int, textScale: CGFloat) -> some View {
         Button(action: {
-            // Animasyonu kaldır
-            selectedTab = tag
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                selectedTab = tag
+            }
         }) {
             Text.localizedSafe(title)
-                .font(.system(size: 16, weight: selectedTab == tag ? .semibold : .medium))
-                .foregroundColor(selectedTab == tag ? .blue : .primary)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 20)
+                 // textScale uygulandı (temel boyut 14)
+                .font(.system(size: 14 * textScale, weight: selectedTab == tag ? .semibold : .regular))
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity)
                 .background(
                     ZStack {
+                        // Seçili sekme için dolgu
                         if selectedTab == tag {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.blue.opacity(0.12))
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(getDifficultyColor(selectedDifficulty))
+                                .matchedGeometryEffect(id: "tabBackground", in: namespace)
+                                .shadow(color: getDifficultyColor(selectedDifficulty).opacity(0.4), radius: 3, x: 0, y: 2)
+                        } else {
+                            // Seçili olmayan sekme için şeffaf
+                            Color.clear
                         }
                     }
                 )
+                .foregroundColor(selectedTab == tag ? .white : .secondary)
         }
-        .foregroundColor(selectedTab == tag ? .blue : .primary)
+        .buttonStyle(PlainButtonStyle())
     }
+    
+    // Namespace tanımı
+    @Namespace private var namespace
     
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -972,16 +993,32 @@ struct StatCard: View {
     let icon: String
     let color: Color
     let colorScheme: ColorScheme
+    let textScale: CGFloat
+    
+    // Temel font boyutları
+    private var titleBaseSize: CGFloat = 13
+    private var valueBaseSize: CGFloat = 24
+    private var iconBaseSize: CGFloat = 12
+    
+    // Add explicit internal initializer
+    internal init(title: String, value: String, icon: String, color: Color, colorScheme: ColorScheme, textScale: CGFloat) {
+        self.title = title
+        self.value = value
+        self.icon = icon
+        self.color = color
+        self.colorScheme = colorScheme
+        self.textScale = textScale
+    }
     
     var body: some View {
         VStack(spacing: 10) {
             // Başlık ve ikon
             HStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 12))
+                    .font(.system(size: iconBaseSize * textScale))
                     .foregroundColor(.gray)
                 Text.localizedSafe(title)
-                    .font(.caption)
+                    .font(.system(size: titleBaseSize * textScale))
                     .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1000,7 +1037,7 @@ struct StatCard: View {
                     .frame(height: 40)
                 
                 Text(value)
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: valueBaseSize * textScale, weight: .bold, design: .rounded))
                     .foregroundColor(color)
             }
             .overlay(

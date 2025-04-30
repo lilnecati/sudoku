@@ -21,6 +21,7 @@ struct GameView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.textScale) var textScale
     
     // ThemeManager'a erişim
     @EnvironmentObject var themeManager: ThemeManager
@@ -399,11 +400,11 @@ struct GameView: View {
     private func statView(icon: String, text: String, color: Color) -> some View {
         HStack(spacing: 5) {
             Image(systemName: icon)
-                .font(.system(size: 14))
+                .font(.system(size: 14 * textScale))
                 .foregroundColor(color)
             
             Text(text)
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 14 * textScale, weight: .medium))
                 .foregroundColor(.primary)
         }
     }
@@ -1049,11 +1050,25 @@ struct DifficultyButton: View {
     let action: () -> Void
     
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.textScale) var textScale
+    
+    // Temel boyutlar
+    private var titleBaseSize: CGFloat = 18
+    private var descriptionBaseSize: CGFloat = 12
+    
+    // Açık initializer eklendi
+    internal init(title: String, description: String, icon: String, color: Color, action: @escaping () -> Void) {
+        self.title = title
+        self.description = description
+        self.icon = icon
+        self.color = color
+        self.action = action
+    }
     
     var body: some View {
         Button(action: action) {
             HStack(spacing: 15) {
-                // İkon
+                // İkon (boyutu sabit)
                 Image(systemName: icon)
                     .font(.system(size: 20))
                     .foregroundColor(.white)
@@ -1067,12 +1082,12 @@ struct DifficultyButton: View {
                 VStack(alignment: .leading, spacing: 2) {
                     // Başlık
                     Text(title)
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: titleBaseSize * textScale, weight: .medium))
                         .foregroundColor(colorScheme == .dark ? .white : .black)
                     
                     // Açıklama
                     Text(description)
-                        .font(.system(size: 12))
+                        .font(.system(size: descriptionBaseSize * textScale))
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }

@@ -11,6 +11,7 @@ struct TutorialView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.textScale) var textScale
     
     // LocalizationManager'ı EnvironmentObject olarak değiştiriyoruz
     @EnvironmentObject var localizationManager: LocalizationManager
@@ -115,7 +116,7 @@ struct TutorialView: View {
                 // Başlık ve kapat butonu
                 HStack {
                     Text(screenTitle)
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.system(size: 28 * textScale, weight: .bold, design: .rounded))
                         .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: true))
                     
                     Spacer()
@@ -160,7 +161,7 @@ struct TutorialView: View {
                             Image(systemName: "chevron.left")
                             Text(backButtonText)
                         }
-                        .font(.headline)
+                        .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
                         .padding(.vertical, 12)
                         .padding(.horizontal, 20)
                         .foregroundColor(.white)
@@ -185,7 +186,7 @@ struct TutorialView: View {
                             Text(currentStep == tutorialSteps.count - 1 ? completeButtonText : nextButtonText)
                             Image(systemName: currentStep == tutorialSteps.count - 1 ? "checkmark" : "chevron.right")
                         }
-                        .font(.headline)
+                        .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
                         .padding(.vertical, 12)
                         .padding(.horizontal, 20)
                         .foregroundColor(.white)
@@ -306,7 +307,7 @@ struct TutorialView: View {
                 
                 // Adım başlığı
                 Text(title)
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 24 * textScale, weight: .bold, design: .rounded))
                     .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: true))
                     .multilineTextAlignment(.center)
                     .padding(.top, 5)
@@ -348,13 +349,13 @@ struct TutorialView: View {
                             VStack(spacing: 16) {
                                 // İkon görünümü
                                 getStepIcon(for: title)
-                                    .font(.system(size: 60))
+                                    .font(.system(size: 60 * textScale))
                                     .foregroundColor(getStepColor(for: title))
                                     .padding(.top, 10)
                                 
                                 // Açıklama metni
                                 Text(description)
-                                    .font(.body)
+                                    .font(.system(size: 16 * textScale))
                                     .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: false))
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal)
@@ -379,7 +380,7 @@ struct TutorialView: View {
                             .foregroundColor(ColorManager.primaryOrange)
                         
                         Text(tip)
-                            .font(.subheadline)
+                            .font(.system(size: 14 * textScale))
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
@@ -588,6 +589,27 @@ struct TutorialStep {
     let descriptionKey: String
     let image: String
     let tipKey: String
+}
+
+// Yardımcı Uzantı (Font Boyutu için)
+extension Font.TextStyle {
+    var defaultSize: CGFloat {
+        switch self {
+        case .largeTitle: return 34
+        case .title: return 28
+        case .title2: return 22
+        case .title3: return 20
+        case .headline: return 17 // Headline için varsayılan boyut
+        case .body: return 17
+        case .callout: return 16
+        case .subheadline: return 15
+        case .footnote: return 13
+        case .caption: return 12
+        case .caption2: return 11
+        @unknown default:
+            return 17
+        }
+    }
 }
 
 // Preview

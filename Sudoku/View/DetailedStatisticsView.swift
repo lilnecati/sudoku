@@ -7,6 +7,7 @@ import FirebaseFirestore
 struct DetailedStatisticsView: View {
     // MARK: - Çeviri Desteği
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.textScale) var textScale
     @EnvironmentObject var localizationManager: LocalizationManager
     @AppStorage("app_language") private var appLanguage: String = "tr"
     
@@ -127,7 +128,7 @@ struct DetailedStatisticsView: View {
                         // Başlık ve Kapat Butonu
                         HStack {
                             Text(pageTitle)
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.system(size: 28 * textScale, weight: .bold, design: .rounded))
                                 .foregroundColor(.primary)
                             
                             Spacer()
@@ -155,7 +156,7 @@ struct DetailedStatisticsView: View {
                             // Zaman aralığı seçici
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(LocalizationManager.shared.localizedString(for: "Time Range"))
-                                    .font(.system(size: 15, weight: .medium))
+                                    .font(.system(size: 15 * textScale, weight: .medium))
                                     .foregroundColor(.secondary)
                                     .padding(.leading, 4)
                                 
@@ -173,7 +174,7 @@ struct DetailedStatisticsView: View {
                             // Zorluk seviyesi seçici
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(LocalizationManager.shared.localizedString(for: "Difficulty Level"))
-                                    .font(.system(size: 15, weight: .medium))
+                                    .font(.system(size: 15 * textScale, weight: .medium))
                                     .foregroundColor(.secondary)
                                     .padding(.leading, 4)
                                 
@@ -197,13 +198,13 @@ struct DetailedStatisticsView: View {
                         .padding(.horizontal)
                         
                         // Özet kart
-                        statisticsSummaryCard
+                        statisticsSummaryCard(textScale: textScale)
                         
                         // Tamamlama oranı grafiği
-                        completionRateChart
+                        completionRateChart(textScale: textScale)
                         
                         // Performans grafiği
-                        performanceChart
+                        performanceChart(textScale: textScale)
                         
                         // Tümünü Sil butonu
                         Button(action: {
@@ -216,7 +217,7 @@ struct DetailedStatisticsView: View {
                                     .foregroundColor(.white)
                                 
                                 Text(LocalizationManager.shared.localizedString(for: "Tüm İstatistikleri Sil"))
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .font(.system(size: 16 * textScale, weight: .semibold))
                                     .foregroundColor(.white)
                             }
                             .padding(.vertical, 15)
@@ -442,12 +443,12 @@ struct DetailedStatisticsView: View {
     }
     
     // Özet istatistik kartı
-    private var statisticsSummaryCard: some View {
+    private func statisticsSummaryCard(textScale: CGFloat) -> some View {
         VStack(spacing: 16) {
             // Başlık
             HStack {
                 Text(LocalizationManager.shared.localizedString(for: "Summary"))
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.system(size: 17 * textScale, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Spacer()
@@ -459,7 +460,7 @@ struct DetailedStatisticsView: View {
                         .frame(width: 10, height: 10)
                     
                     Text(selectedDifficulty.localizedName)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 13 * textScale, weight: .medium))
                         .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 10)
@@ -484,7 +485,7 @@ struct DetailedStatisticsView: View {
                         endPoint: .trailing
                     )
                 )
-                .frame(height: 1)
+                .frame(height: 1 * textScale)
                 .padding(.horizontal)
             
             // İstatistik değerleri - daha gelişmiş, kartlı tasarım
@@ -495,7 +496,8 @@ struct DetailedStatisticsView: View {
                     value: String(format: "%d%%", Int(statistics.successRate * 100)),
                     icon: "checkmark.circle.fill",
                     color: .green,
-                    details: "\(statistics.completedGames)/\(statistics.totalGames) " + LocalizationManager.shared.localizedString(for: "oyun")
+                    details: "\(statistics.completedGames)/\(statistics.totalGames) " + LocalizationManager.shared.localizedString(for: "oyun"),
+                    textScale: textScale
                 )
                 
                 // Ortalama süre
@@ -504,7 +506,8 @@ struct DetailedStatisticsView: View {
                     value: formatTime(statistics.averageTime),
                     icon: "stopwatch.fill",
                     color: .blue,
-                    details: LocalizationManager.shared.localizedString(for: "Her oyun")
+                    details: LocalizationManager.shared.localizedString(for: "Her oyun"),
+                    textScale: textScale
                 )
                 
                 // Doğruluk - hatalar
@@ -513,7 +516,8 @@ struct DetailedStatisticsView: View {
                     value: String(format: "%.1f", statistics.averageErrors),
                     icon: "exclamationmark.triangle.fill",
                     color: .orange,
-                    details: LocalizationManager.shared.localizedString(for: "Ort. hata")
+                    details: LocalizationManager.shared.localizedString(for: "Ort. hata"),
+                    textScale: textScale
                 )
                 
                 // Trend
@@ -522,7 +526,8 @@ struct DetailedStatisticsView: View {
                     value: getTrendValue(),
                     icon: getTrendIcon(),
                     color: getTrendColor(),
-                    details: LocalizationManager.shared.localizedString(for: "Son oyunlarda")
+                    details: LocalizationManager.shared.localizedString(for: "Son oyunlarda"),
+                    textScale: textScale
                 )
             }
             .padding()
@@ -530,19 +535,19 @@ struct DetailedStatisticsView: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+                .shadow(color: Color.black.opacity(0.1), radius: 5 * textScale, x: 0, y: 3 * textScale)
         )
         .padding(.horizontal)
     }
     
     // Tek istatistik kartı
-    private func statCard(title: String, value: String, icon: String, color: Color, details: String) -> some View {
+    private func statCard(title: String, value: String, icon: String, color: Color, details: String, textScale: CGFloat) -> some View {
         VStack(spacing: 14) {
             // İkon
             Image(systemName: icon)
                 .foregroundColor(.white)
-                .font(.system(size: 14, weight: .bold))
-                .frame(width: 28, height: 28)
+                .font(.system(size: 14 * textScale, weight: .bold))
+                .frame(width: 28 * textScale, height: 28 * textScale)
                 .background(
                     Circle()
                         .fill(
@@ -552,45 +557,45 @@ struct DetailedStatisticsView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .shadow(color: color.opacity(0.3), radius: 3, x: 0, y: 2)
+                        .shadow(color: color.opacity(0.3), radius: 3 * textScale, x: 0, y: 2 * textScale)
                 )
             
             VStack(spacing: 4) {
                 // Ana değer
                 Text(value)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 20 * textScale, weight: .bold))
                     .foregroundColor(.primary)
                 
                 // Başlık
                 Text(title)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13 * textScale))
                     .foregroundColor(.secondary)
                 
                 // Detay bilgisi
                 Text(details)
-                    .font(.system(size: 11))
+                    .font(.system(size: 11 * textScale))
                     .foregroundColor(.gray)
-                    .padding(.top, 2)
+                    .padding(.top, 2 * textScale)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
+        .padding(.vertical, 12 * textScale)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6).opacity(0.5))
+            RoundedRectangle(cornerRadius: 12 * textScale)
+                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6).opacity(0.5 * textScale))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(color.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12 * textScale)
+                .strokeBorder(color.opacity(0.2 * textScale), lineWidth: 1 * textScale)
         )
     }
     
     // Tamamlama oranı grafiği
-    private var completionRateChart: some View {
+    private func completionRateChart(textScale: CGFloat) -> some View {
         VStack(spacing: 16) {
             HStack {
                 Text(LocalizationManager.shared.localizedString(for: "Tamamlama Oranı"))
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.system(size: 17 * textScale, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Spacer()
@@ -598,21 +603,21 @@ struct DetailedStatisticsView: View {
                 // Etiket
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.up.right")
-                        .font(.system(size: 10))
+                        .font(.system(size: 10 * textScale))
                         .foregroundColor(.green)
                     
                     Text(LocalizationManager.shared.localizedString(for: "Tamamlanma"))
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 13 * textScale, weight: .medium))
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
+                .padding(.horizontal, 10 * textScale)
+                .padding(.vertical, 5 * textScale)
                 .background(
                     Capsule()
-                        .fill(Color.green.opacity(0.1))
+                        .fill(Color.green.opacity(0.1 * textScale))
                         .overlay(
                             Capsule()
-                                .strokeBorder(Color.green.opacity(0.3), lineWidth: 1)
+                                .strokeBorder(Color.green.opacity(0.3 * textScale), lineWidth: 1 * textScale)
                         )
                 )
             }
@@ -620,7 +625,7 @@ struct DetailedStatisticsView: View {
             
             if completionData.isEmpty {
                 // Hiç veri yoksa mesaj göster
-                emptyDataView()
+                emptyDataView(textScale: textScale)
             } else {
                 // Geliştirilmiş tamamlama grafiği
                 VStack(spacing: 8) {
@@ -646,22 +651,22 @@ struct DetailedStatisticsView: View {
                                         RoundedRectangle(cornerRadius: 6)
                                             .stroke(
                                                 dataPoint.completed ? Color.green.opacity(0.7) : Color.red.opacity(0.7),
-                                                lineWidth: 1
+                                                lineWidth: 1 * textScale
                                             )
                                     )
                                 
                                 // Tarih etiketi
                                 Text(formatDateForDisplay(dataPoint.date))
-                                    .font(.system(size: 9))
+                                    .font(.system(size: 9 * textScale))
                                     .foregroundColor(.secondary)
                                     .rotationEffect(.degrees(-45))
-                                    .frame(width: 25)
+                                    .frame(width: 25 * textScale)
                             }
                         }
                     }
-                    .frame(height: 130)
+                    .frame(height: 130 * textScale)
                     .padding(.horizontal)
-                    .padding(.top, 8)
+                    .padding(.top, 8 * textScale)
                     
                     // Açıklama
                     HStack(spacing: 12) {
@@ -687,7 +692,7 @@ struct DetailedStatisticsView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    .padding(.top, 8)
+                    .padding(.top, 8 * textScale)
                 }
             }
         }
@@ -695,17 +700,17 @@ struct DetailedStatisticsView: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+                .shadow(color: Color.black.opacity(0.1), radius: 5 * textScale, x: 0, y: 3 * textScale)
         )
         .padding(.horizontal)
     }
     
     // Performans grafiği
-    private var performanceChart: some View {
+    private func performanceChart(textScale: CGFloat) -> some View {
         VStack(spacing: 16) {
             HStack {
                 Text(LocalizationManager.shared.localizedString(for: "Performans Trendi"))
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.system(size: 17 * textScale, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Spacer()
@@ -713,21 +718,21 @@ struct DetailedStatisticsView: View {
                 // En iyi süre etiketi
                 HStack(spacing: 6) {
                     Image(systemName: "bolt.fill")
-                        .font(.system(size: 10))
+                        .font(.system(size: 10 * textScale))
                         .foregroundColor(.purple)
                     
                     Text(formatTime(statistics.bestTime))
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 13 * textScale, weight: .medium))
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
+                .padding(.horizontal, 10 * textScale)
+                .padding(.vertical, 5 * textScale)
                 .background(
                     Capsule()
-                        .fill(Color.purple.opacity(0.1))
+                        .fill(Color.purple.opacity(0.1 * textScale))
                         .overlay(
                             Capsule()
-                                .strokeBorder(Color.purple.opacity(0.3), lineWidth: 1)
+                                .strokeBorder(Color.purple.opacity(0.3 * textScale), lineWidth: 1 * textScale)
                         )
                 )
             }
@@ -735,7 +740,7 @@ struct DetailedStatisticsView: View {
             
             if performanceData.isEmpty {
                 // Hiç veri yoksa mesaj göster
-                emptyDataView()
+                emptyDataView(textScale: textScale)
             } else {
                 // Geliştirilmiş performans grafiği
                 VStack(spacing: 8) {
@@ -747,14 +752,14 @@ struct DetailedStatisticsView: View {
                                 HStack {
                                     // Y-ekseni etiketi
                                     Text("\((4-index) * 5)dk")
-                                        .font(.system(size: 8))
+                                        .font(.system(size: 8 * textScale))
                                         .foregroundColor(.secondary)
-                                        .frame(width: 25, alignment: .leading)
+                                        .frame(width: 25 * textScale, alignment: .leading)
                                     
                                     // Yatay referans çizgisi
                                     Rectangle()
-                                        .fill(Color.gray.opacity(0.2))
-                                        .frame(height: 1)
+                                        .fill(Color.gray.opacity(0.2 * textScale))
+                                        .frame(height: 1 * textScale)
                                 }
                             }
                         }
@@ -764,7 +769,7 @@ struct DetailedStatisticsView: View {
                             // Eksenlerin genişliği için boşluk
                             Rectangle()
                                 .fill(Color.clear)
-                                .frame(width: 25)
+                                .frame(width: 25 * textScale)
                             
                             ForEach(performanceData) { dataPoint in
                                 VStack(spacing: 4) {
@@ -779,30 +784,30 @@ struct DetailedStatisticsView: View {
                                                 endPoint: .bottom
                                             )
                                         )
-                                        .frame(height: CGFloat(min(dataPoint.time / 60.0, 20.0) * 10))
+                                        .frame(height: CGFloat(min(dataPoint.time / 60.0, 20.0) * 10 * textScale))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 6)
-                                                .stroke(Color.blue.opacity(0.7), lineWidth: 1)
+                                                .stroke(Color.blue.opacity(0.7 * textScale), lineWidth: 1 * textScale)
                                         )
                                     
                                     // Süre etiketi
                                     Text(formatTimeShort(dataPoint.time))
-                                        .font(.system(size: 8))
+                                        .font(.system(size: 8 * textScale))
                                         .foregroundColor(.blue)
                                     
                                     // Tarih etiketi
                                     Text(formatDateForDisplay(dataPoint.date))
-                                        .font(.system(size: 9))
+                                        .font(.system(size: 9 * textScale))
                                         .foregroundColor(.secondary)
                                         .rotationEffect(.degrees(-45))
-                                        .frame(width: 25)
+                                        .frame(width: 25 * textScale)
                                 }
                             }
                         }
                     }
-                    .frame(height: 200)
+                    .frame(height: 200 * textScale)
                     .padding(.horizontal)
-                    .padding(.top, 8)
+                    .padding(.top, 8 * textScale)
                 }
             }
         }
@@ -810,45 +815,45 @@ struct DetailedStatisticsView: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+                .shadow(color: Color.black.opacity(0.1), radius: 5 * textScale, x: 0, y: 3 * textScale)
         )
         .padding(.horizontal)
     }
     
     // Veri yok görünümü
-    private func emptyDataView() -> some View {
+    private func emptyDataView(textScale: CGFloat) -> some View {
         VStack(spacing: 16) {
             // Boş veri ikonu
             Image(systemName: "chart.bar.xaxis")
-                .font(.system(size: 40))
-                .foregroundColor(Color.gray.opacity(0.5))
-                .padding(.bottom, 8)
+                .font(.system(size: 40 * textScale))
+                .foregroundColor(Color.gray.opacity(0.5 * textScale))
+                .padding(.bottom, 8 * textScale)
             
             // Mesaj
             Text(noDataMessage)
-                .font(.system(size: 15))
+                .font(.system(size: 15 * textScale))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 20 * textScale)
             
             // Alt bilgi
             Text(LocalizationManager.shared.localizedString(for: "Oyun tamamladıkça burada istatistikleriniz görünecek"))
-                .font(.system(size: 13))
+                .font(.system(size: 13 * textScale))
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 30)
+                .padding(.horizontal, 30 * textScale)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 30)
+        .padding(.vertical, 30 * textScale)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.5) : Color(.systemGray6).opacity(0.3))
+            RoundedRectangle(cornerRadius: 12 * textScale)
+                .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.5 * textScale) : Color(.systemGray6).opacity(0.3 * textScale))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 12 * textScale)
+                        .strokeBorder(Color.gray.opacity(0.2 * textScale), lineWidth: 1 * textScale)
                 )
         )
-        .padding(.horizontal, 30)
+        .padding(.horizontal, 30 * textScale)
     }
     
     // MARK: - Helper Fonksiyonlar

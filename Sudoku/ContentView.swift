@@ -60,6 +60,7 @@ struct ContentView: View {
     // MARK: - Properties
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.textScale) var textScale
     
     // ThemeManager'ı ekle
     @EnvironmentObject var themeManager: ThemeManager
@@ -721,7 +722,7 @@ struct ContentView: View {
                         .clipShape(Circle())
                     
                     Text.localizedSafe("Nasıl Oynanır?")
-                        .fontWeight(.medium)
+                        .font(.system(size: 16 * textScale, weight: .medium))
                     
                     Spacer()
                     
