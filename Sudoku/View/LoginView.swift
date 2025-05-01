@@ -57,7 +57,7 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            // Arka plan - performans için sadece gerektiğinde güncelle
+            // Arka plan - performans için optimize edildi
             Color(UIColor.systemBackground)
                 .ignoresSafeArea()
                 .overlay(
@@ -202,7 +202,8 @@ struct LoginView: View {
                 .frame(maxWidth: 500)
                 .padding(.bottom, 20)
             }
-            .scrollDismissesKeyboard(.automatic)
+            .scrollDismissesKeyboard(.immediately) // Otomatik yerine anında klavyeyi kapat
+            .hideKeyboardWhenTappedOutside() // Ekranın boş bir yerine dokunulduğunda klavyeyi kapat
             // Hata mesajı gösterme
             .alert(isPresented: $showError) {
                 Alert(

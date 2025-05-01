@@ -65,8 +65,8 @@ struct ProfileEditView: View {
             Color(UIColor.systemBackground)
                 .ignoresSafeArea()
                 .overlay(
-                    GridBackgroundView()
-                        .ignoresSafeArea()
+            GridBackgroundView()
+                .ignoresSafeArea()
                         .opacity(0.5) // Arka planı hafifletelim
                 )
             
@@ -108,9 +108,10 @@ struct ProfileEditView: View {
                     }
                     
                     loadUserData()
-                }
             }
-            .scrollDismissesKeyboard(.automatic) // Sürüm uyumluluğu için .automatic kullanıyoruz
+            }
+            .scrollDismissesKeyboard(.immediately) // Anında klavyeyi kapat
+            .hideKeyboardWhenTappedOutside() // Metin alanı dışına dokunulduğunda klavyeyi kapat
         }
         .navigationTitle("Profil Düzenle")
         .navigationBarTitleDisplayMode(.inline)

@@ -2332,8 +2332,8 @@ class PersistenceController {
                     Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
                         self?.handleFirebaseLoginResult(authResult: authResult, error: error, completion: completion)
                     }
-                    return
-                }
+                return
+            }
             } catch {
                 logError("Kullanıcı adı sorgulama hatası: \(error.localizedDescription)")
                 
@@ -2341,7 +2341,7 @@ class PersistenceController {
                 completion(nil, error)
                 return
             }
-        } else {
+                        } else {
             // E-posta ile direkt olarak giriş yap
             Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
                 self?.handleFirebaseLoginResult(authResult: authResult, error: error, completion: completion)
@@ -2351,7 +2351,7 @@ class PersistenceController {
     
     // Firebase giriş sonucunu işleyen yardımcı metod
     private func handleFirebaseLoginResult(authResult: AuthDataResult?, error: Error?, completion: @escaping (NSManagedObject?, Error?) -> Void) {
-        if let error = error {
+                        if let error = error {
             logError("Firebase giriş hatası: \(error.localizedDescription)")
             completion(nil, error)
             return
@@ -2378,8 +2378,8 @@ class PersistenceController {
             guard let document = document, document.exists else {
                 logError("Firebase kullanıcısı Firestore'da bulunamadı")
                 completion(nil, nil)
-                return
-            }
+                        return
+                    }
             
             logSuccess("Firestore kullanıcı bilgileri başarıyla getirildi")
             
@@ -2393,13 +2393,13 @@ class PersistenceController {
             let context = self.container.viewContext
             let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
             fetchRequest.predicate = NSPredicate(format: "firebaseUID == %@", user.uid)
-            
-            do {
+                
+                do {
                 let users = try context.fetch(fetchRequest)
                 
-                if let existingUser = users.first {
+                    if let existingUser = users.first {
                     // Firebase'den bilgileri güncelle
-                    existingUser.isLoggedIn = true
+                        existingUser.isLoggedIn = true
                     existingUser.lastLoginDate = Date()
                     
                     // Diğer bilgileri güncelle (opsiyonel)
@@ -2412,12 +2412,12 @@ class PersistenceController {
                     }
                     
                     try context.save()
-                    completion(existingUser, nil)
+                        completion(existingUser, nil)
                 } else {
                     // Kullanıcıyı CoreData'ya kaydet
                     let newUser = User(context: context)
                     newUser.id = UUID()
-                    newUser.username = username
+                            newUser.username = username
                     newUser.email = email
                     newUser.name = name
                     newUser.firebaseUID = user.uid
@@ -2428,9 +2428,9 @@ class PersistenceController {
                     try context.save()
                     completion(newUser, nil)
                 }
-            } catch {
+                } catch {
                 logError("CoreData kullanıcı oluşturma/güncelleme hatası: \(error.localizedDescription)")
-                completion(nil, error)
+                    completion(nil, error)
             }
         }
     }

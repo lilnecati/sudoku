@@ -14,8 +14,12 @@ struct MainContentView: View {
     @ObservedObject private var achievementManager = AchievementManager.shared
     @ObservedObject private var notificationManager = AchievementNotificationManager.shared
     
+    // Bildirim animasyonları için namespace
+    @Namespace private var animation
+    
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
+            // Tab view - ana içerik
             TabView(selection: $selectedTab) {
                 // Ana ekran (dashboard) - MainMenuView ile değiştirildi
                 MainMenuView()
@@ -39,49 +43,41 @@ struct MainContentView: View {
                     .tag(Tab.stats)
             }
             .accentColor(.blue)
-            .onAppear {
-                // Başarımları yüklemeyi dene (eğer henüz yüklenmediyse veya güncelleme gerekiyorsa)
-                // Bu çağrı artık completion bekliyor, ancak burada sonuçla işimiz yok.
-                AchievementManager.shared.loadAchievementsFromFirebase { _ in /* ContentView içinde sonuçla ilgilenmiyoruz */ }
-            }
             
-            // Başarım bildirimlerini birleştir
-            // Her iki sistemin de bildirimleri ekranın üstünden gelsin
-            
-            // Başarım bildirimlerini GeometryReader içinde ekranın üst kısmında gösterelim
-            GeometryReader { geometry in
-                VStack(spacing: 0) {
-                    // AchievementNotificationView - Dynamic Island tarzı
-                    if notificationManager.shouldShowNotification {
-                        AchievementNotificationView()
-                            .frame(width: geometry.size.width)
-                            .transition(.move(edge: .top))
-                    }
-                    
-                    // AchievementManager ile gelen bildirimler de üstte görünsün
-                    if achievementManager.showAchievementAlert, 
-                       let achievement = achievementManager.lastUnlockedAchievement {
-                        // Eski AchievementNotification bileşenini üste taşı
-                        AchievementNotification(achievement: achievement) {
-                            achievementManager.showAchievementAlert = false
-                            
-                            // Bu bildirim kapatıldığında, aynı başarımı Dynamic Island bildiriminde de göster
-                            if !notificationManager.shouldShowNotification && 
-                               achievement.id.count > 0 {
-                                notificationManager.showAchievementNotification(achievement: achievement)
-                            }
-                        }
-                        .transition(.move(edge: .top))
-                        .padding(.top, 10)
-                    }
-                    
-                    Spacer()
+            // Bildirimler için optimize edilmiş overlay
+            VStack(spacing: 0) {
+                // AchievementNotificationView - Dynamic Island tarzı
+                if notificationManager.shouldShowNotification {
+                    AchievementNotificationView()
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(101)
                 }
-                .edgesIgnoringSafeArea(.top)
+                
+                // AchievementManager ile gelen bildirimler
+                if achievementManager.showAchievementAlert, 
+                   let achievement = achievementManager.lastUnlockedAchievement {
+                    AchievementNotification(achievement: achievement) {
+                        achievementManager.showAchievementAlert = false
+                        
+                        // Bu bildirim kapatıldığında, aynı başarımı Dynamic Island bildiriminde de göster
+                        if !notificationManager.shouldShowNotification && 
+                           achievement.id.count > 0 {
+                            notificationManager.showAchievementNotification(achievement: achievement)
+                        }
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .padding(.top, 10)
+                    .zIndex(100)
+                }
+                
+                Spacer()
             }
-            .animation(.spring(), value: notificationManager.shouldShowNotification)
-            .animation(.spring(), value: achievementManager.showAchievementAlert)
-            .zIndex(100) // En üstte göster
+            .animation(.spring(response: 0.4), value: notificationManager.shouldShowNotification)
+            .animation(.spring(response: 0.4), value: achievementManager.showAchievementAlert)
+        }
+        .onAppear {
+            // Başarımları yüklemeyi dene (eğer henüz yüklenmediyse veya güncelleme gerekiyorsa)
+            AchievementManager.shared.loadAchievementsFromFirebase { _ in /* ContentView içinde sonuçla ilgilenmiyoruz */ }
         }
         // AchievementManager'dan yeni başarımlar kazanıldığında Dynamic Island bildirimini tetikle
         .onChange(of: achievementManager.lastUnlockedAchievement) { _, newAchievement in

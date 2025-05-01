@@ -265,7 +265,7 @@ struct RegisterView: View {
                                         .foregroundColor(.green)
                                 } else {
                                     Text("Şifreler eşleşmiyor")
-                                        .font(.caption)
+                                    .font(.caption)
                                         .foregroundColor(.red)
                                 }
                             }
@@ -324,21 +324,22 @@ struct RegisterView: View {
                 .frame(maxWidth: 500)
                 .padding(.bottom, 20)
             }
-            .scrollDismissesKeyboard(.automatic)
+            .scrollDismissesKeyboard(.immediately)
+            .hideKeyboardWhenTappedOutside()
             
             // Hata mesajı
-            .alert(isPresented: $showError) {
+        .alert(isPresented: $showError) {
                 Alert(
                     title: Text("Hata"),
                     message: Text(errorMessage),
                     dismissButton: .default(Text("Tamam"))
                 )
-            }
+        }
             
             // Güçlü şifre bilgisi
-            .sheet(isPresented: $showStrongPasswordInfo) {
+        .sheet(isPresented: $showStrongPasswordInfo) {
                 strongPasswordInfoView
-            }
+        }
         }
     }
     

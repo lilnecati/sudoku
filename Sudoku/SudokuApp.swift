@@ -140,6 +140,9 @@ struct SudokuApp: App {
     private let viewContext: NSManagedObjectContext
     
     init() {
+        // UIScrollView ve klavye davranışı için global ayarlar
+        UIScrollView.appearance().keyboardDismissMode = .onDrag
+        
         // Log seviyesini ayarla (açık bir şekilde)
         #if DEBUG
         LogManager.shared.setLogLevel(.debug)

@@ -111,14 +111,14 @@ struct ScoreboardView: View {
         .onChange(of: selectedDifficulty) { oldValue, newValue in
             // Animasyonu kaldırmak için gecikmeli veri yükleme yapalım
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                loadData()
+            loadData()
             }
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             // Tab değiştirildiğinde verileri güncelle
             // Animasyonu kaldırmak için gecikmeli veri yükleme yapalım
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                loadData()
+            loadData()
             }
         }
         .onAppear {
@@ -147,7 +147,7 @@ struct ScoreboardView: View {
             ForEach(SudokuBoard.Difficulty.allCases) { difficulty in
                 Button(action: {
                     // Daha performanslı bir geçiş için animasyonu kaldıralım
-                    selectedDifficulty = difficulty
+                        selectedDifficulty = difficulty
                 }) {
                     VStack(spacing: 2) {
                         // Zorluk seviyesi ikonu
