@@ -28,6 +28,7 @@ struct SudokuCellView: View {
     @StateObject private var powerManager = PowerSavingManager.shared
     @State private var animateSelection = false
     @State private var animateValue = false
+    @State private var refreshID = UUID() // Yenileme için benzersiz ID
     
     private var effectiveColorScheme: ColorScheme {
         return themeManager.colorScheme ?? .light
@@ -76,6 +77,18 @@ struct SudokuCellView: View {
             }
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
             .aspectRatio(1, contentMode: .fit)
+            .id(refreshID) // Her yenilemede görünümü tamamen yeniden oluştur
+            .onAppear {
+                // İlk yüklemede orijinal değeri ayarla
+                animateValue = isInvalid
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("BoardColorChanged"))) { _ in
+                // Tahta rengi değiştiğinde görünümü yenile
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    // Görünümü tamamen yenilemek için refreshID'yi değiştir
+                    refreshID = UUID()
+                }
+            }
         }
     }
     
@@ -91,8 +104,8 @@ struct SudokuCellView: View {
     
     // Hücre arka plan rengi - Tek renk temali modern tasarım
     private func getCellBackgroundColor() -> Color {
-        // Ana tema rengi: Teal (turkuaz) - ipucu için mavi renk
-        let themeColor = Color.teal
+        // ThemeManager'dan rengimizi alalım
+        let themeColor = themeManager.getBoardColor()
         let hintColor = Color.blue
         let errorColor = Color.red
         
@@ -122,8 +135,8 @@ struct SudokuCellView: View {
     
     // Hücre kenar rengi - Tek renk temalı kenarlar
     private func getCellBorderColor() -> Color {
-        // Ana tema rengi: Teal (turkuaz), ipucu için mavi
-        let themeColor = Color.teal
+        // ThemeManager'dan rengimizi alalım
+        let themeColor = themeManager.getBoardColor()
         let hintColor = Color.blue
         let errorColor = Color.red
         
@@ -153,8 +166,8 @@ struct SudokuCellView: View {
     
     // Metin rengi - Görsel tasarıma uygun modern tema 
     private func getTextColor() -> Color {
-        // Ana tema rengi: Teal (turkuaz) - ipucu için mavi renk
-        _ = Color.teal
+        // ThemeManager'dan rengimizi alalım
+        let themeColor = themeManager.getBoardColor()
         
         // Hatalı giriş için kırmızı metin
         if isInvalid {
@@ -169,7 +182,7 @@ struct SudokuCellView: View {
         } else if isUserEntered {
             // Kullanıcı girişleri - daha belirgin tema rengi
             // Daha koyu ve belirgin renkler kullanarak ayrım sağlama
-            return effectiveColorScheme == .dark ? Color.cyan : Color.blue
+            return effectiveColorScheme == .dark ? themeColor.opacity(0.95) : themeColor.opacity(0.95)
         } else {
             // Diğer metinler - gri
             return effectiveColorScheme == .dark ? Color.gray : Color.gray

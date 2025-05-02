@@ -6,18 +6,25 @@
 
 import SwiftUI
 import Combine
+import FirebaseAuth
 
 struct SudokuBoardView: View {
-    @ObservedObject var viewModel: SudokuViewModel
-    // ThemeManager kullanımı için colorScheme dependency kaldırıldı
-    // @Environment(\.colorScheme) var colorScheme
-    
-    // ThemeManager'a erişim
+    // Tema yönetimini alabilmek için
     @EnvironmentObject var themeManager: ThemeManager
     
-    // Görünümde mevcut tema durumunu yansıtmak için hesaplanmış özellik
+    // MVVM: SudokuViewModel'i saklı tut - her güncelleme view'i yeniden çizer
+    @ObservedObject var viewModel: SudokuViewModel
+    
+    // Otomatik güncellenen koyu mod tercihi (performans için)
+    @AppStorage("prefersDarkMode") private var prefersDarkMode = false
+    @Environment(\.colorScheme) private var systemColorScheme
+    
+    // Görünümü yenilemek için ID
+    @State private var boardRefreshID = UUID()
+    
+    // Geçerli renk şeması
     private var effectiveColorScheme: ColorScheme {
-        return themeManager.colorScheme ?? .light // Varsayılan olarak light, ama ThemeManager'dan gelir
+        return systemColorScheme
     }
     
     // Performans için önbellekleme
@@ -31,9 +38,18 @@ struct SudokuBoardView: View {
     private let normalLineWidth: CGFloat = 0.8
     
     // Hücre arka plan renkleri - önbellekleme
-    private let originalCellBackground: Color = Color.blue.opacity(0.05)
-    private let selectedRowColBackground: Color = Color.blue.opacity(0.08)
-    private let selectedCellBackground: Color = Color.blue.opacity(0.2)
+    private func originalCellBackground() -> Color {
+        return themeManager.getBoardColor().opacity(0.05)
+    }
+    
+    private func selectedRowColBackground() -> Color {
+        return themeManager.getBoardColor().opacity(0.08)
+    }
+    
+    private func selectedCellBackground() -> Color {
+        return themeManager.getBoardColor().opacity(0.2)
+    }
+    
     private let matchingValueBackground: Color = Color.green.opacity(0.15)
     private let invalidValueBackground: Color = Color.red.opacity(0.15)
     
@@ -64,23 +80,23 @@ struct SudokuBoardView: View {
                             LazyHStack(spacing: 0) {
                                 ForEach(0..<9) { column in
                                     cellView(row: row, column: column)
-                                        .id("cell_\(row)_\(column)")
+                                        .id("cell_\(row)_\(column)_\(boardRefreshID)")
                                         .frame(width: localCellSize + (cellPadding * 2), height: localCellSize + (cellPadding * 2))
-                                }
                             }
-                            // Satır boyutunu sabitle
-                            .frame(height: localCellSize + (cellPadding * 2))
                         }
+                        // Satır boyutunu sabitle
+                        .frame(height: localCellSize + (cellPadding * 2))
                     }
+                }
+                .frame(width: minDimension, height: minDimension)
+                .clipped() // Taşmaları önle
+                // Her zaman GPU hızlandırma kullan - güç tasarrufu modunda bile
+                .drawingGroup(opaque: true, colorMode: .linear)
+                
+                // Izgara çizgilerini üst katmanda göster
+                gridOverlay
                     .frame(width: minDimension, height: minDimension)
-                    .clipped() // Taşmaları önle
-                    // Her zaman GPU hızlandırma kullan - güç tasarrufu modunda bile
-                    .drawingGroup(opaque: true, colorMode: .linear)
-                    
-                    // Izgara çizgilerini üst katmanda göster
-                    gridOverlay
-                        .frame(width: minDimension, height: minDimension)
-                        .drawingGroup(opaque: true) // Izgara çizgilerini de GPU ile render et
+                    .drawingGroup(opaque: true) // Izgara çizgilerini de GPU ile render et
                 }
                 .aspectRatio(1, contentMode: .fit) // Kare oranını koru
                 .drawingGroup() // Tüm ZStack'i GPU ile render et
@@ -90,6 +106,9 @@ struct SudokuBoardView: View {
             .onAppear {
                 // İlk yükleme veya ekran değişiminde boyutları güncelle
                 _ = updateSizes(from: frame, cellSize: localCellSize)
+                
+                // İlgili bildirimleri dinle
+                setupBoardColorNotifications()
             }
             .onChange(of: frame) { oldFrame, newFrame in
                 // Ekran boyutu değiştiğinde boyutları güncelle
@@ -97,11 +116,16 @@ struct SudokuBoardView: View {
                     _ = updateSizes(from: newFrame, cellSize: localCellSize)
                 }
             }
+            .onDisappear {
+                // Kaynakları temizle
+                NotificationCenter.default.removeObserver(self)
+            }
             
             // İpucu açıklama ekranı artık GameView'da gösteriliyor
         }
         .aspectRatio(1, contentMode: .fit)
         .drawingGroup() // Tüm görünümü GPU ile render et
+        .id(boardRefreshID) // Tüm tahta görünümünü yenileme ID'si
     }
     
     // Boyutları güncelle - sabit bir cell boyutu için optimize edildi
@@ -242,12 +266,12 @@ struct SudokuBoardView: View {
         
         // İlk olarak seçilen hücre kontrolü
         if viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column {
-            return selectedCellBackground
+            return selectedCellBackground()
         }
         
         // Hücrenin geçerli değeri yok ya da orijinal değerse
         if viewModel.selectedCell == nil {
-            return originalCellBackground
+            return originalCellBackground()
         }
         
         // Hücrenin seçili hücreyle aynı değeri varsa
@@ -260,11 +284,11 @@ struct SudokuBoardView: View {
         
         // Hücre aynı satır, sütun veya 3x3 bloktaysa
         if viewModel.isHighlighted(row: row, column: column) {
-            return selectedRowColBackground
+            return selectedRowColBackground()
         }
         
         // Varsayılan arka plan rengi
-        return originalCellBackground
+        return originalCellBackground()
     }
     
     // Metin rengini hesapla - önbelleğe alma için ayrı fonksiyon
@@ -273,13 +297,13 @@ struct SudokuBoardView: View {
             return effectiveColorScheme == .dark ? .white : .black
         } else if let value = cellValue, let selectedCell = viewModel.selectedCell {
             if viewModel.board.isCorrectValue(row: selectedCell.row, column: selectedCell.column, value: value) {
-                return Color.blue.opacity(0.8)
+                return themeManager.getBoardColor().opacity(0.8)
             } else {
                 return Color.red.opacity(0.8)
             }
         }
         
-        return Color.blue.opacity(0.8)
+        return themeManager.getBoardColor().opacity(0.8)
     }
     
     // İpucu hedef hücresi mi kontrol et
@@ -296,6 +320,61 @@ struct SudokuBoardView: View {
         
         // Vurgulanan diğer hücreler
         return hintData.highlightedCells.contains { $0.row == row && $0.column == column && $0.type == .target }
+    }
+    
+    // MARK: - Bildirim Yönetimi
+    private func setupBoardColorNotifications() {
+        // Renk değişikliği bildirimini dinle
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("BoardColorChanged"), 
+            object: nil, 
+            queue: .main
+        ) { _ in
+            // Renk değiştiğinde zorla yeniden çizim yap
+            withAnimation(.easeInOut(duration: 0.3)) {
+                // ViewModel'in objectWillChange'ini kullan
+                self.viewModel.objectWillChange.send()
+                
+                // Ayrıca tüm tahta görünümünü yenilemek için ID'yi değiştir
+                self.boardRefreshID = UUID()
+            }
+        }
+        
+        // Tema değişikliği bildirimlerini de dinleyebiliriz
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ThemeChanged"), 
+            object: nil, 
+            queue: .main
+        ) { _ in
+            // Tema değiştiğinde zorla yeniden çizim yap
+            withAnimation(.easeInOut(duration: 0.3)) {
+                // ViewModel'in objectWillChange'ini kullan
+                self.viewModel.objectWillChange.send()
+                
+                // Ayrıca tüm tahta görünümünü yenilemek için ID'yi değiştir 
+                self.boardRefreshID = UUID()
+            }
+        }
+    }
+    
+    // MARK: - Firebase Token Validation
+    private func validateFirebaseToken() {
+        if let currentUser = Auth.auth().currentUser {
+            logInfo("Firebase token doğrulaması yapılıyor...")
+            currentUser.getIDTokenResult(forcingRefresh: true) { tokenResult, error in
+                if let error = error {
+                    logError("Token doğrulama hatası: \(error.localizedDescription)")
+                    // Token doğrulama hatası - kullanıcı hesabı silinmiş veya token geçersiz olabilir
+                    // Kullanıcıyı otomatik olarak çıkış yaptır
+                    do {
+                        try Auth.auth().signOut()
+                        logWarning("Geçersiz token nedeniyle kullanıcı çıkış yaptırıldı")
+                    } catch {
+                        logError("Kullanıcı çıkışı hatası: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
     }
 }
 

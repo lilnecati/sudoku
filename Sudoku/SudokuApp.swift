@@ -39,6 +39,28 @@ class ThemeManager: ObservableObject {
         }
     }
     
+    // Sudoku tahtası renk tercihi için yeni özellik
+    @AppStorage("sudokuBoardColor") var sudokuBoardColor: String = "blue" {
+        didSet {
+            if oldValue != sudokuBoardColor {
+                // Renk değiştiğinde bildirimi yayınla
+                objectWillChange.send()
+                
+                // Hızlı güncelleme için bildirim gönder
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("BoardColorChanged"), 
+                    object: nil, 
+                    userInfo: ["oldColor": oldValue, "newColor": sudokuBoardColor]
+                )
+                
+                // Ayrıca genel tema değişikliği bildirimi
+                NotificationCenter.default.post(name: NSNotification.Name("ThemeChanged"), object: nil)
+                
+                logInfo("Tahta rengi değiştirildi: \(oldValue) -> \(sudokuBoardColor)")
+            }
+        }
+    }
+    
     @Published var colorScheme: ColorScheme?
     
     init() {
@@ -53,6 +75,43 @@ class ThemeManager: ObservableObject {
     
     func toggleDarkMode() {
         darkMode.toggle()
+    }
+    
+    // Tahta rengini almak için yardımcı fonksiyon
+    func getBoardColor() -> Color {
+        // Performans için her defasında switch-case yapmak yerine cache kullanma mekaniği ekleyebiliriz
+        switch sudokuBoardColor {
+        case "red":
+            return Color.red
+        case "pink":
+            return Color.pink
+        case "orange":
+            return Color.orange
+        case "purple":
+            return Color.purple
+        case "green":
+            return Color.green
+        default:
+            return Color.blue
+        }
+    }
+    
+    // Renk adını döndüren yardımcı fonksiyon
+    func getBoardColorName() -> String {
+        switch sudokuBoardColor {
+        case "red":
+            return "Kırmızı"
+        case "pink":
+            return "Pembe"
+        case "orange":
+            return "Turuncu"
+        case "purple":
+            return "Mor"
+        case "green":
+            return "Yeşil"
+        default:
+            return "Mavi"
+        }
     }
 }
 

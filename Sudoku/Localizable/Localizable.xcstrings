@@ -245,6 +245,9 @@
     "5" : {
 
     },
+    "A" : {
+
+    },
     "According to Sudoku rules, the value %lld can be placed in this cell." : {
 
     },
@@ -4024,6 +4027,9 @@
         }
       }
     },
+    "Görünüm Ayarları" : {
+
+    },
     "Göster" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4907,6 +4913,9 @@
     "Last Remaining Cell" : {
 
     },
+    "Metin Boyutu" : {
+
+    },
     "Mevcut Şifre" : {
       "localizations" : {
         "en" : {
@@ -5690,6 +5699,7 @@
       }
     },
     "puan" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6319,6 +6329,9 @@
         }
       }
     },
+    "Şu anki: %@" : {
+
+    },
     "Sudoku" : {
       "localizations" : {
         "en" : {
@@ -6408,6 +6421,9 @@
           }
         }
       }
+    },
+    "Sudoku Tahtası Rengi" : {
+
     },
     "Sudoku, 9x9'luk bir tabloda sayıları yerleştirdiğiniz bir bulmaca oyunudur. Bu rehber size temel kuralları ve stratejileri öğretecek." : {
       "extractionState" : "manual",
@@ -6533,6 +6549,9 @@
     },
     "Swordfish deseni bulundu. Bu, belirli hücrelerden bazı adayların çıkarılmasına izin verir" : {
       "comment" : "İpucu açıklaması"
+    },
+    "Tahta rengini, seçili hücreleri ve kullanıcı girdilerini renklendirir" : {
+
     },
     "Tahta üzerinde tespit edilebilen bir ipucu yok. Daha karmaşık stratejilere ihtiyaç olabilir." : {
       "comment" : "İpucu bulunamadı",
@@ -6791,6 +6810,9 @@
           }
         }
       }
+    },
+    "Temalar ve renk seçenekleri" : {
+
     },
     "Temel Kurallar" : {
       "extractionState" : "manual",
@@ -8164,6 +8186,7 @@
       }
     },
     "Zorluk Seviyesi Karşılaştırma" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

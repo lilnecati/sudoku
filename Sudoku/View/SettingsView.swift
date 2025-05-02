@@ -81,6 +81,9 @@ struct SettingsView: View {
     // Başarımlar için sheet state değişkeni
     @State private var showAchievementsSheet = false
     
+    // Tahta rengi seçimi için sheet state değişkeni
+    @State private var showBoardColorSheet = false
+    
     @State private var username = ""
     @State private var password = ""
     @State private var email = ""
@@ -396,6 +399,11 @@ struct SettingsView: View {
         .sheet(isPresented: $showAchievementsSheet) {
             AchievementsSheet()
             .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showBoardColorSheet) {
+            AppearanceSettingsSheet()
+                .environmentObject(themeManager)
+                .presentationDetents([.medium, .large])
         }
     }
     
@@ -807,27 +815,28 @@ struct SettingsView: View {
     }
     
     private func appearanceSettingsView() -> some View {
-        VStack(spacing: 20) {
-            // Sistem görünümünü kullan
+        Button(action: {
+            showBoardColorSheet = true
+        }) {
             HStack(spacing: 15) {
                 // İkon
                 ZStack {
                     Circle()
-                        .fill(Color.indigo.opacity(0.15))
+                        .fill(Color.purple.opacity(0.15))
                         .frame(width: 36, height: 36)
                     
-                    Image(systemName: "gearshape.fill")
+                    Image(systemName: "paintbrush.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.indigo)
+                        .foregroundColor(.purple)
                 }
                 
                 // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Sistem Görünümünü Kullan")
+                    Text("Görünüm Ayarları")
                         .scaledFont(size: 16, weight: .semibold)
                         .foregroundColor(.primary)
                     
-                    Text("Cihazın görünüm ayarını kullan (açık/koyu)")
+                    Text("Temalar ve renk seçenekleri")
                         .scaledFont(size: 13)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
@@ -835,150 +844,9 @@ struct SettingsView: View {
                 
                 Spacer()
                 
-                // Toggle butonu
-                Button(action: {
-                    // Titreşim kontrolü yapılarak ses çal
-                    if enableHapticFeedback {
-                        SoundManager.shared.playNavigationSound()
-                    } else {
-                        SoundManager.shared.playNavigationSoundOnly()
-                    }
-                    
-                    themeManager.useSystemAppearance.toggle()
-                }) {
-                    ZStack {
-                        Capsule()
-                            .fill(themeManager.useSystemAppearance ? Color.indigo : Color.gray.opacity(0.3))
-                            .frame(width: 55, height: 34)
-                        
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 30, height: 30)
-                            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-                            .offset(x: themeManager.useSystemAppearance ? 10 : -10)
-                    }
-                    .animation(nil, value: themeManager.useSystemAppearance)
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-            )
-            .padding(.horizontal, 8)
-            
-            // Karanlık mod
-            if !themeManager.useSystemAppearance {
-                HStack(spacing: 15) {
-                    // İkon
-                    ZStack {
-                        Circle()
-                            .fill(Color.blue.opacity(0.15))
-                            .frame(width: 36, height: 36)
-                        
-                        Image(systemName: "moon.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.blue)
-                    }
-                    
-                    // Başlık ve açıklama
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Karanlık Mod")
-                            .scaledFont(size: 16, weight: .semibold)
-                            .foregroundColor(.primary)
-                        
-                        Text("Karanlık tema aktif eder")
-                            .scaledFont(size: 13)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                    
-                    Spacer()
-                    
-                    // Toggle butonu
-                    Button(action: {
-                        // Titreşim kontrolü yapılarak ses çal
-                        if enableHapticFeedback {
-                            SoundManager.shared.playNavigationSound()
-                        } else {
-                            SoundManager.shared.playNavigationSoundOnly()
-                        }
-                        
-                        themeManager.darkMode.toggle()
-                    }) {
-                        ZStack {
-                            Capsule()
-                                .fill(themeManager.darkMode ? Color.blue : Color.gray.opacity(0.3))
-                                .frame(width: 55, height: 34)
-                            
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 30, height: 30)
-                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-                                .offset(x: themeManager.darkMode ? 10 : -10)
-                        }
-                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.darkMode)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                )
-                .padding(.horizontal, 8)
-            }
-            
-            // Metin boyutu
-            HStack(spacing: 15) {
-                // İkon
-                ZStack {
-                    Circle()
-                        .fill(Color.orange.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    
-                    Image(systemName: "textformat.size")
-                        .font(.system(size: 16))
-                        .foregroundColor(.orange)
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    // Başlık
-                    Text.localizedSafe("text.size")
-                        .scaledFont(size: 16, weight: .semibold)
-                        .foregroundColor(.primary)
-                    
-                    // Seçim butonları
-                    HStack(spacing: 12) {
-                        TextSizeButton(
-                            title: "text.size.small",
-                            isSelected: textSizeString == TextSizePreference.small.rawValue,
-                            action: {
-                                updateTextSizePreference(TextSizePreference.small)
-                            }
-                        )
-                        
-                        TextSizeButton(
-                            title: "text.size.medium", 
-                            isSelected: textSizeString == TextSizePreference.medium.rawValue,
-                            action: {
-                                updateTextSizePreference(TextSizePreference.medium)
-                            }
-                        )
-                        
-                        TextSizeButton(
-                            title: "text.size.large", 
-                            isSelected: textSizeString == TextSizePreference.large.rawValue,
-                            action: {
-                                updateTextSizePreference(TextSizePreference.large)
-                            }
-                        )
-                    }
-                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.gray)
             }
             .padding()
             .background(
@@ -986,82 +854,9 @@ struct SettingsView: View {
                     .fill(.ultraThinMaterial)
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
-            .padding(.horizontal, 8)
         }
-    }
-    
-    struct TextSizeButton: View {
-        var title: String
-        var isSelected: Bool
-        var action: () -> Void
-        
-        var body: some View {
-            Button(action: action) {
-                Text.localizedSafe(title)
-                    .scaledFont(size: 14, weight: isSelected ? .semibold : .regular)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(isSelected ? Color.orange.opacity(0.2) : Color.clear)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(isSelected ? Color.orange : Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                    )
-                    .foregroundColor(isSelected ? .orange : .primary)
-            }
-        }
-    }
-    
-    struct LanguageButton: View {
-        var language: AppLanguage
-        var isSelected: Bool
-        var action: () -> Void
-        
-        var body: some View {
-            Button(action: action) {
-                HStack(spacing: 8) {
-                    Text(language.flag)
-                        .font(.system(size: 18))
-                        .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
-                    
-                    Text.localizedSafe("language." + language.code)
-                        .scaledFont(size: 15, weight: isSelected ? .semibold : .regular)
-                }
-                .padding(.vertical, 10)
-                .padding(.horizontal, 14)
-                .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(isSelected ? 
-                                  LinearGradient(gradient: Gradient(colors: [Color.green.opacity(0.3), Color.green.opacity(0.15)]), 
-                                                startPoint: .topLeading, 
-                                                endPoint: .bottomTrailing) : 
-                                  LinearGradient(gradient: Gradient(colors: [Color.gray.opacity(0.05), Color.gray.opacity(0.05)]), 
-                                                startPoint: .topLeading, 
-                                                endPoint: .bottomTrailing))
-                            
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        isSelected ? Color.green : Color.gray.opacity(0.4),
-                                        isSelected ? Color.green.opacity(0.7) : Color.gray.opacity(0.2)
-                                    ]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: isSelected ? 1.5 : 1
-                            )
-                    }
-                )
-                .shadow(color: isSelected ? Color.green.opacity(0.2) : Color.clear, radius: 3, x: 0, y: 1)
-                .foregroundColor(isSelected ? .green : .primary)
-                .scaleEffect(isSelected ? 1.05 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
-            }
-        }
+        .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal, 8)
     }
     
     private func powerSavingSettingsView() -> some View {
@@ -1930,6 +1725,23 @@ struct SettingsView: View {
         
         logInfo("Tüm başarı verileri silindi")
     }
+    
+    private func getColorNameFromCode(_ colorCode: String) -> String {
+        switch colorCode {
+        case "red":
+            return "Kırmızı"
+        case "pink":
+            return "Pembe"
+        case "orange":
+            return "Turuncu"
+        case "purple":
+            return "Mor"
+        case "green":
+            return "Yeşil"
+        default:
+            return "Mavi"
+        }
+    }
 }
 
 
@@ -2360,6 +2172,434 @@ struct ProfileImageView: View {
             }.resume()
         } else {
             logInfo("Kullanıcının profil resmi URL'si yok")
+        }
+    }
+}
+
+// Tahta renk seçimi sayfası
+struct AppearanceSettingsSheet: View {
+    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
+    @AppStorage("enableHapticFeedback") private var enableHapticFeedback: Bool = true
+    @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
+    
+    // Renk seçildiğinde animasyon için
+    @State private var selectedColorAnimated: String? = nil
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Başlık
+                    Text("Görünüm Ayarları")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                        .padding(.top)
+                    
+                    // Sistem görünümünü kullan
+                    HStack(spacing: 15) {
+                        // İkon
+                        ZStack {
+                            Circle()
+                                .fill(Color.indigo.opacity(0.15))
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(.indigo)
+                        }
+                        
+                        // Başlık ve açıklama
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Sistem Görünümünü Kullan")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Text("Cihazın görünüm ayarını kullan (açık/koyu)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
+                        
+                        Spacer()
+                        
+                        // Toggle butonu
+                        Button(action: {
+                            // Titreşim kontrolü yapılarak ses çal
+                            if enableHapticFeedback {
+                                SoundManager.shared.playNavigationSound()
+                            } else {
+                                SoundManager.shared.playNavigationSoundOnly()
+                            }
+                            
+                            themeManager.useSystemAppearance.toggle()
+                        }) {
+                            ZStack {
+                                Capsule()
+                                    .fill(themeManager.useSystemAppearance ? Color.indigo : Color.gray.opacity(0.3))
+                                    .frame(width: 55, height: 34)
+                                
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 30, height: 30)
+                                    .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                    .offset(x: themeManager.useSystemAppearance ? 10 : -10)
+                            }
+                            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.useSystemAppearance)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                    .padding(.horizontal)
+                    
+                    // Karanlık mod (sistem görünümü kullanılmıyorsa)
+                    if !themeManager.useSystemAppearance {
+                        HStack(spacing: 15) {
+                            // İkon
+                            ZStack {
+                                Circle()
+                                    .fill(Color.blue.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: "moon.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.blue)
+                            }
+                            
+                            // Başlık ve açıklama
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Karanlık Mod")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Karanlık tema aktif eder")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
+                            
+                            Spacer()
+                            
+                            // Toggle butonu
+                            Button(action: {
+                                // Titreşim kontrolü yapılarak ses çal
+                                if enableHapticFeedback {
+                                    SoundManager.shared.playNavigationSound()
+                                } else {
+                                    SoundManager.shared.playNavigationSoundOnly()
+                                }
+                                
+                                themeManager.darkMode.toggle()
+                            }) {
+                                ZStack {
+                                    Capsule()
+                                        .fill(themeManager.darkMode ? Color.blue : Color.gray.opacity(0.3))
+                                        .frame(width: 55, height: 34)
+                                    
+                                    Circle()
+                                        .fill(Color.white)
+                                        .frame(width: 30, height: 30)
+                                        .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                        .offset(x: themeManager.darkMode ? 10 : -10)
+                                }
+                                .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.darkMode)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        )
+                        .padding(.horizontal)
+                    }
+                    
+                    // Metin boyutu
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 15) {
+                            // İkon
+                            ZStack {
+                                Circle()
+                                    .fill(Color.orange.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: "textformat.size")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.orange)
+                            }
+                            
+                            Text("Metin Boyutu")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                        }
+                        
+                        // Seçim butonları
+                        HStack(spacing: 12) {
+                            ForEach(TextSizePreference.allCases, id: \.self) { size in
+                                Button(action: {
+                                    updateTextSizePreference(size)
+                                }) {
+                                    VStack(spacing: 8) {
+                                        Text("A")
+                                            .font(.system(size: size.scaleFactor * 24))
+                                            .fontWeight(.bold)
+                                            .foregroundColor(textSizeString == size.rawValue ? .white : .primary)
+                                            .frame(width: 40, height: 40)
+                                            .background(
+                                                Circle()
+                                                    .fill(textSizeString == size.rawValue ? Color.orange : Color.clear)
+                                                    .overlay(
+                                                        Circle()
+                                                            .strokeBorder(Color.orange.opacity(0.5), lineWidth: textSizeString == size.rawValue ? 0 : 1)
+                                                    )
+                                            )
+                                        
+                                        Text.localizedSafe(size.rawValue)
+                                            .font(.system(size: 14))
+                                            .foregroundColor(textSizeString == size.rawValue ? .orange : .primary)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                    .padding(.horizontal)
+                    
+                    // Sudoku Tahtası Renk Seçimi
+                    VStack {
+                        // Başlık kısmı
+                        HStack {
+                            // İkon ve renk önizlemesi
+                            ZStack {
+                                Circle()
+                                    .fill(themeManager.getBoardColor().opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: "square.grid.3x3.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(themeManager.getBoardColor())
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Sudoku Tahtası Rengi")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Şu anki: \(getColorNameFromCode(themeManager.sudokuBoardColor))")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            // Mevcut renk önizlemesi
+                            Circle()
+                                .fill(themeManager.getBoardColor())
+                                .frame(width: 24, height: 24)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white, lineWidth: 2)
+                                        .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 0)
+                                )
+                        }
+                        .padding(.horizontal)
+                        .padding(.top)
+                        
+                        // Açıklama
+                        Text("Tahta rengini, seçili hücreleri ve kullanıcı girdilerini renklendirir")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal)
+                            .padding(.bottom, 5)
+                        
+                        // Renk ızgarası - 2x3 düzeni
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
+                            // Renk seçenekleri
+                            colorButton(color: .blue, name: "Mavi", code: "blue")
+                            colorButton(color: .red, name: "Kırmızı", code: "red")
+                            colorButton(color: .pink, name: "Pembe", code: "pink")
+                            colorButton(color: .orange, name: "Turuncu", code: "orange")
+                            colorButton(color: .purple, name: "Mor", code: "purple")
+                            colorButton(color: .green, name: "Yeşil", code: "green")
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom)
+                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                    .padding(.horizontal)
+                    .padding(.bottom, 30)
+                }
+            }
+            .navigationBarItems(trailing: Button("Tamam") {
+                presentationMode.wrappedValue.dismiss()
+            })
+            .onAppear {
+                // Mevcut rengi animasyon için kaydet
+                selectedColorAnimated = themeManager.sudokuBoardColor
+            }
+        }
+    }
+    
+    // Renk butonları için yardımcı fonksiyon
+    private func colorButton(color: Color, name: String, code: String) -> some View {
+        Button(action: {
+            // Titreşim geri bildirimi
+            if enableHapticFeedback {
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.impactOccurred(intensity: 0.6)
+                SoundManager.shared.playNavigationSound()
+            } else {
+                SoundManager.shared.playNavigationSoundOnly()
+            }
+            
+            // Animasyon için seçilen rengi kaydet
+            selectedColorAnimated = code
+            
+            // ThemeManager'ı güncelle
+            themeManager.sudokuBoardColor = code
+            
+            // Değişim olduğunu hemen bildir
+            themeManager.objectWillChange.send()
+            
+            // Bildirim gönder
+            NotificationCenter.default.post(name: NSNotification.Name("BoardColorChanged"), object: nil)
+        }) {
+            VStack(spacing: 6) {
+                ZStack {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 48, height: 48) // Daireleri küçülttük
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 2)
+                                .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 0)
+                        )
+                        .scaleEffect(selectedColorAnimated == code ? 1.05 : 1.0) // Hafif animation
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedColorAnimated)
+                    
+                    if themeManager.sudokuBoardColor == code {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(.white)
+                            .font(.system(size: 18, weight: .bold)) // Font boyutu küçültüldü
+                            .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+                    }
+                }
+                
+                Text(name)
+                    .font(.system(size: 14, weight: themeManager.sudokuBoardColor == code ? .semibold : .regular)) // Font boyutu küçültüldü
+                    .foregroundColor(themeManager.sudokuBoardColor == code ? color : (colorScheme == .dark ? .white : .black))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8) // Düşey boşlukları azalttık
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(themeManager.sudokuBoardColor == code ? color.opacity(0.15) : Color.clear)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    // Renk kodundan renk adını döndüren yardımcı fonksiyon
+    private func getColorNameFromCode(_ colorCode: String) -> String {
+        switch colorCode {
+        case "red":
+            return "Kırmızı"
+        case "pink":
+            return "Pembe"
+        case "orange":
+            return "Turuncu"
+        case "purple":
+            return "Mor"
+        case "green":
+            return "Yeşil"
+        default:
+            return "Mavi"
+        }
+    }
+    
+    // TextSize değişikliğini işleme fonksiyonu
+    private func updateTextSizePreference(_ newValue: TextSizePreference) {
+        // Değişikliği AppStorage'a kaydet
+        let previousValue = TextSizePreference(rawValue: textSizeString) ?? .medium
+        // String değeri güncelle
+        textSizeString = newValue.rawValue
+        
+        // Değişikliği bildir
+        NotificationCenter.default.post(name: Notification.Name("TextSizeChanged"), object: nil)
+        
+        // Bildirim sesi çal
+        SoundManager.shared.playNavigationSound()
+        
+        // Görünümün tümünü zorla yenile
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+        }
+        
+        print("Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)")
+    }
+}
+
+// Tahta renk seçim butonu (bu yapıyı artık kullanmıyoruz - yukarıdaki colorButton ile değiştirdik)
+struct BoardColorButton: View {
+    var color: Color
+    var name: String
+    var isSelected: Bool
+    var action: () -> Void
+    
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 2)
+                                .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 0)
+                        )
+                    
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(.white)
+                            .font(.system(size: 18, weight: .bold))
+                    }
+                }
+                
+                Text(name)
+                    .font(.system(size: 14))
+                    .foregroundColor(colorScheme == .dark ? .white : .black)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isSelected ? color.opacity(0.15) : Color.clear)
+            )
         }
     }
 }

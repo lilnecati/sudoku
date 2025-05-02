@@ -1000,9 +1000,11 @@ struct DetailedStatisticsView: View {
         logInfo("İSTATİSTİK YÜKLEME BAŞLADI")
         logInfo("Zorluk Seviyesi: \(selectedDifficulty.rawValue), Zaman Aralığı: \(selectedTimeRange.rawValue)")
         
-        // Kullanıcı giriş yapmış mı kontrol et
-        guard let userID = Auth.auth().currentUser?.uid else {
-            logWarning("İstatistikler yüklenemedi: Kullanıcı giriş yapmamış")
+        // <<< DEĞİŞİKLİK: Kullanıcı ID'sini CoreData'dan al >>>
+        // guard let userID = Auth.auth().currentUser?.uid else {
+        guard let coreDataUser = PersistenceController.shared.getCurrentUser(),
+              let userID = coreDataUser.firebaseUID else {
+            logWarning("İstatistikler yüklenemedi: Kullanıcı giriş yapmamış (CoreData kontrolü)")
             
             // Kullanıcı giriş yapmamışsa varsayılan dummy verileri kullan
             logInfo("Demo verileri yükleniyor (kullanıcı girişi yok)")
@@ -1018,6 +1020,8 @@ struct DetailedStatisticsView: View {
         // savedGames koleksiyonu yerine highScores koleksiyonunu kullan
         let query = db.collection("highScores")
             .whereField("userID", isEqualTo: userID)
+            // <<< YENİ: Sunucu tarafı filtreleme ekle >>>
+            .whereField("difficulty", isEqualTo: selectedDifficulty.rawValue)
             
         // Zaman aralığına göre filtreleme
         let calendar = Calendar.current
@@ -1037,11 +1041,17 @@ struct DetailedStatisticsView: View {
         
         logInfo("Tarih filtresi: \(fromDate) - \(today)")
         
+        // <<< YENİ: Sunucu tarafı tarih filtrelemesi ekle >>>
+        // Firestore'da tarih alanının adının "date" olduğunu varsayıyoruz. Farklıysa değiştirin.
+        let finalQuery = query.whereField("date", isGreaterThan: fromDate)
+        
         // Sorgu çok basitleştirildi, sadece userID kullanılıyor. Diğer filtreleri kod içinde yapacağız.
-        logInfo("Firestore sorgusu yapılıyor: highScores koleksiyonu")
+        // logInfo("Firestore sorgusu yapılıyor: highScores koleksiyonu")
+        logInfo("Optimize edilmiş Firestore sorgusu yapılıyor: highScores - Difficulty: \(selectedDifficulty.rawValue), Date > \(fromDate)")
         
         // Verileri çek
-        query.getDocuments { snapshot, error in
+        // <<< DEĞİŞİKLİK: Optimize edilmiş sorguyu kullan >>>
+        finalQuery.getDocuments { snapshot, error in
             if let error = error {
                 logWarning("Firestore'dan veriler alınamadı: \(error.localizedDescription)")
                 logInfo("Firebase hatası nedeniyle demo veriler yükleniyor")
@@ -1058,31 +1068,8 @@ struct DetailedStatisticsView: View {
                 return
             }
             
-            // Tüm filtreleri kod içinde uygula
-            let filteredDocuments = documents.filter { document in
-                let data = document.data()
-                
-                // İlk olarak tamamlanma kontrolü - highScores'ta kayıt varsa tamamlanmış demektir
-                // isCompleted kontrolünü kaldırdık çünkü highScores sadece tamamlanmış oyunları içerir
-                
-                // difficulty kontrolü
-                guard (data["difficulty"] as? String) == selectedDifficulty.rawValue else {
-                    return false
-                }
-                
-                // Tarih kontrolü - date veya timestamp kullan
-                if let dateTimestamp = data["date"] as? Timestamp {
-                    let creationDate = dateTimestamp.dateValue()
-                    return creationDate > fromDate
-                } else if let timestamp = data["timestamp"] as? Timestamp {
-                    let creationDate = timestamp.dateValue()
-                    return creationDate > fromDate
-                }
-                
-                return false
-            }
-            
-            if filteredDocuments.isEmpty {
+            // <<< DEĞİŞİKLİK: Doğrudan documents kullan >>>
+            if documents.isEmpty {
                 logInfo("Bu filtreye uygun tamamlanmış oyun bulunamadı")
                 // Veri bulunamadıysa boş bırak
                 DispatchQueue.main.async {
@@ -1094,7 +1081,8 @@ struct DetailedStatisticsView: View {
                 return
             }
             
-            logInfo("\(filteredDocuments.count) tamamlanmış oyun bulundu")
+            // <<< DEĞİŞİKLİK: Doğrudan documents kullan >>>
+            logInfo("\(documents.count) tamamlanmış oyun bulundu (sunucu filtreli)")
             
             // İstatistik verileri için geçici diziler
             var tempCompletionData: [CompletionDataPoint] = []
@@ -1106,12 +1094,13 @@ struct DetailedStatisticsView: View {
             var bestTime: TimeInterval = Double.infinity
             
             // Her oyunu işle
-            for (index, document) in filteredDocuments.enumerated() {
+            // <<< DEĞİŞİKLİK: Doğrudan documents kullan >>>
+            for (index, document) in documents.enumerated() {
                 let data = document.data()
                 
                 // Doküman ID
                 let docID = document.documentID
-                logDebug("Oyun \(index+1)/\(filteredDocuments.count) işleniyor - ID: \(docID)")
+                logDebug("Oyun \(index+1)/\(documents.count) işleniyor - ID: \(docID)")
                 
                 // Timestamp'i tarih olarak al
                 if let timestamp = data["date"] as? Timestamp {
@@ -1217,16 +1206,17 @@ struct DetailedStatisticsView: View {
                 
                 // İstatistik özetini oluştur
                 self.statistics = StatisticsData(
-                    totalGames: filteredDocuments.count,
-                    completedGames: filteredDocuments.count, // Tüm oyunlar tamamlanmış (filter ile çektik)
-                    averageTime: totalTime / Double(max(1, filteredDocuments.count)),
+                    totalGames: documents.count, // Sadece filtrelenenler
+                    completedGames: documents.count, 
+                    averageTime: totalTime / Double(max(1, documents.count)),
                     bestTime: bestTime,
-                    averageErrors: Double(totalErrors) / Double(max(1, filteredDocuments.count)),
-                    successRate: 1.0, // Tamamlanma oranı %100 (filter ile tamamlanmış oyunları çektik)
+                    averageErrors: Double(totalErrors) / Double(max(1, documents.count)),
+                    successRate: 1.0, // Tamamlanma oranı %100 (sunucudan filtrelenmiş geldi)
                     trendDirection: trendDirection
                 )
                 
-                logSuccess("UI güncellendi: \(filteredDocuments.count) oyun gösteriliyor")
+                // <<< DEĞİŞİKLİK: Doğrudan documents kullan >>>
+                logSuccess("UI güncellendi: \(documents.count) oyun gösteriliyor (sunucu filtreli)")
                 logSuccess("İSTATİSTİK YÜKLEME TAMAMLANDI")
             }
         }

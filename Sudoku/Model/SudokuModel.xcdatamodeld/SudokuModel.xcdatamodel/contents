@@ -30,7 +30,7 @@
         <attribute name="totalScore" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="highScores" inverseEntity="User"/>
     </entity>
-    <entity name="PendingFirebaseOperation" representedClassName="PendingFirebaseOperation" syncable="YES">
+    <entity name="PendingFirebaseOperation" representedClassName="PendingFirebaseOperation" syncable="YES" codeGenerationType="class">
         <attribute name="action" optional="YES" attributeType="String"/>
         <attribute name="attemptCount" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="dataID" optional="YES" attributeType="String"/>
@@ -39,6 +39,7 @@
         <attribute name="operationID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="payload" optional="YES" attributeType="Binary"/>
         <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="userID" optional="YES" attributeType="String"/>
     </entity>
     <entity name="SavedGame" representedClassName="SavedGame" syncable="YES" codeGenerationType="class">
         <attribute name="boardState" optional="YES" attributeType="Binary"/>

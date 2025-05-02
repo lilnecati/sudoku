@@ -13,7 +13,6 @@ struct ScoreboardView: View {
     @State private var selectedDifficulty: SudokuBoard.Difficulty = .easy
     @State private var statistics: ScoreboardStatistics = ScoreboardStatistics()
     @State private var recentScores: [NSManagedObject] = []
-    @State private var selectedTab = 0
     
     // Detaylı istatistik sayfasına geçiş için state
     @State private var showDetailedStatistics = false
@@ -54,72 +53,43 @@ struct ScoreboardView: View {
                 .padding(.top)
                 .padding(.horizontal)
                 
-                // Sekme kontrolü - Picker yerine butonlar kullanalım
-                HStack(spacing: 0) {
-                    tabButton(title: "Genel", tag: 0, textScale: textScale)
-                    tabButton(title: "Zorluk", tag: 1, textScale: textScale)
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        // Zorluk seviyesi seçici
+                        difficultySelector(textScale: textScale)
+                            .drawingGroup() // Metal hızlandırma ekleyelim
+                        
+                        // İstatistik kartları
+                        statisticsView(textScale: textScale)
+                            .drawingGroup() // Metal hızlandırma ekleyelim
+                        
+                        // Oyun istatistik kartları
+                        gameStatsView(textScale: textScale)
+                            .drawingGroup() // Metal hızlandırma ekleyelim
+                        
+                        // Son oyunlar
+                        recentGamesView(textScale: textScale)
+                            .drawingGroup() // Metal hızlandırma ekleyelim
+                    }
+                    .padding(.bottom)
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6))
-                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                )
-                .padding(.horizontal)
                 .padding(.top, 8)
-                
-                if selectedTab == 0 {
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            // Zorluk seviyesi seçici
-                            difficultySelector(textScale: textScale)
-                                .drawingGroup() // Metal hızlandırma ekleyelim
-                            
-                            // İstatistik kartları
-                            statisticsView(textScale: textScale)
-                                .drawingGroup() // Metal hızlandırma ekleyelim
-                            
-                            // Oyun istatistik kartları
-                            gameStatsView(textScale: textScale)
-                                .drawingGroup() // Metal hızlandırma ekleyelim
-                            
-                            // Son oyunlar
-                            recentGamesView(textScale: textScale)
-                                .drawingGroup() // Metal hızlandırma ekleyelim
-                        }
-                        .padding(.bottom)
-                    }
-                    .padding(.top, 8)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            // Zorluk seviyesi seçici
-                            difficultySelector(textScale: textScale)
-                                .drawingGroup() // Metal hızlandırma ekleyelim
-                            
-                            // Zorluk seviyesi karşılaştırma
-                            difficultyComparisonView(textScale: textScale)
-                                .drawingGroup() // Metal hızlandırma ekleyelim
-                        }
-                        .padding(.bottom)
-                    }
-                    .padding(.top, 8)
-                }
+            }
+            
+            // <<< YENİ: Yükleme göstergesi >>>
+            if isLoading {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.5)
+                    .padding()
+                    .background(Color.black.opacity(0.3))
+                    .cornerRadius(10)
             }
         }
-        .animation(nil, value: selectedTab) // Tab içeriği değişimini animasyonsuz yap
         .animation(nil, value: selectedDifficulty) // Zorluk seçimi değişimini animasyonsuz yap
         .onChange(of: selectedDifficulty) { oldValue, newValue in
-            // Animasyonu kaldırmak için gecikmeli veri yükleme yapalım
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // <<< DEĞİŞİKLİK: Gecikmeyi kaldır >>>
             loadData()
-            }
-        }
-        .onChange(of: selectedTab) { oldValue, newValue in
-            // Tab değiştirildiğinde verileri güncelle
-            // Animasyonu kaldırmak için gecikmeli veri yükleme yapalım
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            loadData()
-            }
         }
         .onAppear {
             // Ekran kararması yönetimi SudokuApp'a devredildi
@@ -682,218 +652,88 @@ struct ScoreboardView: View {
         }
     }
     
-    // Change difficultyComparisonView to a function accepting textScale
-    private func difficultyComparisonView(textScale: CGFloat) -> some View {
-        VStack(spacing: 12) {
-            HStack {
-                Text("Zorluk Seviyesi Karşılaştırma")
-                    // Apply textScale to the headline font
-                    .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                Image(systemName: "chart.bar.xaxis")
-                    .foregroundColor(getDifficultyColor(selectedDifficulty))
-            }
-            .padding(.horizontal)
-            
-            HStack(spacing: 20) {
-                ForEach(SudokuBoard.Difficulty.allCases) { difficulty in
-                    VStack(spacing: 8) {
-                        // Zorluk seviyesi ikonu
-                        Image(systemName: getDifficultyIcon(difficulty))
-                            .font(.system(size: 20))
-                            .foregroundColor(getDifficultyColor(difficulty))
-                            .frame(width: 40, height: 40)
-                            .background(
-                                Circle()
-                                    .fill(getDifficultyColor(difficulty).opacity(0.15))
-                            )
-                        
-                        Text(difficulty.localizedName)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        let bestScore = getBestScoreForDifficulty(difficulty)
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [getDifficultyColor(difficulty).opacity(0.15), getDifficultyColor(difficulty).opacity(0.05)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(height: 28)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [getDifficultyColor(difficulty).opacity(0.4), getDifficultyColor(difficulty).opacity(0.2)]),
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1
-                                        )
-                                )
-                            
-                            Text("\(bestScore)")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundColor(getDifficultyColor(difficulty))
-                        }
-                        
-                        Text("puan")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
-                            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                    )
-                }
-            }
-            .padding()
-        }
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(
-                            colors: [
-                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
-                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
-                            ]
-                        ),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(
-                                gradient: Gradient(
-                                    colors: [getDifficultyColor(selectedDifficulty).opacity(0.7), getDifficultyColor(selectedDifficulty).opacity(0.3)]
-                                ),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
-                        .padding(0.5)
-                )
-        )
-        .padding(.horizontal)
-    }
-    
     private func loadData() {
         logInfo("Skor tablosu yükleniyor - Zorluk seviyesi: \(selectedDifficulty.rawValue)")
+        // <<< YENİ: Yükleme durumunu başlat >>>
+        isLoading = true
         
-        let bestScore = ScoreManager.shared.getBestScore(for: selectedDifficulty)
-        let averageScore = ScoreManager.shared.getAverageScore(for: selectedDifficulty)
-        
-        // Seçili zorluk seviyesi için skorları hesapla
-        let request = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
-        request.predicate = NSPredicate(format: "difficulty == %@", selectedDifficulty.rawValue)
-        request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
-        
-        // Tüm zorluk seviyelerindeki toplam oyun sayısını hesaplamak için
-        let totalGamesRequest = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
-        totalGamesRequest.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
-        
-        do {
+        // <<< YENİ: Arka plan iş parçacığına taşı >>>
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Arka planda yapılacaklar:
             let context = PersistenceController.shared.container.viewContext
+            var loadedStatistics = ScoreboardStatistics() // Geçici istatistik nesnesi
+            var loadedRecentScores: [NSManagedObject] = [] // Geçici skor listesi
             
-            // Seçili zorluk seviyesi için skorları getir
-            let scores = try context.fetch(request)
-            let difficultyGames = scores.count
-            
-            // Tüm zorluk seviyelerindeki toplam oyun sayısı
-            let allScores = try context.fetch(totalGamesRequest)
-            let totalGames = allScores.count
-            
-            logInfo("\(selectedDifficulty.rawValue) zorluk seviyesi için \(difficultyGames) skor bulundu")
-            logInfo("Tüm zorluk seviyeleri için toplam \(totalGames) skor bulundu")
-            
-            // Son oyunları kaydet
-            recentScores = scores
-            
-            if !scores.isEmpty {
-                // İlk skorun detaylarını göster
-                if let firstScore = scores.first {
-                    let id = firstScore.value(forKey: "id") as? UUID
-                    let date = firstScore.value(forKey: "date") as? Date
-                    let totalScore = firstScore.value(forKey: "totalScore") as? Int ?? 0
-                    let elapsedTime = firstScore.value(forKey: "elapsedTime") as? Double ?? 0
-                    logDebug("İlk skor - ID: \(id?.uuidString ?? "ID yok"), Tarih: \(date?.description ?? "Tarih yok"), Puan: \(totalScore), Süre: \(elapsedTime)")
-                }
-            } else {
-                logWarning("Bu zorluk seviyesi için kayıtlı skor bulunamadı")
-            }
-            
-            var totalTime: TimeInterval = 0
-            var bestTime = Double.infinity
-            var totalScore = 0
-            var bestTotalScore = 0
-            
-            for score in scores {
-                if let time = score.value(forKey: "elapsedTime") as? Double {
-                    totalTime += time
-                    bestTime = min(bestTime, time)
+            // Verileri CoreData'dan çek ve hesapla
+            do {
+                // Seçili zorluk seviyesi için skorları hesapla
+                let request = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
+                request.predicate = NSPredicate(format: "difficulty == %@", selectedDifficulty.rawValue)
+                request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
+                
+                // <<< DEĞİŞİKLİK: Fetch yerine count kullan >>>
+                let totalGamesRequest = NSFetchRequest<NSManagedObject>(entityName: "HighScore")
+                // Count için predicate veya sort descriptor gerekmez, ama istersen ekleyebilirsin.
+                
+                // Fetch işlemlerini context.performAndWait içinde yapmak daha güvenli olabilir
+                // ancak burada doğrudan fetch yapıyoruz, context'in doğru thread'de olduğundan emin olmalıyız.
+                // Bu global queue'da yapıldığı için sorun olmamalı.
+                let scores = try context.fetch(request)
+                // <<< DEĞİŞİKLİK: Fetch yerine count kullan >>>
+                let totalGamesCount = try context.count(for: totalGamesRequest)
+                
+                loadedStatistics.difficultyGames = scores.count
+                // <<< DEĞİŞİKLİK: Fetch edilen array yerine count sonucunu kullan >>>
+                loadedStatistics.totalGames = totalGamesCount 
+                loadedRecentScores = scores // Son oyunları geçici listeye al
+                
+                logInfo("\(selectedDifficulty.rawValue) zorluk seviyesi için \(loadedStatistics.difficultyGames) skor bulundu")
+                // <<< DEĞİŞİKLİK: Doğru değişkeni logla >>>
+                logInfo("Tüm zorluk seviyeleri için toplam \(loadedStatistics.totalGames) skor bulundu (count ile)")
+                
+                var totalTime: TimeInterval = 0
+                var bestTime = Double.infinity
+                var totalScoreValue = 0 // Int olarak başlatalım
+                var bestScoreValue = 0 // Int olarak başlatalım
+                
+                for score in scores {
+                    if let time = score.value(forKey: "elapsedTime") as? Double {
+                        totalTime += time
+                        bestTime = min(bestTime, time)
+                    }
+                    let currentScoreValue = calculateScore(for: score) // Skoru burada hesapla
+                    totalScoreValue += currentScoreValue
+                    bestScoreValue = max(bestScoreValue, currentScoreValue)
                 }
                 
-                // Yeni skor alanını kullan (yoksa eski hesaplama yöntemi)
-                if let scoreValue = score.value(forKey: "totalScore") as? Int, scoreValue > 0 {
-                    totalScore += scoreValue
-                    bestTotalScore = max(bestTotalScore, scoreValue)
+                if !scores.isEmpty {
+                    loadedStatistics.averageTime = totalTime / Double(scores.count)
+                    loadedStatistics.bestTime = bestTime == Double.infinity ? 0 : bestTime // Eğer hiç skor yoksa 0 yap
+                    loadedStatistics.averageScore = Double(totalScoreValue) / Double(scores.count) // Double'a çevirerek böl
+                    loadedStatistics.bestScore = bestScoreValue
                 } else {
-                    // Eski hesaplama yöntemi
-                    if let time = score.value(forKey: "elapsedTime") as? Double {
-                        let calculatedScore = Int(10000 / (time + 1))
-                        totalScore += calculatedScore
-                        bestTotalScore = max(bestTotalScore, calculatedScore)
-                    }
+                    // Skor yoksa varsayılan değerler
+                    loadedStatistics.averageTime = 0
+                    loadedStatistics.bestTime = 0
+                    loadedStatistics.averageScore = 0
+                    loadedStatistics.bestScore = 0
                 }
+                
+            } catch {
+                logError("Skor verileri yüklenirken hata: \(error.localizedDescription)")
+                // Hata durumunda istatistikleri sıfırla veya uygun bir değer ata
+                loadedStatistics = ScoreboardStatistics() // Varsayılana dön
+                loadedRecentScores = []
             }
             
-            let averageTime = difficultyGames > 0 ? totalTime / Double(difficultyGames) : 0
-            let calculatedAverageScore = difficultyGames > 0 ? Double(totalScore) / Double(difficultyGames) : 0
-            let successRate: Double = difficultyGames > 0 ? 1.0 : 0.0 // Tüm oyunlar tamamlanmış kabul edilir
-            
-            statistics = ScoreboardStatistics(
-                totalGames: totalGames,  // Tüm zorluk seviyelerindeki toplam oyun sayısı
-                difficultyGames: difficultyGames, // Sadece seçili zorluk seviyesindeki oyun sayısı
-                totalScore: totalScore,
-                averageScore: calculatedAverageScore,
-                bestScore: bestTotalScore > 0 ? bestTotalScore : bestScore, // Yeni en yüksek skoru kullan
-                averageTime: averageTime,
-                bestTime: bestTime < Double.infinity ? bestTime : 0,
-                successRate: successRate
-            )
-        } catch {
-            logError("Oyun istatistikleri alınamadı: \(error.localizedDescription)")
-            statistics = ScoreboardStatistics(
-                totalGames: 0,
-                difficultyGames: 0,
-                totalScore: 0,
-                averageScore: averageScore,
-                bestScore: bestScore,
-                averageTime: 0,
-                bestTime: 0,
-                successRate: 0
-            )
+            // <<< YENİ: Ana iş parçacığına dön ve state'leri güncelle >>>
+            DispatchQueue.main.async {
+                self.statistics = loadedStatistics
+                self.recentScores = loadedRecentScores
+                self.isLoading = false // Yükleme durumunu bitir
+                logInfo("Skor tablosu verileri başarıyla yüklendi ve UI güncellendi.")
+            }
         }
-    }
-    
-    private func getBestScoreForDifficulty(_ difficulty: SudokuBoard.Difficulty) -> Int {
-        return ScoreManager.shared.getBestScore(for: difficulty)
     }
     
     private func getDifficultyColor(_ difficulty: SudokuBoard.Difficulty) -> Color {
@@ -908,41 +748,6 @@ struct ScoreboardView: View {
             return .red
         }
     }
-    
-    // Sekme butonu
-    // textScale parametresi eklendi
-    private func tabButton(title: String, tag: Int, textScale: CGFloat) -> some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                selectedTab = tag
-            }
-        }) {
-            Text.localizedSafe(title)
-                 // textScale uygulandı (temel boyut 14)
-                .font(.system(size: 14 * textScale, weight: selectedTab == tag ? .semibold : .regular))
-                .padding(.vertical, 10)
-                .frame(maxWidth: .infinity)
-                .background(
-                    ZStack {
-                        // Seçili sekme için dolgu
-                        if selectedTab == tag {
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(getDifficultyColor(selectedDifficulty))
-                                .matchedGeometryEffect(id: "tabBackground", in: namespace)
-                                .shadow(color: getDifficultyColor(selectedDifficulty).opacity(0.4), radius: 3, x: 0, y: 2)
-                        } else {
-                            // Seçili olmayan sekme için şeffaf
-                            Color.clear
-                        }
-                    }
-                )
-                .foregroundColor(selectedTab == tag ? .white : .secondary)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-    
-    // Namespace tanımı
-    @Namespace private var namespace
     
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()

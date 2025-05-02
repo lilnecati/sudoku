@@ -63,11 +63,11 @@ class PersistenceController {
             return
         }
         
-        // Kullanıcı giriş yapmış olmalı (şimdilik misafir işlemleri desteklenmiyor)
-        guard let currentUserID = Auth.auth().currentUser?.uid else {
-            logInfo("Bekleyen işlemler işlenemiyor: Kullanıcı giriş yapmamış.")
-            return
-        }
+        // <<< KALDIRILDI: Artık canlı kullanıcı kontrolü burada yapılmayacak. >>>
+        // guard let currentUserID = Auth.auth().currentUser?.uid else {
+        //     logInfo("Bekleyen işlemler işlenemiyor: Kullanıcı giriş yapmamış.")
+        //     return
+        // }
         
         let context = container.newBackgroundContext() // Arka planda çalıştır
         context.perform { [weak self] in
@@ -90,13 +90,20 @@ class PersistenceController {
                     guard let action = operation.action,
                           let opDataType = operation.dataType,
                           let opDataID = operation.dataID else {
-                        // Corrected logError syntax
+
                         logError("Bekleyen işlemde eksik bilgi var, siliniyor: operationID=\(operation.operationID?.uuidString ?? "ID Yok")")
                         context.delete(operation)
-                        continue // Sonraki işleme geç
+                        continue
                     }
                     
-                    logInfo("İşleniyor: \(action) - \(opDataType) - \(opDataID)")
+                    // <<< YENİ: İşleme ait kaydedilmiş userID'yi kullan >>>
+                    // Eğer userID nil ise, misafir işlemi olarak kabul edilebilir veya hata verilebilir.
+                    // Şimdilik nil ise "guest" kullanalım.
+                    let operationUserID = operation.userID ?? "guest"
+                    // <<< YENİ LOG >>>
+                    logDebug("Processing Operation: UserID read from CoreData: \(operation.userID ?? "nil"), Effective UserID: \(operationUserID)")
+                    
+                    logInfo("İşleniyor: \(action) - \(opDataType) - \(opDataID) - User: \(operationUserID)")
                     
                     operation.attemptCount += 1
                     operation.lastAttemptTimestamp = Date()
@@ -108,7 +115,8 @@ class PersistenceController {
                             context.delete(operation)
                             continue
                         }
-                        self.performFirestoreUpdate(userID: currentUserID, dataType: opDataType, dataID: opDataID, payload: opPayload) { success in
+                        // <<< YENİ: operationUserID'yi kullan >>>
+                        self.performFirestoreUpdate(userID: operationUserID, dataType: opDataType, dataID: opDataID, payload: opPayload) { success in
                             context.perform {
                                 if success {
                                     logSuccess("Bekleyen \'update\' işlemi başarıyla tamamlandı ve silindi: \(opDataID)")
@@ -147,7 +155,8 @@ class PersistenceController {
                             }
                         }
                     case "delete":
-                        self.performFirestoreDelete(userID: currentUserID, dataType: opDataType, dataID: opDataID) { success in
+                        // <<< YENİ: operationUserID'yi kullan >>>
+                        self.performFirestoreDelete(userID: operationUserID, dataType: opDataType, dataID: opDataID) { success in
                             context.perform {
                                 if success {
                                     logSuccess("Bekleyen \'delete\' işlemi başarıyla tamamlandı ve silindi: \(opDataID)")
@@ -182,22 +191,28 @@ class PersistenceController {
     
     // Firestore'a güncelleme/oluşturma işlemi yap
     private func performFirestoreUpdate(userID: String, dataType: String, dataID: String, payload: Data, completion: @escaping (Bool) -> Void) {
+        // <<< YENİ LOG >>>
+        logDebug("Performing Firestore Update: Received UserID Param: \(userID)") 
         guard let collectionPath = collectionPath(for: dataType, userID: userID) else {
-            logError("Geçersiz dataType for update: \(dataType)")
+            logError("Geçersiz dataType for update: \\(dataType)")
             completion(false)
             return
         }
         let docRef = db.collection(collectionPath).document(dataID)
         do {
             guard var dataDict = try JSONSerialization.jsonObject(with: payload) as? [String: Any] else {
-                logError("Payload JSON formatına çevrilemedi: \(dataID)")
+                logError("Payload JSON formatına çevrilemedi: \\(dataID)")
                 completion(false)
                 return
             }
             dataDict["lastUpdated"] = FieldValue.serverTimestamp()
-            if dataDict["userID"] == nil {
-                dataDict["userID"] = userID
-            }
+            // <<< DEĞİŞİKLİK: Payload'daki userID'ye bakma, her zaman fonksiyona gelen userID'yi kullan >>>
+            dataDict["userID"] = userID 
+            // <<< YENİ LOG >>>
+            logDebug("Performing Firestore Update: Final UserID in dataDict: \(dataDict["userID"] ?? "nil") for path: \(collectionPath)") 
+            // if dataDict["userID"] == nil { // Eski kontrol kaldırıldı
+            //     dataDict["userID"] = userID
+            // }
             docRef.setData(dataDict, merge: true) { error in
                 if let error = error {
                     logError("Firestore update/setData hatası (\(dataID)): \(error.localizedDescription)")
@@ -282,30 +297,41 @@ class PersistenceController {
         }
     }
     
+ 
     // Yeni Helper: Bekleyen işlemi kuyruğa ekle
     private func queuePendingOperation(action: String, dataType: String, dataID: String, payload: Data?) {
-        logInfo("İşlem kuyruğa ekleniyor: \(action) - \(dataType) - \(dataID)")
+        logInfo("İşlem kuyruğa ekleniyor: \\(action) - \\(dataType) - \\(dataID)")
         let context = container.newBackgroundContext()
+        // let currentUserID = Auth.auth().currentUser?.uid // <<< Eski yöntem kaldırıldı
+        // logDebug("Queueing Operation: UserID from Auth to be saved: \\(currentUserID ?? \"nil\")") 
+        
+        // <<< DEĞİŞİKLİK: ID'yi CoreData'daki aktif kullanıcıdan al >>>
+        let loggedInUser = PersistenceController.shared.getCurrentUser() // Kendi metodumuzu kullanalım
+        let userIDToSave = loggedInUser?.firebaseUID // CoreData'daki firebaseUID'yi al
+        logDebug("Queueing Operation: UserID from CoreData user to be saved: \(userIDToSave ?? "nil") (Username: \(loggedInUser?.username ?? "N/A"))")
+        
         context.performAndWait { // Wait to ensure it's saved before proceeding
             let pendingOp = PendingFirebaseOperation(context: context)
             pendingOp.operationID = UUID()
             pendingOp.action = action
             pendingOp.dataType = dataType
             pendingOp.dataID = dataID
+            pendingOp.userID = userIDToSave // <<< YENİ: CoreData'dan alınan ID'yi kaydet >>>
             pendingOp.payload = payload
             pendingOp.timestamp = Date()
             pendingOp.attemptCount = 0
             
             do {
                 try context.save()
-                logSuccess("Bekleyen işlem başarıyla kuyruğa eklendi: \(pendingOp.operationID?.uuidString ?? "ID Yok")")
+                // <<< YENİ LOG >>>
+                logSuccess("Bekleyen işlem başarıyla kuyruğa eklendi: \(pendingOp.operationID?.uuidString ?? "ID Yok") - UserID Saved: \(userIDToSave ?? "nil")") 
             } catch {
-                logError("Bekleyen işlem kuyruğa eklenirken hata: \(error.localizedDescription)")
+                logError("Bekleyen işlem kuyruğa eklenirken hata: \\(error.localizedDescription)")
             }
         }
     }
     
-    // Helper to check if Firestore error is temporary
+    
     private func isFirestoreErrorTemporary(_ error: Error) -> Bool {
         let nsError = error as NSError
         let temporaryCodes: [Int] = [
@@ -855,6 +881,8 @@ class PersistenceController {
     
     // Benzersiz ID ile yeni bir oyun kaydet
     func saveGame(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval, jsonData: Data? = nil) {
+        // <<< YENİ LOG >>>
+        logDebug("PersistenceController.saveGame called. GameID: \(gameID), Offline: \(!NetworkMonitor.shared.isConnected)")
         let context = container.viewContext
         let game = SavedGame(context: context)
         
@@ -894,6 +922,8 @@ class PersistenceController {
     
     // Firestore'a oyun kaydetme - Updated for Offline Support
     func saveGameToFirestore(gameID: UUID, board: [[Int]], difficulty: String, elapsedTime: TimeInterval, jsonData: Data? = nil) {
+        // <<< YENİ LOG >>>
+        logDebug("PersistenceController.saveGameToFirestore called. GameID: \(gameID), Offline: \(!NetworkMonitor.shared.isConnected)")
         // Kullanıcı kimliğini al - giriş yapmış kullanıcı veya misafir
         let userID = Auth.auth().currentUser?.uid ?? "guest"
         let documentID = gameID.uuidString.uppercased()
@@ -955,6 +985,10 @@ class PersistenceController {
         }
 
         // Check network status (Requires NetworkMonitor)
+        // <<< YENİ LOG >>>
+        let userIDForOfflineCheck = Auth.auth().currentUser?.uid ?? "guest"
+        logDebug("Offline Save Check: UserID before queueing: \(userIDForOfflineCheck)") 
+        
         guard NetworkMonitor.shared.isConnected else {
             logWarning("Çevrimdışı: Oyun kaydetme işlemi kuyruğa alınıyor: \(documentID)")
             // ---> payload (timestampsız JSON) kuyruğa ekleniyor <---

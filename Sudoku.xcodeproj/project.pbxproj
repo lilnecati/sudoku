@@ -52,9 +52,23 @@
 		A4CB25C02D9520F4004E56BE /* fix_sudoku.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fix_sudoku.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A4DD8FE52DC4982500EA7D77 /* Exceptions for "Sudoku" folder in "Sudoku" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"CoreDataModels/PendingFirebaseOperation+CoreDataClass.swift",
+				"CoreDataModels/PendingFirebaseOperation+CoreDataProperties.swift",
+			);
+			target = A4861ADE2D8FFB8A0027B8B9 /* Sudoku */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A4861AE12D8FFB8A0027B8B9 /* Sudoku */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A4DD8FE52DC4982500EA7D77 /* Exceptions for "Sudoku" folder in "Sudoku" target */,
+			);
 			path = Sudoku;
 			sourceTree = "<group>";
 		};
