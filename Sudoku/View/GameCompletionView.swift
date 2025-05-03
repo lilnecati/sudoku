@@ -17,7 +17,12 @@ struct GameCompletionView: View {
     let onDismiss: () -> Void
     
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var showLeaderboard = false
+    
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     var body: some View {
         VStack(spacing: 25) {
@@ -25,15 +30,15 @@ struct GameCompletionView: View {
             VStack(spacing: 10) {
                 Image(systemName: "star.fill")
                     .font(.system(size: 60))
-                    .foregroundColor(.yellow)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .yellow)
                 
                 Text("Tebrikler!")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                 
                 Text("Sudoku'yu Tamamladınız")
                     .font(.title3)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
             }
             
             // Skor ve istatistikler
@@ -42,31 +47,33 @@ struct GameCompletionView: View {
                 VStack(spacing: 5) {
                     Text("\(score)")
                         .font(.system(size: 44, weight: .bold, design: .rounded))
-                        .foregroundColor(ColorManager.primaryBlue)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : ColorManager.primaryBlue)
                     
                     Text("PUAN")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                 }
                 
                 if isNewHighScore {
                     Text("🎉 Yeni Rekor! 🎉")
                         .font(.headline)
-                        .foregroundColor(.orange)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .orange)
                 }
                 
                 // Detaylar
                 VStack(spacing: 15) {
-                    StatisticRow(icon: "clock.fill", title: "Süre", value: formatTime(timeElapsed))
-                    StatisticRow(icon: "xmark.circle.fill", title: "Hata", value: "\(errorCount)")
-                    StatisticRow(icon: "lightbulb.fill", title: "İpucu", value: "\(hintCount)")
-                    StatisticRow(icon: "chart.bar.fill", title: "Zorluk", value: difficulty.localizedName)
+                    StatisticRow(icon: "clock.fill", title: "Süre", value: formatTime(timeElapsed), isBejMode: isBejMode)
+                    StatisticRow(icon: "xmark.circle.fill", title: "Hata", value: "\(errorCount)", isBejMode: isBejMode)
+                    StatisticRow(icon: "lightbulb.fill", title: "İpucu", value: "\(hintCount)", isBejMode: isBejMode)
+                    StatisticRow(icon: "chart.bar.fill", title: "Zorluk", value: difficulty.localizedName, isBejMode: isBejMode)
                 }
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6))
+                        .fill(isBejMode ? 
+                             ThemeManager.BejThemeColors.cardBackground : 
+                             (colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6)))
                 )
             }
             .padding(.vertical)
@@ -80,8 +87,8 @@ struct GameCompletionView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(ColorManager.primaryGreen)
-                    .foregroundColor(.white)
+                    .background(isBejMode ? ThemeManager.BejThemeColors.accent : ColorManager.primaryGreen)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.cardBackground : .white)
                     .cornerRadius(12)
                 }
                 
@@ -91,15 +98,17 @@ struct GameCompletionView: View {
                         .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(ColorManager.primaryRed, lineWidth: 1)
+                                .stroke(isBejMode ? ThemeManager.BejThemeColors.accent : ColorManager.primaryRed, lineWidth: 1)
                         )
-                        .foregroundColor(ColorManager.primaryRed)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : ColorManager.primaryRed)
                 }
             }
             .padding(.horizontal)
         }
         .padding()
-        .background(colorScheme == .dark ? Color(.systemBackground) : .white)
+        .background(isBejMode ? 
+                   ThemeManager.BejThemeColors.background : 
+                   (colorScheme == .dark ? Color(.systemBackground) : .white))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 10)
         .fullScreenCover(isPresented: $showLeaderboard) {
@@ -122,20 +131,22 @@ struct StatisticRow: View {
     let icon: String
     let title: String
     let value: String
+    let isBejMode: Bool
     
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.secondary)
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                 .frame(width: 24)
             
             Text(title)
-                .foregroundColor(.secondary)
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
             
             Spacer()
             
             Text(value)
                 .fontWeight(.medium)
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
         }
     }
 }

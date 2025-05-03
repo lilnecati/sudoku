@@ -9,14 +9,11 @@ import Combine
 
 struct TutorialView: View {
     @Environment(\.presentationMode) var presentationMode
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.textScale) var textScale
-    
-    // LocalizationManager'ı EnvironmentObject olarak değiştiriyoruz
+    @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var localizationManager: LocalizationManager
-    
-    // Dil değişikliğini doğrudan izlemek için AppStorage
     @AppStorage("app_language") private var appLanguage: String = "tr"
     
     // Genel durum değişkenleri
@@ -51,6 +48,11 @@ struct TutorialView: View {
         [[1,3,6,7,9], [2,3,4,6,8], [1,4,6,7,9]],
         [[1,2,3,4], [1,2,3,7,8], [3,4,7,8,9]]
     ]
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     // Rehber adımları
     private var tutorialSteps: [TutorialStep] {
@@ -308,7 +310,9 @@ struct TutorialView: View {
                 // Adım başlığı
                 Text(title)
                     .font(.system(size: 24 * textScale, weight: .bold, design: .rounded))
-                    .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: true))
+                    .foregroundColor(isBejMode ? 
+                                    ThemeManager.BejThemeColors.text : 
+                                    Color.textColor(for: colorScheme, isHighlighted: true))
                     .multilineTextAlignment(.center)
                     .padding(.top, 5)
                     .padding(.horizontal)
@@ -319,8 +323,10 @@ struct TutorialView: View {
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
-                                    colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
+                                    isBejMode ? ThemeManager.BejThemeColors.cardBackground : 
+                                    (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white),
+                                    isBejMode ? ThemeManager.BejThemeColors.cardBackground.opacity(0.95) : 
+                                    (colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95))
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -331,7 +337,12 @@ struct TutorialView: View {
                             RoundedRectangle(cornerRadius: 20)
                                 .stroke(
                                     LinearGradient(
-                                        gradient: Gradient(colors: [ColorManager.primaryBlue.opacity(0.5), ColorManager.primaryBlue.opacity(0.2)]),
+                                        gradient: Gradient(colors: [
+                                            isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.5) :
+                                            ColorManager.primaryBlue.opacity(0.5), 
+                                            isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.2) :
+                                            ColorManager.primaryBlue.opacity(0.2)
+                                        ]),
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
@@ -356,7 +367,9 @@ struct TutorialView: View {
                                 // Açıklama metni
                                 Text(description)
                                     .font(.system(size: 16 * textScale))
-                                    .foregroundColor(Color.textColor(for: colorScheme, isHighlighted: false))
+                                    .foregroundColor(isBejMode ? 
+                                                   ThemeManager.BejThemeColors.text : 
+                                                   Color.textColor(for: colorScheme, isHighlighted: false))
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal)
                                     .padding(.bottom, 10)
@@ -377,11 +390,11 @@ struct TutorialView: View {
                         Text(tipTitle)
                             .font(.caption)
                             .fontWeight(.bold)
-                            .foregroundColor(ColorManager.primaryOrange)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : ColorManager.primaryOrange)
                         
                         Text(tip)
                             .font(.system(size: 14 * textScale))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.horizontal)
@@ -389,7 +402,9 @@ struct TutorialView: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.5) : Color(.systemGray6).opacity(0.5))
+                            .fill(isBejMode ? 
+                                 ThemeManager.BejThemeColors.background.opacity(0.5) : 
+                                 (colorScheme == .dark ? Color(.systemGray5).opacity(0.5) : Color(.systemGray6).opacity(0.5)))
                     )
                     .padding(.horizontal, 20)
                 }
@@ -419,20 +434,40 @@ struct TutorialView: View {
     
     // Rehber adımı için renk seçimi
     private func getStepColor(for title: String) -> Color {
-        if title.contains("Welcome") || title.contains("Bienvenue") || title.contains("Hoş Geldiniz") {
-            return ColorManager.primaryBlue
-        } else if title.contains("Game Rules") || title.contains("Règles") || title.contains("Kurallar") {
-            return ColorManager.primaryPurple
-        } else if title.contains("Cell") || title.contains("Cellule") || title.contains("Hücre") {
-            return ColorManager.primaryOrange
-        } else if title.contains("Notes") || title.contains("Not") {
-            return Color.blue
-        } else if title.contains("Hints") || title.contains("Indices") || title.contains("İpucu") {
-            return Color.yellow
-        } else if title.contains("Completed") || title.contains("Félicitations") || title.contains("Tebrikler") {
-            return ColorManager.primaryGreen
+        if isBejMode {
+            // Bej mod renkleri
+            if title.contains("Welcome") || title.contains("Bienvenue") || title.contains("Hoş Geldiniz") {
+                return ThemeManager.BejThemeColors.accent
+            } else if title.contains("Game Rules") || title.contains("Règles") || title.contains("Kurallar") {
+                return Color(red: 0.6, green: 0.4, blue: 0.2) // Açık kahve
+            } else if title.contains("Cell") || title.contains("Cellule") || title.contains("Hücre") {
+                return Color(red: 0.7, green: 0.4, blue: 0.1) // Turuncu-kahve
+            } else if title.contains("Notes") || title.contains("Not") {
+                return Color(red: 0.5, green: 0.3, blue: 0.1) // Kahverengi-turuncu
+            } else if title.contains("Hints") || title.contains("Indices") || title.contains("İpucu") {
+                return Color(red: 0.7, green: 0.5, blue: 0.3) // Toprak rengi
+            } else if title.contains("Completed") || title.contains("Félicitations") || title.contains("Tebrikler") {
+                return Color(red: 0.4, green: 0.5, blue: 0.2) // Yeşilimsi kahve
+            } else {
+                return ThemeManager.BejThemeColors.secondaryText
+            }
         } else {
-            return Color.gray
+            // Normal renkler
+            if title.contains("Welcome") || title.contains("Bienvenue") || title.contains("Hoş Geldiniz") {
+                return ColorManager.primaryBlue
+            } else if title.contains("Game Rules") || title.contains("Règles") || title.contains("Kurallar") {
+                return ColorManager.primaryPurple
+            } else if title.contains("Cell") || title.contains("Cellule") || title.contains("Hücre") {
+                return ColorManager.primaryOrange
+            } else if title.contains("Notes") || title.contains("Not") {
+                return Color.blue
+            } else if title.contains("Hints") || title.contains("Indices") || title.contains("İpucu") {
+                return Color.yellow
+            } else if title.contains("Completed") || title.contains("Félicitations") || title.contains("Tebrikler") {
+                return ColorManager.primaryGreen
+            } else {
+                return Color.gray
+            }
         }
     }
     

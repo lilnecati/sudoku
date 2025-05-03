@@ -28,14 +28,82 @@ extension EnvironmentValues {
 class ThemeManager: ObservableObject {
     @AppStorage("darkMode") var darkMode: Bool = false {
         didSet {
+            // Sadece değer değiştiyse güncelle (gereksiz güncellemeleri önle)
+            if oldValue != darkMode {
             // Hızlı tema değişimi için doğrudan renk şemasını ayarla
             colorScheme = useSystemAppearance ? nil : (darkMode ? .dark : .light)
+                
+                // Bej mod ve koyu mod aynı anda açık olamaz
+                if darkMode && bejMode {
+                    bejMode = false
+                }
+                
+                // Tema değişikliği bildirimi gönder
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("ThemeChanged"), 
+                    object: nil, 
+                    userInfo: ["isDarkMode": darkMode]
+                )
+                
+                // Log mesajı
+                logInfo("Tema değiştirildi: \(oldValue ? "Koyu" : "Açık") -> \(darkMode ? "Koyu" : "Açık")")
+            }
         }
     }
+    
     @AppStorage("useSystemAppearance") var useSystemAppearance: Bool = false {
         didSet {
+            // Sadece değer değiştiyse güncelle (gereksiz güncellemeleri önle)
+            if oldValue != useSystemAppearance {
             // Hızlı tema değişimi için doğrudan renk şemasını ayarla
             colorScheme = useSystemAppearance ? nil : (darkMode ? .dark : .light)
+                
+                // Bej mod ve sistem görünümü aynı anda açık olamaz
+                if useSystemAppearance && bejMode {
+                    bejMode = false
+                }
+                
+                // Tema değişikliği bildirimi gönder
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("ThemeChanged"), 
+                    object: nil, 
+                    userInfo: ["useSystemAppearance": useSystemAppearance]
+                )
+                
+                // Log mesajı
+                logInfo("Sistem teması kullanımı değiştirildi: \(oldValue) -> \(useSystemAppearance)")
+            }
+        }
+    }
+    
+    // Bej mod özelliği
+    @AppStorage("bejMode") var bejMode: Bool = false {
+        didSet {
+            // Sadece değer değiştiyse güncelle
+            if oldValue != bejMode {
+                // Bej mod açıldığında diğer modları kapat
+                if bejMode {
+                    if darkMode {
+                        darkMode = false
+                    }
+                    if useSystemAppearance {
+                        useSystemAppearance = false
+                    }
+                }
+                
+                // Doğrudan colorScheme güncellemesi
+                colorScheme = bejMode ? .light : (useSystemAppearance ? nil : (darkMode ? .dark : .light))
+                
+                // Tema değişikliği bildirimi gönder
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("ThemeChanged"), 
+                    object: nil, 
+                    userInfo: ["bejMode": bejMode]
+                )
+                
+                // Log mesajı
+                logInfo("Bej mod değiştirildi: \(oldValue) -> \(bejMode)")
+            }
         }
     }
     
@@ -63,36 +131,184 @@ class ThemeManager: ObservableObject {
     
     @Published var colorScheme: ColorScheme?
     
+    // YENİ - Yüksek kontrast mod için özellik ekleyelim
+    @AppStorage("highContrastMode") var highContrastMode: Bool = false {
+        didSet {
+            // Sadece değer değiştiyse güncelle (gereksiz güncellemeleri önle)
+            if oldValue != highContrastMode {
+                // Bildirim gönder
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("ThemeChanged"), 
+                    object: nil, 
+                    userInfo: ["highContrastMode": highContrastMode]
+                )
+                
+                // Log mesajı
+                logInfo("Yüksek kontrast modu değiştirildi: \(oldValue) -> \(highContrastMode)")
+            }
+        }
+    }
+    
+    // Bej mod için renk sabitleri
+    struct BejThemeColors {
+        static let background = Color(red: 0.95, green: 0.92, blue: 0.85) // Ana arka plan rengi (#F2EAD9)
+        static let secondaryBackground = Color(red: 0.92, green: 0.88, blue: 0.82) // İkincil arka plan (#EADFD1)
+        static let text = Color(red: 0.25, green: 0.20, blue: 0.15) // Ana metin rengi (#403326)
+        static let secondaryText = Color(red: 0.4, green: 0.35, blue: 0.3) // İkincil metin rengi (#665A4D)
+        static let accent = Color(red: 0.6, green: 0.4, blue: 0.2) // Vurgu rengi (#996633)
+        static let cardBackground = Color(red: 0.97, green: 0.95, blue: 0.91) // Kart arka planı (#F7F2E8)
+        static let gridLines = Color(red: 0.4, green: 0.35, blue: 0.3).opacity(0.5) // Izgara çizgileri
+    }
+    
     init() {
         // Başlangıç teması ayarla
-        colorScheme = useSystemAppearance ? nil : (darkMode ? .dark : .light)
+        colorScheme = bejMode ? .light : (useSystemAppearance ? nil : (darkMode ? .dark : .light))
     }
     
     // Bu metot artık doğrudan çağrılmayacak
     func updateTheme() {
-        colorScheme = useSystemAppearance ? nil : (darkMode ? .dark : .light)
+        colorScheme = bejMode ? .light : (useSystemAppearance ? nil : (darkMode ? .dark : .light))
     }
     
-    func toggleDarkMode() {
-        darkMode.toggle()
+    // Tema değişikliklerini tek bir yerden yönetmek için toplu güncelleme fonksiyonu
+    func updateAppTheme(darkMode: Bool? = nil, useSystemAppearance: Bool? = nil, bejMode: Bool? = nil, highContrastMode: Bool? = nil) {
+        // Değişiklik olup olmadığını kontrol etmek için
+        var themeChanged = false
+        
+        // Bej mod için kontrol ekle
+        if let newBejMode = bejMode {
+            // Sadece değer değişiyorsa güncelle
+            if self.bejMode != newBejMode {
+                // Bej mod açılıyorsa diğer modları kapat
+                if newBejMode {
+                    if self.darkMode {
+                        self.darkMode = false
+                    }
+                    if self.useSystemAppearance {
+                        self.useSystemAppearance = false
+                    }
+                }
+                
+                self.bejMode = newBejMode
+                themeChanged = true
+            }
+        }
+        
+        // Güncellenmesi gereken parametreleri kontrol et
+        if let newDarkMode = darkMode {
+            // Sadece değer değişiyorsa güncelle
+            if self.darkMode != newDarkMode {
+                // Koyu mod açılıyorsa bej modu kapat
+                if newDarkMode && self.bejMode {
+                    self.bejMode = false
+                }
+                
+                self.darkMode = newDarkMode
+                themeChanged = true
+            }
+        }
+        
+        if let newUseSystemAppearance = useSystemAppearance {
+            // Sadece değer değişiyorsa güncelle
+            if self.useSystemAppearance != newUseSystemAppearance {
+                // Sistem görünümü açılıyorsa bej modu kapat
+                if newUseSystemAppearance && self.bejMode {
+                    self.bejMode = false
+                }
+                
+                self.useSystemAppearance = newUseSystemAppearance
+                themeChanged = true
+            }
+        }
+        
+        // YENİ - Yüksek kontrast modu ekleyelim
+        if let newHighContrastMode = highContrastMode, self.highContrastMode != newHighContrastMode {
+            self.highContrastMode = newHighContrastMode
+            themeChanged = true
+        }
+        
+        // Eğer bir değişiklik olduysa ve bildirim gönderilmediyse
+        if themeChanged {
+            // colorScheme zaten didSet bloklarında güncellendi, burada tekrar güncellemiyoruz
+            
+            // Değişiklikleri herkese bildir
+            objectWillChange.send()
+            
+            // Tema değişikliği bildirimi gönder
+            NotificationCenter.default.post(
+                name: NSNotification.Name("ThemeChanged"), 
+                object: nil,
+                userInfo: ["bulkUpdate": true]
+            )
+            
+            // Log mesajı
+            logInfo("Toplu tema güncellemesi yapıldı")
+        }
+    }
+    
+    // Tema değiştirme kısayol fonksiyonu - Koyu mod / Açık mod geçişi
+    func toggleTheme() {
+        if useSystemAppearance {
+            // Önce sistem temasını kapat, ardından koyu mod değerini değiştir
+            updateAppTheme(useSystemAppearance: false)
+            // Kısa bir gecikme ile koyu mod değerini tersine çevir
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.updateAppTheme(darkMode: !self.darkMode)
+            }
+        } else if bejMode {
+            // Bej moddan çıkıp açık moda geç
+            updateAppTheme(bejMode: false)
+        } else {
+            // Koyu mod değerini değiştir
+            updateAppTheme(darkMode: !darkMode)
+        }
+    }
+    
+    // Metrik/Log için tema durumunu döndür
+    func getCurrentThemeDescription() -> String {
+        if bejMode {
+            return "Bej Tema"
+        } else if useSystemAppearance {
+            return "Sistem (Otomatik)" + (highContrastMode ? " + Yüksek Kontrast" : "")
+        } else {
+            return darkMode ? "Koyu Tema" : "Açık Tema" + (highContrastMode ? " + Yüksek Kontrast" : "")
+        }
     }
     
     // Tahta rengini almak için yardımcı fonksiyon
     func getBoardColor() -> Color {
-        // Performans için her defasında switch-case yapmak yerine cache kullanma mekaniği ekleyebiliriz
-        switch sudokuBoardColor {
-        case "red":
-            return Color.red
-        case "pink":
-            return Color.pink
-        case "orange":
-            return Color.orange
-        case "purple":
-            return Color.purple
-        case "green":
-            return Color.green
-        default:
-            return Color.blue
+        // Bej mod için özel renkler
+        if bejMode {
+            switch sudokuBoardColor {
+            case "red":
+                return Color(red: 0.75, green: 0.30, blue: 0.20) // Bej uyumlu kırmızı
+            case "pink":
+                return Color(red: 0.80, green: 0.40, blue: 0.50) // Bej uyumlu pembe
+            case "orange":
+                return Color(red: 0.85, green: 0.50, blue: 0.20) // Bej uyumlu turuncu
+            case "purple":
+                return Color(red: 0.60, green: 0.35, blue: 0.60) // Bej uyumlu mor
+            case "green":
+                return Color(red: 0.40, green: 0.55, blue: 0.30) // Bej uyumlu yeşil
+            default:
+                return BejThemeColors.accent // Bej modun ana vurgu rengi
+            }
+        } else {
+            // Normal mod
+            switch sudokuBoardColor {
+            case "red":
+                return Color.red
+            case "pink":
+                return Color.pink
+            case "orange":
+                return Color.orange
+            case "purple":
+                return Color.purple
+            case "green":
+                return Color.green
+            default:
+                return Color.blue
+            }
         }
     }
     
@@ -111,6 +327,33 @@ class ThemeManager: ObservableObject {
             return "Yeşil"
         default:
             return "Mavi"
+        }
+    }
+    
+    // Arka plan rengini almak için yardımcı fonksiyon
+    func getBackgroundColor() -> Color {
+        if bejMode {
+            return BejThemeColors.background
+        } else {
+            return darkMode ? Color(red: 0.1, green: 0.1, blue: 0.15) : Color(red: 0.97, green: 0.97, blue: 0.99)
+        }
+    }
+    
+    // Kart arka plan rengini almak için yardımcı fonksiyon
+    func getCardBackgroundColor() -> Color {
+        if bejMode {
+            return BejThemeColors.cardBackground
+        } else {
+            return darkMode ? Color(.systemGray6) : Color.white
+        }
+    }
+    
+    // Metin rengini almak için yardımcı fonksiyon
+    func getTextColor(isSecondary: Bool = false) -> Color {
+        if bejMode {
+            return isSecondary ? BejThemeColors.secondaryText : BejThemeColors.text
+        } else {
+            return isSecondary ? .secondary : .primary
         }
     }
 }
@@ -272,6 +515,8 @@ struct SudokuApp: App {
                 .environment(\.managedObjectContext, viewContext)
                 .environment(\.textScale, textSizePreference.scaleFactor)
                 .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
+                .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode)
+                .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance)
                 .accentColor(ColorManager.primaryBlue)
                 // .achievementToastSystem()  // Toast bildirimleri kapatıldı
                 .withAchievementNotifications()  // Yeni bildirim sistemini kullan

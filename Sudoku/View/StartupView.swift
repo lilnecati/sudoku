@@ -23,6 +23,13 @@ struct StartupView: View {
     
     // LocalizationManager ekle
     @EnvironmentObject var localizationManager: LocalizationManager
+    // Tema yöneticisi ekle
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama ekleyelim
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     // Animasyon durumları
     @State private var logoScale: CGFloat = 0.3
@@ -62,10 +69,10 @@ struct StartupView: View {
                     // Arkaplan gradyant
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color(UIColor.systemBackground),
-                            Color(UIColor.systemBackground).opacity(0.8),
-                            gridColors[0].opacity(0.1),
-                            gridColors[1].opacity(0.1)
+                            isBejMode ? ThemeManager.BejThemeColors.background : Color(UIColor.systemBackground),
+                            isBejMode ? ThemeManager.BejThemeColors.background.opacity(0.8) : Color(UIColor.systemBackground).opacity(0.8),
+                            isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.1) : gridColors[0].opacity(0.1),
+                            isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.1) : gridColors[1].opacity(0.1)
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -75,7 +82,7 @@ struct StartupView: View {
                     
                     // Sudoku grid animasyonu
                     if showGrid {
-                        SudokuGridAnimation()
+                        SudokuGridAnimation(isBejMode: isBejMode)
                             .opacity(gridOpacity)
                     }
                     
@@ -84,7 +91,9 @@ struct StartupView: View {
                         ForEach(0..<numbers.count, id: \.self) { index in
                             Text("\(numbers[index])")
                                 .font(.system(size: numberSizes[index], weight: .semibold, design: .rounded))
-                                .foregroundColor(numberColors[index])
+                                .foregroundColor(isBejMode ? 
+                                              ThemeManager.BejThemeColors.text.opacity(0.7) : 
+                                              numberColors[index])
                                 .position(numberPositions[index])
                                 .opacity(0.7)
                                 .transition(.scale.combined(with: .opacity))
@@ -103,14 +112,14 @@ struct StartupView: View {
                         // Uygulama adı
                         Text(LocalizationManager.shared.localizedString(for: "SUDOKU"))
                             .font(.system(size: 42, weight: .heavy, design: .rounded))
-                            .foregroundColor(.primary)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                             .tracking(5)
                             .opacity(textOpacity)
                         
                         // Alt başlık
                         Text(LocalizationManager.shared.localizedString(for: "Zihninizi Çalıştırın"))
                             .font(.system(size: 18, weight: .medium, design: .rounded))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                             .padding(.top, -5)
                             .opacity(textOpacity * 0.8)
                         
@@ -122,7 +131,9 @@ struct StartupView: View {
                             ZStack {
                                 Circle()
                                     .fill(LinearGradient(
-                                        gradient: Gradient(colors: [gridColors[2], gridColors[0]]),
+                                        gradient: Gradient(colors: isBejMode ? 
+                                                         [ThemeManager.BejThemeColors.accent, ThemeManager.BejThemeColors.accent.opacity(0.7)] : 
+                                                         [gridColors[2], gridColors[0]]),
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ))
@@ -135,20 +146,22 @@ struct StartupView: View {
                             
                             // Geliştirici adı
                             VStack(alignment: .leading, spacing: 0) {
-                                Text(LocalizationManager.shared.localizedString(for: "Geliştirici"))
+                                Text.localizedSafe("Geliştirici")
                                     .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                                 
                                 Text("Necati Yıldırım")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                             }
                         }
                         .padding(.vertical, 10)
                         .padding(.horizontal, 16)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(UIColor.systemBackground).opacity(0.9))
+                                .fill(isBejMode ? 
+                                     ThemeManager.BejThemeColors.cardBackground.opacity(0.9) : 
+                                     Color(UIColor.systemBackground).opacity(0.9))
                                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                         )
                         .padding(.bottom, 20)
@@ -253,7 +266,7 @@ struct StartupView: View {
             let y = CGFloat.random(in: 20...(screenHeight - 20))
             numberPositions.append(CGPoint(x: x, y: y))
             
-            // Rastgele renk
+            // Rastgele renk - Bej mod için renkleri uyarla
             let randomColor = gridColors[Int.random(in: 0..<gridColors.count)]
             numberColors.append(randomColor.opacity(Double.random(in: 0.5...0.9)))
             
@@ -266,19 +279,20 @@ struct StartupView: View {
 // Sudoku grid animasyonu
 struct SudokuGridAnimation: View {
     @State private var isAnimating = false
+    var isBejMode: Bool = false
     
     var body: some View {
         ZStack {
             // Arka plan grid
             GridPattern(rows: 9, columns: 9, lineWidth: 1)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                .stroke(isBejMode ? ThemeManager.BejThemeColors.text.opacity(0.1) : Color.primary.opacity(0.1), lineWidth: 1)
                 .background(Color.clear)
                 .scaleEffect(isAnimating ? 1.1 : 1.0)
                 .opacity(isAnimating ? 0.3 : 0.5)
             
             // Ön plan grid
             GridPattern(rows: 3, columns: 3, lineWidth: 2)
-                .stroke(Color.primary.opacity(0.2), lineWidth: 2)
+                .stroke(isBejMode ? ThemeManager.BejThemeColors.text.opacity(0.2) : Color.primary.opacity(0.2), lineWidth: 2)
                 .background(Color.clear)
                 .scaleEffect(isAnimating ? 1.05 : 1.0)
                 .opacity(isAnimating ? 0.5 : 0.3)

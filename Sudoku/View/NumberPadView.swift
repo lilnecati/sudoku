@@ -15,6 +15,12 @@ struct NumberPadView: View {
     @ObservedObject var viewModel: SudokuViewModel
     var isEnabled: Bool
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     // Sabit değerler
     private let columns = [
@@ -27,17 +33,39 @@ struct NumberPadView: View {
     
     // Önbelleğe alınmış renkler
     private let disabledOpacity: Double = 0.5
-    private let buttonColors: [Int: Color] = [
-        1: .blue,
-        2: .indigo,
-        3: .purple,
-        4: .green,
-        5: .mint,
-        6: .orange,
-        7: .pink,
-        8: .red,
-        9: .cyan
-    ]
+    
+    // Sayı butonları için renk alıcı fonksiyon - bej mod desteği için
+    private func getButtonColor(for number: Int) -> Color {
+        if isBejMode {
+            // Bej mod renkleri - daha yumuşak, toprak tonları
+            switch number {
+            case 1: return Color(red: 0.5, green: 0.3, blue: 0.1) // Kahverengi-turuncu
+            case 2: return Color(red: 0.6, green: 0.4, blue: 0.2) // Açık kahve
+            case 3: return Color(red: 0.7, green: 0.5, blue: 0.3) // Toprak rengi
+            case 4: return Color(red: 0.4, green: 0.5, blue: 0.2) // Yeşilimsi kahve
+            case 5: return Color(red: 0.6, green: 0.5, blue: 0.3) // Bej
+            case 6: return Color(red: 0.7, green: 0.4, blue: 0.1) // Turuncu-kahve
+            case 7: return Color(red: 0.6, green: 0.3, blue: 0.2) // Kiremit
+            case 8: return Color(red: 0.5, green: 0.2, blue: 0.1) // Kızıl kahve
+            case 9: return Color(red: 0.4, green: 0.4, blue: 0.3) // Koyu bej
+            default: return ThemeManager.BejThemeColors.accent
+            }
+        } else {
+            // Normal mod için standart renkler
+            switch number {
+            case 1: return .blue
+            case 2: return .indigo
+            case 3: return .purple
+            case 4: return .green
+            case 5: return .mint
+            case 6: return .orange
+            case 7: return .pink
+            case 8: return .red
+            case 9: return .cyan
+            default: return .blue
+            }
+        }
+    }
     
     var body: some View {
         // Sabit boyutlu tuş takımı konteynerı
@@ -76,7 +104,9 @@ struct NumberPadView: View {
             .padding(.horizontal)
             .background(
                 RoundedRectangle(cornerRadius: 15)
-                    .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6).opacity(0.5))
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         (colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6).opacity(0.5)))
             )
             // Sabit maksimum genişlik
             .frame(width: containerWidth)
@@ -95,7 +125,7 @@ struct NumberPadView: View {
         // Sadece gerekli değerleri hesapla - görünüm optimizasyonu için
         let remaining = 9 - (viewModel.usedNumbers[number] ?? 0)
         let isDisabled = (remaining <= 0 && !viewModel.pencilMode) || !isEnabled
-        let buttonColor = buttonColors[number] ?? .blue
+        let buttonColor = getButtonColor(for: number)
         @State var isPressed = false
         
         return Button(action: {
@@ -257,7 +287,8 @@ struct NumberPadView: View {
     
     // Silme tuşu - sabit boyutla optimize edilmiş
     private var eraseButton: some View {
-        let buttonColor: Color = .red
+        // Bej mod renkleri için
+        let buttonColor: Color = isBejMode ? ThemeManager.BejThemeColors.accent : .red
         let isDisabled = !isEnabled || viewModel.selectedCell == nil
         @State var isPressed = false
         

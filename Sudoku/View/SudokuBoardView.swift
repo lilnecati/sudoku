@@ -27,6 +27,11 @@ struct SudokuBoardView: View {
         return systemColorScheme
     }
     
+    // Bej mod kullanılıyor mu kontrol et
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
     // Performans için önbellekleme
     @State private var cellSize: CGFloat = 0
     @State private var gridSize: CGFloat = 0
@@ -68,9 +73,9 @@ struct SudokuBoardView: View {
                 
                 // Sadece oyun tahtasını içine alan konteyner
                 ZStack {
-                    // Tablo arkaplanı
+                    // Tablo arkaplanı - Bej mod için özel arka plan
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(effectiveColorScheme == .dark ? Color(.systemGray5) : Color(.systemBackground))
+                        .fill(getTableBackgroundColor())
                         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                         .aspectRatio(1, contentMode: .fit)
                     
@@ -116,6 +121,12 @@ struct SudokuBoardView: View {
                     _ = updateSizes(from: newFrame, cellSize: localCellSize)
                 }
             }
+            .onChange(of: themeManager.colorScheme) { _, _ in
+                // Tema değişikliğinde yenile
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    boardRefreshID = UUID()
+                }
+            }
             .onDisappear {
                 // Kaynakları temizle
                 NotificationCenter.default.removeObserver(self)
@@ -126,6 +137,9 @@ struct SudokuBoardView: View {
         .aspectRatio(1, contentMode: .fit)
         .drawingGroup() // Tüm görünümü GPU ile render et
         .id(boardRefreshID) // Tüm tahta görünümünü yenileme ID'si
+        .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode) // Tema değişimi animasyonu
+        .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance) // Sistem tema değişimi animasyonu
+        .animation(.easeInOut(duration: 0.3), value: themeManager.bejMode) // Bej mod değişimi animasyonu
     }
     
     // Boyutları güncelle - sabit bir cell boyutu için optimize edildi
@@ -141,11 +155,16 @@ struct SudokuBoardView: View {
         return false
     }
     
-    // Grid çizgilerini çiz - performans için sadece değişiklik olduğunda yeniden hesapla
+    // Izgara çizgilerini çiz - performans için sadece değişiklik olduğunda yeniden hesapla
     private var gridOverlay: some View {
-        // Önbellekten kullan - grid overlay çok sık değişmiyor
-        let gridColor = effectiveColorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.6)
-        let gridLinesColor = effectiveColorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.3)
+        // Bej mod grid renkleri
+        let gridColor = isBejMode ? 
+                      ThemeManager.BejThemeColors.text.opacity(0.7) : 
+                      (effectiveColorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.6))
+        
+        let gridLinesColor = isBejMode ? 
+                           ThemeManager.BejThemeColors.text.opacity(0.3) : 
+                           (effectiveColorScheme == .dark ? Color.gray.opacity(0.5) : Color.gray.opacity(0.3))
         
         return ZStack {
             // Tüm hücreler için ince çizgiler - tek bir drawingGroup içinde birleştir
@@ -264,46 +283,89 @@ struct SudokuBoardView: View {
     private func calculateCellBackgroundColor(row: Int, column: Int) -> Color {
         let cellValue = viewModel.board.getValue(row: row, column: column)
         
-        // İlk olarak seçilen hücre kontrolü
-        if viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column {
-            return selectedCellBackground()
-        }
-        
-        // Hücrenin geçerli değeri yok ya da orijinal değerse
-        if viewModel.selectedCell == nil {
+        // Bej mod özel renkleri
+        if isBejMode {
+            // İlk olarak seçilen hücre kontrolü
+            if viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column {
+                return ThemeManager.BejThemeColors.accent.opacity(0.2)
+            }
+            
+            // Hücrenin geçerli değeri yok ya da orijinal değerse
+            if viewModel.selectedCell == nil {
+                return ThemeManager.BejThemeColors.background.opacity(0.5)
+            }
+            
+            // Hücrenin seçili hücreyle aynı değeri varsa
+            if let selectedCell = viewModel.selectedCell,
+               let selectedValue = viewModel.board.getValue(row: selectedCell.row, column: selectedCell.column),
+               let currentValue = cellValue,
+               selectedValue == currentValue && currentValue != 0 {
+                return Color(red: 0.4, green: 0.55, blue: 0.3).opacity(0.15) // Bej uyumlu yeşil
+            }
+            
+            // Hücre aynı satır, sütun veya 3x3 bloktaysa
+            if viewModel.isHighlighted(row: row, column: column) {
+                return ThemeManager.BejThemeColors.accent.opacity(0.1)
+            }
+            
+            // Varsayılan arka plan rengi
+            return ThemeManager.BejThemeColors.background.opacity(0.5)
+        } else {
+            // Normal tema renkleri
+            // İlk olarak seçilen hücre kontrolü
+            if viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column {
+                return selectedCellBackground()
+            }
+            
+            // Hücrenin geçerli değeri yok ya da orijinal değerse
+            if viewModel.selectedCell == nil {
+                return originalCellBackground()
+            }
+            
+            // Hücrenin seçili hücreyle aynı değeri varsa
+            if let selectedCell = viewModel.selectedCell,
+               let selectedValue = viewModel.board.getValue(row: selectedCell.row, column: selectedCell.column),
+               let currentValue = cellValue,
+               selectedValue == currentValue && currentValue != 0 {
+                return matchingValueBackground
+            }
+            
+            // Hücre aynı satır, sütun veya 3x3 bloktaysa
+            if viewModel.isHighlighted(row: row, column: column) {
+                return selectedRowColBackground()
+            }
+            
+            // Varsayılan arka plan rengi
             return originalCellBackground()
         }
-        
-        // Hücrenin seçili hücreyle aynı değeri varsa
-        if let selectedCell = viewModel.selectedCell,
-           let selectedValue = viewModel.board.getValue(row: selectedCell.row, column: selectedCell.column),
-           let currentValue = cellValue,
-           selectedValue == currentValue && currentValue != 0 {
-            return matchingValueBackground
-        }
-        
-        // Hücre aynı satır, sütun veya 3x3 bloktaysa
-        if viewModel.isHighlighted(row: row, column: column) {
-            return selectedRowColBackground()
-        }
-        
-        // Varsayılan arka plan rengi
-        return originalCellBackground()
     }
     
     // Metin rengini hesapla - önbelleğe alma için ayrı fonksiyon
     private func getTextColor(isOriginal: Bool, isSelected: Bool, cellValue: Int?) -> Color {
-        if isOriginal {
-            return effectiveColorScheme == .dark ? .white : .black
-        } else if let value = cellValue, let selectedCell = viewModel.selectedCell {
-            if viewModel.board.isCorrectValue(row: selectedCell.row, column: selectedCell.column, value: value) {
-                return themeManager.getBoardColor().opacity(0.8)
-            } else {
-                return Color.red.opacity(0.8)
+        if isBejMode {
+            if isOriginal {
+                return ThemeManager.BejThemeColors.text
+            } else if let value = cellValue, let selectedCell = viewModel.selectedCell {
+                if viewModel.board.isCorrectValue(row: selectedCell.row, column: selectedCell.column, value: value) {
+                    return ThemeManager.BejThemeColors.accent
+                } else {
+                    return Color.red.opacity(0.8)
+                }
             }
+            return ThemeManager.BejThemeColors.accent
+        } else {
+            if isOriginal {
+                return effectiveColorScheme == .dark ? .white : .black
+            } else if let value = cellValue, let selectedCell = viewModel.selectedCell {
+                if viewModel.board.isCorrectValue(row: selectedCell.row, column: selectedCell.column, value: value) {
+                    return themeManager.getBoardColor().opacity(0.8)
+                } else {
+                    return Color.red.opacity(0.8)
+                }
+            }
+            
+            return themeManager.getBoardColor().opacity(0.8)
         }
-        
-        return themeManager.getBoardColor().opacity(0.8)
     }
     
     // İpucu hedef hücresi mi kontrol et
@@ -374,6 +436,15 @@ struct SudokuBoardView: View {
                     }
                 }
             }
+        }
+    }
+    
+    // Tahta arka plan rengini hesapla
+    private func getTableBackgroundColor() -> Color {
+        if isBejMode {
+            return ThemeManager.BejThemeColors.cardBackground
+        } else {
+            return effectiveColorScheme == .dark ? Color(.systemGray5) : Color(.systemBackground)
         }
     }
 }

@@ -38,6 +38,11 @@ struct SettingsView: View {
     // ThemeManager
     @EnvironmentObject var themeManager: ThemeManager
     
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
     // Dismiss için Binding
     @Binding var showView: Bool
     
@@ -162,7 +167,9 @@ struct SettingsView: View {
         ZStack {
             Circle()
                 .fill(LinearGradient(
-                    gradient: Gradient(colors: [.blue, .purple]),
+                    gradient: Gradient(colors: isBejMode ? 
+                                      [ThemeManager.BejThemeColors.accent, ThemeManager.BejThemeColors.accent.opacity(0.7)] : 
+                                      [.blue, .purple]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing)
                 )
@@ -199,15 +206,15 @@ struct SettingsView: View {
                 Image(systemName: "person.fill.badge.plus")
                     .font(.system(size: 16))
                 Text("Giriş Yap")
-                    .scaledFont(size: 16, weight: .medium)
+                    .font(.system(size: 16, weight: .medium))
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, 12)
             .background(
-                Color.blue
+                (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue)
                     .cornerRadius(12)
-                    .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 2)
+                    .shadow(color: (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue).opacity(0.3), radius: 5, x: 0, y: 2)
             )
         }
     }
@@ -361,8 +368,14 @@ struct SettingsView: View {
         .navigationViewStyle(StackNavigationViewStyle())
         .localizationAware()
         .preferredColorScheme(themeManager.colorScheme)
+        .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode) // Tema değişimi animasyonu
+        .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance) // Sistem teması kullanımı değişimi animasyonu
+        .themeAware() // Tema değişikliklerine tepki gösterme
         .sheet(isPresented: $showRegisterView) {
-            RegisterViewContainer()
+            RegisterView(isPresented: $showRegisterView, currentUser: $currentUser)
+        }
+        .sheet(isPresented: $showLoginView) {
+            LoginView(isPresented: $showLoginView, currentUser: $currentUser)
         }
         .onAppear {
             // Ekran kararması yönetimi SudokuApp'a devredildi
@@ -388,6 +401,19 @@ struct SettingsView: View {
         .onChange(of: themeManager.darkMode) { _, _ in
             // Tema değişikliği olduğunda anında uygulamak için
             themeManager.objectWillChange.send()
+            
+            // Tema değişimi geri bildirimi
+            if enableHapticFeedback {
+                let generator = UIImpactFeedbackGenerator(style: .light)
+                generator.impactOccurred()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ThemeChanged"))) { notification in
+            // Tema değişikliği bildirimini alınca görünümü güncelle
+            withAnimation(.easeInOut(duration: 0.3)) {
+                // Görünümü güncellemek için boş bir işlem - SwiftUI bunu algılayıp yeniden çizer
+                let _ = themeManager.colorScheme
+            }
         }
         .sheet(isPresented: $showLanguageSheet) {
             LanguageSelectionSheet(
@@ -403,7 +429,7 @@ struct SettingsView: View {
         .sheet(isPresented: $showBoardColorSheet) {
             AppearanceSettingsSheet()
                 .environmentObject(themeManager)
-                .presentationDetents([.medium, .large])
+            .presentationDetents([.medium, .large])
         }
     }
     
@@ -435,6 +461,26 @@ struct SettingsView: View {
             queue: .main
         ) { _ in
             self.syncProfileImage()
+        }
+        
+        // Tema değişikliği bildirimi dinleyicisi
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("ThemeChanged"),
+            object: nil,
+            queue: .main
+        ) { notification in
+            // Tema değişikliğinde görsel geri bildirim
+            if self.enableHapticFeedback {
+                let generator = UIImpactFeedbackGenerator(style: .light)
+                generator.impactOccurred(intensity: 0.5)
+            }
+            
+            // Log kaydı
+            if let isDarkMode = notification.userInfo?["isDarkMode"] as? Bool {
+                logInfo("Tema değişimi algılandı: \(isDarkMode ? "Koyu" : "Açık") mod")
+            } else if let useSystem = notification.userInfo?["useSystemAppearance"] as? Bool {
+                logInfo("Sistem teması kullanımı değişimi algılandı: \(useSystem ? "Aktif" : "Pasif")")
+            }
         }
     }
     
@@ -498,24 +544,32 @@ struct SettingsView: View {
     
     private func backgroundRectangle(cornerRadius: CGFloat = 12) -> some View {
         RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(.ultraThinMaterial)
+            .fill(isBejMode ? 
+                 ThemeManager.BejThemeColors.cardBackground : 
+                 Color(uiColor: UIColor.systemBackground).opacity(0.8))
             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(colorScheme == .dark ? 
+                    .stroke(isBejMode ? 
+                           ThemeManager.BejThemeColors.accent.opacity(0.2) : 
+                           (colorScheme == .dark ? 
                             Color.white.opacity(0.15) : 
-                            Color.blue.opacity(0.1), 
+                            Color.blue.opacity(0.1)), 
                             lineWidth: 1)
             )
     }
     
     private func settingRowBackground() -> some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(.ultraThinMaterial)
+            .fill(isBejMode ? 
+                 ThemeManager.BejThemeColors.cardBackground : 
+                 Color(uiColor: UIColor.systemBackground).opacity(0.8))
             .shadow(color: Color.black.opacity(0.07), radius: 3, x: 0, y: 1)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+                    .stroke(isBejMode ? 
+                           ThemeManager.BejThemeColors.accent.opacity(0.2) : 
+                           Color.blue.opacity(0.2), lineWidth: 1)
             )
     }
     
@@ -524,11 +578,12 @@ struct SettingsView: View {
         HStack(spacing: 10) {
             Image(systemName: systemImage)
                 .font(.title2)
-                .foregroundColor(.blue)
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
             
             Text.localizedSafe(title)
                 .font(.title2)
                 .bold()
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
             
             Spacer()
         }
@@ -536,7 +591,9 @@ struct SettingsView: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.blue.opacity(0.1))
+                .fill(isBejMode ? 
+                     ThemeManager.BejThemeColors.accent.opacity(0.1) : 
+                     Color.blue.opacity(0.1))
                 .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 2)
         )
         .padding(.horizontal, 6)
@@ -549,23 +606,25 @@ struct SettingsView: View {
                 // Sol taraftaki simge
                 ZStack {
                     Circle()
-                        .fill(Color.blue.opacity(0.15))
+                        .fill(isBejMode ? 
+                             ThemeManager.BejThemeColors.accent.opacity(0.15) : 
+                             Color.blue.opacity(0.15))
                         .frame(width: 36, height: 36)
                     
                     Image(systemName: "speaker.wave.2.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.blue)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
                 }
                 
                 // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Ses Efektleri")
                         .scaledFont(size: 16, weight: .semibold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                     
                     Text("Oyun içi ses efektlerini aç/kapat")
                         .scaledFont(size: 13)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                         .lineLimit(1)
                 }
                 
@@ -584,7 +643,9 @@ struct SettingsView: View {
                 }) {
                     ZStack {
                         Capsule()
-                            .fill(enableSoundEffects ? Color.blue : Color.gray.opacity(0.3))
+                            .fill(enableSoundEffects ? 
+                                 (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue) : 
+                                 Color.gray.opacity(0.3))
                             .frame(width: 55, height: 34)
                         
                         Circle()
@@ -601,7 +662,9 @@ struct SettingsView: View {
             .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         Color(uiColor: UIColor.systemBackground).opacity(0.8))
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
             .padding(.horizontal, 8)
@@ -612,23 +675,25 @@ struct SettingsView: View {
                 // İkon
                 ZStack {
                     Circle()
-                        .fill(Color.purple.opacity(0.15))
+                        .fill(isBejMode ? 
+                             ThemeManager.BejThemeColors.accent.opacity(0.15) : 
+                             Color.purple.opacity(0.15))
                         .frame(width: 36, height: 36)
                     
                     Image(systemName: "trophy.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.purple)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .purple)
                 }
                 
                 // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Başarım Bildirimleri")
                         .scaledFont(size: 16, weight: .semibold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                     
                     Text("Yeni başarımlar kazanıldığında bildirim göster")
                         .scaledFont(size: 13)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                         .lineLimit(1)
                 }
                 
@@ -650,7 +715,9 @@ struct SettingsView: View {
                 }) {
                     ZStack {
                         Capsule()
-                            .fill(enableAchievementNotifications ? Color.purple : Color.gray.opacity(0.3))
+                            .fill(enableAchievementNotifications ? 
+                                 (isBejMode ? ThemeManager.BejThemeColors.accent : Color.purple) : 
+                                 Color.gray.opacity(0.3))
                             .frame(width: 55, height: 34)
                         
                         Circle()
@@ -663,135 +730,63 @@ struct SettingsView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            .padding()
+            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
-            
-            if enableSoundEffects {
-                HStack(spacing: 15) {
-                    // İkon
-                    ZStack {
-                        Circle()
-                            .fill(Color.blue.opacity(0.15))
-                            .frame(width: 36, height: 36)
-                        
-                        Image(systemName: "speaker.wave.3.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.blue)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        // Başlık ve değer
-                        HStack {
-                            Text("Ses Seviyesi")
-                                .scaledFont(size: 16, weight: .semibold)
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                            
-                            Text("%\(Int(soundVolume * 100))")
-                                .scaledFont(size: 14, weight: .medium)
-                                .foregroundColor(.blue)
-                        }
-                        
-                        // Slider
-                        HStack {
-                            Image(systemName: "speaker.fill")
-                                .foregroundColor(.gray)
-                                .font(.system(size: 12))
-                            
-                            Slider(value: $soundVolume, in: 0...1, step: 0.05)
-                                .accentColor(.blue)
-                                .onAppear {
-                                    SoundManager.shared.updateVolumeLevel(soundVolume)
-                                }
-                                .onChange(of: soundVolume) { oldValue, newValue in
-                                    SoundManager.shared.updateVolumeLevelQuietly(newValue)
-                                }
-                            
-                            Image(systemName: "speaker.wave.3.fill")
-                                .foregroundColor(.blue)
-                                .font(.system(size: 12))
-                        }
-                        
-                        // Test butonu
-                        Button(action: {
-                            SoundManager.shared.executeSound(.test)
-                        }) {
-                            HStack {
-                                Image(systemName: "play.circle.fill")
-                                    .font(.system(size: 14))
-                                
-                                Text("Sesi Test Et")
-                                    .scaledFont(size: 14, weight: .medium)
-                            }
-                            .foregroundColor(.blue)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.blue.opacity(0.15))
-                            )
-                        }
-                        .padding(.top, 8)
-                    }
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.ultraThinMaterial)
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         Color(uiColor: UIColor.systemBackground).opacity(0.8))
                         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 )
                 .padding(.horizontal, 8)
-                .transition(.opacity)
-            }
             
-            // Titreşim geri bildirimi
+            // Haptic feedback ayarı
             HStack(spacing: 15) {
-                // Sol taraftaki simge
+                // İkon
                 ZStack {
                     Circle()
-                        .fill(Color.orange.opacity(0.15))
+                        .fill(isBejMode ? 
+                             ThemeManager.BejThemeColors.accent.opacity(0.15) : 
+                             Color.green.opacity(0.15))
                         .frame(width: 36, height: 36)
                     
                     Image(systemName: "iphone.radiowaves.left.and.right")
                         .font(.system(size: 16))
-                        .foregroundColor(.orange)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .green)
                 }
                 
                 // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Titreşim Geri Bildirimi")
                         .scaledFont(size: 16, weight: .semibold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                     
-                    Text("Oyun içi titreşim efektlerini aç/kapa")
+                    Text("Dokunmatik geri bildirim ve haptik motor kullanımı")
                         .scaledFont(size: 13)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                         .lineLimit(1)
                 }
                 
                 Spacer()
                 
-                // Toggle butonu - titreşim durumu için özel
+                // Toggle butonu
                 Button(action: {
-                    // Eğer titreşim kapalıysa ve açılıyorsa, yani false iken true oluyor
-                    if enableHapticFeedback == false {
-                        // Açılırken titreşim verelim - direkt SoundManager kullanarak
-                        SoundManager.shared.playNavigationSound()
-                    } else {
-                        // Kapanırken titreşim vermeyelim
+                    // Titreşim kontrolü - kapatmadan önce son bir geri bildirim
                         SoundManager.shared.playNavigationSoundOnly()
+                    
+                    if enableHapticFeedback {
+                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                        generator.impactOccurred(intensity: 0.8)
                     }
                     
                     enableHapticFeedback.toggle()
                 }) {
                     ZStack {
                         Capsule()
-                            .fill(enableHapticFeedback ? Color.orange : Color.gray.opacity(0.3))
+                            .fill(enableHapticFeedback ? 
+                                 (isBejMode ? ThemeManager.BejThemeColors.accent : Color.green) : 
+                                 Color.gray.opacity(0.3))
                             .frame(width: 55, height: 34)
                         
                         Circle()
@@ -804,790 +799,60 @@ struct SettingsView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            .padding()
+            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         Color(uiColor: UIColor.systemBackground).opacity(0.8))
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
             .padding(.horizontal, 8)
-        }
-    }
     
-    private func appearanceSettingsView() -> some View {
-        Button(action: {
-            showBoardColorSheet = true
-        }) {
+            // Başarımlar başlığı
+            sectionHeader(title: "Başarımlar", systemImage: "trophy.fill")
+            
+            // Başarımlar Bölümü
+        VStack(spacing: 20) {
+                // Başarımlar düğmesi
+                Button(action: {
+                    showAchievementsSheet = true
+                }) {
             HStack(spacing: 15) {
                 // İkon
                 ZStack {
                     Circle()
-                        .fill(Color.purple.opacity(0.15))
+                                .fill(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.15) : Color.yellow.opacity(0.15))
                         .frame(width: 36, height: 36)
                     
-                    Image(systemName: "paintbrush.fill")
+                            Image(systemName: "trophy.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.purple)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .yellow)
                 }
                 
                 // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Görünüm Ayarları")
+                            Text("Başarımlar")
                         .scaledFont(size: 16, weight: .semibold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                     
-                    Text("Temalar ve renk seçenekleri")
+                            Text("Tüm başarımlarınızı görüntüleyin")
                         .scaledFont(size: 13)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                         .lineLimit(1)
                 }
                 
                 Spacer()
                 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.gray)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-        .padding(.horizontal, 8)
-    }
-    
-    private func powerSavingSettingsView() -> some View {
-        VStack(spacing: 20) {
-            // Pil durumu göstergesi - resme uygun dikdörtgen tasarım
-            HStack(spacing: 15) {
-                // İkon
-                ZStack {
-                    Circle()
-                        .fill(getBatteryColor().opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    
-                    Image(systemName: getBatteryIcon())
-                        .font(.system(size: 16))
-                        .foregroundColor(getBatteryColor())
-                }
-                
-                // Başlık ve durum
-                VStack(alignment: .leading, spacing: 4) {
-                    // Pil durumu ve yüzde - tek satırda kalacak şekilde
-                    HStack(spacing: 4) {
-                        Text("Pil Durumu")
-                            .scaledFont(size: 16, weight: .bold)
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
-                        
-                        Text("\(Int(powerManager.batteryLevel * 100))%")
-                            .scaledFont(size: 14, weight: .medium)
-                            .foregroundColor(getBatteryColor())
-                            .lineLimit(1)
-                    }
-                    .minimumScaleFactor(0.8) // Yazı sığmazsa küçültebilir
-                    
-                    // Pil durum mesajı
-                    if powerManager.batteryLevel <= 0.2 {
-                        Text("Düşük Pil")
-                            .scaledFont(size: 14, weight: .medium)
-                            .foregroundColor(.orange)
-                            .padding(.vertical, 4)
-                            .padding(.horizontal, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.orange.opacity(0.2))
-                            )
-                    }
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-            )
-            .padding(.horizontal, 8)
-            
-            // Güç Tasarrufu Ayarları
-            Section {
-                // Yüksek performans modu
-                HStack {
-                    Label {
-                        Text("Yüksek Performans Modu")
-                            .scaledFont(size: 16, weight: .medium)
-                    } icon: {
-                        Image(systemName: "bolt.fill")
-                            .foregroundColor(.yellow)
-                    }
-                    
-                    Spacer()
-                    
-                    // Toggle görünümü - sadece buna basınca toggle olacak
-                    Button(action: {
-                        // Titreşim kontrolü yapılarak ses çal
-                        if enableHapticFeedback {
-                            SoundManager.shared.playNavigationSound()
-                        } else {
-                            SoundManager.shared.playNavigationSoundOnly()
-                        }
-                        
-                        // Değeri tersine çevir
-                        highPerformanceMode.toggle()
-                        
-                        PowerSavingManager.shared.highPerformanceMode = highPerformanceMode
-                        // Yüksek performans modunu açarken güç tasarrufunu kapat
-                        if highPerformanceMode && powerSavingMode {
-                            powerSavingMode = false
-                        }
-                    }) {
-                        ZStack {
-                            Capsule()
-                                .fill(highPerformanceMode ? Color.yellow : Color.gray.opacity(0.3))
-                                .frame(width: 55, height: 34)
-                            
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 30, height: 30)
-                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-                                .offset(x: highPerformanceMode ? 10 : -10)
-                        }
-                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: highPerformanceMode)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                )
-                .padding(.horizontal, 8)
-                
-                // Otomatik güç tasarrufu
-                HStack {
-                    Label {
-                        Text("Otomatik Güç Tasarrufu")
-                            .scaledFont(size: 16, weight: .medium)
-                    } icon: {
-                        Image(systemName: "battery.25")
-                            .foregroundColor(.orange)
-                    }
-                    
-                    Spacer()
-                    
-                    // Toggle görünümü - sadece buna basınca toggle olacak
-                    Button(action: {
-                        // Titreşim kontrolü yapılarak ses çal
-                        if enableHapticFeedback {
-                            SoundManager.shared.playNavigationSound()
-                        } else {
-                            SoundManager.shared.playNavigationSoundOnly()
-                        }
-                        
-                        // Değeri tersine çevir
-                        autoPowerSaving.toggle()
-                        
-                        PowerSavingManager.shared.isAutoPowerSavingEnabled = autoPowerSaving
-                    }) {
-                        ZStack {
-                            Capsule()
-                                .fill(autoPowerSaving ? Color.orange : Color.gray.opacity(0.3))
-                                .frame(width: 55, height: 34)
-                            
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 30, height: 30)
-                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-                                .offset(x: autoPowerSaving ? 10 : -10)
-                        }
-                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: autoPowerSaving)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                )
-                .padding(.horizontal, 8)
-                
-                // Güç tasarrufu açıklaması
-                if powerSavingMode || autoPowerSaving {
-                    Text("Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir.")
-                        .scaledFont(size: 12)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                }
-                
-                // Yüksek performans açıklaması
-                if highPerformanceMode {
-                    Text("Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır.")
-                        .scaledFont(size: 12)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                }
-            } header: {
-                Text("Performans")
-                    .scaledFont(size: 18, weight: .bold)
-            } footer: {
-                Text("Güç tasarrufu modu, cihazınızın pil ömrünü uzatır.")
-                    .scaledFont(size: 12)
-            }
-        }
-    }
-    
-    private func aboutSettingsView() -> some View {
-        VStack(spacing: 20) {
-            // Uygulama logosu ve sürüm bilgisi
-            VStack(spacing: 15) {
-                // Logo
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 80, height: 80)
-                    
-                    Text("S")
-                        .scaledFont(size: 40, weight: .bold)
-                        .foregroundColor(.white)
-                }
-                
-                // İsim ve Sürüm
-                Text("Sudoku")
-                    .scaledFont(size: 24, weight: .bold)
-                    .foregroundColor(.primary)
-                
-                Text("Sürüm 1.0")
-                    .scaledFont(size: 16, weight: .medium)
-                    .foregroundColor(.secondary)
-                
-                // Yatay çizgi
-                Rectangle()
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(height: 1)
-                    .padding(.vertical, 10)
-                
-                // Geliştirici bilgisi
-                HStack(spacing: 15) {
-                    // İkon
-                    ZStack {
-                        Circle()
-                            .fill(Color.teal.opacity(0.15))
-                            .frame(width: 40, height: 40)
-                        
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 18))
-                            .foregroundColor(.teal)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text.localizedSafe("Geliştirici")
-                            .scaledFont(size: 14)
-                            .foregroundColor(.secondary)
-                        
-                        Text("Necati Yıldırım")
-                            .scaledFont(size: 16, weight: .medium)
-                            .foregroundColor(.primary)
-                    }
-                    
-                    Spacer()
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
-            )
-            
-            // Bilgi kartları
-            InfoCard(
-                title: "Uygulama Hakkında",
-                description: "Bu Sudoku uygulaması, klasik Sudoku oyununu modern bir arayüzle sunmak için tasarlanmıştır. Dört farklı zorluk seviyesi, not alma özellikleri, ve daha fazlasıyla dolu bir oyun deneyimi sunar.",
-                iconName: "info.circle.fill",
-                color: .blue
-            )
-            
-            // Tüm ayarları sıfırla
-            Button(action: {
-                resetAllSettings()
-            }) {
-                HStack {
-                    Image(systemName: "arrow.counterclockwise.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.red)
-                    
-                    Text("Tüm Ayarları Sıfırla")
-                        .scaledFont(size: 16, weight: .medium)
-                        .foregroundColor(.red)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray.opacity(0.5))
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.red.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(Color.red.opacity(0.3), lineWidth: 1)
-                        )
-                )
-            }
-            .padding(.horizontal, 8)
-            
-            // Telif hakkı ve yapım yılı
-            Text(" 2024 Necati Yıldırım")
-                .scaledFont(size: 14, weight: .regular)
-                .foregroundColor(.secondary)
-                .padding(.top)
-        }
-    }
-    
-    struct InfoCard: View {
-        var title: String
-        var description: String
-        var iconName: String
-        var color: Color
-        
-        @Environment(\.colorScheme) var colorScheme
-        
-        var body: some View {
-            HStack(alignment: .top, spacing: 15) {
-                // İkon
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    
-                    Image(systemName: iconName)
-                        .font(.system(size: 16))
-                        .foregroundColor(color)
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(title)
-                        .scaledFont(size: 16, weight: .semibold)
-                        .foregroundColor(.primary)
-                    
-                    Text(description)
-                        .scaledFont(size: 14)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(3)
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            )
-            .padding(.horizontal, 8)
-        }
-    }
-    
-    // TextSize değişikliğini işleme fonksiyonu
-    private func updateTextSizePreference(_ newValue: TextSizePreference) {
-        // Değişikliği AppStorage'a kaydet
-        let previousValue = textSizePreference
-        // String değeri güncelle
-        textSizeString = newValue.rawValue
-        
-        // Değişikliği bildir
-        NotificationCenter.default.post(name: Notification.Name("TextSizeChanged"), object: nil)
-        
-        // Bildirim sesi çal
-        SoundManager.shared.playNavigationSound()
-        
-        // Görünümün tümünü zorla yenile
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
-        }
-        
-        logInfo("Metin boyutu değiştirildi: \(previousValue.rawValue) -> \(newValue.rawValue)")
-    }
-    
-    // Dil değişikliğini işleme fonksiyonu
-    private func updateLanguagePreference(_ newValue: AppLanguage) {
-        // Mevcut dil değerini al - string olarak
-        let previousLanguageCode = localizationManager.currentLanguage
-        
-        // Değerleri aynıysa erken çık
-        guard previousLanguageCode != newValue.code else { return }
-        
-        // Dili değiştir
-        localizationManager.setLanguage(newValue)
-        
-        // Bildirim sesi çal
-        SoundManager.shared.playNavigationSound()
-        
-        // Görünümün tümünü zorla yenile
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
-        }
-        
-        // Önceki dil kodunu kullanarak dil ismini bul
-        let previousLanguageName = AppLanguage.allLanguages.first(where: { $0.code == previousLanguageCode })?.name ?? previousLanguageCode
-        
-        logInfo("Dil değiştirildi: \(previousLanguageName) -> \(newValue.name)")
-    }
-    
-    // Profil resmi için eklenen URL'den yükleme fonksiyonu
-    private func loadImageFromURL(urlString: String, completion: @escaping (UIImage?) -> Void) {
-        guard let url = URL(string: urlString) else { 
-            completion(nil)
-            return
-        }
-        
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                logError("Profil resmi yüklenemedi: \(error)")
-                completion(nil)
-                return
-            }
-            
-            if let data = data, let image = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    completion(image)
-                }
-            } else {
-                completion(nil)
-            }
-        }
-        
-        task.resume()
-    }
-    
-    private func profileSettingsView() -> some View {
-        VStack(spacing: 20) {
-            // Kullanıcı profil kartı - Büyük ve göze çarpan tasarım
-            HStack {
-                // Profil resmi
-                ZStack {
-                    if let user = PersistenceController.shared.getCurrentUser() {
-                        // Profil resmi görüntüleme
-                        ProfileImageView(user: user)
-                            .frame(width: 80, height: 80)
-                    } else {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 80, height: 80)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
-                    
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 34))
-                            .foregroundColor(.white)
-                    }
-                }
-                
-                Spacer()
-                .frame(width: 20)
-                
-                // Kullanıcı bilgileri - Daha kompakt
-                VStack(alignment: .leading, spacing: 6) {
-                    if let user = PersistenceController.shared.getCurrentUser() {
-                        // Giriş yapılmışsa kullanıcı bilgilerini göster
-                        Text(user.name ?? "İsimsiz Kullanıcı")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.primary)
-                        
-                        // Kullanıcı adını @ işareti ve değiştirilemez ibaresi olmadan göster
-                        let displayUsername = user.username ?? ""
-                        Text(displayUsername)
-                            .onAppear {
-                                logDebug("Kullanıcı adı: \(displayUsername)")
-                                logDebug("E-posta: \(user.email ?? "")")
-                            }
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
-                    } else {
-                        // Giriş yapılmamışsa giriş seçenekleri göster
-                        Text.localizedSafe("Giriş Yapmadınız")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.primary)
-                        
-                        Text.localizedSafe("Skorlarınızı kaydetmek için giriş yapın")
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-                
-                Spacer()
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                    .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
-            )
-            
-            // Hesap butonu - sadece giriş yapmışsa
-            if let _ = PersistenceController.shared.getCurrentUser() {
-                // Kullanıcı giriş yapmışsa profil düzenleme ve çıkış butonları
-                NavigationLink(destination: ProfileEditView()) {
-                    HStack {
-                        Label {
-                            Text.localizedSafe("profile.edit")
-                                .scaledFont(size: 16, weight: .medium)
-                                .foregroundColor(.primary)
-                        } icon: {
-                            Image(systemName: "pencil.circle.fill")
-                                .foregroundColor(.blue)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                            .font(.system(size: 14))
-                    }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal, 8)
-                
-                // Çıkış butonu
-                Button(action: {
-                    // Çıkış işlemi öncesi debug
-                    debugPrint("Çıkış işlemi başlatılıyor, mevcut kullanıcı: \(String(describing: PersistenceController.shared.getCurrentUser()?.username))")
-                    
-                    // Force UI update first to make sure changes are reflected
-                    withAnimation(nil) {
-                        // Çıkış işlemi
-                        PersistenceController.shared.logoutCurrentUser()
-                        
-                        // Titreşim ve ses
-                        if enableHapticFeedback {
-                            SoundManager.shared.playNavigationSound()
-                        } else {
-                            SoundManager.shared.playNavigationSoundOnly()
-                        }
-                        
-                        // Başarılı çıkış bildirimi
-                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                        impactFeedback.prepare()
-                        impactFeedback.impactOccurred()
-                    }
-                    
-                    // Çıkış işlemi sonrası debug
-                    debugPrint("Çıkış işlemi tamamlandı, mevcut kullanıcı: \(String(describing: PersistenceController.shared.getCurrentUser()?.username))")
-                    
-                    // UI güncellemesi için garanti mekanizması
-                    DispatchQueue.main.async {
-                        // Kullanıcı çıkışından sonra veri yenileme bildirimi
-                        NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
-                        
-                        // Force refresh
-                        NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
-                        
-                        // UI'ı tamamen sıfırlamak için sayfayı kapat
-                        self.presentationMode.wrappedValue.dismiss()
-                        
-                        // Dummy state değişkeni ile görünümü yenileme
-                        isRefreshing.toggle()
-                    }
-                }) {
-                    HStack {
-                        Label {
-                            Text.localizedSafe("Çıkış Yap")
-                                .scaledFont(size: 16, weight: .medium)
-                                .foregroundColor(.red)
-                        } icon: {
-                            Image(systemName: "arrow.right.circle.fill")
-                                .foregroundColor(.red)
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal, 8)
-            } else {
-                // Kullanıcı giriş yapmamışsa giriş ve kayıt butonları
-                NavigationLink(destination: LoginViewContainer()) {
-                    HStack {
-                        Label {
-                            Text.localizedSafe("Giriş Yap")
-                                .scaledFont(size: 16, weight: .medium)
-                                .foregroundColor(.blue)
-                        } icon: {
-                            Image(systemName: "person.circle.fill")
-                                .foregroundColor(.blue)
-                        }
-                        
-                        Spacer()
-                        
-                        
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                            .font(.system(size: 14))
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal, 8)
-                
-                NavigationLink(destination: RegisterViewContainer()) {
-                    HStack {
-                        Label {
-                            Text.localizedSafe("Yeni Hesap Oluştur")
-                                .scaledFont(size: 16, weight: .medium)
-                                .foregroundColor(.green)
-                        } icon: {
-                            Image(systemName: "person.badge.plus")
-                                .foregroundColor(.green)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                            .font(.system(size: 14))
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-                .padding(.horizontal, 8)
-            }
-            
-            // Dil Seçimi başlığı
-            sectionHeader(title: "Dil Seçimi", systemImage: "globe")
-            
-            // Dil Seçimi
-            VStack(spacing: 20) {
-                // Dil seçimi düğmesi
-                Button(action: {
-                    showLanguageSheet = true
-                }) {
-                    HStack(spacing: 15) {
-                        // İkon
-                        ZStack {
-                            Circle()
-                                .fill(Color.blue.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            
-                            Image(systemName: "globe")
-                                .font(.system(size: 16))
-                                .foregroundColor(.blue)
-                        }
-                        
-                        // Başlık ve açıklama
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text.localizedSafe("language.selection")
-                                .scaledFont(size: 16, weight: .semibold)
-                                .foregroundColor(.primary)
-                            
-                            Text(AppLanguage.allLanguages.first(where: { $0.code == selectedLanguage })?.name ?? "Türkçe")
-                                .scaledFont(size: 13)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
-                        
-                        Spacer()
-                        
                         Image(systemName: "chevron.right")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.gray)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .gray)
                     }
                     .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
-                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            .padding(.horizontal, 8)
-            
-            // Başarımlar başlığı
-            sectionHeader(title: "Başarımlar", systemImage: "trophy.fill")
-            
-            // Başarımlar Bölümü
-            VStack(spacing: 20) {
-                // Başarımlar düğmesi
-                Button(action: {
-                    showAchievementsSheet = true
-                }) {
-                    HStack(spacing: 15) {
-                        // İkon
-                        ZStack {
-                            Circle()
-                                .fill(Color.yellow.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            
-                            Image(systemName: "trophy.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(.yellow)
-                        }
-                        
-                        // Başlık ve açıklama
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Başarımlar")
-                                .scaledFont(size: 16, weight: .semibold)
-                                .foregroundColor(.primary)
-                            
-                            Text("Tüm başarımlarınızı görüntüleyin")
-                                .scaledFont(size: 13)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.gray)
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                            .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                     )
                 }
@@ -1597,42 +862,42 @@ struct SettingsView: View {
                 Button(action: {
                     resetAchievementData()
                 }) {
-                    HStack(spacing: 15) {
-                        // İkon
-                        ZStack {
-                            Circle()
-                                .fill(Color.red.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            
+                HStack(spacing: 15) {
+                    // İkon
+                    ZStack {
+                        Circle()
+                                .fill(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.15) : Color.red.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        
                             Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: 16))
-                                .foregroundColor(.red)
-                        }
-                        
-                        // Başlık ve açıklama
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Başarımları Sıfırla")
-                                .scaledFont(size: 16, weight: .semibold)
-                                .foregroundColor(.red)
-                            
-                            Text("Tüm başarımları sıfırlayın")
-                                .scaledFont(size: 13)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
-                        
-                        Spacer()
+                            .font(.system(size: 16))
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .red)
                     }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    
+                    // Başlık ve açıklama
+                    VStack(alignment: .leading, spacing: 4) {
+                            Text("Başarımları Sıfırla")
+                            .scaledFont(size: 16, weight: .semibold)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .red)
+                        
+                            Text("Tüm başarımları sıfırlayın")
+                            .scaledFont(size: 13)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                            .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    )
+                )
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            .padding(.horizontal, 8)
+                .padding(.horizontal, 8)
         }
     }
     
@@ -1680,7 +945,7 @@ struct SettingsView: View {
             .padding(.top)
             .padding(.horizontal, 16)
         }
-        .background(.ultraThinMaterial)
+        .background(Color(uiColor: UIColor.systemBackground).opacity(0.95))
         .cornerRadius(20)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -1741,6 +1006,483 @@ struct SettingsView: View {
         default:
             return "Mavi"
         }
+    }
+    
+    // Görünüm ayarları görünümü için fonksiyon
+    private func appearanceSettingsView() -> some View {
+        Button(action: {
+            showBoardColorSheet = true
+        }) {
+            HStack(spacing: 15) {
+                // İkon
+                ZStack {
+                    Circle()
+                        .fill(isBejMode ? 
+                             ThemeManager.BejThemeColors.accent.opacity(0.15) : 
+                             Color.purple.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "paintbrush.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .purple)
+                }
+                
+                // Başlık ve açıklama
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Görünüm Ayarları")
+                        .scaledFont(size: 16, weight: .semibold)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                    
+                    Text("Temalar ve renk seçenekleri")
+                        .scaledFont(size: 13)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.gray)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal, 8)
+    }
+    
+    // Güç tasarrufu ayarları görünümü için fonksiyon
+    private func powerSavingSettingsView() -> some View {
+        VStack(spacing: 20) {
+            // Pil durumu göstergesi - resme uygun dikdörtgen tasarım
+            HStack(spacing: 15) {
+                // İkon
+                ZStack {
+                    Circle()
+                        .fill(getBatteryColor().opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: getBatteryIcon())
+                        .font(.system(size: 16))
+                        .foregroundColor(getBatteryColor())
+                }
+                
+                // Başlık ve durum
+                VStack(alignment: .leading, spacing: 4) {
+                    // Pil durumu ve yüzde - tek satırda kalacak şekilde
+                    HStack(spacing: 4) {
+                        Text("Pil Durumu")
+                            .scaledFont(size: 16, weight: .bold)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                            .lineLimit(1)
+                        
+                        Text("\(Int(powerManager.batteryLevel * 100))%")
+                            .scaledFont(size: 14, weight: .medium)
+                            .foregroundColor(getBatteryColor())
+                            .lineLimit(1)
+                    }
+                    .minimumScaleFactor(0.8) // Yazı sığmazsa küçültebilir
+                    
+                    // Pil durum mesajı
+                    if powerManager.batteryLevel <= 0.2 {
+                        Text("Düşük Pil")
+                            .scaledFont(size: 14, weight: .medium)
+                            .foregroundColor(.orange)
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.orange.opacity(0.2))
+                            )
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            )
+            .padding(.horizontal, 8)
+            
+            // Güç Tasarrufu Ayarları
+            Section {
+                // Yüksek performans modu
+                HStack {
+                    Label {
+                        Text("Yüksek Performans Modu")
+                            .scaledFont(size: 16, weight: .medium)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                    } icon: {
+                        Image(systemName: "bolt.fill")
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .yellow)
+                    }
+                    
+                    Spacer()
+                    
+                    // Toggle görünümü - sadece buna basınca toggle olacak
+                    Button(action: {
+                        // Titreşim kontrolü yapılarak ses çal
+                        if enableHapticFeedback {
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Değeri tersine çevir
+                        highPerformanceMode.toggle()
+                        
+                        PowerSavingManager.shared.highPerformanceMode = highPerformanceMode
+                        // Yüksek performans modunu açarken güç tasarrufunu kapat
+                        if highPerformanceMode && powerSavingMode {
+                            powerSavingMode = false
+                        }
+                    }) {
+                        ZStack {
+                            Capsule()
+                                .fill(highPerformanceMode ? 
+                                     (isBejMode ? ThemeManager.BejThemeColors.accent : Color.yellow) : 
+                                     Color.gray.opacity(0.3))
+                                .frame(width: 55, height: 34)
+                            
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 30, height: 30)
+                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                .offset(x: highPerformanceMode ? 10 : -10)
+                        }
+                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: highPerformanceMode)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isBejMode ? 
+                             ThemeManager.BejThemeColors.cardBackground : 
+                             Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal, 8)
+                
+                // Otomatik güç tasarrufu
+                HStack {
+                    Label {
+                        Text("Otomatik Güç Tasarrufu")
+                            .scaledFont(size: 16, weight: .medium)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                    } icon: {
+                        Image(systemName: "battery.25")
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .orange)
+                    }
+                    
+                    Spacer()
+                    
+                    // Toggle görünümü - sadece buna basınca toggle olacak
+                    Button(action: {
+                        // Titreşim kontrolü yapılarak ses çal
+                        if enableHapticFeedback {
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Değeri tersine çevir
+                        autoPowerSaving.toggle()
+                        
+                        PowerSavingManager.shared.isAutoPowerSavingEnabled = autoPowerSaving
+                    }) {
+                        ZStack {
+                            Capsule()
+                                .fill(autoPowerSaving ? 
+                                     (isBejMode ? ThemeManager.BejThemeColors.accent : Color.orange) : 
+                                     Color.gray.opacity(0.3))
+                                .frame(width: 55, height: 34)
+                            
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 30, height: 30)
+                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                .offset(x: autoPowerSaving ? 10 : -10)
+                        }
+                        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: autoPowerSaving)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isBejMode ? 
+                             ThemeManager.BejThemeColors.cardBackground : 
+                             Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal, 8)
+                
+                // Güç tasarrufu açıklaması
+                if powerSavingMode || autoPowerSaving {
+                    Text("Güç tasarrufu modu, bazı görsel efektleri ve animasyonları devre dışı bırakır veya basitleştirir.")
+                        .scaledFont(size: 12)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                        .padding(.top, 4)
+                        .padding(.horizontal, 8)
+                }
+                
+                // Yüksek performans açıklaması
+                if highPerformanceMode {
+                    Text("Yüksek performans modu daha akıcı animasyonlar ve görsel efektler sağlar ancak pil kullanımını artırır.")
+                        .scaledFont(size: 12)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                        .padding(.top, 4)
+                        .padding(.horizontal, 8)
+                }
+            } header: {
+                Text("Performans")
+                    .scaledFont(size: 18, weight: .bold)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                    .padding(.horizontal, 8)
+            } footer: {
+                Text("Güç tasarrufu modu, cihazınızın pil ömrünü uzatır.")
+                    .scaledFont(size: 12)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+            .padding(.horizontal, 8)
+            }
+        }
+    }
+    
+    // Profil ayarları görünümü
+    private func profileSettingsView() -> some View {
+        VStack(spacing: 20) {
+            // Kullanıcı profil kartı - Büyük ve göze çarpan tasarım
+            HStack {
+                // Profil resmi
+                ZStack {
+                    if let user = PersistenceController.shared.getCurrentUser() {
+                        // Profil resmi görüntüleme
+                        ProfileImageView(user: user)
+                            .frame(width: 80, height: 80)
+                    } else {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 80, height: 80)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
+                    
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 34))
+                            .foregroundColor(.white)
+                    }
+                }
+                
+                Spacer()
+                .frame(width: 20)
+                
+                // Kullanıcı bilgileri
+                VStack(alignment: .leading, spacing: 6) {
+                    if let user = PersistenceController.shared.getCurrentUser() {
+                        // Giriş yapılmışsa kullanıcı bilgilerini göster
+                        Text(user.value(forKey: "name") as? String ?? "İsimsiz Kullanıcı")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                        
+                        // Kullanıcı adı
+                        let displayUsername = user.value(forKey: "username") as? String ?? ""
+                        Text(displayUsername)
+                            .font(.system(size: 16))
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                    } else {
+                        // Giriş yapılmamışsa
+                        Text.localizedSafe("Giriş Yapmadınız")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                        
+                        Text.localizedSafe("Skorlarınızı kaydetmek için giriş yapın")
+                            .font(.system(size: 16))
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                            .lineLimit(1)
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                    .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
+            )
+            
+            // Butonlar - giriş durumuna göre farklı butonlar göster
+            if let _ = PersistenceController.shared.getCurrentUser() {
+                // Kullanıcı giriş yapmışsa - Profili Düzenle ve Çıkış Yap butonları
+                HStack(spacing: 12) {
+                    // Profili Düzenle butonu
+                    Button(action: {
+                        // Titreşim geri bildirimi
+                        if enableHapticFeedback {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Profil düzenleme sayfasına yönlendir
+                        // NOT: Bu geçiş NavigationLink ile yapılmalı, şu anda devre dışı
+                        logInfo("Profil düzenleme butonu tıklandı")
+                    }) {
+                        HStack {
+                            Image(systemName: "person.fill.badge.plus")
+                                .font(.system(size: 16))
+                            Text("Profili Düzenle")
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                            (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue)
+                                .cornerRadius(12)
+                                .shadow(color: (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue).opacity(0.3), radius: 5, x: 0, y: 2)
+                        )
+                    }
+                    
+                    // Çıkış Yap butonu
+                Button(action: {
+                        // Titreşim geri bildirimi
+                        if enableHapticFeedback {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Çıkış yap
+                        logoutUser()
+                }) {
+                    HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.system(size: 16))
+                            Text("Çıkış Yap")
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                    .background(
+                            Color.red
+                                .cornerRadius(12)
+                                .shadow(color: Color.red.opacity(0.3), radius: 5, x: 0, y: 2)
+                        )
+                    }
+                }
+            } else {
+                // Kullanıcı giriş yapmamışsa - Giriş Yap ve Kayıt Ol butonları
+                VStack(spacing: 12) {
+                    // Giriş Yap butonu
+                    Button(action: {
+                        // Titreşim geri bildirimi
+                        if enableHapticFeedback {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Giriş sayfasına yönlendir
+                        showLoginView = true
+                        logInfo("Giriş yap butonu tıklandı")
+                    }) {
+                        HStack {
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 16))
+                            Text("Giriş Yap")
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                    .background(
+                            (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue)
+                                .cornerRadius(12)
+                                .shadow(color: (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue).opacity(0.3), radius: 5, x: 0, y: 2)
+                        )
+                    }
+                    
+                    // Kayıt Ol butonu
+                Button(action: {
+                        // Titreşim geri bildirimi
+                        if enableHapticFeedback {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            SoundManager.shared.playNavigationSound()
+                        } else {
+                            SoundManager.shared.playNavigationSoundOnly()
+                        }
+                        
+                        // Kayıt sayfasına yönlendir
+                        showRegisterView = true
+                        logInfo("Kayıt ol butonu tıklandı")
+                    }) {
+                        HStack {
+                            Image(systemName: "person.badge.plus")
+                                .font(.system(size: 16))
+                            Text("Kayıt Ol")
+                                .scaledFont(size: 16, weight: .medium)
+                        }
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue, lineWidth: 1)
+                                )
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    )
+                }
+                }
+            }
+        }
+    }
+    
+    // Kullanıcı çıkış işlemi için fonksiyon
+    private func logoutUser() {
+        // Çıkış işlemleri
+        PersistenceController.shared.logoutCurrentUser()
+        
+        // UI güncellemesi ana thread'de yapılmalı
+        DispatchQueue.main.async {
+            // Kullanıcı bilgisini sıfırla
+            self.currentUser = nil
+            
+            // Bildirim gönder
+            NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
+        }
+        
+        logSuccess("Kullanıcı başarıyla çıkış yaptı")
     }
 }
 
@@ -1986,6 +1728,12 @@ struct LanguageCell: View {
     var action: () -> Void
     
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     var body: some View {
         Button(action: action) {
@@ -1998,13 +1746,13 @@ struct LanguageCell: View {
                 
                 Text(languageName)
                     .scaledFont(size: 20, weight: isSelected ? .semibold : .regular)
-                    .foregroundColor(isDisabled ? .gray : (isSelected ? .primary : .primary))
+                    .foregroundColor(isDisabled ? .gray : (isBejMode ? ThemeManager.BejThemeColors.text : .primary))
                 
                 Spacer()
                 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .green)
                         .font(.system(size: 22))
                         .padding(.trailing, 5)
                 }
@@ -2028,12 +1776,16 @@ struct LanguageCell: View {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(
                         isSelected ? 
+                        (isBejMode ? 
+                         ThemeManager.BejThemeColors.accent.opacity(0.08) : 
                         (colorScheme == .dark ? 
                          Color(.systemGray5).opacity(0.8) : 
-                         Color.green.opacity(0.08)) :
+                          Color.green.opacity(0.08))) :
+                        (isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
                         (colorScheme == .dark ? 
                          Color(.systemGray6) : 
-                         Color.white)
+                          Color.white))
                     )
                     .shadow(
                         color: Color.black.opacity(isSelected ? 0.1 : 0.05),
@@ -2051,22 +1803,34 @@ struct LanguageCell: View {
 
 // Profil resmi görüntüleme bileşeni
 struct ProfileImageView: View {
-    let user: User
+    let user: NSManagedObject
     @State private var profileImage: UIImage?
     @State private var isLoading = false
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     var body: some View {
         ZStack {
             // Arka plan daire
             Circle()
                 .fill(
+                    isBejMode ?
+                    LinearGradient(
+                        gradient: Gradient(colors: [ThemeManager.BejThemeColors.accent.opacity(0.7), ThemeManager.BejThemeColors.accent.opacity(0.4)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ) :
                     LinearGradient(
                         gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
+                .shadow(color: isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.3) : Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
             
             if isLoading {
                 // Yükleniyor göstergesi
@@ -2081,6 +1845,12 @@ struct ProfileImageView: View {
                     .overlay(
                         Circle()
                             .stroke(
+                                isBejMode ?
+                                LinearGradient(
+                                    gradient: Gradient(colors: [ThemeManager.BejThemeColors.accent.opacity(0.7), ThemeManager.BejThemeColors.accent.opacity(0.4)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ) :
                                 LinearGradient(
                                     gradient: Gradient(colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)]),
                                     startPoint: .topLeading,
@@ -2091,7 +1861,7 @@ struct ProfileImageView: View {
                     )
             } else {
                 // Varsayılan avatar - baş harfler
-                Text(String(user.name?.prefix(1) ?? "U"))
+                Text(String((user.value(forKey: "name") as? String ?? "U").prefix(1)))
                     .font(.system(size: 34, weight: .bold))
                     .foregroundColor(.white)
             }
@@ -2114,14 +1884,14 @@ struct ProfileImageView: View {
         URLCache.shared.removeAllCachedResponses()
         
         // Önce yerel depolamada kontrol et
-        if let imageData = user.profileImage, let image = UIImage(data: imageData) {
+        if let imageData = user.value(forKey: "profileImage") as? Data, let image = UIImage(data: imageData) {
             profileImage = image
             logSuccess("Profil resmi yerel depolamadan yüklendi - Boyut: \(imageData.count) byte, Hash: \(imageData.hashValue)")
             return
         }
         
         // Yerel yoksa URL'den yüklemeyi dene
-        if let photoURL = user.photoURL {
+        if let photoURL = user.value(forKey: "photoURL") as? String {
             isLoading = true
             logInfo("Profil resmi URL'den yükleniyor: \(photoURL)")
             
@@ -2153,25 +1923,18 @@ struct ProfileImageView: View {
                         self.profileImage = image
                         
                         // Resmi yerel olarak da kaydet
-                        self.user.profileImage = data
-                        // Not: Burada zaman damgası ekleyecektik fakat User modelinde lastProfileUpdate özelliği yok
+                        self.user.setValue(data, forKey: "profileImage")
                         do {
                             try PersistenceController.shared.container.viewContext.save()
-                            UserDefaults.standard.synchronize() // Hemen senkronize et
-                            logSuccess("Profil resmi yerel veritabanına kaydedildi")
-                            
-                            // Tüm profil resmi görünümlerini güncellemek için bildirim gönder
-                            NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
+                            logSuccess("Profil resmi veritabanına kaydedildi")
                         } catch {
-                            logError("Profil resmi yerel olarak kaydedilemedi: \(error)")
+                            logError("Profil resmi kaydedilemedi: \(error)")
                         }
                     } else {
-                        logError("Profil resmi verisi dönüştürülemedi")
+                        logError("Profil resmi verisi alınamadı")
                     }
                 }
             }.resume()
-        } else {
-            logInfo("Kullanıcının profil resmi URL'si yok")
         }
     }
 }
@@ -2186,6 +1949,9 @@ struct AppearanceSettingsSheet: View {
     
     // Renk seçildiğinde animasyon için
     @State private var selectedColorAnimated: String? = nil
+    // Tema değişimi için animasyon durumları
+    @State private var darkModeAnimation: Bool = false
+    @State private var systemAppearanceAnimation: Bool = false
     
     var body: some View {
         NavigationView {
@@ -2199,129 +1965,27 @@ struct AppearanceSettingsSheet: View {
                         .padding(.horizontal)
                         .padding(.top)
                     
-                    // Sistem görünümünü kullan
-                    HStack(spacing: 15) {
-                        // İkon
-                        ZStack {
-                            Circle()
-                                .fill(Color.indigo.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(.indigo)
-                        }
+                    // Tema ayarları başlığı
+                    HStack {
+                        Image(systemName: "paintpalette.fill")
+                            .font(.title2)
+                            .foregroundColor(.primary)
                         
-                        // Başlık ve açıklama
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Sistem Görünümünü Kullan")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                            
-                            Text("Cihazın görünüm ayarını kullan (açık/koyu)")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
+                        Text("Uygulama Teması")
+                            .font(.title2)
+                            .fontWeight(.semibold)
                         
                         Spacer()
-                        
-                        // Toggle butonu
-                        Button(action: {
-                            // Titreşim kontrolü yapılarak ses çal
-                            if enableHapticFeedback {
-                                SoundManager.shared.playNavigationSound()
-                            } else {
-                                SoundManager.shared.playNavigationSoundOnly()
-                            }
-                            
-                            themeManager.useSystemAppearance.toggle()
-                        }) {
-                            ZStack {
-                                Capsule()
-                                    .fill(themeManager.useSystemAppearance ? Color.indigo : Color.gray.opacity(0.3))
-                                    .frame(width: 55, height: 34)
-                                
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 30, height: 30)
-                                    .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-                                    .offset(x: themeManager.useSystemAppearance ? 10 : -10)
-                            }
-                            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.useSystemAppearance)
-                        }
-                        .buttonStyle(PlainButtonStyle())
                     }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                    )
                     .padding(.horizontal)
+                    .padding(.top, 10)
                     
-                    // Karanlık mod (sistem görünümü kullanılmıyorsa)
-                    if !themeManager.useSystemAppearance {
-                        HStack(spacing: 15) {
-                            // İkon
-                            ZStack {
-                                Circle()
-                                    .fill(Color.blue.opacity(0.15))
-                                    .frame(width: 36, height: 36)
-                                
-                                Image(systemName: "moon.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.blue)
-                            }
-                            
-                            // Başlık ve açıklama
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Karanlık Mod")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                
-                                Text("Karanlık tema aktif eder")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
-                            }
-                            
-                            Spacer()
-                            
-                            // Toggle butonu
-                            Button(action: {
-                                // Titreşim kontrolü yapılarak ses çal
-                                if enableHapticFeedback {
-                                    SoundManager.shared.playNavigationSound()
-                                } else {
-                                    SoundManager.shared.playNavigationSoundOnly()
-                                }
-                                
-                                themeManager.darkMode.toggle()
-                            }) {
-                                ZStack {
-                                    Capsule()
-                                        .fill(themeManager.darkMode ? Color.blue : Color.gray.opacity(0.3))
-                                        .frame(width: 55, height: 34)
-                                    
-                                    Circle()
-                                        .fill(Color.white)
-                                        .frame(width: 30, height: 30)
-                                        .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-                                        .offset(x: themeManager.darkMode ? 10 : -10)
-                                }
-                                .animation(.spring(response: 0.2, dampingFraction: 0.7), value: themeManager.darkMode)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                        )
+                    // Tema önizleme kartı
+                    themePreviewCard
                         .padding(.horizontal)
-                    }
+                    
+                    // NOT: "Sistem Görünümünü Kullan" ve "Koyu Mod" butonları kaldırıldı
+                    // Tema kartları üzerinden doğrudan tema değişikliği yapılabilir
                     
                     // Metin boyutu
                     VStack(alignment: .leading, spacing: 10) {
@@ -2400,11 +2064,15 @@ struct AppearanceSettingsSheet: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Sudoku Tahtası Rengi")
                                     .font(.headline)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(themeManager.bejMode ? 
+                                                     ThemeManager.BejThemeColors.text : 
+                                                     .primary)
                                 
-                                Text("Şu anki: \(getColorNameFromCode(themeManager.sudokuBoardColor))")
+                                Text("Şu anki: \(themeManager.getBoardColorName())")
                                     .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(themeManager.bejMode ? 
+                                                    ThemeManager.BejThemeColors.secondaryText : 
+                                                    .secondary)
                             }
                             
                             Spacer()
@@ -2445,21 +2113,216 @@ struct AppearanceSettingsSheet: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                            .fill(themeManager.bejMode ? 
+                                  ThemeManager.BejThemeColors.cardBackground : 
+                                  (colorScheme == .dark ? Color(.systemGray6) : Color.white))
                             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                     )
                     .padding(.horizontal)
                     .padding(.bottom, 30)
                 }
             }
+            .background(themeManager.bejMode ? 
+                   ThemeManager.BejThemeColors.background : 
+                   (colorScheme == .dark ? Color.black.opacity(0.7) : Color.white.opacity(0.7)))
             .navigationBarItems(trailing: Button("Tamam") {
+                // Değişiklikleri kaydetmek için nesneyi değişmiş olarak işaretle
+                themeManager.objectWillChange.send()
+                
+                // Tema değişikliği bildirimini gönder
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("ThemeChanged"), 
+                    object: nil
+                )
+                
+                // Sayfayı kapat
                 presentationMode.wrappedValue.dismiss()
             })
             .onAppear {
                 // Mevcut rengi animasyon için kaydet
                 selectedColorAnimated = themeManager.sudokuBoardColor
+                
+                // Mevcut tema değerlerini eşitle
+                darkModeAnimation = themeManager.darkMode
+                systemAppearanceAnimation = themeManager.useSystemAppearance
+            }
+            .preferredColorScheme(themeManager.colorScheme)
+            .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode)
+            .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance)
+        }
+    }
+    
+    // Tema önizleme kartı
+    private var themePreviewCard: some View {
+        VStack(spacing: 12) {
+            // Başlık
+            Text("Geçerli Tema")
+                .font(.headline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 4)
+            
+            // Önizleme kutucukları
+            HStack(spacing: 10) {
+                // Koyu mod önizleme
+                themeSampleCard(
+                    title: "Koyu Mod", 
+                    isSelected: themeManager.darkMode && !themeManager.useSystemAppearance && !themeManager.bejMode,
+                    isDarkMode: true
+                )
+                .onTapGesture {
+                    if enableHapticFeedback {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                    }
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        themeManager.updateAppTheme(darkMode: true, useSystemAppearance: false, bejMode: false)
+                    }
+                }
+                
+                // Açık mod önizleme
+                themeSampleCard(
+                    title: "Açık Mod", 
+                    isSelected: !themeManager.darkMode && !themeManager.useSystemAppearance && !themeManager.bejMode,
+                    isDarkMode: false
+                )
+                .onTapGesture {
+                    if enableHapticFeedback {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                    }
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        themeManager.updateAppTheme(darkMode: false, useSystemAppearance: false, bejMode: false)
+                    }
+                }
+                
+                // Sistem modu önizleme
+                themeSampleCard(
+                    title: "Sistem", 
+                    isSelected: themeManager.useSystemAppearance && !themeManager.bejMode,
+                    isDarkMode: UITraitCollection.current.userInterfaceStyle == .dark
+                )
+                .onTapGesture {
+                    if enableHapticFeedback {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                    }
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        themeManager.updateAppTheme(useSystemAppearance: true, bejMode: false)
+                    }
+                }
+                
+                // Bej mod önizleme
+                themeSampleCard(
+                    title: "Bej Mod", 
+                    isSelected: themeManager.bejMode,
+                    isDarkMode: false,
+                    isBejMode: true
+                )
+                .onTapGesture {
+                    if enableHapticFeedback {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                    }
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        themeManager.updateAppTheme(bejMode: true)
+                    }
+                }
             }
         }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(themeManager.bejMode ? 
+                      ThemeManager.BejThemeColors.cardBackground : 
+                      (colorScheme == .dark ? Color(.systemGray6) : Color.white))
+            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        )
+    }
+    
+    // Tema örnek kartı
+    private func themeSampleCard(title: String, isSelected: Bool, isDarkMode: Bool, isBejMode: Bool = false) -> some View {
+        VStack(spacing: 8) {
+            // Örnek görünüm
+            VStack(spacing: 4) {
+                // Renk ayarları
+                let barColor = isBejMode ? ThemeManager.BejThemeColors.background : (isDarkMode ? Color.black : Color.white)
+                let contentColor = isBejMode ? ThemeManager.BejThemeColors.cardBackground : (isDarkMode ? Color.black : Color.white)
+                let textColor = isBejMode ? ThemeManager.BejThemeColors.secondaryText : (isDarkMode ? Color.gray.opacity(0.7) : Color.gray.opacity(0.3))
+                
+                // Uygulama çubuğu
+                Rectangle()
+                    .fill(barColor)
+                    .frame(height: 12)
+                    .overlay(
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(textColor)
+                                .frame(width: 4, height: 4)
+                            
+                            Rectangle()
+                                .fill(textColor)
+                                .frame(width: 20, height: 4)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 4)
+                    )
+                
+                // İçerik alanı
+                Rectangle()
+                    .fill(contentColor)
+                    .frame(height: 40)
+                    .overlay(
+                        VStack(spacing: 4) {
+                            // Metin örneği
+                            Rectangle()
+                                .fill(textColor)
+                                .frame(width: 40, height: 3)
+                            
+                            // Tahta örneği
+                            HStack(spacing: 2) {
+                                ForEach(0..<3) { _ in
+                                    Rectangle()
+                                        .fill(isBejMode ? 
+                                              ThemeManager.BejThemeColors.accent.opacity(0.6) : 
+                                              themeManager.getBoardColor().opacity(isDarkMode ? 0.7 : 0.3))
+                                        .frame(width: 8, height: 8)
+                                }
+                            }
+                            
+                            // Buton örneği
+                            Rectangle()
+                                .fill(isBejMode ? 
+                                      ThemeManager.BejThemeColors.accent.opacity(0.8) : 
+                                      themeManager.getBoardColor().opacity(isDarkMode ? 0.9 : 0.6))
+                                .frame(width: 30, height: 6)
+                        }
+                        .padding(.vertical, 6)
+                    )
+            }
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isSelected ? (isBejMode ? ThemeManager.BejThemeColors.accent : themeManager.getBoardColor()) : Color.clear, lineWidth: 2)
+            )
+            
+            // Başlık
+            Text(title)
+                .font(.caption)
+                .foregroundColor(isSelected ? 
+                                 (isBejMode ? ThemeManager.BejThemeColors.accent : themeManager.getBoardColor()) : 
+                                 .secondary)
+                .fontWeight(isSelected ? .semibold : .regular)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isSelected ? 
+                      (isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.1) : themeManager.getBoardColor().opacity(0.1)) : 
+                      Color.clear)
+        )
     }
     
     // Renk butonları için yardımcı fonksiyon
@@ -2470,7 +2333,7 @@ struct AppearanceSettingsSheet: View {
                 let generator = UIImpactFeedbackGenerator(style: .medium)
                 generator.impactOccurred(intensity: 0.6)
                 SoundManager.shared.playNavigationSound()
-            } else {
+        } else {
                 SoundManager.shared.playNavigationSoundOnly()
             }
             
@@ -2488,55 +2351,79 @@ struct AppearanceSettingsSheet: View {
         }) {
             VStack(spacing: 6) {
                 ZStack {
-                    Circle()
-                        .fill(color)
-                        .frame(width: 48, height: 48) // Daireleri küçülttük
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white, lineWidth: 2)
-                                .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 0)
-                        )
-                        .scaleEffect(selectedColorAnimated == code ? 1.05 : 1.0) // Hafif animation
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedColorAnimated)
+                    // Bej mod için özel renk görünümü
+                    if themeManager.bejMode {
+                        let bejCompatibleColor = getBejCompatibleColor(color: color, code: code)
+                        Circle()
+                            .fill(bejCompatibleColor)
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 2)
+                                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 0)
+                            )
+                            .scaleEffect(selectedColorAnimated == code ? 1.05 : 1.0)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedColorAnimated)
+                    } else {
+                        Circle()
+                            .fill(color)
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 2)
+                                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 0)
+                            )
+                            .scaleEffect(selectedColorAnimated == code ? 1.05 : 1.0)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedColorAnimated)
+                    }
                     
                     if themeManager.sudokuBoardColor == code {
                         Image(systemName: "checkmark")
                             .foregroundColor(.white)
-                            .font(.system(size: 18, weight: .bold)) // Font boyutu küçültüldü
+                            .font(.system(size: 18, weight: .bold))
                             .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                     }
                 }
                 
                 Text(name)
-                    .font(.system(size: 14, weight: themeManager.sudokuBoardColor == code ? .semibold : .regular)) // Font boyutu küçültüldü
-                    .foregroundColor(themeManager.sudokuBoardColor == code ? color : (colorScheme == .dark ? .white : .black))
+                    .font(.system(size: 14, weight: themeManager.sudokuBoardColor == code ? .semibold : .regular))
+                    .foregroundColor(themeManager.bejMode ? 
+                                     (themeManager.sudokuBoardColor == code ? ThemeManager.BejThemeColors.accent : ThemeManager.BejThemeColors.text) : 
+                                     (themeManager.sudokuBoardColor == code ? color : (colorScheme == .dark ? .white : .black)))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8) // Düşey boşlukları azalttık
+            .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(themeManager.sudokuBoardColor == code ? color.opacity(0.15) : Color.clear)
+                    .fill(themeManager.sudokuBoardColor == code ? 
+                          (themeManager.bejMode ? ThemeManager.BejThemeColors.accent.opacity(0.15) : color.opacity(0.15)) : 
+                          Color.clear)
             )
         }
         .buttonStyle(PlainButtonStyle())
     }
     
+    // Bej mod uyumlu renk döndüren yardımcı fonksiyon
+    private func getBejCompatibleColor(color: Color, code: String) -> Color {
+        switch code {
+        case "red":
+            return Color(red: 0.75, green: 0.30, blue: 0.20)
+        case "pink":
+            return Color(red: 0.80, green: 0.40, blue: 0.50)
+        case "orange":
+            return Color(red: 0.85, green: 0.50, blue: 0.20)
+        case "purple":
+            return Color(red: 0.60, green: 0.35, blue: 0.60)
+        case "green":
+            return Color(red: 0.40, green: 0.55, blue: 0.30)
+        default: // blue
+            return ThemeManager.BejThemeColors.accent
+        }
+    }
+    
     // Renk kodundan renk adını döndüren yardımcı fonksiyon
     private func getColorNameFromCode(_ colorCode: String) -> String {
-        switch colorCode {
-        case "red":
-            return "Kırmızı"
-        case "pink":
-            return "Pembe"
-        case "orange":
-            return "Turuncu"
-        case "purple":
-            return "Mor"
-        case "green":
-            return "Yeşil"
-        default:
-            return "Mavi"
-        }
+        return themeManager.getBoardColorName()
     }
     
     // TextSize değişikliğini işleme fonksiyonu
@@ -2603,3 +2490,92 @@ struct BoardColorButton: View {
         }
     }
 }
+
+// MARK: - ThemePreferenceKey 
+// SwiftUI ortamındaki tema değişikliklerini takip etmek için
+struct ThemePreferenceKey: PreferenceKey {
+    static var defaultValue: Bool = false
+    
+    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = nextValue()
+    }
+}
+
+// MARK: - ThemeAwareModifier
+// Görünümlerin tema değişikliklerine tepki vermesini sağlar
+struct ThemeAwareModifier: ViewModifier {
+    @EnvironmentObject var themeManager: ThemeManager
+    @State private var themeID = UUID()
+    
+    func body(content: Content) -> some View {
+        content
+            .id(themeID) // Görünümü zorla yenilemek için
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ThemeChanged"))) { _ in
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    // Görünümü zorla yenilemek için ID'yi değiştir
+                    themeID = UUID()
+                }
+            }
+            .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode)
+            .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance)
+    }
+}
+
+// Kolay kullanım için extension ekle
+extension View {
+    func themeAware() -> some View {
+        self.modifier(ThemeAwareModifier())
+    }
+}
+
+struct InfoCard: View {
+    var title: String
+    var description: String
+    var iconName: String
+    var color: Color
+    
+    @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 15) {
+            // İkon
+            ZStack {
+                Circle()
+                    .fill(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.15) : color.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: iconName)
+                    .font(.system(size: 16))
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : color)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .scaledFont(size: 16, weight: .semibold)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                
+                Text(description)
+                    .scaledFont(size: 14)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineSpacing(3)
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isBejMode ? 
+                     ThemeManager.BejThemeColors.cardBackground : 
+                     (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        )
+        .padding(.horizontal, 8)
+    }
+}
+

@@ -10,8 +10,13 @@ import Combine
 
 struct MainMenuView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var hasSavedGame: Bool = false
     @State private var showSettings: Bool = false
+    
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     var body: some View {
         NavigationView {
@@ -37,7 +42,7 @@ struct MainMenuView: View {
                         
                         Text("SUDOKU")
                             .font(.system(size: 42, weight: .bold, design: .rounded))
-                            .foregroundColor(colorScheme == .dark ? .white : .black)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : (colorScheme == .dark ? .white : .black))
                             .shadow(color: .blue.opacity(0.6), radius: 5, x: 0, y: 0)
                     }
                     .padding(.top, 50)
@@ -54,7 +59,8 @@ struct MainMenuView: View {
                                 title: "Yeni Oyun",
                                 icon: "play.fill",
                                 color: .green,
-                                colorScheme: colorScheme
+                                colorScheme: colorScheme,
+                                isBejMode: isBejMode
                             )
                         }
                         
@@ -69,7 +75,8 @@ struct MainMenuView: View {
                                     title: "Devam Et",
                                     icon: "arrow.clockwise",
                                     color: .blue,
-                                    colorScheme: colorScheme
+                                    colorScheme: colorScheme,
+                                    isBejMode: isBejMode
                                 )
                             }
                         }
@@ -82,7 +89,8 @@ struct MainMenuView: View {
                                 title: "Skor Tablosu",
                                 icon: "trophy.fill",
                                 color: .orange,
-                                colorScheme: colorScheme
+                                colorScheme: colorScheme,
+                                isBejMode: isBejMode
                             )
                         }
                         
@@ -94,7 +102,8 @@ struct MainMenuView: View {
                                 title: "Ayarlar",
                                 icon: "gearshape.fill",
                                 color: .purple,
-                                colorScheme: colorScheme
+                                colorScheme: colorScheme,
+                                isBejMode: isBejMode
                             )
                         }
                     }
@@ -149,37 +158,38 @@ struct NeonMenuButton: View {
     let icon: String
     let color: Color
     let colorScheme: ColorScheme
+    let isBejMode: Bool
     
     var body: some View {
         HStack {
             // İkon
             ZStack {
                 Circle()
-                    .fill(color.opacity(colorScheme == .dark ? 0.3 : 0.15))
+                    .fill(color.opacity(isBejMode ? 0.2 : (colorScheme == .dark ? 0.3 : 0.15)))
                     .frame(width: 44, height: 44)
                     .overlay(
                         Circle()
-                            .stroke(color, lineWidth: colorScheme == .dark ? 2 : 1)
-                            .blur(radius: colorScheme == .dark ? 2 : 0)
+                            .stroke(color, lineWidth: isBejMode ? 1 : (colorScheme == .dark ? 2 : 1))
+                            .blur(radius: isBejMode ? 0 : (colorScheme == .dark ? 2 : 0))
                     )
-                    .shadow(color: color.opacity(colorScheme == .dark ? 0.8 : 0.3), radius: 8, x: 0, y: 0)
+                    .shadow(color: color.opacity(isBejMode ? 0.4 : (colorScheme == .dark ? 0.8 : 0.3)), radius: 8, x: 0, y: 0)
                 
                 Image(systemName: icon)
                     .font(.title2)
-                    .foregroundColor(colorScheme == .dark ? .white : color)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : (colorScheme == .dark ? .white : color))
             }
             
             // Başlık
             Text(title)
                 .font(.title3.bold())
-                .foregroundColor(colorScheme == .dark ? .white : .black)
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : (colorScheme == .dark ? .white : .black))
             
             Spacer()
             
             // Sağ ok işareti
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(colorScheme == .dark ? .white.opacity(0.8) : .gray)
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : (colorScheme == .dark ? .white.opacity(0.8) : .gray))
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 20)
@@ -187,26 +197,27 @@ struct NeonMenuButton: View {
             ZStack {
                 // Arkaplan
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(colorScheme == .dark ? 
-                          Color.black.opacity(0.5) : 
-                          Color.white.opacity(0.7))
+                    .fill(isBejMode ? 
+                          ThemeManager.BejThemeColors.cardBackground : 
+                          (colorScheme == .dark ? Color.black.opacity(0.5) : Color.white.opacity(0.7)))
                 
                 // Kenar çizgileri
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                color.opacity(colorScheme == .dark ? 0.7 : 0.3), 
-                                color.opacity(colorScheme == .dark ? 0.3 : 0.1)
+                                color.opacity(isBejMode ? 0.4 : (colorScheme == .dark ? 0.7 : 0.3)), 
+                                color.opacity(isBejMode ? 0.2 : (colorScheme == .dark ? 0.3 : 0.1))
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: colorScheme == .dark ? 1.5 : 1.0
+                        lineWidth: isBejMode ? 1.0 : (colorScheme == .dark ? 1.5 : 1.0)
                     )
             }
         )
-        .shadow(color: color.opacity(colorScheme == .dark ? 0.4 : 0.2), radius: colorScheme == .dark ? 10 : 5, x: 0, y: 4)
+        .shadow(color: color.opacity(isBejMode ? 0.3 : (colorScheme == .dark ? 0.4 : 0.2)), 
+                radius: isBejMode ? 6 : (colorScheme == .dark ? 10 : 5), x: 0, y: 4)
     }
 }
 

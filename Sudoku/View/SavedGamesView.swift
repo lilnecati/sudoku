@@ -14,6 +14,12 @@ struct SavedGamesView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.textScale) var textScale
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     // FetchRequest'i kaldırıp State değişkenine geçiyoruz
     //@FetchRequest(
@@ -111,16 +117,16 @@ struct SavedGamesView: View {
         VStack(spacing: 15) {
             Image(systemName: "bookmark.slash.fill")
                 .font(.system(size: 70))
-                .foregroundColor(Color.blue.opacity(0.5))
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.5) : Color.blue.opacity(0.5))
             
             Text.localizedSafe("Kaydedilmiş oyun bulunamadı")
                 .font(.system(size: Font.TextStyle.title2.defaultSize * textScale).bold())
-                .foregroundColor(Color.textColor(for: colorScheme))
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : Color.textColor(for: colorScheme))
             
             if selectedDifficulty == "Tümü" || selectedDifficulty == "All" || selectedDifficulty == "Tous" {
                 Text.localizedSafe("Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın.")
                     .font(.system(size: Font.TextStyle.subheadline.defaultSize * textScale))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             } else {
@@ -139,7 +145,7 @@ struct SavedGamesView: View {
                 
                 Text(formattedText)
                     .font(.system(size: Font.TextStyle.subheadline.defaultSize * textScale))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             }
@@ -147,7 +153,9 @@ struct SavedGamesView: View {
         .padding(30)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .fill(isBejMode ? 
+                     ThemeManager.BejThemeColors.cardBackground : 
+                     (colorScheme == .dark ? Color(.systemGray6) : Color.white))
                 .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
         )
         .padding()
@@ -164,7 +172,7 @@ struct SavedGamesView: View {
                 HStack {
                     Text.localizedSafe("Kaydedilmiş Oyunlar")
                         .font(.system(size: 28 * textScale, weight: .bold, design: .rounded))
-                        .foregroundColor(Color.textColor(for: colorScheme))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : Color.textColor(for: colorScheme))
                     
                     Spacer()
                     
@@ -174,133 +182,129 @@ struct SavedGamesView: View {
                             // Sadece PersistenceController üzerinden silme işlemini tetikle.
                             // Arayüz güncellemesi "RefreshSavedGames" bildirimi ile yapılacak.
                             PersistenceController.shared.deleteAllSavedGames()
-                            // ViewContext'i yenileme ve kaydetme adımları kaldırıldı.
-                            // viewContext.reset()
-                            // do {
-                            //     try viewContext.save()
-                            // } catch {
-                            //     logError("ViewContext yenileme hatası: \\(error)")
-                            // }
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "trash")
                                 Text.localizedSafe("Tümünü Sil")
                             }
                             .font(.system(size: 14 * textScale, weight: .medium))
-                            .foregroundColor(.red)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .red)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(
                                 Capsule()
-                                    .stroke(Color.red.opacity(0.5), lineWidth: 1)
+                                    .fill(isBejMode ? 
+                                         ThemeManager.BejThemeColors.cardBackground : 
+                                         (colorScheme == .dark ? Color.red.opacity(0.15) : Color.red.opacity(0.1)))
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(isBejMode ? 
+                                                  ThemeManager.BejThemeColors.accent.opacity(0.5) : 
+                                                  Color.red.opacity(0.3), lineWidth: 1)
+                                    )
                             )
                         }
                     }
                 }
-                .padding(.top)
                 .padding(.horizontal)
+                .padding(.top, 8)
                 
-                // Özelleştirilmiş zorluk seviyesi filtreleme
-                customDifficultyPicker()
-                    .padding(.horizontal)
-                    .padding(.top, 4)
+                // Zorluk seviyesi seçici
+                HStack {
+                    ForEach(difficultyLevels, id: \.self) { difficulty in
+                        Button(action: {
+                            selectedDifficulty = difficulty
+                        }) {
+                            HStack(spacing: 4) {
+                                Text(difficulty)
+                                    .font(.system(size: 14 * textScale, weight: .medium))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                            }
+                            .foregroundColor(selectedDifficulty == difficulty ? 
+                                           (isBejMode ? ThemeManager.BejThemeColors.text : .white) : 
+                                           (isBejMode ? ThemeManager.BejThemeColors.text : .primary))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(selectedDifficulty == difficulty ? 
+                                         (isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.8) : Color.blue) : 
+                                         (isBejMode ? ThemeManager.BejThemeColors.cardBackground.opacity(0.7) : Color.clear))
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(selectedDifficulty == difficulty ? 
+                                                  (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue) : 
+                                                  (isBejMode ? ThemeManager.BejThemeColors.text.opacity(0.3) : Color.gray.opacity(0.3)), lineWidth: 1)
+                                    )
+                            )
+                        }
+                    }
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 8)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(isBejMode ? 
+                             ThemeManager.BejThemeColors.cardBackground : 
+                             (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                )
+                .padding(.horizontal, 16)
                 
-                // Filtreleme butonları ile liste arasına boşluk ekle
-                Spacer()
-                    .frame(height: 15)
-                
+                // Boş durum veya oyun listesi
                 if filteredGames.isEmpty {
                     Spacer()
                     emptyStateView
                     Spacer()
                 } else {
-                    // Kaydedilmiş oyunlar listesi - List kullanımı ile silme işlemi
-                    List {
-                        ForEach(filteredGames, id: \.objectID) { game in
-                            savedGameCard(for: game)
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                                .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) {
-                                        // PersistenceController üzerinden sil
-                                        PersistenceController.shared.deleteSavedGame(game)
-                                    } label: {
-                                        Label("Sil", systemImage: "trash")
-                                    }
+                    // Kaydedilmiş oyun listesi
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(filteredGames) { game in
+                                SavedGameCard(game: game, viewModel: viewModel) {
+                                    // Oyun seçimi ve ekranı kapat
+                                    gameSelected(game)
+                                    presentationMode.wrappedValue.dismiss()
+                                } onDelete: {
+                                    // Oyun silme işlemi
+                                    gameToDelete = game
+                                    showingDeleteAlert = true
                                 }
+                            }
                         }
-                    }
-                    .listStyle(PlainListStyle())
-                    .environment(\.defaultMinListRowHeight, 175)
-                }
-            }
-        }
-        // Notification Center dinleyicisi ekle
-        .onAppear {
-            // Ekran kararması yönetimi SudokuApp'a devredildi
-            
-            // Manuel olarak kayıtlı oyunları yükle
-            loadSavedGames()
-            
-            logInfo("SavedGamesView - Bulunan kaydedilmiş oyun sayısı: \(savedGames.count)")
-        }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshSavedGames"))) { _ in
-            // Manuel olarak oyunları tekrar yükle - Silinen oyunları hemen güncellemek için
-            logInfo("SavedGamesView: Bildirim alındı - veri yenileniyor")
-            
-            // Doğrudan tüm oyunları yükleyelim
-            let freshGames = PersistenceController.shared.getAllSavedGames()
-            
-            // Silinen oyunların güncel durumlarını görmek için çağırıyoruz
-            logInfo("Güncel veritabanı durumu: \(freshGames.count) oyun mevcut")
-            
-            // UI güncelleme - silinen oyunlar varsa hemen gösterilecek
-            DispatchQueue.main.async {
-                // Tarih sırasına göre sıralayalım
-                let sortedGames = freshGames.sorted { 
-                    let date1 = $0.dateCreated ?? Date.distantPast
-                    let date2 = $1.dateCreated ?? Date.distantPast
-                    return date1 > date2
-                }
-                
-                // Direkt UI'ı güncelleyecek şekilde atama yapalım
-                self.savedGames = sortedGames
-                // filterGames() savedGames didSet içinde otomatik çağrılacak
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserLoggedIn"))) { _ in
-            logInfo("Kullanıcı giriş yaptı - Kayıtlı oyunları senkronize ediliyor")
-            if Auth.auth().currentUser != nil {
-                // 1 saniye gecikme ile senkronizasyonu çalıştır (giriş işlemi tamamen tamamlansın diye)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    PersistenceController.shared.syncSavedGamesFromFirestore { success in
-                        if success {
-                            logSuccess("Giriş sonrası Firebase senkronizasyonu başarılı")
-                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 20)
                     }
                 }
             }
-        }
-        .alert(isPresented: $showingDeleteAlert) {
-            Alert(
-                title: Text("Oyunu Sil"),
-                message: Text("Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?"),
-                primaryButton: .destructive(Text("Sil")) {
-                    if let game = gameToDelete {
-                        viewContext.delete(game)
-                        do {
-                            try viewContext.save()
-                        } catch {
-                            logError("Error saving context: \(error)")
+            .onAppear {
+                // CloudKit senkronizasyonunu burada değil, ViewModel veya AppDelegate'de yapacağız
+                loadSavedGames()
+            }
+            .onChange(of: selectedDifficulty) { oldValue, newValue in
+                // Değişiklik filtreleme fonksiyonunda zaten ele alınıyor
+                logInfo("Zorluk seviyesi değişti: \(oldValue) -> \(newValue)")
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshSavedGames"))) { _ in
+                // Bildirim alındığında verileri yeniden yükle
+                logInfo("SavedGamesView: RefreshSavedGames bildirimi alındı")
+                loadSavedGames()
+            }
+            // Silme için uyarı
+            .alert(isPresented: $showingDeleteAlert) {
+                Alert(
+                    title: Text("Oyunu Sil"),
+                    message: Text("Bu oyunu silmek istediğinizden emin misiniz?"),
+                    primaryButton: .destructive(Text("Sil")) {
+                        if let game = gameToDelete {
+                            deleteGame(game)
                         }
-                    }
-                },
-                secondaryButton: .cancel(Text("İptal")) {
-                    // İptal edildiğinde kartı eski konumuna döndür
-                    // Animasyon kaldırıldı
-                }
-            )
+                    },
+                    secondaryButton: .cancel(Text("İptal"))
+                )
+            }
         }
     }
     
@@ -770,6 +774,514 @@ struct SavedGamesView: View {
             // UI güncellemesi
             self.savedGames = sortedGames
             self.filterGames()
+        }
+    }
+    
+    // Kayıtlı oyunu silme fonksiyonu
+    private func deleteGame(_ game: SavedGame) {
+        // Oyunu silmek için PersistenceController kullan
+        PersistenceController.shared.deleteSavedGame(game)
+        
+        // UI'ı yenile
+        loadSavedGames()
+        
+        // gameToDelete'i temizle
+        gameToDelete = nil
+    }
+}
+
+struct SavedGameCard: View {
+    let game: SavedGame
+    let viewModel: SudokuViewModel
+    let onSelect: () -> Void
+    let onDelete: () -> Void
+    
+    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.textScale) var textScale
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
+    var body: some View {
+        Button(action: onSelect) {
+            // Kart görünümü
+            VStack(spacing: 0) {
+                // Üst bilgi kısmı
+                HStack {
+                    // Sol kısım: Zorluk seviyesi
+                    HStack(spacing: 5) {
+                        Image(systemName: getDifficultyIcon(difficulty: game.difficulty ?? "Kolay"))
+                            .font(.system(size: 14))
+                        
+                        Text(game.difficulty ?? "Kolay")
+                            .font(.system(size: 14 * textScale, weight: .medium))
+                    }
+                    .foregroundColor(getDifficultyColor(difficulty: game.difficulty ?? "Kolay"))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(getDifficultyColor(difficulty: game.difficulty ?? "Kolay").opacity(0.15))
+                            .overlay(
+                                Capsule()
+                                    .stroke(getDifficultyColor(difficulty: game.difficulty ?? "Kolay").opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                    
+                    Spacer()
+                    
+                    // Sağ kısım: Tarih
+                    if let date = game.dateCreated {
+                        Text(formatDate(date))
+                            .font(.system(size: 12 * textScale))
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                    }
+                }
+                .padding(.horizontal, 15)
+                .padding(.top, 15)
+                .padding(.bottom, 10)
+                
+                Divider()
+                    .padding(.horizontal, 15)
+                
+                // Oyun bilgileri
+                HStack(alignment: .center, spacing: 15) {
+                    // Sol kısım - Küçük sudoku tahtası görselleştirmesi
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(isBejMode ? 
+                                 ThemeManager.BejThemeColors.background.opacity(0.5) : 
+                                 (colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6)))
+                            .frame(width: 80, height: 80)
+                        
+                        // Basit sudoku tahtası gösterimi
+                        MiniSudokuBoard(boardState: getBoardState(from: game))
+                            .frame(width: 70, height: 70)
+                    }
+                    .padding(.leading, 15)
+                    
+                    // Sağ kısım - Oyun bilgileri
+                    VStack(alignment: .leading, spacing: 8) {
+                        // İlerleme
+                        ProgressView(value: getGameProgress(), total: 1.0)
+                            .progressViewStyle(LinearProgressViewStyle(tint: isBejMode ? ThemeManager.BejThemeColors.accent : .blue))
+                            .frame(maxWidth: .infinity)
+                        
+                        HStack(spacing: 16) {
+                            // İstatistikler - İlk satır
+                            VStack(alignment: .leading, spacing: 4) {
+                                // Oyun süresi
+                                HStack(spacing: 5) {
+                                    Image(systemName: "clock.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .orange)
+                                    
+                                    Text(formatTime(getElapsedTime()))
+                                        .font(.system(size: 12 * textScale, weight: .medium))
+                                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                                        .lineLimit(1)
+                                }
+                                
+                                // Hatalar
+                                HStack(spacing: 5) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(isBejMode ? 
+                                                       Color(red: 0.7, green: 0.3, blue: 0.2) : 
+                                                       .red)
+                                    
+                                    Text("\(getErrorCount()) Hata")
+                                        .font(.system(size: 12 * textScale, weight: .medium))
+                                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                                        .lineLimit(1)
+                                }
+                            }
+                            
+                            // İstatistikler - İkinci satır
+                            VStack(alignment: .leading, spacing: 4) {
+                                // Kalan İpucu
+                                HStack(spacing: 5) {
+                                    Image(systemName: "lightbulb.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(isBejMode ? 
+                                                       Color(red: 0.7, green: 0.6, blue: 0.2) : 
+                                                       .yellow)
+                                    
+                                    Text("\(getRemainingHints()) İpucu")
+                                        .font(.system(size: 12 * textScale, weight: .medium))
+                                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                                        .lineLimit(1)
+                                }
+                                
+                                // Doluluk oranı
+                                HStack(spacing: 5) {
+                                    Image(systemName: "chart.bar.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
+                                    
+                                    Text("\(Int(getGameProgress() * 100))% Tamamlandı")
+                                        .font(.system(size: 12 * textScale, weight: .medium))
+                                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                                        .lineLimit(1)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                    
+                    // Sil butonu
+                    Button(action: onDelete) {
+                        Image(systemName: "trash.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(isBejMode ? Color(red: 0.7, green: 0.3, blue: 0.2) : .red)
+                            .frame(width: 36, height: 36)
+                            .background(
+                                Circle()
+                                    .fill(isBejMode ? 
+                                         ThemeManager.BejThemeColors.cardBackground : 
+                                         (colorScheme == .dark ? Color.red.opacity(0.15) : Color.red.opacity(0.1)))
+                            )
+                    }
+                    .padding(.trailing, 15)
+                }
+                .padding(.vertical, 15)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    // Zorluk seviyesi ikonu
+    private func getDifficultyIcon(difficulty: String) -> String {
+        switch difficulty {
+        case "Kolay", "Easy", "Facile":
+            return "leaf.fill"
+        case "Orta", "Medium", "Moyen":
+            return "flame.fill"
+        case "Zor", "Hard", "Difficile":
+            return "bolt.fill"
+        case "Uzman", "Expert":
+            return "star.fill"
+        default:
+            return "questionmark"
+        }
+    }
+    
+    // Zorluk seviyesi rengi
+    private func getDifficultyColor(difficulty: String) -> Color {
+        if isBejMode {
+            switch difficulty {
+            case "Kolay", "Easy", "Facile":
+                return Color(red: 0.4, green: 0.6, blue: 0.3) // Bej uyumlu yeşil
+            case "Orta", "Medium", "Moyen":
+                return Color(red: 0.7, green: 0.5, blue: 0.2) // Bej uyumlu turuncu
+            case "Zor", "Hard", "Difficile":
+                return Color(red: 0.7, green: 0.3, blue: 0.2) // Bej uyumlu kırmızı
+            case "Uzman", "Expert":
+                return Color(red: 0.5, green: 0.3, blue: 0.5) // Bej uyumlu mor
+            default:
+                return ThemeManager.BejThemeColors.accent
+            }
+        } else {
+            switch difficulty {
+            case "Kolay", "Easy", "Facile":
+                return .green
+            case "Orta", "Medium", "Moyen":
+                return .orange
+            case "Zor", "Hard", "Difficile":
+                return .red
+            case "Uzman", "Expert":
+                return .purple
+            default:
+                return .blue
+            }
+        }
+    }
+    
+    // Tarih formatı
+    private func formatDate(_ date: Date) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "d MMM yyyy HH:mm"
+        return dateFormatter.string(from: date)
+    }
+    
+    // Süre formatı
+    private func formatTime(_ seconds: Int) -> String {
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return "\(minutes)m \(remainingSeconds)s"
+    }
+    
+    // Hata sayısı
+    private func getErrorCount() -> Int {
+        // Gerçek hata sayısını döndür
+        guard let boardStateData = game.boardState else { return 0 }
+        
+        do {
+            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
+                return dict["errorCount"] as? Int ?? 0 // Veri yoksa 0 döndür
+            }
+        } catch {
+            logError("Hata sayısı alınamadı: \(error)")
+        }
+        
+        return 0 // Hata durumunda 0 döndür
+    }
+    
+    // Kalan ipucu sayısı
+    private func getRemainingHints() -> Int {
+        // Gerçek ipucu sayısını döndür
+        guard let boardStateData = game.boardState else { return 3 } // Varsayılan olarak 3 ipucu
+        
+        do {
+            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
+                return dict["remainingHints"] as? Int ?? 3 // Veri yoksa varsayılan 3 ipucu
+            }
+        } catch {
+            logError("İpucu sayısı alınamadı: \(error)")
+        }
+        
+        return 3 // Hata durumunda varsayılan 3 ipucu
+    }
+    
+    // Oyun ilerleme yüzdesi
+    private func getGameProgress() -> Double {
+        // Zorluk seviyesine göre varsayılan ilerleme
+        let defaultProgress: Double
+        switch game.difficulty {
+        case "Kolay", "Easy", "Facile":
+            defaultProgress = 0.35
+        case "Orta", "Medium", "Moyen":
+            defaultProgress = 0.25
+        case "Zor", "Hard", "Difficile":
+            defaultProgress = 0.15
+        case "Uzman", "Expert":
+            defaultProgress = 0.1
+        default:
+            defaultProgress = 0.2
+        }
+        
+        // Gerçek ilerleme yüzdesini döndür
+        guard let boardStateData = game.boardState else { return defaultProgress }
+        
+        do {
+            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
+                if let progress = dict["completionPercentage"] as? Double {
+                    return progress
+                }
+                // Veri yoksa zorluk seviyesine göre varsayılan ilerleme
+                return defaultProgress
+            }
+        } catch {
+            logError("İlerleme yüzdesi alınamadı: \(error)")
+        }
+        
+        return defaultProgress // Hata durumunda zorluk seviyesine göre varsayılan ilerleme
+    }
+    
+    // Oyun süresi
+    private func getElapsedTime() -> Int {
+        // Gerçek oyun süresini döndür
+        let defaultTime = Int(game.elapsedTime)
+        if defaultTime > 0 {
+            return defaultTime
+        }
+        
+        guard let boardStateData = game.boardState else { return 0 }
+        
+        do {
+            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
+                return dict["elapsedTime"] as? Int ?? 0 // Veri yoksa 0 saniye
+            }
+        } catch {
+            logError("Oyun süresi alınamadı: \(error)")
+        }
+        
+        return 0 // Hata durumunda 0 saniye
+    }
+    
+    // Kaydetilen oyun verisinden board state'i güvenli şekilde çıkarmak için yardımcı fonksiyon
+    private func getBoardState(from game: SavedGame) -> [String: Any] {
+        guard let boardStateData = game.boardState else {
+            return [:]
+        }
+        
+        do {
+            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
+                return dict
+            }
+        } catch {
+            logError("Oyun verisi ayrıştırma hatası: \(error)")
+        }
+        
+        return [:]
+    }
+}
+
+struct MiniSudokuBoard: View {
+    let boardState: [String: Any]
+    @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
+    // Örnek sayıları gösterecek bir değişken
+    private let sampleNumbers = [
+        [nil, nil, 5, nil, nil, 8, nil, nil, nil],
+        [nil, nil, nil, 4, nil, nil, 1, nil, nil],
+        [3, nil, nil, nil, nil, nil, nil, 6, nil],
+        [nil, 1, nil, nil, 9, nil, nil, nil, 7],
+        [nil, nil, nil, nil, nil, nil, nil, nil, nil],
+        [2, nil, nil, nil, 8, nil, nil, 5, nil],
+        [nil, 4, nil, nil, nil, nil, nil, nil, 8],
+        [nil, nil, 6, nil, nil, 3, nil, nil, nil],
+        [nil, nil, nil, 5, nil, nil, 9, nil, nil]
+    ]
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let cellSize = geometry.size.width / 9
+            
+            // 9x9 grid
+            VStack(spacing: 0) {
+                ForEach(0..<9) { row in
+                    HStack(spacing: 0) {
+                        ForEach(0..<9) { col in
+                            // Cell
+                            ZStack {
+                                Rectangle()
+                                    .fill(getCellColor(row: row, col: col))
+                                    .frame(width: cellSize, height: cellSize)
+                                    .overlay(
+                                        Rectangle()
+                                            .stroke(isBejMode ? 
+                                                  ThemeManager.BejThemeColors.text.opacity(0.3) : 
+                                                  (colorScheme == .dark ? Color.white.opacity(0.2) : Color.black.opacity(0.1)), 
+                                                   lineWidth: 0.5)
+                                    )
+                                
+                                // Hücre içindeki sayı
+                                if let value = getDisplayValue(row: row, col: col) {
+                                    Text("\(value)")
+                                        .font(.system(size: min(cellSize * 0.7, 8), weight: .medium))
+                                        .foregroundColor(isBejMode ? 
+                                                       ThemeManager.BejThemeColors.text : 
+                                                       (colorScheme == .dark ? .white : .black))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .overlay(
+                // Bölge çizgileri
+                GridLines(color: isBejMode ? 
+                         ThemeManager.BejThemeColors.text.opacity(0.5) : 
+                         (colorScheme == .dark ? Color.white.opacity(0.5) : Color.black.opacity(0.3)), 
+                          lineWidth: 1.0)
+            )
+            .aspectRatio(1, contentMode: .fit)
+        }
+    }
+    
+    private func getCellColor(row: Int, col: Int) -> Color {
+        // Bej moda göre renkler
+        if isBejMode {
+            if getDisplayValue(row: row, col: col) == nil {
+                if isFixed(row: row, col: col) {
+                    return ThemeManager.BejThemeColors.background
+                } else {
+                    return ThemeManager.BejThemeColors.cardBackground
+                }
+            } else {
+                return ThemeManager.BejThemeColors.accent.opacity(0.2)
+            }
+        } else {
+            // Normal mod
+            if getDisplayValue(row: row, col: col) == nil {
+                if isFixed(row: row, col: col) {
+                    return colorScheme == .dark ? Color.gray.opacity(0.1) : Color.gray.opacity(0.05)
+                } else {
+                    return colorScheme == .dark ? Color.black.opacity(0.1) : Color.white
+                }
+            } else {
+                return colorScheme == .dark ? Color.blue.opacity(0.3) : Color.blue.opacity(0.15)
+            }
+        }
+    }
+    
+    private func getDisplayValue(row: Int, col: Int) -> Int? {
+        // Önce gerçek oyun verisinden okumaya çalış
+        if let value = getCellValue(row: row, col: col) {
+            // Sıfırları gösterme
+            return value > 0 ? value : nil
+        }
+        
+        // Gerçek veri yoksa örnek verileri kullan (sıfırları gösterme)
+        let sampleValue = sampleNumbers[row][col]
+        return sampleValue != nil && sampleValue! > 0 ? sampleValue : nil
+    }
+    
+    private func getCellValue(row: Int, col: Int) -> Int? {
+        // Veriyi kontrol et
+        if let boardValues = boardState["board"] as? [[Int?]] {
+            if boardValues.count > row && boardValues[row].count > col {
+                return boardValues[row][col]
+            }
+        }
+        return nil
+    }
+    
+    private func isFixed(row: Int, col: Int) -> Bool {
+        // Veriyi kontrol et
+        if let fixedCells = boardState["fixedCells"] as? [[Bool]] {
+            if fixedCells.count > row && fixedCells[row].count > col {
+                return fixedCells[row][col]
+            }
+        }
+        
+        // Örnek verilerde tek sayıları sabit göster
+        return sampleNumbers[row][col] != nil
+    }
+}
+
+struct GridLines: View {
+    let color: Color
+    let lineWidth: CGFloat
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let width = geometry.size.width
+            let height = geometry.size.height
+            
+            Path { path in
+                // Dikey çizgiler
+                for i in 1...2 {
+                    let x = width / 3 * CGFloat(i)
+                    path.move(to: CGPoint(x: x, y: 0))
+                    path.addLine(to: CGPoint(x: x, y: height))
+                }
+                
+                // Yatay çizgiler
+                for i in 1...2 {
+                    let y = height / 3 * CGFloat(i)
+                    path.move(to: CGPoint(x: 0, y: y))
+                    path.addLine(to: CGPoint(x: width, y: y))
+                }
+            }
+            .stroke(color, lineWidth: lineWidth)
         }
     }
 }

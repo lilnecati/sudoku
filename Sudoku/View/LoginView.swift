@@ -10,6 +10,7 @@ import CoreData
 struct LoginView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
     
     @Binding var isPresented: Bool
     @Binding var currentUser: NSManagedObject?
@@ -28,12 +29,19 @@ struct LoginView: View {
     // Klavye çıkıp çıkmadığını izleyecek state
     @State private var keyboardIsVisible = false
     
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
     // View performansı için çıktıları önbelleğe alma
     @ViewBuilder private func loginButton(isDisabled: Bool) -> some View {
         Button(action: loginUser) {
             if isLoading {
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: colorScheme == .dark ? .white : .blue))
+                    .progressViewStyle(CircularProgressViewStyle(tint: isBejMode ? 
+                                                                ThemeManager.BejThemeColors.text : 
+                                                                (colorScheme == .dark ? .white : .blue)))
             } else {
                 Text("Giriş Yap")
                     .fontWeight(.semibold)
@@ -73,12 +81,12 @@ struct LoginView: View {
                     VStack(spacing: 10) {
                         Image(systemName: "person.circle.fill")
                             .font(.system(size: 70))
-                            .foregroundColor(.blue)
-                            .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
+                            .shadow(color: (isBejMode ? ThemeManager.BejThemeColors.accent : .blue).opacity(0.3), radius: 5, x: 0, y: 3)
                         
                         Text("Giriş Yap")
                             .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.primary)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                     }
                     .padding(.top, 30)
                     .padding(.bottom, 30)
@@ -89,14 +97,19 @@ struct LoginView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Kullanıcı Adı")
                                 .font(.headline)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                             
                             TextField("Kullanıcı adınızı girin", text: $username)
                                 .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
+                                .background(isBejMode ? 
+                                           ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                           Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                        .stroke(isBejMode ? 
+                                               ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                               Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
@@ -119,14 +132,19 @@ struct LoginView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Şifre")
                                 .font(.headline)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                             
                             SecureField("Şifrenizi girin", text: $password)
                                 .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
+                                .background(isBejMode ? 
+                                           ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                           Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                        .stroke(isBejMode ? 
+                                               ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                               Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                                 .submitLabel(.done)
                                 .onSubmit {
@@ -144,7 +162,7 @@ struct LoginView: View {
                         }) {
                             Text("Şifremi Unuttum")
                                 .font(.subheadline)
-                                .foregroundColor(.blue)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
                         }
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         
@@ -152,7 +170,9 @@ struct LoginView: View {
                         Button(action: loginUser) {
                             if isLoading {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .progressViewStyle(CircularProgressViewStyle(tint: isBejMode ? 
+                                                                                ThemeManager.BejThemeColors.text : 
+                                                                                .white))
                             } else {
                                 Text("Giriş Yap")
                                     .fontWeight(.semibold)
@@ -161,16 +181,18 @@ struct LoginView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background((username.isEmpty || password.isEmpty || isLoading) ? Color.gray : Color.blue.opacity(0.8))
-                        .foregroundColor(.white)
+                        .background((username.isEmpty || password.isEmpty || isLoading) ? 
+                                   Color.gray : 
+                                   (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue.opacity(0.8)))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.cardBackground : .white)
                         .cornerRadius(12)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
+                        .shadow(color: (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue).opacity(0.3), radius: 5, x: 0, y: 3)
                         .disabled(username.isEmpty || password.isEmpty || isLoading)
                         
                         // Kayıt ol butonu
                         HStack {
                             Text("Hesabınız yok mu?")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                             
                             Button(action: {
                                 dismissKeyboard()
@@ -178,7 +200,7 @@ struct LoginView: View {
                                 NotificationCenter.default.post(name: Notification.Name("ShowRegisterView"), object: nil)
                             }) {
                                 Text("Kayıt Ol")
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
                             }
                         }
                         .padding(.vertical, 8)
@@ -191,8 +213,10 @@ struct LoginView: View {
                             Text("İptal")
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
-                                .foregroundColor(.primary)
+                                .background(isBejMode ? 
+                                           ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                           Color(UIColor.secondarySystemBackground))
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                                 .cornerRadius(8)
                         }
                     }

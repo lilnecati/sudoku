@@ -65,6 +65,11 @@ struct ContentView: View {
     // ThemeManager'ı ekle
     @EnvironmentObject var themeManager: ThemeManager
     
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
     @StateObject private var viewModel = SudokuViewModel()
     @State private var currentPage: AppPage = .home // Tab değişikliklerini takip etmek için
     @State private var previousPage: AppPage = .home
@@ -298,12 +303,12 @@ struct ContentView: View {
             // İyileştirilmiş başlık
             Text("SUDOKU")
                 .font(.system(size: 38, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
+                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                 .overlay(
-                    // Metin için altın gölge efekti
+                    // Metin için altın gölge efekti - bej modunda özel renk
                     Text("SUDOKU")
                         .font(.system(size: 38, weight: .bold, design: .rounded))
-                        .foregroundColor(Color.blue.opacity(0.3))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.3) : Color.blue.opacity(0.3))
                         .offset(x: 2, y: 2)
                         .blur(radius: 2)
                         .mask(Text("SUDOKU")
@@ -364,12 +369,14 @@ struct ContentView: View {
                 ZStack {
                     Circle()
                         .fill(LinearGradient(
-                            gradient: Gradient(colors: [Color.green, Color.green.opacity(0.7)]),
+                            gradient: Gradient(colors: isBejMode ? 
+                                             [ThemeManager.BejThemeColors.accent, ThemeManager.BejThemeColors.accent.opacity(0.7)] : 
+                                             [Color.green, Color.green.opacity(0.7)]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ))
                         .frame(width: 48, height: 48)
-                        .shadow(color: Color.green.opacity(0.3), radius: 5, x: 0, y: 2)
+                        .shadow(color: isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.3) : Color.green.opacity(0.3), radius: 5, x: 0, y: 2)
                     
                     Image(systemName: "play.circle.fill")
                         .foregroundColor(.white)
@@ -381,31 +388,31 @@ struct ContentView: View {
                     Text.localizedSafe("Devam Et")
                         .font(.headline)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                     
                     Text.localizedSafe("Kaldığın yerden devam et")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                 }
                 .padding(.leading, 6)
                 
                 Spacer()
                 
                 Image(systemName: "chevron.forward")
-                    .foregroundColor(Color.green.opacity(0.8))
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.8) : Color.green.opacity(0.8))
                     .font(.subheadline)
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 18)
             .background(
                 ZStack {
-                    // Modern arka plan
+                    // Arka plan - bej mod veya normal mod
                     RoundedRectangle(cornerRadius: 18)
-                        .fill(Color(UIColor.secondarySystemBackground))
+                        .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : Color(UIColor.secondarySystemBackground))
                     
-                    // Özel kenar vurgusu
+                    // Kenar vurgusu - bej mod veya normal mod
                     RoundedRectangle(cornerRadius: 18)
-                        .stroke(Color.green.opacity(0.2), lineWidth: 1.5)
+                        .stroke(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.2) : Color.green.opacity(0.2), lineWidth: 1.5)
                 }
                     .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
             )
@@ -426,13 +433,13 @@ struct ContentView: View {
                 HStack {
                     Text.localizedSafe("Yeni Oyun")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                     
                     Spacer()
                     
                     // Dekoratif öğe - küçük bir zar
                     Image(systemName: "die.face.5")
-                        .foregroundColor(Color.blue.opacity(0.7))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.7) : Color.blue.opacity(0.7))
                         .font(.headline)
                         .rotationEffect(Angle(degrees: 15))
                 }
@@ -442,252 +449,16 @@ struct ContentView: View {
                 VStack(spacing: 16) {
                     // Üst sıra: Kolay ve Orta
                     HStack(spacing: 15) {
-                        // Kolay (index 0)
-                        Button(action: {
-                            SoundManager.shared.playNavigationSound()
-                            
-                            // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
-                            viewModel.resetGameState()
-                            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[0]
-                            viewModel.newGame(difficulty: selectedCustomDifficulty)
-                            
-                            withAnimation(.spring()) {
-                                showGame = true
-                            }
-                        }) {
-                            HStack {
-                                // Güzel gradient ikon arka planı
-                                ZStack {
-                                    Circle()
-                                        .fill(LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                difficultyColor(for: 0),
-                                                difficultyColor(for: 0).opacity(0.7)
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ))
-                                        .frame(width: 44, height: 44)
-                                        .shadow(color: difficultyColor(for: 0).opacity(0.3), radius: 4, x: 0, y: 2)
-                                    
-                                    Image(systemName: difficultyIcon(for: 0))
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 18, weight: .semibold))
-                                }
-                                
-                                Text(SudokuBoard.Difficulty.allCases[0].localizedName)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                    .fontWeight(.semibold)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.forward")
-                                    .foregroundColor(difficultyColor(for: 0).opacity(0.7))
-                                    .font(.subheadline)
-                            }
-                            .padding(.vertical, 14)
-                            .padding(.horizontal, 18)
-                            .background(
-                                ZStack {
-                                    // Arka plan
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color(UIColor.secondarySystemBackground))
-                                    
-                                    // Kenar vurgusu
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(difficultyColor(for: 0).opacity(0.2), lineWidth: 1.5)
-                                }
-                                    .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
-                            )
+                        ForEach(0..<2) { index in
+                            difficultyButton(for: index)
                         }
-                        .buttonStyle(ScaleButtonStyle())
-                        
-                        // Orta (index 1)
-                        Button(action: {
-                            SoundManager.shared.playNavigationSound()
-                            
-                            // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
-                            viewModel.resetGameState()
-                            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[1]
-                            viewModel.newGame(difficulty: selectedCustomDifficulty)
-                            
-                            withAnimation(.spring()) {
-                                showGame = true
-                            }
-                        }) {
-                            HStack {
-                                // Güzel gradient ikon arka planı
-                                ZStack {
-                                    Circle()
-                                        .fill(LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                difficultyColor(for: 1),
-                                                difficultyColor(for: 1).opacity(0.7)
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ))
-                                        .frame(width: 44, height: 44)
-                                        .shadow(color: difficultyColor(for: 1).opacity(0.3), radius: 4, x: 0, y: 2)
-                                    
-                                    Image(systemName: difficultyIcon(for: 1))
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 18, weight: .semibold))
-                                }
-                                
-                                Text(SudokuBoard.Difficulty.allCases[1].localizedName)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                    .fontWeight(.semibold)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.forward")
-                                    .foregroundColor(difficultyColor(for: 1).opacity(0.7))
-                                    .font(.subheadline)
-                            }
-                            .padding(.vertical, 14)
-                            .padding(.horizontal, 18)
-                            .background(
-                                ZStack {
-                                    // Arka plan
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color(UIColor.secondarySystemBackground))
-                                    
-                                    // Kenar vurgusu
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(difficultyColor(for: 1).opacity(0.2), lineWidth: 1.5)
-                                }
-                                    .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
-                            )
-                        }
-                        .buttonStyle(ScaleButtonStyle())
                     }
                     
                     // Alt sıra: Zor ve Uzman
                     HStack(spacing: 15) {
-                        // Zor (index 2)
-                        Button(action: {
-                            SoundManager.shared.playNavigationSound()
-                            
-                            // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
-                            viewModel.resetGameState()
-                            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[2]
-                            viewModel.newGame(difficulty: selectedCustomDifficulty)
-                            
-                            withAnimation(.spring()) {
-                                showGame = true
-                            }
-                        }) {
-                            HStack {
-                                // Güzel gradient ikon arka planı
-                                ZStack {
-                                    Circle()
-                                        .fill(LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                difficultyColor(for: 2),
-                                                difficultyColor(for: 2).opacity(0.7)
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ))
-                                        .frame(width: 44, height: 44)
-                                        .shadow(color: difficultyColor(for: 2).opacity(0.3), radius: 4, x: 0, y: 2)
-                                    
-                                    Image(systemName: difficultyIcon(for: 2))
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 18, weight: .semibold))
-                                }
-                                
-                                Text(SudokuBoard.Difficulty.allCases[2].localizedName)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                    .fontWeight(.semibold)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.forward")
-                                    .foregroundColor(difficultyColor(for: 2).opacity(0.7))
-                                    .font(.subheadline)
-                            }
-                            .padding(.vertical, 14)
-                            .padding(.horizontal, 18)
-                            .background(
-                                ZStack {
-                                    // Arka plan
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color(UIColor.secondarySystemBackground))
-                                    
-                                    // Kenar vurgusu
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(difficultyColor(for: 2).opacity(0.2), lineWidth: 1.5)
-                                }
-                                    .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
-                            )
+                        ForEach(2..<4) { index in
+                            difficultyButton(for: index)
                         }
-                        .buttonStyle(ScaleButtonStyle())
-                        
-                        // Uzman (index 3)
-                        Button(action: {
-                            SoundManager.shared.playNavigationSound()
-                            
-                            // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
-                            viewModel.resetGameState()
-                            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[3]
-                            viewModel.newGame(difficulty: selectedCustomDifficulty)
-                            
-                            withAnimation(.spring()) {
-                                showGame = true
-                            }
-                        }) {
-                            HStack {
-                                // Güzel gradient ikon arka planı
-                                ZStack {
-                                    Circle()
-                                        .fill(LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                difficultyColor(for: 3),
-                                                difficultyColor(for: 3).opacity(0.7)
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ))
-                                        .frame(width: 44, height: 44)
-                                        .shadow(color: difficultyColor(for: 3).opacity(0.3), radius: 4, x: 0, y: 2)
-                                    
-                                    Image(systemName: difficultyIcon(for: 3))
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 18, weight: .semibold))
-                                }
-                                
-                                Text(SudokuBoard.Difficulty.allCases[3].localizedName)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                    .fontWeight(.semibold)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.forward")
-                                    .foregroundColor(difficultyColor(for: 3).opacity(0.7))
-                                    .font(.subheadline)
-                            }
-                            .padding(.vertical, 14)
-                            .padding(.horizontal, 18)
-                            .background(
-                                ZStack {
-                                    // Arka plan
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color(UIColor.secondarySystemBackground))
-                                    
-                                    // Kenar vurgusu
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(difficultyColor(for: 3).opacity(0.2), lineWidth: 1.5)
-                                }
-                                    .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
-                            )
-                        }
-                        .buttonStyle(ScaleButtonStyle())
                     }
                 }
                 .offset(y: buttonsOffset)
@@ -706,7 +477,7 @@ struct ContentView: View {
                 }
             }
             
-            // Rehber butonu
+            // Rehber butonu - bej moduna uyarlandı
             Button(action: {
                 SoundManager.shared.playNavigationSound()
                 
@@ -718,22 +489,23 @@ struct ContentView: View {
                     Image(systemName: "questionmark.circle.fill")
                         .foregroundColor(.white)
                         .padding(10)
-                        .background(Color.blue)
+                        .background(isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue)
                         .clipShape(Circle())
                     
                     Text.localizedSafe("Nasıl Oynanır?")
                         .font(.system(size: 16 * textScale, weight: .medium))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
-                        .foregroundColor(.gray)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .gray)
                         .font(.caption)
                 }
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(UIColor.secondarySystemBackground))
+                        .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : Color(UIColor.secondarySystemBackground))
                 )
             }
             .buttonStyle(ScaleButtonStyle())
@@ -742,12 +514,101 @@ struct ContentView: View {
         }
     }
     
+    // Zorluk düzeyi butonu için yardımcı fonksiyon - kodu temiz tutmak için
+    private func difficultyButton(for index: Int) -> some View {
+        Button(action: {
+            SoundManager.shared.playNavigationSound()
+            
+            // Yeni bir oyun başlatmak için önce viewModel'i resetle ve yeni oyun oluştur
+            viewModel.resetGameState()
+            selectedCustomDifficulty = SudokuBoard.Difficulty.allCases[index]
+            viewModel.newGame(difficulty: selectedCustomDifficulty)
+            
+            withAnimation(.spring()) {
+                showGame = true
+            }
+        }) {
+            HStack {
+                // Güzel gradient ikon arka planı - bej mod uyumlu
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(
+                            gradient: Gradient(colors: isBejMode ? 
+                                             [ThemeManager.BejThemeColors.accent, ThemeManager.BejThemeColors.accent.opacity(0.7)] : 
+                                             [difficultyColor(for: index), difficultyColor(for: index).opacity(0.7)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ))
+                        .frame(width: 44, height: 44)
+                        .shadow(color: isBejMode ? 
+                               ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                               difficultyColor(for: index).opacity(0.3), radius: 4, x: 0, y: 2)
+                    
+                    Image(systemName: difficultyIcon(for: index))
+                        .foregroundColor(.white)
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                
+                Text(SudokuBoard.Difficulty.allCases[index].localizedName)
+                    .font(.headline)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.forward")
+                    .foregroundColor(isBejMode ? 
+                                   ThemeManager.BejThemeColors.accent.opacity(0.7) : 
+                                   difficultyColor(for: index).opacity(0.7))
+                    .font(.subheadline)
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 18)
+            .background(
+                ZStack {
+                    // Arka plan - bej mod uyumlu
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : Color(UIColor.secondarySystemBackground))
+                    
+                    // Kenar vurgusu - bej mod uyumlu
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(isBejMode ? 
+                               ThemeManager.BejThemeColors.accent.opacity(0.2) : 
+                               difficultyColor(for: index).opacity(0.2), lineWidth: 1.5)
+                }
+                    .shadow(color: Color.black.opacity(0.07), radius: 7, x: 0, y: 3)
+            )
+        }
+        .buttonStyle(ScaleButtonStyle())
+    }
+    
     // MARK: - Main Content View
     var mainContentView: some View {
         ZStack {
-            // Yeni ızgara arka planı
-            GridBackgroundView()
-                .edgesIgnoringSafeArea(.all)
+            // Bej mod için özel arka plan, normal mod için ızgara arka planı
+            if isBejMode {
+                ThemeManager.BejThemeColors.background
+                    .edgesIgnoringSafeArea(.all)
+                    .overlay(
+                        // Bej mod için hafif desen
+                        VStack(spacing: 20) {
+                            ForEach(0..<20) { i in
+                                HStack(spacing: 20) {
+                                    ForEach(0..<10) { j in
+                                        Circle()
+                                            .fill(ThemeManager.BejThemeColors.accent.opacity(0.03))
+                                            .frame(width: 8, height: 8)
+                                    }
+                                }
+                                .offset(x: i % 2 == 0 ? 10 : 0)
+                            }
+                        }
+                    )
+            } else {
+                // Normal mod için ızgara arka planı
+                GridBackgroundView()
+                    .edgesIgnoringSafeArea(.all)
+            }
             
             // Yükleme/hata durumları veya ana içerik
             if isLoading {

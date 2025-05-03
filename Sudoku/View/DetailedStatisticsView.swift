@@ -9,6 +9,7 @@ struct DetailedStatisticsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.textScale) var textScale
     @EnvironmentObject var localizationManager: LocalizationManager
+    @EnvironmentObject var themeManager: ThemeManager
     @AppStorage("app_language") private var appLanguage: String = "tr"
     
     // Görünümü kapatmak için
@@ -38,6 +39,11 @@ struct DetailedStatisticsView: View {
     @State private var trendTitle: String = ""
     @State private var gamesPlayedTitle: String = ""
     @State private var noDataMessage: String = ""
+    
+    // Bej mod kontrolü için hesaplama ekleyelim
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     // Zaman aralığı seçenekleri
     enum TimeRange: String, CaseIterable, Identifiable {
@@ -129,7 +135,7 @@ struct DetailedStatisticsView: View {
                         HStack {
                             Text(pageTitle)
                                 .font(.system(size: 28 * textScale, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                             
                             Spacer()
                             
@@ -139,11 +145,11 @@ struct DetailedStatisticsView: View {
                             }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 24))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .gray)
                                     .padding(8)
                                     .background(
                                         Circle()
-                                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                                            .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(.systemGray6) : Color.white))
                                             .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
                                     )
                             }
@@ -157,7 +163,7 @@ struct DetailedStatisticsView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(LocalizationManager.shared.localizedString(for: "Time Range"))
                                     .font(.system(size: 15 * textScale, weight: .medium))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                                     .padding(.leading, 4)
                                 
                                 VStack(spacing: 0) {
@@ -165,7 +171,9 @@ struct DetailedStatisticsView: View {
                                 }
                                 .background(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .fill(colorScheme == .dark ? Color(.systemGray6).opacity(0.8) : Color.white)
+                                        .fill(isBejMode ?
+                                            ThemeManager.BejThemeColors.cardBackground :
+                                            (colorScheme == .dark ? Color(.systemGray6).opacity(0.8) : Color.white))
                                         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
                                 )
                             }
@@ -175,7 +183,7 @@ struct DetailedStatisticsView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(LocalizationManager.shared.localizedString(for: "Difficulty Level"))
                                     .font(.system(size: 15 * textScale, weight: .medium))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                                     .padding(.leading, 4)
                                 
                                 VStack(spacing: 0) {
@@ -183,7 +191,9 @@ struct DetailedStatisticsView: View {
                                 }
                                 .background(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .fill(colorScheme == .dark ? Color(.systemGray6).opacity(0.8) : Color.white)
+                                        .fill(isBejMode ?
+                                            ThemeManager.BejThemeColors.cardBackground :
+                                            (colorScheme == .dark ? Color(.systemGray6).opacity(0.8) : Color.white))
                                         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
                                 )
                             }
@@ -192,7 +202,9 @@ struct DetailedStatisticsView: View {
                         .padding(16)
                         .background(
                             RoundedRectangle(cornerRadius: 18)
-                                .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.9) : Color.white.opacity(0.95))
+                                .fill(isBejMode ?
+                                    ThemeManager.BejThemeColors.background :
+                                    (colorScheme == .dark ? Color(.systemGray5).opacity(0.9) : Color.white.opacity(0.95)))
                                 .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                         )
                         .padding(.horizontal)
@@ -214,11 +226,11 @@ struct DetailedStatisticsView: View {
                             HStack(spacing: 10) {
                                 Image(systemName: "trash.fill")
                                     .font(.system(size: 15))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .white)
                                 
                                 Text(LocalizationManager.shared.localizedString(for: "Tüm İstatistikleri Sil"))
                                     .font(.system(size: 16 * textScale, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .white)
                             }
                             .padding(.vertical, 15)
                             .padding(.horizontal, 20)
@@ -331,7 +343,7 @@ struct DetailedStatisticsView: View {
                             } else {
                                 // Seçili olmayan durum için görünür arka plan
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                                    .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)))
                             }
                         }
                     )
@@ -395,7 +407,7 @@ struct DetailedStatisticsView: View {
                             } else {
                                 // Seçili olmayan durum için görünür arka plan
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                                    .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)))
                             }
                         }
                     )
@@ -449,7 +461,7 @@ struct DetailedStatisticsView: View {
             HStack {
                 Text(LocalizationManager.shared.localizedString(for: "Summary"))
                     .font(.system(size: 17 * textScale, weight: .bold))
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                 
                 Spacer()
                 
@@ -461,7 +473,7 @@ struct DetailedStatisticsView: View {
                     
                     Text(selectedDifficulty.localizedName)
                         .font(.system(size: 13 * textScale, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
@@ -534,7 +546,7 @@ struct DetailedStatisticsView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(.systemGray6) : Color.white))
                 .shadow(color: Color.black.opacity(0.1), radius: 5 * textScale, x: 0, y: 3 * textScale)
         )
         .padding(.horizontal)
@@ -564,12 +576,12 @@ struct DetailedStatisticsView: View {
                 // Ana değer
                 Text(value)
                     .font(.system(size: 20 * textScale, weight: .bold))
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                 
                 // Başlık
                 Text(title)
                     .font(.system(size: 13 * textScale))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                 
                 // Detay bilgisi
                 Text(details)
@@ -582,7 +594,9 @@ struct DetailedStatisticsView: View {
         .padding(.vertical, 12 * textScale)
         .background(
             RoundedRectangle(cornerRadius: 12 * textScale)
-                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6).opacity(0.5 * textScale))
+                .fill(isBejMode ? 
+                    ThemeManager.BejThemeColors.cardBackground : 
+                    (colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6).opacity(0.5 * textScale)))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12 * textScale)
@@ -596,7 +610,7 @@ struct DetailedStatisticsView: View {
             HStack {
                 Text(LocalizationManager.shared.localizedString(for: "Tamamlama Oranı"))
                     .font(.system(size: 17 * textScale, weight: .bold))
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                 
                 Spacer()
                 
@@ -608,7 +622,7 @@ struct DetailedStatisticsView: View {
                     
                     Text(LocalizationManager.shared.localizedString(for: "Tamamlanma"))
                         .font(.system(size: 13 * textScale, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                 }
                 .padding(.horizontal, 10 * textScale)
                 .padding(.vertical, 5 * textScale)
@@ -699,7 +713,7 @@ struct DetailedStatisticsView: View {
         .padding(.vertical)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(.systemGray6) : Color.white))
                 .shadow(color: Color.black.opacity(0.1), radius: 5 * textScale, x: 0, y: 3 * textScale)
         )
         .padding(.horizontal)
@@ -711,7 +725,7 @@ struct DetailedStatisticsView: View {
             HStack {
                 Text(LocalizationManager.shared.localizedString(for: "Performans Trendi"))
                     .font(.system(size: 17 * textScale, weight: .bold))
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                 
                 Spacer()
                 
@@ -723,7 +737,7 @@ struct DetailedStatisticsView: View {
                     
                     Text(formatTime(statistics.bestTime))
                         .font(.system(size: 13 * textScale, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                 }
                 .padding(.horizontal, 10 * textScale)
                 .padding(.vertical, 5 * textScale)
@@ -814,7 +828,7 @@ struct DetailedStatisticsView: View {
         .padding(.vertical)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(.systemGray6) : Color.white))
                 .shadow(color: Color.black.opacity(0.1), radius: 5 * textScale, x: 0, y: 3 * textScale)
         )
         .padding(.horizontal)
@@ -847,11 +861,9 @@ struct DetailedStatisticsView: View {
         .padding(.vertical, 30 * textScale)
         .background(
             RoundedRectangle(cornerRadius: 12 * textScale)
-                .fill(colorScheme == .dark ? Color(.systemGray5).opacity(0.5 * textScale) : Color(.systemGray6).opacity(0.3 * textScale))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12 * textScale)
-                        .strokeBorder(Color.gray.opacity(0.2 * textScale), lineWidth: 1 * textScale)
-                )
+                .fill(isBejMode ? 
+                    ThemeManager.BejThemeColors.background : 
+                    (colorScheme == .dark ? Color(.systemGray5).opacity(0.5 * textScale) : Color(.systemGray6).opacity(0.3 * textScale)))
         )
         .padding(.horizontal, 30 * textScale)
     }

@@ -1,9 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    " 2024 Necati Yıldırım" : {
-
-    },
     "?" : {
 
     },
@@ -135,9 +132,6 @@
         }
       }
     },
-    "%%%lld" : {
-
-    },
     "%d sayısı, %d. satırda sadece bu hücreye konabilir" : {
       "comment" : "İpucu açıklaması",
       "localizations" : {
@@ -186,6 +180,12 @@
     "%lld bildirim" : {
 
     },
+    "%lld Hata" : {
+
+    },
+    "%lld İpucu" : {
+
+    },
     "%lld:%@" : {
       "localizations" : {
         "en" : {
@@ -197,6 +197,9 @@
       }
     },
     "%lld%%" : {
+
+    },
+    "%lld%% Tamamlandı" : {
 
     },
     "%llddk" : {
@@ -3211,6 +3214,7 @@
       }
     },
     "Bu kaydedilmiş oyunu silmek istediğinizden emin misiniz?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3219,6 +3223,9 @@
           }
         }
       }
+    },
+    "Bu oyunu silmek istediğinizden emin misiniz?" : {
+
     },
     "Bu özellik yakında eklenecek" : {
       "extractionState" : "stale",
@@ -3270,6 +3277,7 @@
       }
     },
     "Cihazın görünüm ayarını kullan (açık/koyu)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3535,6 +3543,9 @@
           }
         }
       }
+    },
+    "Dokunmatik geri bildirim ve haptik motor kullanımı" : {
+
     },
     "Due to other numbers in the row, column, and 3x3 block, only 4 can be placed in this cell." : {
       "extractionState" : "manual",
@@ -3863,6 +3874,9 @@
 
     },
     "Fotoğraf yükleniyor..." : {
+
+    },
+    "Geçerli Tema" : {
 
     },
     "Geliştirici" : {
@@ -4563,6 +4577,7 @@
       }
     },
     "Karanlık Mod" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4585,6 +4600,7 @@
       }
     },
     "Karanlık tema aktif eder" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5400,6 +5416,7 @@
 
     },
     "Oyun içi titreşim efektlerini aç/kapa" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5698,6 +5715,9 @@
         }
       }
     },
+    "Profili Düzenle" : {
+
+    },
     "puan" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5756,6 +5776,7 @@
       }
     },
     "S" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5868,6 +5889,7 @@
       }
     },
     "Ses Seviyesi" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5890,6 +5912,7 @@
       }
     },
     "Sesi Test Et" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6114,6 +6137,7 @@
 
     },
     "Sistem Görünümünü Kullan" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7012,6 +7036,7 @@
       }
     },
     "Tüm Ayarları Sıfırla" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7882,6 +7907,9 @@
           }
         }
       }
+    },
+    "Uygulama Teması" : {
+
     },
     "Uygulamayı kapatıp tekrar açmayı deneyin." : {
       "extractionState" : "stale",

@@ -5,6 +5,12 @@ import StoreKit
 struct AchievementsSheet: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     @ObservedObject private var achievementManager = AchievementManager.shared
     @State private var selectedCategory: AchievementCategory? = nil
@@ -92,7 +98,7 @@ struct AchievementsSheet: View {
     var body: some View {
         NavigationView {
         ZStack {
-                Color(.systemGroupedBackground)
+                Color(isBejMode ? UIColor(ThemeManager.BejThemeColors.background) : .systemGroupedBackground)
                     .edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 0) {
@@ -156,12 +162,12 @@ struct AchievementsSheet: View {
                         .padding(.horizontal)
                         .padding(.vertical, 8)
                     }
-                    .background(Color(.systemBackground))
+                    .background(isBejMode ? ThemeManager.BejThemeColors.cardBackground : Color(.systemBackground))
                     
                     // Filtre seçenekleri
                     HStack {
                         Menu {
-        Button(action: {
+                            Button(action: {
                                 self.showUnlockedOnly = false
                                 self.filterOption = .all
                             }) {
@@ -200,142 +206,99 @@ struct AchievementsSheet: View {
                                 }
                             }
                         } label: {
-                            Label {
-                                Text.localizedSafe("achievements.filter", defaultValue: "Filtrele")
-                .foregroundColor(.primary)
-                            } icon: {
-                                Image(systemName: "line.3.horizontal.decrease.circle")
-                                    .foregroundColor(.blue)
-        }
-                            .font(.system(size: 15, weight: .medium))
-                            .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(
+                            HStack {
+                                Text.localizedSafe("achievements.filter.button", defaultValue: "Filtrele")
+                                    .scaledFont(size: 14)
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 12))
+                            }
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(.systemGray6))
+                                    .fill(isBejMode ? 
+                                         ThemeManager.BejThemeColors.cardBackground.opacity(0.8) : 
+                                         (colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground)))
+                                    .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                             )
                         }
                         
                         Spacer()
                         
-                        // Sıralama seçenekleri
-                        Menu {
-                            Button(action: {
-                                self.sortOption = .default
-                            }) {
-                                Label {
-                                    Text.localizedSafe("achievements.sort.default", defaultValue: "Varsayılan")
-                                } icon: {
-                                    if sortOption == .default {
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
+                        if achievementManager.achievements.filter({ $0.isCompleted }).count > 0 {
+                            // Başarı puanı
+                            HStack(spacing: 4) {
+                                Text("\(achievementManager.totalPoints)")
+                                    .scaledFont(size: 16, weight: .bold)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                                
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.yellow)
                             }
-                            
-                            Button(action: {
-                                self.sortOption = .completed
-                            }) {
-                                Label {
-                                    Text.localizedSafe("achievements.sort.completed_first", defaultValue: "Tamamlananlar Önce")
-                                } icon: {
-                                    if sortOption == .completed {
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                            
-                            Button(action: {
-                                self.sortOption = .progress
-                            }) {
-            Label {
-                                    Text.localizedSafe("achievements.sort.progress", defaultValue: "İlerlemeye Göre")
-            } icon: {
-                                    if sortOption == .progress {
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                        } label: {
-                            Label {
-                                Text.localizedSafe("achievements.sort", defaultValue: "Sırala")
-                                    .foregroundColor(.primary)
-                            } icon: {
-                                Image(systemName: "arrow.up.arrow.down")
-                                    .foregroundColor(.blue)
-                            }
-                            .font(.system(size: 15, weight: .medium))
-        .padding(.vertical, 8)
                             .padding(.horizontal, 12)
-        .background(
+                            .padding(.vertical, 6)
+                            .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(.systemGray6))
+                                    .fill(isBejMode ? 
+                                         ThemeManager.BejThemeColors.cardBackground.opacity(0.8) : 
+                                         (colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground)))
+                                    .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                             )
                         }
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
-                    .background(Color(.systemBackground))
-                    .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: 1)
                     
-                    // Başarım listesi
+                    // Başarı listesi
                     if filteredAchievements.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "trophy.fill")
+                        // Boş durumu
+                        VStack(spacing: 12) {
+                            Image(systemName: "trophy")
                                 .font(.system(size: 50))
-                                .foregroundColor(.gray.opacity(0.5))
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .gray)
+                                .padding(.top, 40)
                             
-                            Text.localizedSafe("achievements.empty.message", defaultValue: "Bu kategoride başarım bulunamadı.")
-                                .font(.headline)
-                                .foregroundColor(.gray)
+                            Text.localizedSafe("achievements.empty", defaultValue: "Hiç başarım bulunamadı")
+                                .scaledFont(size: 18, weight: .medium)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                            
+                            Text.localizedSafe("achievements.empty.subtitle", defaultValue: "Filtreleri değiştirmeyi deneyin")
+                                .scaledFont(size: 15)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                            
+                            Spacer()
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(.systemGroupedBackground))
+                        .frame(maxWidth: .infinity)
                     } else {
-        ScrollView {
+                        // Başarı listesi
+                        ScrollView {
                             LazyVStack(spacing: 10) {
-                ForEach(filteredAchievements) { achievement in
-                    AchievementCard(achievement: achievement)
-                        .padding(.horizontal)
-                }
-            }
-            .padding(.vertical)
+                                ForEach(filteredAchievements) { achievement in
+                                    AchievementCard(achievement: achievement)
+                                        .padding(.horizontal)
+                                }
+                            }
+                            .padding(.vertical)
                         }
                     }
                 }
             }
             .navigationBarTitle(Text.localizedSafe("achievements.title", defaultValue: "Başarımlar"), displayMode: .inline)
             .navigationBarItems(
-                trailing: HStack {
-                    if achievementManager.totalPoints > 0 {
-                        HStack(spacing: 4) {
-                            Text("\(achievementManager.totalPoints)")
-                                .font(.system(size: 16, weight: .bold))
-                            
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 14))
-                                .foregroundColor(.yellow)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(
-                            Capsule()
-                                .fill(Color(.systemGray5))
-                        )
-                    }
-                    
-                    Button(action: {
-                        self.showingInfo = true
-                    }) {
-                        Image(systemName: "info.circle")
-                    }
-                    .sheet(isPresented: $showingInfo) {
-                        AchievementsInfoView()
-                    }
+                trailing: Button(action: {
+                    self.presentationMode.wrappedValue.dismiss()
+                }) {
+                    Text("Tamam")
+                        .fontWeight(.semibold)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
                 }
             )
         }
         .onAppear {
-            // Ekran kararması yönetimi SudokuApp'a devredildi
             // Başarımlar AchievementManager tarafından otomatik yüklenir.
         }
     }
@@ -351,6 +314,12 @@ struct CategoryFilterButton: View {
     var defaultValue: String = ""
     
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     var body: some View {
         Button(action: action) {
@@ -362,16 +331,22 @@ struct CategoryFilterButton: View {
                     Text.localizedSafe(title, defaultValue: defaultValue)
                         .scaledFont(size: 14)
                 } else {
-                Text(title)
+                    Text(title)
                         .scaledFont(size: 14)
                 }
             }
-            .foregroundColor(isSelected ? .white : .primary)
+            .foregroundColor(isSelected ? 
+                           (isBejMode ? ThemeManager.BejThemeColors.cardBackground : .white) : 
+                           (isBejMode ? ThemeManager.BejThemeColors.text : .primary))
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.blue : (colorScheme == .dark ? Color(.systemGray5) : Color(.systemBackground)))
+                    .fill(isSelected ? 
+                         (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue) : 
+                         (isBejMode ? 
+                          ThemeManager.BejThemeColors.background : 
+                          (colorScheme == .dark ? Color(.systemGray5) : Color(.systemBackground))))
                     .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
             )
         }
@@ -383,7 +358,13 @@ struct AchievementCard: View {
     let achievement: Achievement
     
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var showDetail = false
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     var body: some View {
         Button(action: {
@@ -395,14 +376,20 @@ struct AchievementCard: View {
                     Circle()
                         .fill(LinearGradient(
                             gradient: Gradient(colors: [
-                                colorForCategory(achievement.category).opacity(0.7),
-                                colorForCategory(achievement.category)
+                                isBejMode ? 
+                                    ThemeManager.BejThemeColors.accent.opacity(0.7) : 
+                                    colorForCategory(achievement.category).opacity(0.7),
+                                isBejMode ? 
+                                    ThemeManager.BejThemeColors.accent : 
+                                    colorForCategory(achievement.category)
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ))
                         .frame(width: 50, height: 50)
-                        .shadow(color: colorForCategory(achievement.category).opacity(0.3), radius: 3, x: 0, y: 2)
+                        .shadow(color: isBejMode ? 
+                               ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                               colorForCategory(achievement.category).opacity(0.3), radius: 3, x: 0, y: 2)
                     
                     Image(systemName: achievement.iconName)
                         .font(.system(size: 22))
@@ -414,24 +401,30 @@ struct AchievementCard: View {
                     // Başarı adı
                     Text.localizedSafe("achievement.\(achievement.id).name", defaultValue: achievement.name)
                         .scaledFont(size: 16, weight: .medium)
-                        .foregroundColor(achievement.isCompleted ? .primary : .secondary)
+                        .foregroundColor(achievement.isCompleted ? 
+                                        (isBejMode ? ThemeManager.BejThemeColors.text : .primary) : 
+                                        (isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary))
                     
                     // Başarı açıklaması
                     Text.localizedSafe("achievement.\(achievement.id).description", defaultValue: achievement.description)
                         .scaledFont(size: 14)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                         .lineLimit(1)
                     
                     // İlerleme çubuğu
                     ZStack(alignment: .leading) {
                         // Arka plan
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                            .fill(isBejMode ? 
+                                 ThemeManager.BejThemeColors.secondaryBackground : 
+                                 (colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)))
                             .frame(height: 6)
                         
                         // İlerleme
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(colorForCategory(achievement.category))
+                            .fill(isBejMode ? 
+                                 ThemeManager.BejThemeColors.accent : 
+                                 colorForCategory(achievement.category))
                             .frame(width: max(4, CGFloat(achievement.progress) * 200), height: 6)
                     }
                     .frame(width: 200, height: 6)
@@ -442,12 +435,16 @@ struct AchievementCard: View {
                 // Rozet/Kilit ikonu
                 Image(systemName: achievement.isCompleted ? "checkmark.seal.fill" : "lock.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(achievement.isCompleted ? .green : .gray)
+                    .foregroundColor(achievement.isCompleted ? 
+                                    (isBejMode ? ThemeManager.BejThemeColors.accent : .green) : 
+                                    (isBejMode ? ThemeManager.BejThemeColors.secondaryText : .gray))
             }
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 15)
-                    .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         (colorScheme == .dark ? Color(.systemGray6) : Color.white))
                     .shadow(color: Color.black.opacity(0.08), radius: 3, x: 0, y: 2)
             )
         }

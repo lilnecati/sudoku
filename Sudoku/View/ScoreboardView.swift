@@ -10,9 +10,15 @@ import CoreData
 struct ScoreboardView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.textScale) var textScale
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var selectedDifficulty: SudokuBoard.Difficulty = .easy
     @State private var statistics: ScoreboardStatistics = ScoreboardStatistics()
     @State private var recentScores: [NSManagedObject] = []
+    
+    // Bej mod için kısa bir hesaplama ekleyelim
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     // Detaylı istatistik sayfasına geçiş için state
     @State private var showDetailedStatistics = false
@@ -31,7 +37,7 @@ struct ScoreboardView: View {
                 HStack {
                     Text.localizedSafe("Skor Tablosu")
                         .font(.system(size: 28 * textScale, weight: .bold, design: .rounded))
-                        .foregroundColor(Color.textColor(for: colorScheme))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : Color.textColor(for: colorScheme))
                     
                     Spacer()
                     
@@ -45,7 +51,9 @@ struct ScoreboardView: View {
                             .padding(8)
                             .background(
                                 Circle()
-                                    .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                                    .fill(isBejMode ? 
+                                         ThemeManager.BejThemeColors.cardBackground : 
+                                         (colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)))
                                     .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
                             )
                     }
@@ -82,7 +90,9 @@ struct ScoreboardView: View {
                     .progressViewStyle(CircularProgressViewStyle())
                     .scaleEffect(1.5)
                     .padding()
-                    .background(Color.black.opacity(0.3))
+                    .background(isBejMode ? 
+                               ThemeManager.BejThemeColors.background.opacity(0.3) : 
+                               Color.black.opacity(0.3))
                     .cornerRadius(10)
             }
         }
@@ -108,6 +118,7 @@ struct ScoreboardView: View {
         .fullScreenCover(isPresented: $showDetailedStatistics) {
             DetailedStatisticsView()
                 .environmentObject(LocalizationManager.shared)
+                .environmentObject(themeManager)
         }
     }
     
@@ -141,7 +152,9 @@ struct ScoreboardView: View {
                                     .shadow(color: getDifficultyColor(difficulty).opacity(0.4), radius: 4, x: 0, y: 2)
                             } else {
                                 Capsule()
-                                    .fill(colorScheme == .dark ? Color.gray.opacity(0.2) : Color.gray.opacity(0.1))
+                                    .fill(isBejMode ? 
+                                         ThemeManager.BejThemeColors.cardBackground.opacity(0.2) : 
+                                         (colorScheme == .dark ? Color.gray.opacity(0.2) : Color.gray.opacity(0.1)))
                                     .overlay(
                                         Capsule()
                                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
@@ -160,7 +173,9 @@ struct ScoreboardView: View {
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .fill(isBejMode ? 
+                     ThemeManager.BejThemeColors.cardBackground : 
+                     (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         )
         .padding(.horizontal)
@@ -185,7 +200,9 @@ struct ScoreboardView: View {
             HStack {
                 Text.localizedSafe("Performans İstatistikleri")
                     .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? 
+                                    ThemeManager.BejThemeColors.text : 
+                                    .primary)
                 
                 Spacer()
                 
@@ -220,34 +237,11 @@ struct ScoreboardView: View {
         }
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(
-                            colors: [
-                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
-                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
-                            ]
-                        ),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(
-                                gradient: Gradient(
-                                    colors: [getDifficultyColor(selectedDifficulty).opacity(0.7), getDifficultyColor(selectedDifficulty).opacity(0.3)]
-                                ),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
-                        .padding(0.5)
-                )
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isBejMode ? 
+                     ThemeManager.BejThemeColors.cardBackground : 
+                     (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         )
         .padding(.horizontal)
     }
@@ -257,7 +251,9 @@ struct ScoreboardView: View {
             HStack {
                 Text.localizedSafe("Oyun İstatistikleri")
                     .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? 
+                                    ThemeManager.BejThemeColors.text : 
+                                    .primary)
                 
                 Spacer()
                 
@@ -310,34 +306,11 @@ struct ScoreboardView: View {
         }
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(
-                            colors: [
-                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
-                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
-                            ]
-                        ),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(
-                                gradient: Gradient(
-                                    colors: [getDifficultyColor(selectedDifficulty).opacity(0.7), getDifficultyColor(selectedDifficulty).opacity(0.3)]
-                                ),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
-                        .padding(0.5)
-                )
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isBejMode ? 
+                     ThemeManager.BejThemeColors.cardBackground : 
+                     (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         )
         .padding(.horizontal)
     }
@@ -347,7 +320,9 @@ struct ScoreboardView: View {
             HStack {
                 Text.localizedSafe("Son Oyunlar")
                     .font(.system(size: Font.TextStyle.headline.defaultSize * textScale))
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? 
+                                    ThemeManager.BejThemeColors.text : 
+                                    .primary)
                 
                 Spacer()
                 
@@ -389,34 +364,11 @@ struct ScoreboardView: View {
         }
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(
-                            colors: [
-                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white,
-                                colorScheme == .dark ? Color(UIColor.secondarySystemBackground).opacity(0.95) : Color.white.opacity(0.95)
-                            ]
-                        ),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(
-                                gradient: Gradient(
-                                    colors: [getDifficultyColor(selectedDifficulty).opacity(0.7), getDifficultyColor(selectedDifficulty).opacity(0.3)]
-                                ),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
-                        .padding(0.5)
-                )
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isBejMode ? 
+                     ThemeManager.BejThemeColors.cardBackground : 
+                     (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         )
         .padding(.horizontal)
     }
@@ -640,15 +592,32 @@ struct ScoreboardView: View {
             return .blue
         }
         
-        switch difficulty {
-        case .easy:
-            return .green
-        case .medium:
-            return .blue
-        case .hard:
-            return .orange
-        case .expert:
-            return .red
+        return getDifficultyColor(difficulty)
+    }
+    
+    private func getDifficultyColor(_ difficulty: SudokuBoard.Difficulty) -> Color {
+        if themeManager.bejMode {
+            switch difficulty {
+            case .easy:
+                return Color(red: 0.4, green: 0.6, blue: 0.3) // Bej uyumlu yeşil
+            case .medium:
+                return Color(red: 0.7, green: 0.5, blue: 0.2) // Bej uyumlu turuncu
+            case .hard:
+                return Color(red: 0.7, green: 0.3, blue: 0.2) // Bej uyumlu kırmızı
+            case .expert:
+                return Color(red: 0.5, green: 0.3, blue: 0.5) // Bej uyumlu mor
+            }
+        } else {
+            switch difficulty {
+            case .easy:
+                return .green
+            case .medium:
+                return .orange
+            case .hard:
+                return .red
+            case .expert:
+                return .purple
+            }
         }
     }
     
@@ -736,19 +705,6 @@ struct ScoreboardView: View {
         }
     }
     
-    private func getDifficultyColor(_ difficulty: SudokuBoard.Difficulty) -> Color {
-        switch difficulty {
-        case .easy:
-            return .green
-        case .medium:
-            return .blue
-        case .hard:
-            return .orange
-        case .expert:
-            return .red
-        }
-    }
-    
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "d MMM HH:mm"
@@ -788,7 +744,10 @@ struct ScoreboardView: View {
     }
     
     private func setupLanguageChangeListener() {
-        // Language change listener setup
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("LanguageChanged"), object: nil, queue: .main) { _ in
+            // Dil değiştiğinde verileri yeniden yükle
+            self.loadData()
+        }
     }
 }
 
@@ -807,6 +766,12 @@ struct StatCard: View {
     let color: Color
     let colorScheme: ColorScheme
     let textScale: CGFloat
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama ekleyelim
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     // Temel font boyutları
     private var titleBaseSize: CGFloat = 13
@@ -832,7 +797,9 @@ struct StatCard: View {
                     .foregroundColor(.gray)
                 Text.localizedSafe(title)
                     .font(.system(size: titleBaseSize * textScale))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isBejMode ? 
+                                    ThemeManager.BejThemeColors.text : 
+                                    .primary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 8)
@@ -873,6 +840,12 @@ struct RecentGameRow: View {
     let score: NSManagedObject
     let rank: Int
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     var body: some View {
         ZStack {
@@ -1168,26 +1141,43 @@ struct RecentGameRow: View {
         return formatter.string(from: date)
     }
     
-    // Zorluk seviyesine göre renk - ScoreboardView'dakinin aynısı
+    // Zorluk seviyesine göre renk
     private func getDifficultyColor() -> Color {
         guard let difficultyString = score.value(forKey: "difficulty") as? String,
               let difficulty = SudokuBoard.Difficulty(rawValue: difficultyString) else {
             return .blue
         }
         
-        switch difficulty {
-        case .easy:
-            return .green
-        case .medium:
-            return .blue
-        case .hard:
-            return .orange
-        case .expert:
-            return .red
+        return getDifficultyColor(difficulty)
+    }
+    
+    private func getDifficultyColor(_ difficulty: SudokuBoard.Difficulty) -> Color {
+        if themeManager.bejMode {
+            switch difficulty {
+            case .easy:
+                return Color(red: 0.4, green: 0.6, blue: 0.3) // Bej uyumlu yeşil
+            case .medium:
+                return Color(red: 0.7, green: 0.5, blue: 0.2) // Bej uyumlu turuncu
+            case .hard:
+                return Color(red: 0.7, green: 0.3, blue: 0.2) // Bej uyumlu kırmızı
+            case .expert:
+                return Color(red: 0.5, green: 0.3, blue: 0.5) // Bej uyumlu mor
+            }
+        } else {
+            switch difficulty {
+            case .easy:
+                return .green
+            case .medium:
+                return .orange
+            case .hard:
+                return .red
+            case .expert:
+                return .purple
+            }
         }
     }
     
-    // Zorluk seviyesi metin stringinden ikonu döndürür - ScoreboardView'dakinin aynısı
+    // Zorluk seviyesi metin stringinden ikonu döndürür
     private func getDifficultyIconFromString(_ difficultyString: String) -> String {
         switch difficultyString {
         case "Kolay":
@@ -1214,4 +1204,66 @@ struct ScoreboardStatistics {
     var averageTime: TimeInterval = 0
     var bestTime: TimeInterval = 0
     var successRate: Double = 0
+}
+
+// Son kalan colorScheme kontrollerini güncelleyelim
+// ScoreboardStatCard yapısı içindeki tüm renk kullanımlarını güncelleyelim
+struct ScoreboardStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    let colorScheme: ColorScheme
+    let textScale: CGFloat
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Sol icon kısmı
+            ZStack {
+                Circle()
+                    .fill(isBejMode ? 
+                         ThemeManager.BejThemeColors.cardBackground : 
+                         (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                    .frame(width: 50, height: 50)
+                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 2)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundColor(color)
+            }
+            
+            // Sağ text kısmı
+            VStack(alignment: .leading, spacing: 4) {
+                // Başlık
+                Text.localizedSafe(title)
+                    .font(.system(size: 14 * textScale))
+                    .foregroundColor(isBejMode ? 
+                                    ThemeManager.BejThemeColors.secondaryText : 
+                                    .secondary)
+                
+                // Değer
+                Text(value)
+                    .font(.system(size: 20 * textScale, weight: .bold))
+                    .foregroundColor(isBejMode ? 
+                                    ThemeManager.BejThemeColors.text : 
+                                    .primary)
+            }
+            
+            Spacer()
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isBejMode ? 
+                     ThemeManager.BejThemeColors.cardBackground : 
+                     (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        )
+    }
 }

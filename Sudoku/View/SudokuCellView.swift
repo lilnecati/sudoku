@@ -104,88 +104,165 @@ struct SudokuCellView: View {
     
     // Hücre arka plan rengi - Tek renk temali modern tasarım
     private func getCellBackgroundColor() -> Color {
+        // Bej mod kontrolü
+        let isBejMode = themeManager.bejMode
+        
         // ThemeManager'dan rengimizi alalım
         let themeColor = themeManager.getBoardColor()
         let hintColor = Color.blue
         let errorColor = Color.red
         
-        // Hatalı giriş için kırmızı arka plan
-        if isInvalid {
-            return effectiveColorScheme == .dark ? errorColor.opacity(0.25) : errorColor.opacity(0.15)
-        }
-        // İpucu hedefiyse mavi renkle vurgula (görsellerdeki gibi)
-        else if isHintTarget {
-            return effectiveColorScheme == .dark ? hintColor.opacity(0.45) : hintColor.opacity(0.25) 
-        }
-        else if isSelected {
-            // Seçili hücre - en koyu ton
-            return effectiveColorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.25)
-        } else if isMatchingValue {
-            // Aynı değerli hücreler - DAHA BELİRGİN TON
-            // Tüm aynı değerli hücreler için aynı arka plan rengi kullan
-            return effectiveColorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.3)
-        } else if isHighlighted {
-            // Aynı satır/sütun - orta ton
-            return effectiveColorScheme == .dark ? themeColor.opacity(0.25) : themeColor.opacity(0.15) 
+        if isBejMode {
+            // Hatalı giriş için kırmızı arka plan (bej uyumlu)
+            if isInvalid {
+                return Color(red: 0.95, green: 0.80, blue: 0.80) // Bej uyumlu hata rengi
+            }
+            // İpucu hedefiyse özel bej uyumlu renk
+            else if isHintTarget {
+                return ThemeManager.BejThemeColors.accent.opacity(0.25)
+            }
+            else if isSelected {
+                // Seçili hücre - bej temalı vurgu rengi
+                return ThemeManager.BejThemeColors.accent.opacity(0.2)
+            } else if isMatchingValue {
+                // Aynı değerli hücreler
+                return ThemeManager.BejThemeColors.accent.opacity(0.15)
+            } else if isHighlighted {
+                // Aynı satır/sütun
+                return ThemeManager.BejThemeColors.accent.opacity(0.1)
+            } else {
+                // Normal hücreler
+                return ThemeManager.BejThemeColors.cardBackground
+            }
         } else {
-            // Normal hücreler - çok hafif ton veya beyaz
-            return effectiveColorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white
+            // Normal tema renkleri (mevcut kod)
+            // Hatalı giriş için kırmızı arka plan
+            if isInvalid {
+                return effectiveColorScheme == .dark ? errorColor.opacity(0.25) : errorColor.opacity(0.15)
+            }
+            // İpucu hedefiyse mavi renkle vurgula (görsellerdeki gibi)
+            else if isHintTarget {
+                return effectiveColorScheme == .dark ? hintColor.opacity(0.45) : hintColor.opacity(0.25) 
+            }
+            else if isSelected {
+                // Seçili hücre - en koyu ton
+                return effectiveColorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.25)
+            } else if isMatchingValue {
+                // Aynı değerli hücreler - DAHA BELİRGİN TON
+                return effectiveColorScheme == .dark ? themeColor.opacity(0.4) : themeColor.opacity(0.3)
+            } else if isHighlighted {
+                // Aynı satır/sütun - orta ton
+                return effectiveColorScheme == .dark ? themeColor.opacity(0.25) : themeColor.opacity(0.15) 
+            } else {
+                // Normal hücreler - çok hafif ton veya beyaz
+                return effectiveColorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white
+            }
         }
     }
     
     // Hücre kenar rengi - Tek renk temalı kenarlar
     private func getCellBorderColor() -> Color {
+        // Bej mod kontrolü
+        let isBejMode = themeManager.bejMode
+        
         // ThemeManager'dan rengimizi alalım
         let themeColor = themeManager.getBoardColor()
         let hintColor = Color.blue
         let errorColor = Color.red
         
-        // Hatalı giriş için kırmızı kenarlık
-        if isInvalid {
-            return effectiveColorScheme == .dark ? errorColor : errorColor
-        }
-        // İpucu hedefiyse daha koyu mavi kenarlık (görsellerdeki gibi)
-        else if isHintTarget {
-            return effectiveColorScheme == .dark ? hintColor.opacity(1.0) : hintColor.opacity(0.8)
-        }
-        else if isSelected {
-            // Seçili hücre kenarı - tam yoğunluk
-            return themeColor
-        } else if isMatchingValue {
-            // Aynı değerli hücrelerin kenarları - DAHA BELİRGİN
-            // Tüm aynı değerli hücreler için aynı kenar rengi kullan
-            return effectiveColorScheme == .dark ? themeColor.opacity(0.9) : themeColor.opacity(0.7)
-        } else if isHighlighted {
-            // Aynı satır/sütun kenarı - orta yoğunluk
-            return effectiveColorScheme == .dark ? themeColor.opacity(0.6) : themeColor.opacity(0.4)
+        if isBejMode {
+            // Hatalı giriş için kırmızı kenarlık (bej uyumlu)
+            if isInvalid {
+                return Color(red: 0.7, green: 0.3, blue: 0.2) // Bej uyumlu hata kenar rengi
+            }
+            // İpucu hedefiyse özel bej uyumlu kenarlık
+            else if isHintTarget {
+                return ThemeManager.BejThemeColors.accent
+            }
+            else if isSelected {
+                // Seçili hücre kenarı - tam yoğunluk
+                return ThemeManager.BejThemeColors.accent
+            } else if isMatchingValue {
+                // Aynı değerli hücrelerin kenarları
+                return ThemeManager.BejThemeColors.accent.opacity(0.8)
+            } else if isHighlighted {
+                // Aynı satır/sütun kenarı
+                return ThemeManager.BejThemeColors.accent.opacity(0.5)
+            } else {
+                // Normal kenarlar
+                return ThemeManager.BejThemeColors.text.opacity(0.3)
+            }
         } else {
-            // Normal kenarlar - çok hafif
-            return effectiveColorScheme == .dark ? themeColor.opacity(0.3) : themeColor.opacity(0.2)
+            // Normal tema renkleri (mevcut kod)
+            // Hatalı giriş için kırmızı kenarlık
+            if isInvalid {
+                return effectiveColorScheme == .dark ? errorColor : errorColor
+            }
+            // İpucu hedefiyse daha koyu mavi kenarlık (görsellerdeki gibi)
+            else if isHintTarget {
+                return effectiveColorScheme == .dark ? hintColor.opacity(1.0) : hintColor.opacity(0.8)
+            }
+            else if isSelected {
+                // Seçili hücre kenarı - tam yoğunluk
+                return themeColor
+            } else if isMatchingValue {
+                // Aynı değerli hücrelerin kenarları - DAHA BELİRGİN
+                return effectiveColorScheme == .dark ? themeColor.opacity(0.9) : themeColor.opacity(0.7)
+            } else if isHighlighted {
+                // Aynı satır/sütun kenarı - orta yoğunluk
+                return effectiveColorScheme == .dark ? themeColor.opacity(0.6) : themeColor.opacity(0.4)
+            } else {
+                // Normal kenarlar - çok hafif
+                return effectiveColorScheme == .dark ? themeColor.opacity(0.3) : themeColor.opacity(0.2)
+            }
         }
     }
     
     // Metin rengi - Görsel tasarıma uygun modern tema 
     private func getTextColor() -> Color {
+        // Bej mod kontrolü
+        let isBejMode = themeManager.bejMode
+        
         // ThemeManager'dan rengimizi alalım
         let themeColor = themeManager.getBoardColor()
         
-        // Hatalı giriş için kırmızı metin
-        if isInvalid {
-            return effectiveColorScheme == .dark ? Color.red : Color.red
-        }
-        else if isHintTarget {
-            // İpucu hedefi - mavi (görseldeki gibi)
-            return Color.blue
-        } else if isFixed {
-            // Sabit sayılar - standart siyah/beyaz (maksimum okunabilirlik)
-            return effectiveColorScheme == .dark ? Color.white : Color.black
-        } else if isUserEntered {
-            // Kullanıcı girişleri - daha belirgin tema rengi
-            // Daha koyu ve belirgin renkler kullanarak ayrım sağlama
-            return effectiveColorScheme == .dark ? themeColor.opacity(0.95) : themeColor.opacity(0.95)
+        if isBejMode {
+            // Hatalı giriş için kırmızı metin (bej uyumlu)
+            if isInvalid {
+                return Color(red: 0.75, green: 0.30, blue: 0.20) // Bej uyumlu kırmızı
+            }
+            else if isHintTarget {
+                // İpucu hedefi
+                return ThemeManager.BejThemeColors.accent
+            } else if isFixed {
+                // Sabit sayılar
+                return ThemeManager.BejThemeColors.text
+            } else if isUserEntered {
+                // Kullanıcı girişleri
+                return ThemeManager.BejThemeColors.accent
+            } else {
+                // Diğer metinler
+                return ThemeManager.BejThemeColors.secondaryText
+            }
         } else {
-            // Diğer metinler - gri
-            return effectiveColorScheme == .dark ? Color.gray : Color.gray
+            // Normal tema renkleri (mevcut kod)
+            // Hatalı giriş için kırmızı metin
+            if isInvalid {
+                return effectiveColorScheme == .dark ? Color.red : Color.red
+            }
+            else if isHintTarget {
+                // İpucu hedefi - mavi (görseldeki gibi)
+                return Color.blue
+            } else if isFixed {
+                // Sabit sayılar - standart siyah/beyaz (maksimum okunabilirlik)
+                return effectiveColorScheme == .dark ? Color.white : Color.black
+            } else if isUserEntered {
+                // Kullanıcı girişleri - daha belirgin tema rengi
+                return effectiveColorScheme == .dark ? themeColor.opacity(0.95) : themeColor.opacity(0.95)
+            } else {
+                // Diğer metinler - gri
+                return effectiveColorScheme == .dark ? Color.gray : Color.gray
+            }
         }
     }
     

@@ -14,6 +14,14 @@ struct AnimatedSudokuLogo: View {
     @AppStorage("lastSelectedPattern") private var savedPattern: Int = 0
     @AppStorage("lastBorderColorIndex") private var savedBorderColorIndex: Int = 0
     
+    // ThemeManager için erişim
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
     @State private var glowIntensity: CGFloat = 0.5
     @State private var highlightedCell: Int? = nil
     @State private var scale: CGFloat = 1.0
@@ -79,13 +87,35 @@ struct AnimatedSudokuLogo: View {
     
     // Sayı için renk alma
     private func colorForNumber(at index: Int) -> Color {
-        let colorIndex = (index + colorOffset) % colors.count
-        return colors[colorIndex]
+        // Bej mod için özel renkler kullan
+        if isBejMode {
+            // Bej mod için yumuşak renkler dizisi
+            let bejColors: [Color] = [
+                ThemeManager.BejThemeColors.accent,
+                ThemeManager.BejThemeColors.accent.opacity(0.8),
+                Color(red: 0.6, green: 0.4, blue: 0.2), // Koyu kahve
+                Color(red: 0.75, green: 0.55, blue: 0.35), // Açık kahve
+                Color(red: 0.8, green: 0.6, blue: 0.4), // Krem
+                Color(red: 0.7, green: 0.5, blue: 0.3), // Orta kahve
+                Color(red: 0.85, green: 0.65, blue: 0.45), // Kum rengi
+                Color(red: 0.65, green: 0.45, blue: 0.25), // Karamel
+                Color(red: 0.55, green: 0.35, blue: 0.15), // Amber
+            ]
+            return bejColors[index % bejColors.count]
+        } else {
+            let colorIndex = (index + colorOffset) % colors.count
+            return colors[colorIndex]
+        }
     }
     
     // Border için renk alma
     private func borderColor() -> Color {
-        return colors[borderColorIndex]
+        // Bej mod için özel kenar rengi
+        if isBejMode {
+            return ThemeManager.BejThemeColors.accent
+        } else {
+            return colors[borderColorIndex]
+        }
     }
     
     var body: some View {
@@ -103,7 +133,8 @@ struct AnimatedSudokuLogo: View {
                                 isHighlighted: patterns[selectedPattern].contains(index) && highlightedCell != nil,
                                 isSpecialHighlighted: highlightedCell == index,
                                 mainColor: borderColor(),
-                                textColor: colorForNumber(at: index)
+                                textColor: colorForNumber(at: index),
+                                isBejMode: isBejMode
                             )
                             .animation(.easeInOut(duration: 0.3), value: highlightedCell == index)
                             .animation(.easeInOut(duration: 0.5), value: patterns[selectedPattern].contains(index))
@@ -124,23 +155,23 @@ struct AnimatedSudokuLogo: View {
             )
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.black.opacity(0.9))
+                    .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : Color.black.opacity(0.9))
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .animation(.easeInOut(duration: 0.5), value: borderColorIndex)
             
-            // Parlama efekti
+            // Parlama efekti - bej modunda daha hafif
             RoundedRectangle(cornerRadius: 12)
-                .stroke(borderColor(), lineWidth: 2)
-                .blur(radius: 6)
-                .opacity(glowIntensity)
+                .stroke(borderColor(), lineWidth: isBejMode ? 1.5 : 2)
+                .blur(radius: isBejMode ? 4 : 6)
+                .opacity(isBejMode ? glowIntensity * 0.6 : glowIntensity)
                 .frame(width: gridSize + 10, height: gridSize + 10)
             
-            // Dış parlama efekti
+            // Dış parlama efekti - bej modunda daha hafif
             RoundedRectangle(cornerRadius: 16)
-                .stroke(borderColor(), lineWidth: 1)
-                .blur(radius: 8)
-                .opacity(glowIntensity * 0.7)
+                .stroke(borderColor(), lineWidth: isBejMode ? 0.8 : 1)
+                .blur(radius: isBejMode ? 6 : 8)
+                .opacity(isBejMode ? glowIntensity * 0.4 : glowIntensity * 0.7)
                 .frame(width: gridSize + 20, height: gridSize + 20)
         }
         .frame(width: gridSize, height: gridSize)
@@ -228,32 +259,38 @@ struct SudokuCell: View {
     let isSpecialHighlighted: Bool
     let mainColor: Color
     let textColor: Color
+    var isBejMode: Bool = false // Bej mod parametresi eklendi
     
     var body: some View {
         ZStack {
-            // Arka plan
+            // Arka plan - bej mod için özel
             Rectangle()
                 .fill(
-                    isSpecialHighlighted ? mainColor.opacity(0.5) :
-                    isHighlighted ? mainColor.opacity(0.3) : Color.clear
+                    isBejMode ?
+                    (isHighlighted ? 
+                     ThemeManager.BejThemeColors.accent.opacity(0.15) : 
+                     ThemeManager.BejThemeColors.cardBackground.opacity(0.4)) :
+                    (isHighlighted ? 
+                     mainColor.opacity(0.15) : 
+                     Color.black.opacity(0.4))
                 )
                 .frame(width: size, height: size)
             
-            // Sayı
-            Text("\(number)")
-                .font(.system(size: isSpecialHighlighted ? 20 : 18, weight: .bold))
-                .foregroundColor(
-                    isSpecialHighlighted ? .white :
-                    isHighlighted ? .white : textColor
+            // Kenar çizgileri - bej mod için özel
+            Rectangle()
+                .strokeBorder(
+                    isSpecialHighlighted ? 
+                    (isBejMode ? ThemeManager.BejThemeColors.accent : mainColor) : 
+                    (isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.3) : mainColor.opacity(0.3)),
+                    lineWidth: isSpecialHighlighted ? 2 : 0.5
                 )
                 .frame(width: size, height: size)
-                .scaleEffect(isSpecialHighlighted ? 1.2 : isHighlighted ? 1.1 : 1.0)
-                .shadow(color: textColor.opacity(0.7), radius: 2)
+            
+            // Sayı - bej mod için özel
+            Text("\(number)")
+                .font(.system(size: size * 0.6, weight: .bold, design: .rounded))
+                .foregroundColor(textColor)
+                .opacity(isBejMode ? 0.9 : 1.0) // Bej modda hafif saydamlık
         }
-        .overlay(
-            Rectangle()
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-        )
-        .animation(.easeInOut(duration: 0.5), value: textColor)
     }
 }
