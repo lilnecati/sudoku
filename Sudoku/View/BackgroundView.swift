@@ -16,6 +16,7 @@ struct GridBackgroundView: View {
     }
     
     var body: some View {
+        // Önceki ZStack yapısına geri dön
         ZStack {
             // Arka plan rengi - colorScheme'e göre değişir
             baseBackground
@@ -24,6 +25,9 @@ struct GridBackgroundView: View {
             gridPattern
                 .edgesIgnoringSafeArea(.all)
         }
+        // Kaldırılan modifier'lar (opacity, geometryreader vb.)
+        // .edgesIgnoringSafeArea(.all) // Zaten gridPattern içinde var
+        // .opacity(0.8) // Gerekirse tekrar eklenebilir
     }
     
     // Temel arka plan - colorScheme'e göre değişir
@@ -91,18 +95,12 @@ struct GridBackgroundView: View {
     // Izgara desenini oluşturan görünüm - colorScheme'e göre değişir
     private var gridPattern: some View {
         Canvas { context, size in
-            if isBejMode {
-                drawBejModeGrid(context: context, size: size)
-            }
-            else if colorScheme == .dark {
-                drawDarkModeGrid(context: context, size: size)
-            } else {
-                drawLightModeGrid(context: context, size: size)
-            }
+            // Koşul kaldırıldı, her zaman Açık Mod ızgarasını çiz
+            drawLightModeGrid(context: context, size: size)
         }
         .drawingGroup() // Metal hızlandırması için
-        .blur(radius: isBejMode ? 0.3 : (colorScheme == .dark ? 0.5 : 0)) // Glow efekti için - Canvas dışında uygulayabiliriz
-        .blendMode(isBejMode ? .multiply : (colorScheme == .dark ? .screen : .multiply)) // Karışım modu tema rengiyle uyumlu
+        .blur(radius: 0) // Sabit blur (Açık Mod değeri)
+        .blendMode(.multiply) // Sabit blend modu (Açık Mod/Bej Mod değeri)
     }
     
     // Bej mod ızgara çizgileri
@@ -299,6 +297,11 @@ struct GridBackgroundView: View {
     
     // Açık mod ızgara çizgileri
     private func drawLightModeGrid(context: GraphicsContext, size: CGSize) {
+        // --- GEÇİCİ TEST: Izgara yerine kırmızı çiz --- 
+        // context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.red)) // KALDIRILDI
+        // --- TEST SONU ---
+        
+        // Orijinal ızgara çizim kodunu aktif et
         // Izgara çizgilerinin rengi - açık tema için pastel mavi ton
         let primaryGridColor = Color(red: 0.7, green: 0.8, blue: 0.9).opacity(0.5)
         let secondaryGridColor = Color(red: 0.8, green: 0.9, blue: 1.0).opacity(0.5)

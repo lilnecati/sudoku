@@ -269,6 +269,7 @@ struct LoginView: View {
                     self.isPresented = false
                     
                     // Kullanıcı giriş bildirimini gönder
+                    logInfo("Posting UserLoggedIn notification from LoginView (Successful login)...")
                     NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
                     
                     // Başarılı giriş titreşimi
@@ -292,6 +293,7 @@ struct LoginView: View {
                             self.isPresented = false
                             
                             // Kullanıcı giriş bildirimini gönder
+                            logInfo("Posting UserLoggedIn notification from LoginView (Successful login)...")
                             NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
                             
                             // Başarılı giriş titreşimi

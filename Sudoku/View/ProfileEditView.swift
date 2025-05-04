@@ -6,6 +6,9 @@ struct ProfileEditView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     
+    // ThemeManager eklendi
+    @EnvironmentObject var themeManager: ThemeManager
+    
     @State private var name: String = ""
     @State private var email: String = ""
     @State private var username: String = ""
@@ -44,11 +47,41 @@ struct ProfileEditView: View {
     private let cloudName = "dn5ciuoia" // Cloudinary hesabınızdan alındı
     private let uploadPreset = "sudoku_app" // İmzasız yüklemeler için özel preset
     
-    // Mevcut kullanıcı bilgilerini yükle
+    // Mevcut kullanıcı bilgileri - dışarıdan alınacak
+    let user: NSManagedObject // Tipi NSManagedObject olarak değiştirildi
+    @Binding var isPresented: Bool // Sheet'i kapatmak için binding
+    
+    // Bej mod kontrolü için hesaplama eklendi
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
+    
+    // Özel initializer
+    init(user: NSManagedObject, isPresented: Binding<Bool>) { // Parametre tipi NSManagedObject olarak değiştirildi
+        self.user = user
+        self._isPresented = isPresented // Binding'i set et
+        
+        // State değişkenlerini kullanıcı verisiyle başlat
+        _name = State(initialValue: user.value(forKey: "name") as? String ?? "")
+        _email = State(initialValue: user.value(forKey: "email") as? String ?? "")
+        _username = State(initialValue: user.value(forKey: "username") as? String ?? "")
+        
+        // Profil resmini de state'e yükle
+        if let imageData = user.value(forKey: "profileImage") as? Data,
+           let image = UIImage(data: imageData) {
+            _selectedImage = State(initialValue: image)
+        } else {
+            _selectedImage = State(initialValue: nil)
+        }
+    }
+    
+    // Mevcut kullanıcı bilgilerini yükle - Artık init içinde yapılıyor
+    /* 
     private var currentUser: User? {
         return PersistenceController.shared.getCurrentUser()
     }
-    
+    */
+   
     // Klavyeyi kapat
     private func dismissKeyboard() {
         focusName = false
@@ -175,7 +208,7 @@ struct ProfileEditView: View {
                                 
                                 // Ana menü ekranına dön
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                    self.presentationMode.wrappedValue.dismiss()
+                                    self.isPresented = false
                                 }
                             } else {
                                 // Hesap silme işlemi başarısız oldu
@@ -260,15 +293,19 @@ struct ProfileEditView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Ad Soyad")
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                 
                 TextField("Adınızı ve soyadınızı girin", text: $name)
                     .padding()
-                    .background(Color(UIColor.secondarySystemBackground))
+                    .background(isBejMode ? 
+                               ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                               Color(UIColor.secondarySystemBackground))
                     .cornerRadius(10)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                            .stroke(isBejMode ? 
+                                   ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                   Color.blue.opacity(0.3), lineWidth: 1)
                     )
                     .focused($focusName)
                     .submitLabel(.next)
@@ -281,17 +318,21 @@ struct ProfileEditView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("E-posta")
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                 
                 TextField("E-posta adresinizi girin", text: $email)
                     .padding()
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
-                    .background(Color(UIColor.secondarySystemBackground))
+                    .background(isBejMode ? 
+                               ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                               Color(UIColor.secondarySystemBackground))
                     .cornerRadius(10)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                            .stroke(isBejMode ? 
+                                   ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                   Color.blue.opacity(0.3), lineWidth: 1)
                     )
                     .focused($focusEmail)
                     .submitLabel(.done)
@@ -368,11 +409,15 @@ struct ProfileEditView: View {
                     // Mevcut şifre
                     SecureField("Mevcut Şifre", text: $currentPassword)
                         .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
+                        .background(isBejMode ? 
+                                   ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                   Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                .stroke(isBejMode ? 
+                                       ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                       Color.blue.opacity(0.3), lineWidth: 1)
                         )
                         .focused($focusCurrentPassword)
                         .submitLabel(.next)
@@ -383,11 +428,15 @@ struct ProfileEditView: View {
                     // Yeni şifre
                     SecureField("Yeni Şifre", text: $newPassword)
                         .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
+                        .background(isBejMode ? 
+                                   ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                   Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                .stroke(isBejMode ? 
+                                       ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                       Color.blue.opacity(0.3), lineWidth: 1)
                         )
                         .focused($focusNewPassword)
                         .submitLabel(.next)
@@ -398,11 +447,15 @@ struct ProfileEditView: View {
                     // Yeni şifre onay
                     SecureField("Yeni Şifre (Tekrar)", text: $confirmPassword)
                         .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
+                        .background(isBejMode ? 
+                                   ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                   Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                .stroke(isBejMode ? 
+                                       ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                       Color.blue.opacity(0.3), lineWidth: 1)
                         )
                         .focused($focusConfirmPassword)
                         .submitLabel(.done)
@@ -482,20 +535,20 @@ struct ProfileEditView: View {
     
     // Kullanıcı verilerini yükle
     private func loadUserData() {
-        guard let user = currentUser else { return }
+        // guard let user = currentUser else { return } // Eski kontrol kaldırıldı
         
-        name = user.name ?? ""
-        email = user.email ?? ""
-        username = user.username ?? ""
+        name = user.value(forKey: "name") as? String ?? ""
+        email = user.value(forKey: "email") as? String ?? ""
+        username = user.value(forKey: "username") as? String ?? ""
         
         // Debug bilgisi
         logDebug("ProfileEditView - Kullanıcı adı: \(username)")
         logDebug("ProfileEditView - E-posta: \(email)")
         
         // Profil resmi varsa yükle
-        if let imageData = user.profileImage, let image = UIImage(data: imageData) {
+        if let imageData = user.value(forKey: "profileImage") as? Data, let image = UIImage(data: imageData) {
             selectedImage = image
-        } else if let photoURL = user.photoURL {
+        } else if let photoURL = user.value(forKey: "photoURL") as? String {
             // Cloudinary'den profil resmini yükle
             loadImageFromURL(urlString: photoURL)
         }
@@ -531,20 +584,20 @@ struct ProfileEditView: View {
         }
         
         // CoreData işlemleri
-        guard let user = currentUser else {
-            isLoading = false
-            return
-        }
+        // guard let user = currentUser else { // Eski kontrol
+        //     isLoading = false
+        //     return
+        // } // Artık user doğrudan kullanılıyor
         
         let context = PersistenceController.shared.container.viewContext
         
         // Temel bilgileri kaydet
-        user.name = name
-        user.email = email
+        user.setValue(name, forKey: "name")
+        user.setValue(email, forKey: "email")
         
         // Profil resmi varsa kaydet
         if let selectedImage = selectedImage, let imageData = selectedImage.jpegData(compressionQuality: 0.7) {
-            user.profileImage = imageData
+            user.setValue(imageData, forKey: "profileImage")
         }
         
         do {
@@ -565,10 +618,12 @@ struct ProfileEditView: View {
     private func changePassword() {
         isLoading = true
         
-        guard let user = currentUser,
-              let storedPassword = user.password,
-              let salt = user.passwordSalt else {
+        guard let storedPassword = user.value(forKey: "password") as? String,
+              let salt = user.value(forKey: "passwordSalt") as? String else { // Tipi String olarak değiştirildi
             isLoading = false
+            alertTitle = "Hata"
+            alertMessage = "Şifre bilgileri alınamadı."
+            showAlert = true
             return
         }
         
@@ -602,11 +657,11 @@ struct ProfileEditView: View {
         
         // Yeni şifre hashle ve kaydet
         let context = PersistenceController.shared.container.viewContext
-        let newSalt = SecurityManager.shared.generateSalt()
+        let newSalt = SecurityManager.shared.generateSalt() // String olarak salt oluşturuluyor
         let hashedPassword = SecurityManager.shared.hashPassword(newPassword, salt: newSalt)
         
-        user.password = hashedPassword
-        user.passwordSalt = newSalt
+        user.setValue(hashedPassword, forKey: "password")
+        user.setValue(newSalt, forKey: "passwordSalt") // String salt kaydediliyor
         
         do {
             try context.save()
@@ -653,9 +708,9 @@ struct ProfileEditView: View {
                     self.selectedImage = image
                     
                     // Resmi yerel olarak da kaydet
-                    guard let user = self.currentUser else { return }
+                    // guard let user = self.currentUser else { return } // Eski kontrol
                     
-                    user.profileImage = data
+                    self.user.setValue(data, forKey: "profileImage")
                     do {
                         try PersistenceController.shared.container.viewContext.save()
                         logSuccess("Resim yerel olarak kaydedildi")
@@ -676,12 +731,14 @@ struct ProfileEditView: View {
     
     // Cloudinary'ye resim yükleme
     private func uploadImageToCloudinary(_ image: UIImage) {
-        guard let user = currentUser, let userId = user.id?.uuidString else {
+        // guard let user = currentUser, let userId = user.id?.uuidString else { // Eski kontrol
+        guard let userId = user.value(forKey: "id") as? UUID else { // Doğrudan user kullan
             alertTitle = "Hata"
             alertMessage = "Kullanıcı bilgisi bulunamadı."
             showAlert = true
             return
         }
+        let userIdString = userId.uuidString // UUID'yi string'e çevir
         
         isUploadingImage = true
         uploadProgress = 0.1 // Başladığını göstermek için
@@ -696,7 +753,7 @@ struct ProfileEditView: View {
         }
         
         // Önce yerel olarak kaydet
-        user.profileImage = imageData
+        user.setValue(imageData, forKey: "profileImage")
         do {
             try PersistenceController.shared.container.viewContext.save()
             logSuccess("Resim yerel olarak kaydedildi")
@@ -716,7 +773,7 @@ struct ProfileEditView: View {
         }
         
         logInfo("Cloudinary'ye yükleme başlatılıyor: \(uploadURL)")
-        logInfo("Kullanıcı: \(userId)")
+        logInfo("Kullanıcı: \(userIdString)")
         logInfo("Preset: \(uploadPreset)")
         
         // MultipartFormData oluştur
@@ -736,7 +793,7 @@ struct ProfileEditView: View {
         // Benzersiz bir public_id kullan (kullanıcı ID + zaman damgası + rastgele string)
         let timestamp = Int(Date().timeIntervalSince1970)
         let randomString = UUID().uuidString.prefix(8)
-        let uniquePublicId = "profile_\(userId)_\(timestamp)_\(randomString)"
+        let uniquePublicId = "profile_\(userIdString)_\(timestamp)_\(randomString)"
         
         logInfo("Benzersiz profil resmi ID: \(uniquePublicId)")
         
@@ -808,14 +865,14 @@ struct ProfileEditView: View {
                             
                             // URL'yi kullanıcı bilgilerine kaydet
                             let context = PersistenceController.shared.container.viewContext
-                            user.photoURL = secureUrl
+                            user.setValue(secureUrl, forKey: "photoURL")
                             
                             do {
                                 try context.save()
                                 logSuccess("Resim URL'si CoreData'ya kaydedildi")
                                 
                                 // Firebase'e URL'yi kaydet
-                                if let firebaseUID = user.firebaseUID {
+                                if let firebaseUID = user.value(forKey: "firebaseUID") as? String {
                                     logInfo("Profil resmi URL'si Firebase'e gönderiliyor...")
                                     PersistenceController.shared.db.collection("users").document(firebaseUID).updateData([
                                         "photoURL": secureUrl

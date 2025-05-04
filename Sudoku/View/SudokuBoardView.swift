@@ -238,13 +238,17 @@ struct SudokuBoardView: View {
         let isOriginal = viewModel.board.isOriginalValue(row: row, column: column)
         let isSelected = viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column
         
-        // Vurgu ve yanlış değer durumlarını hesapla - viewModel'daki önbelleklenmiş metodları kullan
-        let isHighlighted = viewModel.isHighlighted(row: row, column: column)
-        let isSameValue = viewModel.hasSameValue(row: row, column: column)
+        // YENİ: Sadece dolu bir hücre seçiliyse diğerlerini vurgula
+        let shouldHighlightBasedOnSelection = viewModel.selectedCell != nil && (viewModel.board.getValue(at: viewModel.selectedCell!.row, col: viewModel.selectedCell!.column) ?? 0 > 0)
+        
+        // İpucu aktifse normal vurgulamaları kapat
+        let isHintActive = viewModel.hintExplanationData != nil
+        let isHighlighted = !isHintActive && shouldHighlightBasedOnSelection && viewModel.isHighlighted(row: row, column: column)
+        let isSameValue = !isHintActive && shouldHighlightBasedOnSelection && viewModel.hasSameValue(row: row, column: column)
         let isInvalid = viewModel.invalidCells.contains(Position(row: row, col: column))
         
-        // İpucu hedef hücresi mi kontrol et
-        let isHintTarget = isHintTargetCell(row: row, column: column)
+        // YENİ: Bu hücrenin ipucu hedefi olup olmadığını kontrol et
+        let isHintTargetCell = isHintActive && viewModel.hintExplanationData?.row == row && viewModel.hintExplanationData?.column == column
         
         // Kalem işaretlerini al
         let pencilMarks = viewModel.getPencilMarks(at: row, col: column)
@@ -264,14 +268,15 @@ struct SudokuBoardView: View {
             isMatchingValue: isSameValue,
             isInvalid: isInvalid,
             pencilMarks: pencilMarks,
-            isHintTarget: isHintTarget,
             onCellTapped: {
                 // Performans optimizasyonu: Zaten seçili hücreye tekrar basılırsa işlem yapma
                 if viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column {
                     return
                 }
                 viewModel.selectCell(row: row, column: column)
-            }
+            },
+            isHintEntered: false,
+            isHintTargetCell: isHintTargetCell
         )
         .id(cellID)
         .drawingGroup(opaque: true, colorMode: .linear) // Her zaman GPU ile render et, maksimum performans
@@ -285,9 +290,12 @@ struct SudokuBoardView: View {
         
         // Bej mod özel renkleri
         if isBejMode {
+            // ThemeManager'dan rengimizi alalım
+            let themeColor = themeManager.getBoardColor()
+            
             // İlk olarak seçilen hücre kontrolü
             if viewModel.selectedCell?.row == row && viewModel.selectedCell?.column == column {
-                return ThemeManager.BejThemeColors.accent.opacity(0.2)
+                return themeColor.opacity(0.2)
             }
             
             // Hücrenin geçerli değeri yok ya da orijinal değerse
@@ -300,12 +308,12 @@ struct SudokuBoardView: View {
                let selectedValue = viewModel.board.getValue(row: selectedCell.row, column: selectedCell.column),
                let currentValue = cellValue,
                selectedValue == currentValue && currentValue != 0 {
-                return Color(red: 0.4, green: 0.55, blue: 0.3).opacity(0.15) // Bej uyumlu yeşil
+                return themeColor.opacity(0.15) // Bej uyumlu yeşil yerine seçilen rengi kullan
             }
             
             // Hücre aynı satır, sütun veya 3x3 bloktaysa
             if viewModel.isHighlighted(row: row, column: column) {
-                return ThemeManager.BejThemeColors.accent.opacity(0.1)
+                return themeColor.opacity(0.1)
             }
             
             // Varsayılan arka plan rengi
@@ -343,16 +351,19 @@ struct SudokuBoardView: View {
     // Metin rengini hesapla - önbelleğe alma için ayrı fonksiyon
     private func getTextColor(isOriginal: Bool, isSelected: Bool, cellValue: Int?) -> Color {
         if isBejMode {
+            // ThemeManager'dan rengimizi alalım
+            let themeColor = themeManager.getBoardColor()
+            
             if isOriginal {
                 return ThemeManager.BejThemeColors.text
             } else if let value = cellValue, let selectedCell = viewModel.selectedCell {
                 if viewModel.board.isCorrectValue(row: selectedCell.row, column: selectedCell.column, value: value) {
-                    return ThemeManager.BejThemeColors.accent
+                    return themeColor
                 } else {
                     return Color.red.opacity(0.8)
                 }
             }
-            return ThemeManager.BejThemeColors.accent
+            return themeColor
         } else {
             if isOriginal {
                 return effectiveColorScheme == .dark ? .white : .black
@@ -446,21 +457,6 @@ struct SudokuBoardView: View {
         } else {
             return effectiveColorScheme == .dark ? Color(.systemGray5) : Color(.systemBackground)
         }
-    }
-}
-
-// Equatable desteği ekle
-extension SudokuCellView: Equatable {
-    static func == (lhs: SudokuCellView, rhs: SudokuCellView) -> Bool {
-        lhs.row == rhs.row &&
-        lhs.column == rhs.column &&
-        lhs.value == rhs.value &&
-        lhs.isFixed == rhs.isFixed &&
-        lhs.isSelected == rhs.isSelected &&
-        lhs.isHighlighted == rhs.isHighlighted &&
-        lhs.isMatchingValue == rhs.isMatchingValue &&
-        lhs.isInvalid == rhs.isInvalid &&
-        lhs.isHintTarget == rhs.isHintTarget
     }
 }
 

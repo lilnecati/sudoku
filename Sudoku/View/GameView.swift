@@ -168,8 +168,71 @@ struct GameView: View {
                 }
             }
             
-            // Tüm overlay'ler
-            overlayViews
+            // YENİ: Overlay Katmanı (İpucu, Zorluk Seçici, Oyun Sonu vs.)
+            .overlay(alignment: .bottom) { // İpucu panelini alttan hizala
+                ZStack(alignment: .bottom) { // Overlay içinde ZStack
+                    // İpucu Açıklama Paneli
+                    if viewModel.showHintExplanation {
+                        HintExplanationView(viewModel: viewModel)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+
+                    // Zorluk Seçici (Ortada)
+                    if showDifficultyPicker {
+                        // Arka plan karartması
+                        Color.black.opacity(0.4)
+                            .edgesIgnoringSafeArea(.all)
+                            .onTapGesture { showDifficultyPicker = false }
+                            .zIndex(5) // Diğer overlay'lerin altında
+
+                        difficultyPickerView
+                            .zIndex(10)
+                            .alignmentGuide(.bottom) { $0[.bottom] } // Ortalama için
+                    }
+
+                    // Tebrikler Ekranı (Ortada)
+                    if showingGameComplete {
+                        Color.black.opacity(0.7)
+                            .edgesIgnoringSafeArea(.all)
+                            .zIndex(5)
+                        congratulationsView
+                            .zIndex(10)
+                            .alignmentGuide(.bottom) { $0[.bottom] }
+                    }
+
+                    // Oyun Bitti Ekranı (Ortada)
+                    if viewModel.gameState == .failed {
+                        Color.black.opacity(0.7)
+                            .edgesIgnoringSafeArea(.all)
+                            .zIndex(5)
+                        gameOverView
+                            .zIndex(10)
+                            .alignmentGuide(.bottom) { $0[.bottom] }
+                    }
+
+                    // İpucu Yok Mesajı (Altta)
+                    if showNoHintsMessage {
+                        VStack {
+                            Spacer()
+                            Text("Her oyunda yalnızca 3 ipucu kullanabilirsiniz!")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.orange.opacity(0.9))
+                                )
+                                .padding(.bottom, safeBottomPadding + 10) // NumberPad'in üstüne gelmesin
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        }
+                        .zIndex(100) // En üstte
+                    }
+                }
+                .animation(.easeInOut, value: showNoHintsMessage) // Mesaj animasyonu
+                .animation(.easeInOut, value: showingGameComplete) // Tebrik animasyonu
+                .animation(.easeInOut, value: viewModel.gameState == .failed) // Oyun Bitti animasyonu
+                .animation(.easeInOut, value: showDifficultyPicker) // Zorluk seçici animasyonu
+            }
         }
         // SafeArea hesaplaması ekleyerek çalışması sağlandı
         .background(
@@ -241,11 +304,12 @@ struct GameView: View {
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.title3)
-                        .foregroundColor(.primary)
+                        .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : .primary)
                         .padding(12)
                         .background(
                             Circle()
-                                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                                .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.cardBackground : 
+                                      (colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)))
                         )
                 }
                 
@@ -254,7 +318,7 @@ struct GameView: View {
                 // Oyun başlığı
                 Text("Sudoku")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : .primary)
                 
                 Spacer()
                 
@@ -264,11 +328,12 @@ struct GameView: View {
                 } label: {
                     Image(systemName: "gearshape.fill")
                         .font(.title3)
-                        .foregroundColor(.primary)
+                        .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : .primary)
                         .padding(12)
                         .background(
                             Circle()
-                                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                                .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.cardBackground : 
+                                      (colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)))
                         )
                 }
             }
@@ -383,16 +448,6 @@ struct GameView: View {
             
             // Numara tuşları
             NumberPadView(viewModel: viewModel, isEnabled: viewModel.gameState == .playing)
-            
-            // İpucu açıklama paneli - tüm butonların üstünde gösterilecek
-            ZStack {
-                if viewModel.showHintExplanation {
-                    HintExplanationView(viewModel: viewModel)
-                        .transition(.move(edge: .bottom))
-                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showHintExplanation)
-                        .zIndex(100) // En üst katmanda göster
-                }
-            }
         }
     }
     
@@ -406,63 +461,6 @@ struct GameView: View {
             Text(text)
                 .font(.system(size: 14 * textScale, weight: .medium))
                 .foregroundColor(.primary)
-        }
-    }
-    
-    // Uyarı ve bilgi ekranları
-    private var overlayViews: some View {
-        ZStack {
-            if showDifficultyPicker {
-                Color.black.opacity(0.4)
-                    .edgesIgnoringSafeArea(.all)
-                    .onTapGesture {
-                        showDifficultyPicker = false
-                    }
-                
-                difficultyPickerView
-                    .zIndex(10)
-            }
-            
-            if showingGameComplete {
-                Color.black.opacity(0.7)
-                    .edgesIgnoringSafeArea(.all)
-                    .onTapGesture {
-                        // Dokunmayı yakala ama hiçbir şey yapma
-                    }
-                
-                congratulationsView
-                    .zIndex(10)
-            }
-            
-            if viewModel.gameState == .failed {
-                Color.black.opacity(0.7)
-                    .edgesIgnoringSafeArea(.all)
-                    .onTapGesture {
-                        // Dokunmayı yakala ama hiçbir şey yapma
-                    }
-                
-                gameOverView
-                    .zIndex(10)
-            }
-            
-            if showNoHintsMessage {
-                VStack {
-                    Spacer()
-                    Text("Her oyunda yalnızca 3 ipucu kullanabilirsiniz!")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.orange.opacity(0.9))
-                        )
-                        .padding(.bottom, 100)
-                        .transition(.opacity)
-                }
-                .zIndex(100)
-                .transition(.opacity)
-                .animation(.easeInOut, value: showNoHintsMessage)
-            }
         }
     }
     
@@ -1013,28 +1011,6 @@ struct StatRowView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.primary)
         }
-    }
-}
-
-// View uzantısı
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-// RoundedCorner uzantısı
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(
-            roundedRect: rect,
-            byRoundingCorners: corners,
-            cornerRadii: CGSize(width: radius, height: radius)
-        )
-        return Path(path.cgPath)
     }
 }
 

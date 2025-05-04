@@ -308,14 +308,21 @@ class SudokuViewModel: ObservableObject {
     }
     
     // Seçili hücreye değer atar - optimize edildi
-    func setValueAtSelectedCell(_ value: Int?) {
-        guard let selectedCell = selectedCell else { 
-            logWarning("Hücre seçili değil!")
-            return 
-        }
+    func setValueAtSelectedCell(_ value: Int?, at specifiedRow: Int? = nil, col specifiedCol: Int? = nil) {
+        // Eğer belirli bir hücre verilmemişse, seçili hücreyi kullan
+        let row: Int
+        let col: Int
         
-        let row = selectedCell.row
-        let col = selectedCell.column
+        if let r = specifiedRow, let c = specifiedCol {
+            row = r
+            col = c
+        } else if let selected = selectedCell {
+            row = selected.row
+            col = selected.column
+        } else {
+            logWarning("Değer atamak için ne hücre belirtildi ne de seçili hücre var!")
+            return
+        }
         
         // Debug log
         logDebug("setValueAtSelectedCell: \(value ?? 0) -> (\(row), \(col)), pencilMode: \(pencilMode)")
@@ -741,6 +748,7 @@ class SudokuViewModel: ObservableObject {
         case related        // İlişkili hücre (aynı satır, sütun veya blok)
         case elimination    // Elenen aday
         case candidate      // Aday değer
+        case conflict       // Çakışan değer
     }
     
     // İpucu açıklama veri modeli - gelişmiş sınıf
@@ -763,6 +771,9 @@ class SudokuViewModel: ObservableObject {
         // Adımlara göre açıklamalar
         var stepTitles: [String] = []
         var stepDescriptions: [String] = []
+        
+        // YENİ: Hedef hücrenin veya ilgili hücrelerin adayları (opsiyonel)
+        var targetCellCandidates: [Int]? = nil
         
         // İpucu için ek bilgiler
         var candidateValues: [Int] = []  // Aday değerler
@@ -868,6 +879,44 @@ class SudokuViewModel: ObservableObject {
                 for c in blockStartCol..<blockStartCol+3 {
                     if r != row || c != column {
                         highlightCell(row: r, column: c, type: type)
+                    }
+                }
+            }
+        }
+        
+        // Belirli bir bölgeyi (satır, sütun, blok) vurgula
+        func highlightRegion(region: SudokuRegion, index: Int, excludeRow: Int? = nil, excludeCol: Int? = nil, type: CellInteractionType = .highlight, conflictValue: Int? = nil) {
+            switch region {
+            case .row:
+                for c in 0..<9 {
+                    if c != excludeCol {
+                        // Eğer conflictValue varsa ve hücrede o değer varsa, conflict olarak işaretle
+                        // TODO: ViewModel'e board erişimi gerekecek
+                        // let currentVal = // Get value from board at (index, c)
+                        // let cellType = (conflictValue != nil && currentVal == conflictValue) ? .conflict : type
+                        highlightCell(row: index, column: c, type: type)
+                    }
+                }
+            case .column:
+                for r in 0..<9 {
+                    if r != excludeRow {
+                        // TODO: ViewModel'e board erişimi gerekecek
+                        // let currentVal = // Get value from board at (r, index)
+                        // let cellType = (conflictValue != nil && currentVal == conflictValue) ? .conflict : type
+                        highlightCell(row: r, column: index, type: type)
+                    }
+                }
+            case .block:
+                let blockStartRow = (index / 3) * 3
+                let blockStartCol = (index % 3) * 3
+                for r in blockStartRow..<blockStartRow+3 {
+                    for c in blockStartCol..<blockStartCol+3 {
+                        if r != excludeRow || c != excludeCol {
+                            // TODO: ViewModel'e board erişimi gerekecek
+                            // let currentVal = // Get value from board at (r, c)
+                            // let cellType = (conflictValue != nil && currentVal == conflictValue) ? .conflict : type
+                            highlightCell(row: r, column: c, type: type)
+                        }
                     }
                 }
             }
@@ -1013,35 +1062,37 @@ class SudokuViewModel: ObservableObject {
     
     // Naked Single ipucu oluştur
     private func createNakedSingleHint(row: Int, col: Int, value: Int) -> HintData {
-        // Swift string interpolation yerine format kullanarak lokalizasyon
         let formatString = NSLocalizedString("Bu hücreye sadece %d değeri konabilir çünkü diğer tüm sayılar elendi.", comment: "İpucu açıklaması")
         let reason = String(format: formatString, value)
         
         let hint = HintData(row: row, column: col, value: value, reason: reason, technique: HintTechnique.nakedSingle)
+        // Başlangıçta hedef hücreyi belirle (HintData init içinde yapılıyor)
         
-        // Adım 1: İlişkili hücreleri vurgula
-        hint.addStep(title: NSLocalizedString("Satır, Sütun ve Blok İnceleme", comment: "İpucu başlığı"), 
-                  description: NSLocalizedString("Bu hücrenin aynı satır, sütun ve blokta bulunan diğer hücreler incelendi.", comment: "İpucu açıklaması"))
-        hint.highlightRelatedCells(row: row, column: col, type: CellInteractionType.related)
+        // Adım 1: İlişkili hücreleri vurgula (daha belirgin)
+        hint.addStep(title: NSLocalizedString("İlişkili Hücreler", comment: "İpucu başlığı"), // Başlık değişti
+                     description: NSLocalizedString("Hedef hücrenin bulunduğu satır, sütun ve 3x3 blok inceleniyor. Kırmızı ile işaretlenenler, '%d' değerinin bu hücreye konmasını engelleyen dolu hücrelerdir.", comment: "İpucu adım 1 açıklaması").replacingOccurrences(of: "%d", with: "\\(value)")) // Açıklama detaylandı
+        hint.highlightRelatedCells(row: row, column: col, type: .related)
         
-        // Adım 2: Tek aday olduğunu göster
-        let stepFormatString = NSLocalizedString("Bu hücreye sadece %d değeri konabilir, diğer tüm sayılar elendi.", comment: "İpucu açıklaması")
-        let stepDescription = String(format: stepFormatString, value)
-        
-        hint.addStep(title: NSLocalizedString("Tek Olasılık Tespiti", comment: "İpucu başlığı"), 
+        // Adım 2: Tek aday olduğunu göster (hedef hücre vurgulanır)
+        let stepFormatString = NSLocalizedString("Satır/sütun/bloktaki diğer tüm sayılar (%d hariç) zaten kullanılmış veya elenmiş. Bu hücreye sadece %d yazılabilir.", comment: "İpucu adım 2 açıklaması") // Açıklama detaylandı
+        let stepDescription = String(format: stepFormatString, value, value)
+        hint.addStep(title: NSLocalizedString("Tek Kalan Aday", comment: "İpucu başlığı"), // Başlık değişti
                   description: stepDescription)
+        // Son adımda sadece hedef hücre vurgulu kalsın
+        hint.highlightedCells = [(row, col, .target)] 
+        hint.highlightedBlock = nil // Bölge vurgusunu kaldır
         
         // Aday değerleri göster
-        hint.candidateValues = [value]
+        hint.targetCellCandidates = [value]
         
-        // Hücreyi çöz
-        enterValue(value, at: row, col: col)
+        // Hücreyi çözme işini ipucu alındıktan sonra kullanıcıya bırakalım veya isteğe bağlı yapalım
+        // enterValue(value, at: row, col: col)
         hintCount += 1
         remainingHints -= 1
         
-        // Tahtayı güncelle
-        validateBoard()
-        updateUsedNumbers()
+        // Tahtayı güncelleme işini de ipucu alındıktan sonraya bırakalım
+        // validateBoard()
+        // updateUsedNumbers()
         
         return hint
     }
@@ -1148,87 +1199,60 @@ class SudokuViewModel: ObservableObject {
     // Hidden Single ipucu oluştur
     private func createHiddenSingleHint(row: Int, col: Int, value: Int, region: SudokuRegion, regionIndex: Int) -> HintData {
         var regionName = ""
-        var description = ""
         
         switch region {
         case .row:
             let rowFormat = NSLocalizedString("%d. satırda", comment: "İpucu bölge adı")
             regionName = String(format: rowFormat, row+1)
-            let descFormat = NSLocalizedString("%d sayısı, %d. satırda sadece bu hücreye konabilir", comment: "İpucu açıklaması")
-            description = String(format: descFormat, value, row+1)
         case .column:
             let colFormat = NSLocalizedString("%d. sütunda", comment: "İpucu bölge adı")
             regionName = String(format: colFormat, col+1)
-            let descFormat = NSLocalizedString("%d sayısı, %d. sütunda sadece bu hücreye konabilir", comment: "İpucu açıklaması")
-            description = String(format: descFormat, value, col+1)
         case .block:
             let blockRow = (regionIndex / 3) + 1
             let blockCol = (regionIndex % 3) + 1
             let blockFormat = NSLocalizedString("%d. satır, %d. sütundaki 3x3 blokta", comment: "İpucu bölge adı")
             regionName = String(format: blockFormat, blockRow, blockCol)
-            let descFormat = NSLocalizedString("%d sayısı, bu 3x3 blokta sadece bu hücreye konabilir", comment: "İpucu açıklaması")
-            description = String(format: descFormat, value)
         }
         
         let reasonFormat = NSLocalizedString("%@ %d sayısı sadece bu hücreye konabilir.", comment: "İpucu ana açıklaması")
         let reason = String(format: reasonFormat, regionName, value)
         
         let hint = HintData(row: row, column: col, value: value, reason: reason, technique: HintTechnique.hiddenSingle)
-        
-        // Adım 1: Bölgeyi vurgula
-        let stepFormat = NSLocalizedString("%@ tüm hücreler incelendi.", comment: "İpucu açıklaması")
-        let stepDescription = String(format: stepFormat, regionName)
-        
+        // Başlangıçta hedef hücreyi belirle
+        // hint.highlightCell(row: row, column: col, type: .target)
+
+        // Adım 1: Bölgeyi vurgula ve çakışanları göster
+        let stepFormat = NSLocalizedString("%@ tüm hücreler incelendi. Kırmızı ile işaretli olanlar, '%d' değeri için olası diğer konumları engelliyor.", comment: "İpucu açıklaması")
+        let stepDescription = String(format: stepFormat, regionName).replacingOccurrences(of: "%d", with: "\(value)")
         hint.addStep(title: NSLocalizedString("Bölge İncelemesi", comment: "İpucu başlığı"), 
                   description: stepDescription)
         
-        // Bölgeye göre vurgulama yap
-        switch region {
-        case .row:
-            for c in 0..<9 {
-                if c != col {
-                    hint.highlightCell(row: row, column: c, type: CellInteractionType.related)
-                }
-            }
-        case .column:
-            for r in 0..<9 {
-                if r != row {
-                    hint.highlightCell(row: r, column: col, type: CellInteractionType.related)
-                }
-            }
-        case .block:
-            // 3x3 bloğu başlangıç koordinatlarını hesapla
-            let blockStartRow = (regionIndex / 3) * 3
-            let blockStartCol = (regionIndex % 3) * 3
-            
-            // Bloğu vurgula - highlightBlock bir metot olduğu için değer atayamayız
-            hint.highlightBlock(forRow: blockStartRow, column: blockStartCol)
-            
-            for r in blockStartRow..<blockStartRow+3 {
-                for c in blockStartCol..<blockStartCol+3 {
-                    if r != row || c != col {
-                        hint.highlightCell(row: r, column: c, type: CellInteractionType.related)
-                    }
-                }
-            }
+        // Bölgeye göre vurgulama yap ve çakışanları işaretle
+        hint.highlightRegion(region: region, index: regionIndex, excludeRow: row, excludeCol: col, conflictValue: value)
+        
+        // Adım 2: Tek konumu göster (hedef hücre vurgulanır)
+        let finalDescFormat = NSLocalizedString("%d sayısı, bu bölgede yalnızca bu hücreye yerleştirilebilir.", comment: "İpucu açıklaması")
+        let finalDescription = String(format: finalDescFormat, value)
+        hint.addStep(title: NSLocalizedString("Tek Konum Tespiti", comment: "İpucu başlığı"), 
+                  description: finalDescription)
+        // Son adımda sadece hedef hücreyi ve belki bloğu vurgula
+        hint.highlightedCells = [(row, col, .target)]
+        if region == .block {
+             hint.highlightBlock(forRow: row, column: col)
+        } else {
+             hint.highlightedBlock = nil
         }
         
-        // Adım 2: Tek konumu göster
-        hint.addStep(title: NSLocalizedString("Tek Konum Tespiti", comment: "İpucu başlığı"), 
-                  description: description)
+        // hint.candidateValues = [value] // Bu satır yerine yeni targetCellCandidates kullanılıyor
+        // Hidden Single için hedef hücrenin o anki adaylarını hesapla
+        hint.targetCellCandidates = calculateCandidates(forRow: row, col: col)
         
-        // Hedef hücreyi vurgula
-        hint.highlightCell(row: row, column: col, type: CellInteractionType.target)
-        hint.candidateValues = [value]
-        
-        // Hücreyi çöz
-        enterValue(value, at: row, col: col)
+        // Hücreyi çözme ve tahtayı güncelleme işini kullanıcıya bırakalım
+        // enterValue(value, at: row, col: col)
         hintCount += 1
         remainingHints -= 1
-        
-        // Tahtayı güncelle
-        validateBoard()
-        updateUsedNumbers()
+        // validateBoard()
+        // updateUsedNumbers()
         
         return hint
     }
@@ -1278,29 +1302,33 @@ class SudokuViewModel: ObservableObject {
     
     // Rastgele ipucu oluştur
     private func createRandomHint(row: Int, col: Int, value: Int) -> HintData {
-        let reason = NSLocalizedString("Sudoku kurallarına göre bu hücreye \(value) değeri konabilir.", comment: "İpucu açıklaması")
+        let formatString = NSLocalizedString("Sudoku kurallarına göre bu hücreye %d değeri konabilir.", comment: "İpucu açıklaması")
+        let reason = String(format: formatString, value)
         
         let hint = HintData(row: row, column: col, value: value, reason: reason, technique: HintTechnique.general)
-        
-        // Adım 1: İlişkili hücreleri vurgula
-        hint.addStep(title: NSLocalizedString("Boş Hücre Analizi", comment: "İpucu başlığı"), 
+        // Başlangıçta hedefi belirle
+        // hint.highlightCell(row: row, column: col, type: .target)
+
+        // Adım 1: Genel Analiz
+        hint.addStep(title: NSLocalizedString("Hücre Analizi", comment: "İpucu başlığı"), 
                   description: NSLocalizedString("Bu hücre, sudoku tahtasında çözülebilir bir hücre olarak belirlendi.", comment: "İpucu açıklaması"))
-        
-        // İlişkili hücreleri vurgula
-        hint.highlightRelatedCells(row: row, column: col, type: CellInteractionType.related)
+        // Bu adımda belirli bir vurgu yapmayalım, sadece hedef hücre kalsın
+        hint.highlightedCells = [(row, col, .target)]
         
         // Adım 2: Değeri göster
+        let stepFormat = NSLocalizedString("Bu hücreye %d değeri konabilir.", comment: "İpucu açıklaması")
+        let stepDescription = String(format: stepFormat, value)
         hint.addStep(title: NSLocalizedString("Değer Önerisi", comment: "İpucu başlığı"), 
-                  description: NSLocalizedString("Bu hücreye \(value) değeri konabilir.", comment: "İpucu açıklaması"))
+                  description: stepDescription)
+        // Bu adımda da sadece hedef hücre vurgulu kalsın
+        hint.highlightedCells = [(row, col, .target)]
         
-        // Hücreyi çöz
-        enterValue(value, at: row, col: col)
+        // Hücreyi çözme ve tahtayı güncelleme işini kullanıcıya bırakalım
+        // enterValue(value, at: row, col: col)
         hintCount += 1
         remainingHints -= 1
-        
-        // Tahtayı güncelle
-        validateBoard()
-        updateUsedNumbers()
+        // validateBoard()
+        // updateUsedNumbers()
         
         return hint
     }
@@ -1318,6 +1346,8 @@ class SudokuViewModel: ObservableObject {
     private func showHintFound(_ hint: HintData) {
         hintExplanationData = hint
         currentHintStep = 0
+        selectedCell = nil // İpucu aktifken mevcut hücre seçimini iptal et
+        logDebug("İpucu bulundu, hücre seçimi iptal edildi.")
         showHintExplanation = true
     }
     
@@ -2790,6 +2820,47 @@ class SudokuViewModel: ObservableObject {
         )
         
         print("Yüksek skor kaydedildi: \(score) puan")
+    }
+    
+    // İpucunu tahtaya uygula
+    // İpucunun kullanıldığını onayla ve paneli kapat
+    func confirmHintUsed(hint: HintData?) {
+        guard let hint = hint else { return }
+        
+        // Başarım kontrolü (ipucu kullanıldı)
+        // Sadece geçerli bir ipucu tekniği varsa sayacı artır
+        if hint.technique != .none {
+            // Doğru başarım ID'sini kullanarak ilerlemeyi artır
+            achievementManager.incrementAchievementProgress(id: "hints_used") // Varsayılan ID, gerekirse değiştir
+            logInfo("İpucu kullanımı onaylandı ve başarım sayacı artırıldı: \(hint.id)")
+        } else {
+            logInfo("Geçersiz ipucu tekniği (.none), başarım sayacı artırılmadı.")
+        }
+        
+        // İpucu açıklamasını kapat
+        closeHintExplanation()
+    }
+    
+    // YENİ: İpucu değerini paneli kapatmadan tahtaya yerleştirir
+    func placeHintValueOnBoard(hint: HintData?) {
+        guard let hint = hint, hint.technique != .none else { return }
+
+        // Hedef hücre boşsa değeri gir
+        if board.getValue(at: hint.row, col: hint.column) == nil {
+            logInfo("İpucu değeri anında yerleştiriliyor: (\(hint.row), \(hint.column)) -> \(hint.value)")
+
+            // Değeri gir (pencilMode false olmalı)
+            let wasPencilMode = pencilMode
+            pencilMode = false
+            // Belirli bir hücreye değer atayan fonksiyonu kullan
+            setValueAtSelectedCell(hint.value, at: hint.row, col: hint.column)
+            pencilMode = wasPencilMode // Eski moda dön
+
+            // ÖNEMLİ: Seçimi kaldırma veya paneli kapatma işlemleri burada yapılmaz.
+            // Başarım sayacı da burada artırılmaz.
+        } else {
+            logWarning("İpucu değeri yerleştirilemedi: Hedef hücre (\(hint.row), \(hint.column)) zaten dolu.")
+        }
     }
 } 
 

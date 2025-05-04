@@ -74,15 +74,20 @@ class AchievementManager: ObservableObject {
         
         // Eğer kullanıcı giriş yapmışsa, Firebase'den başarımları yükle
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            if Auth.auth().currentUser != nil {
+            logInfo("[ACH_INIT_CHECK] Dispatch queue block executed.") // <<< YENİ LOG
+            if let currentUser = Auth.auth().currentUser {
+                logInfo("[ACH_INIT_CHECK] User IS logged in (uid: \(currentUser.uid)). Calling loadAchievementsFromFirebase.") // <<< YENİ LOG
                 // init sırasında çağrıldığında completion ile işimiz yok, sadece yüklemeyi denesin.
-                self?.loadAchievementsFromFirebase { _ in /* Init sırasında sonuçla ilgilenmiyoruz */ } // <<< DÜZELTME: Boş completion eklendi
+                self?.loadAchievementsFromFirebase { _ in /* Init sırasında sonuçla ilgilenmiyoruz */ }
+            } else {
+                logWarning("[ACH_INIT_CHECK] User IS NOT logged in at this point.") // <<< YENİ LOG
             }
         }
     }
     
     // Kullanıcı giriş yaptığında çağrılan fonksiyon
     @objc private func handleUserLoggedIn() {
+        logInfo("[ACH_NOTIFICATION] handleUserLoggedIn called.") // <<< YENİ LOG
         logInfo("Kullanıcı oturum açtı - Başarımlar yükleniyor ve senkronize ediliyor") // Log güncellendi
         guard let user = Auth.auth().currentUser else {
             logError("handleUserLoggedIn: Kullanıcı bulunamadı.")
@@ -1379,135 +1384,137 @@ class AchievementManager: ObservableObject {
     
     // Firebase'den başarımları yükle - Completion Handler Eklendi
     func loadAchievementsFromFirebase(completion: @escaping (Bool) -> Void) { // <<< Completion eklendi
+        logInfo("[ACH_FIREBASE_LOAD] Starting loadAchievementsFromFirebase...") // BAŞLANGIÇ
         // Giriş yapmış kullanıcı kontrolü
         guard let user = Auth.auth().currentUser else {
-            logError("Firebase başarımları yüklenemiyor - kullanıcı giriş yapmamış")
+            logError("[ACH_FIREBASE_LOAD] Failed: User not logged in.") // HATA: Kullanıcı yok
             completion(false) // <<< Başarısızlık bildir
             return
         }
-        
-        logInfo("Firebase\'den başarımlar yükleniyor...")
-        
-        // Firestore\'dan başarımları al - doğru koleksiyon adını kullan
+        logInfo("[ACH_FIREBASE_LOAD] User confirmed: \\(user.uid)") // Kullanıcı OK
+
+        logInfo("Firebase\\'den başarımlar yükleniyor...")
+
+        // Firestore\\'dan başarımları al - doğru koleksiyon adını kullan
         let userAchievementsRef = db.collection("userAchievements").document(user.uid)
-        
+
         userAchievementsRef.getDocument { [weak self] document, error in
             guard let self = self else {
+                logError("[ACH_FIREBASE_LOAD] Failed: self is nil.") // HATA: Self nil
                 completion(false) // Self yoksa başarısız
                 return
             }
-            
+
             if let error = error {
-                logError("Firebase başarım yükleme hatası: \(error.localizedDescription)")
-                // Eski veriyi yüklemeyi dene ama yine de başarısız bildir?
-                // Ya da sadece CoreData'dan yüklemeyi dene ve başarılı bildir? Şimdilik başarısız.
-                self.loadFromCoreDataBackup(for: user.uid) // CoreData'yı dene
+                logError("[ACH_FIREBASE_LOAD] Error getting user document: \(error.localizedDescription)") // HATA: Belge alınamadı
+                // Hata durumunda CoreData'dan yüklemeyi dene
+                self.loadFromCoreDataBackup(for: user.uid)
                 completion(false) // <<< Hata durumunda başarısızlık bildir
                 return
             }
-            
+
             if let document = document, document.exists {
-                // Ana belge varsa kategorileri kontrol et
+                // String interpolation düzeltildi
                 let categories = document.data()?["categories"] as? [String] ?? []
-                
+                logInfo("[ACH_FIREBASE_LOAD] User document exists. Categories: \\(categories)") // Belge VAR
+                // Ana belge varsa kategorileri kontrol et
+                // let categories = document.data()?["categories"] as? [String] ?? [] // Tekrarlanan satır kaldırıldı
+
                 if categories.isEmpty {
-                    logWarning("Kategorileri yok veya boş - Firebase başarımları bulunamadı")
+                    logWarning("[ACH_FIREBASE_LOAD] Categories array is empty in user document. Trying old structure...") // Kategoriler boş/yok
                     // Eski veriyi yüklemeyi dene
                     self.tryLoadingOldFirebaseStructure(userID: user.uid, completion: completion)
                     return // Eski yapı yüklemesi kendi completion'ını çağıracak
                 }
-                
-                logInfo("Firebase\'de \(categories.count) başarım kategorisi bulundu")
-                
+
+                logInfo("Firebase\\'de \\(categories.count) başarım kategorisi bulundu")
+
                 var loadedFirebaseAchievements: [[String: Any]] = []
                 let categoriesGroup = DispatchGroup()
                 var categoryLoadErrors = 0
-                
+
                 // Her kategori için yükleme işlemi
                 for category in categories {
                     categoriesGroup.enter()
+                    logInfo("[ACH_FIREBASE_LOAD] Loading category: \\(category)") // Kategori yükleme BAŞLADI
                     userAchievementsRef.collection("categories").document(category).getDocument { categoryDoc, categoryError in
-                        defer { categoriesGroup.leave() } // Her durumda leave çağrılmasını garantile
-                        if let categoryError = categoryError {
-                            logError("Kategori yükleme hatası: \(categoryError.localizedDescription)")
+                        defer {
+                             logInfo("[ACH_FIREBASE_LOAD] Leaving dispatch group for category: \\(category)") // Grup bırakıldı
+                             categoriesGroup.leave()
+                        } // Her durumda leave çağrılmasını garantile
+                        if let categoryError = categoryError { // _ -> categoryError
+                            logError("[ACH_FIREBASE_LOAD] Error loading category \(category): \(categoryError.localizedDescription)") // Kategori HATA
                             categoryLoadErrors += 1
                             return
                         }
-                        
+
                         if let categoryDoc = categoryDoc, categoryDoc.exists,
                            let achievements = categoryDoc.data()?["achievements"] as? [[String: Any]] {
+                            logInfo("[ACH_FIREBASE_LOAD] Successfully loaded \\(achievements.count) achievements for category: \\(category)") // Kategori OK
                             loadedFirebaseAchievements.append(contentsOf: achievements)
+                        } else {
+                             logWarning("[ACH_FIREBASE_LOAD] Category document \\(category) not found or empty.") // Kategori Belgesi YOK/BOŞ
                         }
                     }
                 }
-                
-                // Tüm kategoriler yüklendiğinde
-                categoriesGroup.notify(queue: .main) { [weak self] in
-                    guard let self = self else {
-                        completion(false)
-                        return
+
+                // Tüm kategori yüklemeleri bittiğinde
+                categoriesGroup.notify(queue: .main) {
+                    if categoryLoadErrors > 0 {
+                        logError("[ACH_FIREBASE_LOAD] Finished loading categories with \\(categoryLoadErrors) errors.") // Kategori HATALARI
+                    } else {
+                        logSuccess("[ACH_FIREBASE_LOAD] Finished loading categories successfully.") // Kategori OK
                     }
-                    
-                    if loadedFirebaseAchievements.isEmpty && categoryLoadErrors == 0 {
-                        logWarning("Firebase\'den yüklenen başarımlar yok veya boş (kategori belgeleri boştu)")
-                        // Başarılı ama boş yüklendi olarak kabul edebiliriz.
-                        self.achievementCoreDataService.saveAchievements(self.achievements, for: user.uid)
-                        completion(true) // <<< Başarılı (ama boş) yükleme
-                        return
-                    } else if categoryLoadErrors > 0 && loadedFirebaseAchievements.isEmpty {
-                        logError("Tüm kategori yüklemeleri başarısız oldu.")
-                        self.loadFromCoreDataBackup(for: user.uid)
-                        completion(false) // <<< Kategori yükleme hataları nedeniyle başarısız
-                        return
-                    } else if categoryLoadErrors > 0 {
-                        logWarning("Bazı kategoriler yüklenirken hata oluştu, ancak yine de devam ediliyor.")
-                    }
-                    
-                    // Firebase\'den gelen verilerle başarımları güncelle
+                    logInfo("[ACH_FIREBASE_LOAD] Calling updateAchievementsFromFirebase with \\(loadedFirebaseAchievements.count) achievements.") // Güncelleme ÇAĞRISI
                     self.updateAchievementsFromFirebase(loadedFirebaseAchievements)
-                    logSuccess("Firebase\'den \(loadedFirebaseAchievements.count) başarım yüklendi ve güncellendi")
-                    
-                    // Başarımları CoreData'ya da kaydet
+                    // Başarılı yükleme sonrası CoreData'ya yedekle - DOĞRU FONKSİYON KULLANILDI
                     self.achievementCoreDataService.saveAchievements(self.achievements, for: user.uid)
-                    logSuccess("Başarımlar CoreData\'ya kaydedildi")
-                    completion(true) // <<< Başarılı yükleme ve güncelleme
+                    logSuccess("[ACH_FIREBASE_LOAD] Finished successfully (New Structure). Calling completion(true).") // BİTTİ (Yeni)
+                    completion(true)
                 }
             } else {
-                logWarning("Firebase\'de başarım belgesi bulunamadı (userAchievements koleksiyonunda)")
+                 logWarning("[ACH_FIREBASE_LOAD] User document not found in userAchievements collection for user \\(user.uid). Trying old structure...") // Belge YOK (Yeni)
                 // Eski koleksiyondan (users) veri yüklemeyi dene
                 self.tryLoadingOldFirebaseStructure(userID: user.uid, completion: completion)
             }
         }
     }
-    
+
     // Yardımcı fonksiyon: Eski Firebase yapısını yüklemeyi dene
     private func tryLoadingOldFirebaseStructure(userID: String, completion: @escaping (Bool) -> Void) {
+        logInfo("[ACH_FIREBASE_LOAD_OLD] Starting tryLoadingOldFirebaseStructure for user \\(userID)...") // BAŞLANGIÇ (Eski)
         self.db.collection("users").document(userID).getDocument { [weak self] (document, error) in
             guard let self = self else {
+                logError("[ACH_FIREBASE_LOAD_OLD] Failed: self is nil.") // HATA: Self nil (Eski)
                 completion(false)
                 return
             }
-                    
-                    if let error = error {
-                        logError("Users koleksiyonundan başarım yükleme hatası: \(error.localizedDescription)")
+
+                    if error != nil {
+                        logError("[ACH_FIREBASE_LOAD_OLD] Error getting document from 'users' collection: \(error!.localizedDescription)") // HATA: Belge alınamadı (Eski)
                 self.loadFromCoreDataBackup(for: userID)
+                logInfo("[ACH_FIREBASE_LOAD_OLD] Finished unsuccessfully (Error fetching old structure). Calling completion(false).") // BİTTİ (Eski - Hata)
                 completion(false) // Eski yapı yüklenemedi
                         return
                     }
-                    
+
                     if let document = document, document.exists,
                        let achievementsData = document.data()?["achievements"] as? [[String: Any]], !achievementsData.isEmpty {
-                        logInfo("Eski yapıdan (users koleksiyonu) \(achievementsData.count) başarım yüklendi")
+                        logInfo("[ACH_FIREBASE_LOAD_OLD] Old structure data found in 'users' collection (\\(achievementsData.count) achievements). Updating and syncing to new structure...") // Eski Veri VAR
                         self.updateAchievementsFromFirebase(achievementsData)
+                        // Başarılı yükleme sonrası CoreData'ya yedekle - DOĞRU FONKSİYON KULLANILDI
+                        self.achievementCoreDataService.saveAchievements(self.achievements, for: userID)
                         logSuccess("Eski yapıdan başarımlar güncellendi, yeni yapıya senkronize ediliyor...")
                 // Yeni yapıya senkronize et ve sonucu bildir
                 self.syncWithFirebase { success in
+                    logInfo("[ACH_FIREBASE_LOAD_OLD] Sync after loading old structure finished with success: \\(success). Calling completion(\\(success)).") // ESKİ -> YENİ Senkronizasyon BİTTİ
                     completion(success) // Yeni yapıya senkronizasyonun sonucunu bildir
                 }
                     } else {
-                logWarning("Eski yapıda da başarım bulunamadı, CoreData\'dan yükleniyor")
+                logWarning("[ACH_FIREBASE_LOAD_OLD] No data found in 'users' collection or achievements array is empty for user \\(userID). Loading from CoreData backup.") // Eski Veri YOK
                 self.loadFromCoreDataBackup(for: userID)
-                completion(true) // CoreData'dan yüklendiği için 'başarılı' kabul edilebilir?
+                logInfo("[ACH_FIREBASE_LOAD_OLD] Finished unsuccessfully (Old Structure not found or empty). Calling completion(false).") // BİTTİ (Eski - Başarısız)
+                completion(false)
             }
         }
     }
@@ -2095,7 +2102,7 @@ class AchievementManager: ObservableObject {
     }
 
     // Bir başarımın sayacını 1 artırır
-    private func incrementAchievementProgress(id: String) {
+    func incrementAchievementProgress(id: String) {
         guard let index = achievements.firstIndex(where: { $0.id == id }) else {
             logWarning("incrementAchievementProgress: Başarım bulunamadı - ID: \(id)")
             return

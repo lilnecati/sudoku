@@ -112,8 +112,16 @@
         }
       }
     },
-    "%@ tüm hücreler incelendi." : {
-      "comment" : "İpucu açıklaması"
+    "%@ tüm hücreler incelendi. Kırmızı ile işaretli olanlar, '%d' değeri için olası diğer konumları engelliyor." : {
+      "comment" : "İpucu açıklaması",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ tüm hücreler incelendi. Kırmızı ile işaretli olanlar, '%2$d' değeri için olası diğer konumları engelliyor."
+          }
+        }
+      }
     },
     "%@ zorluk seviyesinde kaydedilmiş oyun bulunmamaktadır." : {
       "extractionState" : "stale",
@@ -132,29 +140,7 @@
         }
       }
     },
-    "%d sayısı, %d. satırda sadece bu hücreye konabilir" : {
-      "comment" : "İpucu açıklaması",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$d sayısı, %2$d. satırda sadece bu hücreye konabilir"
-          }
-        }
-      }
-    },
-    "%d sayısı, %d. sütunda sadece bu hücreye konabilir" : {
-      "comment" : "İpucu açıklaması",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$d sayısı, %2$d. sütunda sadece bu hücreye konabilir"
-          }
-        }
-      }
-    },
-    "%d sayısı, bu 3x3 blokta sadece bu hücreye konabilir" : {
+    "%d sayısı, bu bölgede yalnızca bu hücreye yerleştirilebilir." : {
       "comment" : "İpucu açıklaması"
     },
     "%d. satır, %d. sütundaki 3x3 blokta" : {
@@ -249,9 +235,6 @@
 
     },
     "A" : {
-
-    },
-    "According to Sudoku rules, the value %lld can be placed in this cell." : {
 
     },
     "achievement.birthday_player.description" : {
@@ -2942,7 +2925,6 @@
       }
     },
     "Adım %lld / %lld" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3084,6 +3066,7 @@
     },
     "Bitti" : {
       "comment" : "İpucu bitirme butonu",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3135,6 +3118,7 @@
     },
     "Boş Hücre Analizi" : {
       "comment" : "İpucu başlığı",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3157,6 +3141,7 @@
     },
     "Bu hücrenin aynı satır, sütun ve blokta bulunan diğer hücreler incelendi." : {
       "comment" : "İpucu açıklaması",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3177,6 +3162,9 @@
         }
       }
     },
+    "Bu hücreye %d değeri konabilir." : {
+      "comment" : "İpucu açıklaması"
+    },
     "Bu hücreye sadece \\(value) değeri konabilir çünkü diğer tüm sayılar elendi." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3189,9 +3177,6 @@
       }
     },
     "Bu hücreye sadece %d değeri konabilir çünkü diğer tüm sayılar elendi." : {
-      "comment" : "İpucu açıklaması"
-    },
-    "Bu hücreye sadece %d değeri konabilir, diğer tüm sayılar elendi." : {
       "comment" : "İpucu açıklaması"
     },
     "Bu hücreye sadece tek bir sayı konabilir" : {
@@ -3870,9 +3855,6 @@
         }
       }
     },
-    "Finished" : {
-
-    },
     "Fotoğraf yükleniyor..." : {
 
     },
@@ -4201,6 +4183,12 @@
         }
       }
     },
+    "Hedef Hücre Adayları:" : {
+
+    },
+    "Hedef hücrenin bulunduğu satır, sütun ve 3x3 blok inceleniyor. Kırmızı ile işaretlenenler, '%d' değerinin bu hücreye konmasını engelleyen dolu hücrelerdir." : {
+      "comment" : "İpucu adım 1 açıklaması"
+    },
     "Henüz kaydedilmiş oyun bulunmamaktadır. Bir oyunu kaydetmek için oyun ekranında 'Kaydet' butonunu kullanın." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4331,6 +4319,7 @@
       }
     },
     "Hint" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4415,6 +4404,9 @@
         }
       }
     },
+    "Hücre Analizi" : {
+      "comment" : "İpucu başlığı"
+    },
     "İleri" : {
       "comment" : "İpucu sonraki adım butonu",
       "localizations" : {
@@ -4431,6 +4423,9 @@
           }
         }
       }
+    },
+    "İlişkili Hücreler" : {
+      "comment" : "İpucu başlığı"
     },
     "In this region, 5 can only be placed in this cell because there's no room for 5 in other cells." : {
       "extractionState" : "manual",
@@ -4926,9 +4921,6 @@
         }
       }
     },
-    "Last Remaining Cell" : {
-
-    },
     "Metin Boyutu" : {
 
     },
@@ -5147,9 +5139,6 @@
           }
         }
       }
-    },
-    "Only the value %lld can be placed in this cell because all other numbers have been eliminated." : {
-
     },
     "Örnek Gösterilemiyor" : {
       "extractionState" : "stale",
@@ -5698,6 +5687,9 @@
         }
       }
     },
+    "Profil düzenlenemiyor. Kullanıcı bulunamadı." : {
+
+    },
     "profile.edit" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5834,11 +5826,23 @@
     },
     "Satır, Sütun ve Blok İnceleme" : {
       "comment" : "İpucu başlığı",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Row, Column and Block Analysis"
+          }
+        }
+      }
+    },
+    "Satır/sütun/bloktaki diğer tüm sayılar (%d hariç) zaten kullanılmış veya elenmiş. Bu hücreye sadece %d yazılabilir." : {
+      "comment" : "İpucu adım 2 açıklaması",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Satır/sütun/bloktaki diğer tüm sayılar (%1$d hariç) zaten kullanılmış veya elenmiş. Bu hücreye sadece %2$d yazılabilir."
           }
         }
       }
@@ -5989,7 +5993,11 @@
         }
       }
     },
+    "Şifre Onay" : {
+
+    },
     "Şifre Onayı" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6129,12 +6137,6 @@
           }
         }
       }
-    },
-    "Single Position Detection" : {
-
-    },
-    "Single Possibility Detection" : {
-
     },
     "Sistem Görünümünü Kullan" : {
       "extractionState" : "stale",
@@ -6396,6 +6398,9 @@
           }
         }
       }
+    },
+    "Sudoku kurallarına göre bu hücreye %d değeri konabilir." : {
+      "comment" : "İpucu açıklaması"
     },
     "Sudoku kurallarına göre bu hücreye bu değer konabilir" : {
       "comment" : "İpucu açıklaması"
@@ -6722,6 +6727,9 @@
         }
       }
     },
+    "Tek Kalan Aday" : {
+      "comment" : "İpucu başlığı"
+    },
     "Tek Konum Stratejisi" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6781,6 +6789,7 @@
     },
     "Tek Olasılık Tespiti" : {
       "comment" : "İpucu başlığı",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6952,9 +6961,6 @@
           }
         }
       }
-    },
-    "The number %lld can only be placed in this cell in this region." : {
-
     },
     "Time Range" : {
       "extractionState" : "stale",

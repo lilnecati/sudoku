@@ -102,6 +102,9 @@ struct SettingsView: View {
     // Mevcut kullanıcı bilgisi
     @State private var currentUser: NSManagedObject? = nil
 
+    // Profil düzenleme sheet'ini kontrol etmek için state
+    @State private var showProfileEditSheet = false
+
     @State private var previousChargingState: Bool?
     
     // Pil simgesini al
@@ -255,7 +258,9 @@ struct SettingsView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white)
+                    .fill(isBejMode ? 
+                        ThemeManager.BejThemeColors.cardBackground : 
+                        (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             )
             .foregroundColor(.primary)
@@ -312,13 +317,28 @@ struct SettingsView: View {
     }
     
     var body: some View {
-        NavigationView {
             ZStack {
+            // GridBackgroundView tam ekranı kaplasın
                 GridBackgroundView()
-                    .ignoresSafeArea()
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 0) { // Ana VStack spacing 0
+                // Özel Başlık Çubuğu
+                HStack {
+                    Text("Ayarlar") // Başlık metni
+                        .font(.largeTitle.bold())
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                    
+                    Spacer()
+                    
+                    // "Tamam" butonu kaldırıldı
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
                 
+                // İçerik ScrollView'ı
                 ScrollView {
-                    VStack(spacing: 25) {
+                    VStack(spacing: 15) { 
                         // Profil ve hesap ayarları bölümü - başlık olmadan
                         self.profileSettingsView()
 
@@ -354,28 +374,36 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 30)
-                        .padding(.bottom, 20)
+                        .padding(.top, 15) 
+                        .padding(.bottom, 10) 
                     }
-                    .padding(.top)
+                    .padding(.top, 8) 
                     .padding(.horizontal, 16)
                 }
-                .padding(.vertical, 8)
             }
-            .navigationBarTitle(Text.localized("settings.title"), displayMode: .large)
-            .navigationBarItems(trailing: closeButton)
         }
-        .navigationViewStyle(StackNavigationViewStyle())
         .localizationAware()
         .preferredColorScheme(themeManager.colorScheme)
-        .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode) // Tema değişimi animasyonu
-        .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance) // Sistem teması kullanımı değişimi animasyonu
-        .themeAware() // Tema değişikliklerine tepki gösterme
+        .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode)
+        .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance)
+        .themeAware()
         .sheet(isPresented: $showRegisterView) {
             RegisterView(isPresented: $showRegisterView, currentUser: $currentUser)
         }
         .sheet(isPresented: $showLoginView) {
             LoginView(isPresented: $showLoginView, currentUser: $currentUser)
+        }
+        // Yeni sheet modifier: ProfileEditView için
+        .sheet(isPresented: $showProfileEditSheet) {
+            // ProfileEditView'ı burada çağırıyoruz.
+            // ProfileEditView'ın mevcut kullanıcıyı alması gerekebilir.
+            if let user = currentUser ?? PersistenceController.shared.getCurrentUser() {
+                 ProfileEditView(user: user, isPresented: $showProfileEditSheet)
+                    .environmentObject(themeManager) // Gerekliyse themeManager'ı da geçirelim
+            } else {
+                // Kullanıcı bulunamazsa bir hata mesajı veya boş görünüm gösterilebilir
+                Text("Profil düzenlenemiyor. Kullanıcı bulunamadı.")
+            }
         }
         .onAppear {
             // Ekran kararması yönetimi SudokuApp'a devredildi
@@ -664,7 +692,7 @@ struct SettingsView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isBejMode ? 
                          ThemeManager.BejThemeColors.cardBackground : 
-                         Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                         (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
             .padding(.horizontal, 8)
@@ -736,7 +764,7 @@ struct SettingsView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isBejMode ? 
                          ThemeManager.BejThemeColors.cardBackground : 
-                         Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                         (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 )
                 .padding(.horizontal, 8)
@@ -854,10 +882,10 @@ struct SettingsView: View {
                 RoundedRectangle(cornerRadius: 12)
                             .fill(isBejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    )
+            )
                 }
                 .buttonStyle(PlainButtonStyle())
-                
+            
                 // Başarımları sıfırlama düğmesi
                 Button(action: {
                     resetAchievementData()
@@ -898,7 +926,7 @@ struct SettingsView: View {
                 .buttonStyle(PlainButtonStyle())
             }
                 .padding(.horizontal, 8)
-        }
+            }
     }
     
     private var mainSettingsView: some View {
@@ -915,7 +943,7 @@ struct SettingsView: View {
                 
                 // Görünüm ayarları
                 self.sectionHeader(title: "Görünüm", systemImage: "paintbrush.fill")
-                
+                    
                 // Görünüm ayarları bölümü - dil seçimi kaldırıldı
                 self.appearanceSettingsView()
                 
@@ -949,7 +977,7 @@ struct SettingsView: View {
         .cornerRadius(20)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-    }
+        }
     
     private var closeButton: some View {
         Button(action: {
@@ -1050,7 +1078,7 @@ struct SettingsView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isBejMode ? 
                          ThemeManager.BejThemeColors.cardBackground : 
-                         Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                         (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
         }
@@ -1111,7 +1139,7 @@ struct SettingsView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isBejMode ? 
                          ThemeManager.BejThemeColors.cardBackground : 
-                         Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                         (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
             .padding(.horizontal, 8)
@@ -1171,7 +1199,7 @@ struct SettingsView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(isBejMode ? 
                              ThemeManager.BejThemeColors.cardBackground : 
-                             Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                             (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 )
                 .padding(.horizontal, 8)
@@ -1225,7 +1253,7 @@ struct SettingsView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(isBejMode ? 
                              ThemeManager.BejThemeColors.cardBackground : 
-                             Color(uiColor: UIColor.systemBackground).opacity(0.8))
+                             (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
                         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 )
                 .padding(.horizontal, 8)
@@ -1331,10 +1359,10 @@ struct SettingsView: View {
             )
             
             // Butonlar - giriş durumuna göre farklı butonlar göster
-            if let _ = PersistenceController.shared.getCurrentUser() {
+            if PersistenceController.shared.getCurrentUser() != nil { // Sadece varlığını kontrol et
                 // Kullanıcı giriş yapmışsa - Profili Düzenle ve Çıkış Yap butonları
                 HStack(spacing: 12) {
-                    // Profili Düzenle butonu
+                    // Profili Düzenle butonu -> NavigationLink yerine sheet açacak
                     Button(action: {
                         // Titreşim geri bildirimi
                         if enableHapticFeedback {
@@ -1345,9 +1373,9 @@ struct SettingsView: View {
                             SoundManager.shared.playNavigationSoundOnly()
                         }
                         
-                        // Profil düzenleme sayfasına yönlendir
-                        // NOT: Bu geçiş NavigationLink ile yapılmalı, şu anda devre dışı
-                        logInfo("Profil düzenleme butonu tıklandı")
+                        // Profil düzenleme sheet'ini aç
+                        showProfileEditSheet = true 
+                        logInfo("Profil düzenleme butonu tıklandı, sheet açılıyor")
                     }) {
                         HStack {
                             Image(systemName: "person.fill.badge.plus")
@@ -1362,9 +1390,9 @@ struct SettingsView: View {
                             (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue)
                                 .cornerRadius(12)
                                 .shadow(color: (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue).opacity(0.3), radius: 5, x: 0, y: 2)
-                        )
-                    }
-                    
+                    )
+                }
+                
                     // Çıkış Yap butonu
                 Button(action: {
                         // Titreşim geri bildirimi
@@ -1392,8 +1420,8 @@ struct SettingsView: View {
                             Color.red
                                 .cornerRadius(12)
                                 .shadow(color: Color.red.opacity(0.3), radius: 5, x: 0, y: 2)
-                        )
-                    }
+                    )
+                }
                 }
             } else {
                 // Kullanıcı giriş yapmamışsa - Giriş Yap ve Kayıt Ol butonları
@@ -1407,8 +1435,8 @@ struct SettingsView: View {
                             SoundManager.shared.playNavigationSound()
                         } else {
                             SoundManager.shared.playNavigationSoundOnly()
-                        }
-                        
+            }
+            
                         // Giriş sayfasına yönlendir
                         showLoginView = true
                         logInfo("Giriş yap butonu tıklandı")
@@ -1426,8 +1454,8 @@ struct SettingsView: View {
                             (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue)
                                 .cornerRadius(12)
                                 .shadow(color: (isBejMode ? ThemeManager.BejThemeColors.accent : Color.blue).opacity(0.3), radius: 5, x: 0, y: 2)
-                        )
-                    }
+                    )
+                }
                     
                     // Kayıt Ol butonu
                 Button(action: {
@@ -1443,7 +1471,7 @@ struct SettingsView: View {
                         // Kayıt sayfasına yönlendir
                         showRegisterView = true
                         logInfo("Kayıt ol butonu tıklandı")
-                    }) {
+                }) {
                         HStack {
                             Image(systemName: "person.badge.plus")
                                 .font(.system(size: 16))
@@ -1993,17 +2021,17 @@ struct AppearanceSettingsSheet: View {
                             // İkon
                             ZStack {
                                 Circle()
-                                    .fill(Color.orange.opacity(0.15))
+                                    .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.accent.opacity(0.15) : Color.orange.opacity(0.15))
                                     .frame(width: 36, height: 36)
                                 
                                 Image(systemName: "textformat.size")
                                     .font(.system(size: 16))
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.accent : .orange)
                             }
                             
                             Text("Metin Boyutu")
                                 .font(.headline)
-                                .foregroundColor(.primary)
+                                .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : .primary)
                         }
                         
                         // Seçim butonları
@@ -2016,20 +2044,29 @@ struct AppearanceSettingsSheet: View {
                                         Text("A")
                                             .font(.system(size: size.scaleFactor * 24))
                                             .fontWeight(.bold)
-                                            .foregroundColor(textSizeString == size.rawValue ? .white : .primary)
+                                            .foregroundColor(textSizeString == size.rawValue ? 
+                                                            (themeManager.bejMode ? ThemeManager.BejThemeColors.background : .white) : 
+                                                            (themeManager.bejMode ? ThemeManager.BejThemeColors.text : .primary))
                                             .frame(width: 40, height: 40)
                                             .background(
                                                 Circle()
-                                                    .fill(textSizeString == size.rawValue ? Color.orange : Color.clear)
+                                                    .fill(textSizeString == size.rawValue ? 
+                                                         (themeManager.bejMode ? ThemeManager.BejThemeColors.accent : Color.orange) : 
+                                                         Color.clear)
                                                     .overlay(
                                                         Circle()
-                                                            .strokeBorder(Color.orange.opacity(0.5), lineWidth: textSizeString == size.rawValue ? 0 : 1)
+                                                            .strokeBorder(themeManager.bejMode ? 
+                                                                          ThemeManager.BejThemeColors.accent.opacity(0.5) : 
+                                                                          Color.orange.opacity(0.5), 
+                                                                        lineWidth: textSizeString == size.rawValue ? 0 : 1)
                                                     )
                                             )
                                         
                                         Text.localizedSafe(size.rawValue)
                                             .font(.system(size: 14))
-                                            .foregroundColor(textSizeString == size.rawValue ? .orange : .primary)
+                                            .foregroundColor(textSizeString == size.rawValue ? 
+                                                           (themeManager.bejMode ? ThemeManager.BejThemeColors.accent : .orange) : 
+                                                           (themeManager.bejMode ? ThemeManager.BejThemeColors.secondaryText : .primary))
                                     }
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 8)
@@ -2041,7 +2078,8 @@ struct AppearanceSettingsSheet: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                            .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.cardBackground : 
+                                 (colorScheme == .dark ? Color(.systemGray6) : Color.white))
                             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                     )
                     .padding(.horizontal)
@@ -2351,32 +2389,19 @@ struct AppearanceSettingsSheet: View {
         }) {
             VStack(spacing: 6) {
                 ZStack {
-                    // Bej mod için özel renk görünümü
-                    if themeManager.bejMode {
-                        let bejCompatibleColor = getBejCompatibleColor(color: color, code: code)
-                        Circle()
-                            .fill(bejCompatibleColor)
-                            .frame(width: 48, height: 48)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 2)
-                                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 0)
-                            )
-                            .scaleEffect(selectedColorAnimated == code ? 1.05 : 1.0)
-                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedColorAnimated)
-                    } else {
-                        Circle()
-                            .fill(color)
-                            .frame(width: 48, height: 48)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 2)
-                                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 0)
-                            )
-                            .scaleEffect(selectedColorAnimated == code ? 1.05 : 1.0)
-                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedColorAnimated)
-                    }
+                    // Renk gösterimi
+                    Circle()
+                        .fill(themeManager.bejMode ? getBejCompatibleColor(color: color, code: code) : color)
+                        .frame(width: 48, height: 48)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 2)
+                                .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 0)
+                        )
+                        .scaleEffect(selectedColorAnimated == code ? 1.05 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedColorAnimated)
                     
+                    // Seçili renk için işaret
                     if themeManager.sudokuBoardColor == code {
                         Image(systemName: "checkmark")
                             .foregroundColor(.white)
@@ -2385,6 +2410,7 @@ struct AppearanceSettingsSheet: View {
                     }
                 }
                 
+                // Gerçek renk adını göster
                 Text(name)
                     .font(.system(size: 14, weight: themeManager.sudokuBoardColor == code ? .semibold : .regular))
                     .foregroundColor(themeManager.bejMode ? 
@@ -2407,17 +2433,17 @@ struct AppearanceSettingsSheet: View {
     private func getBejCompatibleColor(color: Color, code: String) -> Color {
         switch code {
         case "red":
-            return Color(red: 0.75, green: 0.30, blue: 0.20)
+            return ThemeManager.BejThemeColors.boardColors.red
         case "pink":
-            return Color(red: 0.80, green: 0.40, blue: 0.50)
+            return ThemeManager.BejThemeColors.boardColors.pink
         case "orange":
-            return Color(red: 0.85, green: 0.50, blue: 0.20)
+            return ThemeManager.BejThemeColors.boardColors.orange
         case "purple":
-            return Color(red: 0.60, green: 0.35, blue: 0.60)
+            return ThemeManager.BejThemeColors.boardColors.purple
         case "green":
-            return Color(red: 0.40, green: 0.55, blue: 0.30)
+            return ThemeManager.BejThemeColors.boardColors.green
         default: // blue
-            return ThemeManager.BejThemeColors.accent
+            return ThemeManager.BejThemeColors.boardColors.blue
         }
     }
     
@@ -2514,8 +2540,8 @@ struct ThemeAwareModifier: ViewModifier {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     // Görünümü zorla yenilemek için ID'yi değiştir
                     themeID = UUID()
-                }
-            }
+        }
+    }
             .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode)
             .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance)
     }

@@ -19,105 +19,38 @@ struct MainMenuView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Izgara arka planı
-                GridBackgroundView()
-                    .edgesIgnoringSafeArea(.all)
+        // NavigationView GEÇİCİ OLARAK kaldırıldı
+        ZStack {
+            // Izgara arka planı
+            GridBackgroundView()
+                .edgesIgnoringSafeArea(.all)
+            
+            /* // Ana VStack GEÇİCİ OLARAK yorum satırına alındı
+            VStack(spacing: 25) {
+                // Animasyonlu logo ve başlık
+                // ... 
                 
-                VStack(spacing: 25) {
-                    // Animasyonlu logo ve başlık
-                    VStack(spacing: 10) {
-                        // Sistem ikonu kullanarak logo
-                        Image(systemName: "grid.circle.fill")
-                            .font(.system(size: 80))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.purple, .blue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .shadow(color: .purple.opacity(0.6), radius: 10, x: 0, y: 0)
-                        
-                        Text("SUDOKU")
-                            .font(.system(size: 42, weight: .bold, design: .rounded))
-                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : (colorScheme == .dark ? .white : .black))
-                            .shadow(color: .blue.opacity(0.6), radius: 5, x: 0, y: 0)
-                    }
-                    .padding(.top, 50)
-                    
-                    Spacer()
-                    
-                    // Ana menü butonları
-                    VStack(spacing: 18) {
-                        // Yeni Oyun butonu
-                        NavigationLink {
-                            GameView(difficulty: .easy)
-                        } label: {
-                            NeonMenuButton(
-                                title: "Yeni Oyun",
-                                icon: "play.fill",
-                                color: .green,
-                                colorScheme: colorScheme,
-                                isBejMode: isBejMode
-                            )
-                        }
-                        
-                        // Devam Et butonu
-                        if hasSavedGame {
-                            NavigationLink {
-                                if let savedGame = loadLastGame() {
-                                    GameView(savedGame: savedGame)
-                                }
-                            } label: {
-                                NeonMenuButton(
-                                    title: "Devam Et",
-                                    icon: "arrow.clockwise",
-                                    color: .blue,
-                                    colorScheme: colorScheme,
-                                    isBejMode: isBejMode
-                                )
-                            }
-                        }
-                        
-                        // Skor Tablosu butonu
-                        NavigationLink {
-                            ScoreboardView()
-                        } label: {
-                            NeonMenuButton(
-                                title: "Skor Tablosu",
-                                icon: "trophy.fill",
-                                color: .orange,
-                                colorScheme: colorScheme,
-                                isBejMode: isBejMode
-                            )
-                        }
-                        
-                        // Ayarlar butonu
-                        Button {
-                            showSettings = true
-                        } label: {
-                            NeonMenuButton(
-                                title: "Ayarlar",
-                                icon: "gearshape.fill",
-                                color: .purple,
-                                colorScheme: colorScheme,
-                                isBejMode: isBejMode
-                            )
-                        }
-                    }
-                    .padding(.horizontal, 30)
-                    
-                    Spacer()
-                }
+                Spacer()
+                
+                // Ana menü butonları
+                // ...
+                
+                Spacer()
             }
-            .sheet(isPresented: $showSettings) {
-                SettingsView(showView: $showSettings)
-            }
+            */
         }
+        .sheet(isPresented: $showSettings) {
+            // NavigationView kaldırıldı, SettingsView doğrudan çağrılıyor
+            SettingsView(showView: $showSettings)
+            .preferredColorScheme(themeManager.colorScheme) // Sheet'in de tema uyumlu olmasını sağla
+        }
+        // .navigationViewStyle(StackNavigationViewStyle()) kaldırıldı
         .onAppear {
             checkForSavedGame()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ForceRefreshUI"))) { _ in
+            // Bu bildirim alındığında görünümün yenilenmesi için bir state değişikliği yapar
+            logInfo("MainMenuView: ForceRefreshUI bildirimi alındı")
         }
     }
     

@@ -12,6 +12,9 @@ struct RegisterView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     
+    // ThemeManager eklendi
+    @EnvironmentObject var themeManager: ThemeManager
+    
     @Binding var isPresented: Bool
     @Binding var currentUser: NSManagedObject?
     
@@ -37,10 +40,16 @@ struct RegisterView: View {
     // Doğrulama durumları
     @State private var usernameValidationMessage = ""
     @State private var emailValidationMessage = ""
-    @State private var passwordValidationMessage = ""
-    @State private var confirmPasswordValidationMessage = ""
+    @State private var passwordStrengthMessage = ""
+    @State private var isUsernameValid = false
+    @State private var isEmailValid = false
+    @State private var isPasswordStrong = false
+    @State private var showingPasswordInfo = false
     
-    @State private var showStrongPasswordInfo = false
+    // Bej mod kontrolü için hesaplama eklendi
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     // Performans için önbelleğe alma
     @ViewBuilder private func registerButton(isDisabled: Bool) -> some View {
@@ -116,158 +125,171 @@ struct RegisterView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Ad Soyad")
                                 .font(.headline)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                             
                             TextField("Adınızı ve soyadınızı girin", text: $name)
                                 .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
+                                .background(isBejMode ? 
+                                           ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                           Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                        .stroke(isBejMode ? 
+                                               ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                               Color.blue.opacity(0.3), lineWidth: 1)
                                 )
-                                .focused($focusName)
                                 .submitLabel(.next)
                                 .onSubmit { focusEmail = true }
-                                .onAppear {
-                                    NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { _ in
-                                        keyboardIsVisible = true
-                                    }
-                                    NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
-                                        keyboardIsVisible = false
-                                    }
-                                }
+                                .focused($focusName)
                         }
                         
                         // E-posta
                         VStack(alignment: .leading, spacing: 6) {
                             Text("E-posta")
                                 .font(.headline)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                             
                             TextField("E-posta adresinizi girin", text: $email)
                                 .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
+                                .background(isBejMode ? 
+                                           ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                           Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                        .stroke(isBejMode ? 
+                                               ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                               Color.blue.opacity(0.3), lineWidth: 1)
                                 )
                                 .keyboardType(.emailAddress)
                                 .autocapitalization(.none)
-                                .focused($focusEmail)
                                 .submitLabel(.next)
                                 .onSubmit { focusUsername = true }
+                                .focused($focusEmail)
+                                .onChange(of: email) {
+                                    validateEmail(email)
+                                }
                         }
                         
-                        // Kullanıcı adı
+                        // Kullanıcı Adı
                         VStack(alignment: .leading, spacing: 6) {
-                            HStack(spacing: 4) {
+                            HStack {
                                 Text("Kullanıcı Adı")
                                     .font(.headline)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                                 
                                 Text("(Zorunlu ve Değiştirilemez)")
                                     .font(.caption)
-                                    .foregroundColor(.red.opacity(0.8))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(Color.red.opacity(0.1))
-                                    )
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .orange)
                             }
                             
                             Text("Kullanıcı adınız benzersiz olmalı ve daha sonra değiştirilemez.")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
-                                .padding(.bottom, 4)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                             
                             TextField("Benzersiz kullanıcı adı (en az 4 karakter)", text: $username)
                                 .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
+                                .background(isBejMode ? 
+                                           ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                           Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                                .focused($focusUsername)
-                                .submitLabel(.next)
-                                .onSubmit { focusPassword = true }
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                        .stroke(isBejMode ? 
+                                               ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                               Color.blue.opacity(0.3), lineWidth: 1)
                                 )
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                                .submitLabel(.next)
+                                .onSubmit { focusPassword = true }
+                                .focused($focusUsername)
+                                .onChange(of: username) {
+                                    validateUsername(username)
+                                }
+                            
+                            if !usernameValidationMessage.isEmpty {
+                                Text(usernameValidationMessage)
+                                    .font(.caption)
+                                    .foregroundColor(isUsernameValid ? .green : .red)
+                            }
                         }
                         
                         // Şifre
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Şifre")
-                                .font(.headline)
+                            HStack {
+                                Text("Şifre")
+                                    .font(.headline)
+                                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                                Spacer()
+                                Button(action: {
+                                    showingPasswordInfo = true
+                                }) {
+                                    Image(systemName: "info.circle")
+                                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
+                                    Text("Güçlü şifre nedir?")
+                                        .font(.caption)
+                                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
+                                }
+                            }
                             
                             SecureField("Şifrenizi girin", text: $password)
                                 .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
+                                .background(isBejMode ? 
+                                           ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                           Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                        .stroke(isBejMode ? 
+                                               ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                               Color.blue.opacity(0.3), lineWidth: 1)
                                 )
-                                .focused($focusPassword)
                                 .submitLabel(.next)
                                 .onSubmit { focusConfirmPassword = true }
-                            
-                            // Parola gücü bilgisi
-                            if !password.isEmpty {
-                                let passwordCheck = SecurityManager.shared.isStrongPassword(password)
-                                Text(passwordCheck.message)
-                                    .font(.caption)
-                                    .foregroundColor(passwordCheck.isStrong ? .green : .red)
-                            }
-                            
-                            // Şifre bilgisi butonu
-                            Button(action: {
-                                dismissKeyboard()
-                                showStrongPasswordInfo.toggle()
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "info.circle")
-                                        .font(.caption)
-                                    Text("Güçlü şifre nedir?")
-                                        .font(.caption)
+                                .focused($focusPassword)
+                                .onChange(of: password) {
+                                    validatePasswordStrength(password)
                                 }
-                                .foregroundColor(.blue)
+                            
+                            if !passwordStrengthMessage.isEmpty {
+                                Text(passwordStrengthMessage)
+                                    .font(.caption)
+                                    .foregroundColor(isPasswordStrong ? .green : .red)
                             }
                         }
                         
-                        // Şifre onay
+                        // Şifre Onay
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Şifre Onayı")
+                            Text("Şifre Onay")
                                 .font(.headline)
+                                .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                             
                             SecureField("Şifrenizi tekrar girin", text: $confirmPassword)
                                 .padding()
-                                .background(Color(UIColor.secondarySystemBackground))
+                                .background(isBejMode ? 
+                                           ThemeManager.BejThemeColors.background.opacity(0.1) : 
+                                           Color(UIColor.secondarySystemBackground))
                                 .cornerRadius(10)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                        .stroke(isBejMode ? 
+                                               ThemeManager.BejThemeColors.accent.opacity(0.3) : 
+                                               Color.blue.opacity(0.3), lineWidth: 1)
                                 )
-                                .focused($focusConfirmPassword)
                                 .submitLabel(.done)
                                 .onSubmit {
-                                    dismissKeyboard()
-                                    if !isFormInvalid {
+                                    if isFormValid {
                                         registerUser()
                                     }
                                 }
+                                .focused($focusConfirmPassword)
                             
-                            // Şifre eşleşme bilgisi
                             if !confirmPassword.isEmpty {
-                                if password == confirmPassword {
-                                    Text("Şifreler eşleşiyor")
-                                        .font(.caption)
-                                        .foregroundColor(.green)
-                                } else {
-                                    Text("Şifreler eşleşmiyor")
+                                Text(password == confirmPassword ? "Şifreler eşleşiyor" : "Şifreler eşleşmiyor")
                                     .font(.caption)
-                                        .foregroundColor(.red)
-                                }
+                                    .foregroundColor(password == confirmPassword ? .green : .red)
                             }
                         }
                         
@@ -284,11 +306,11 @@ struct RegisterView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(isFormInvalid ? Color.gray : Color.blue.opacity(0.8))
+                        .background(!isFormValid ? Color.gray : Color.blue.opacity(0.8))
                         .foregroundColor(.white)
                         .cornerRadius(12)
                         .shadow(color: Color.blue.opacity(0.3), radius: 5, x: 0, y: 3)
-                        .disabled(isFormInvalid)
+                        .disabled(!isFormValid)
                         
                         // Zaten hesabınız var mı butonu
                         HStack {
@@ -337,7 +359,7 @@ struct RegisterView: View {
         }
             
             // Güçlü şifre bilgisi
-        .sheet(isPresented: $showStrongPasswordInfo) {
+        .sheet(isPresented: $showingPasswordInfo) {
                 strongPasswordInfoView
         }
         }
@@ -353,36 +375,48 @@ struct RegisterView: View {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
-    private var isFormInvalid: Bool {
-        if name.isEmpty || email.isEmpty || username.isEmpty || password.isEmpty || confirmPassword.isEmpty {
-            return true
-        }
-        
-        if password != confirmPassword {
-            return true
-        }
-        
-        // Şifre gücü kontrolü
-        let passwordCheck = SecurityManager.shared.isStrongPassword(password)
-        if !passwordCheck.isStrong {
-            return true
-        }
-        
-        // E-posta kontrolü
-        let emailCheck = SecurityManager.shared.isValidEmail(email)
-        if !emailCheck.isValid {
-            return true
-        }
-        
-        // Kullanıcı adı kontrolü
+    // Form geçerlilik kontrolü (isFormInvalid yerine)
+    private var isFormValid: Bool {
+         // Basic empty checks
+         guard !name.isEmpty, !email.isEmpty, !username.isEmpty, !password.isEmpty, !confirmPassword.isEmpty else {
+             return false
+         }
+         // Email check
+         guard isEmailValid else { return false } // Use the state variable
+         // Username check
+         guard isUsernameValid else { return false } // Use the state variable
+         // Password strength check
+         guard isPasswordStrong else { return false } // Use the state variable
+         // Password confirmation check
+         guard password == confirmPassword else { return false }
+
+         // TODO: Add check for existing username if necessary
+
+         return true
+     }
+     
+    // Kullanıcı adı doğrulama fonksiyonu
+    private func validateUsername(_ username: String) {
         let usernameCheck = SecurityManager.shared.isValidUsername(username)
-        if !usernameCheck.isValid {
-            return true
-        }
-        
-        return false
+        isUsernameValid = usernameCheck.isValid
+        usernameValidationMessage = usernameCheck.message
+        // TODO: Check if username exists
     }
     
+    // E-posta doğrulama fonksiyonu
+    private func validateEmail(_ email: String) {
+        let emailCheck = SecurityManager.shared.isValidEmail(email)
+        isEmailValid = emailCheck.isValid
+        emailValidationMessage = emailCheck.message
+    }
+    
+    // Şifre gücü doğrulama fonksiyonu
+    private func validatePasswordStrength(_ password: String) {
+        let passwordCheck = SecurityManager.shared.isStrongPassword(password)
+        isPasswordStrong = passwordCheck.isStrong
+        passwordStrengthMessage = passwordCheck.message
+    }
+
     private func registerUser() {
         isLoading = true
         
@@ -444,12 +478,23 @@ struct RegisterView: View {
                     self.isPresented = false
                     
                     // Kullanıcı giriş bildirimini gönder
+                    logInfo("Posting UserLoggedIn notification from RegisterView...")
                     NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
                     
                     // Başarılı kayıt titreşimi
                     let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                     impactFeedback.prepare()
                     impactFeedback.impactOccurred()
+
+                    // Başarı durumunda devam et
+                    self.presentationMode.wrappedValue.dismiss()
+
+                    // Kullanıcı giriş yaptı bildirimi gönder
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        // Kullanıcı giriş bildirimi gönder
+                        logInfo("Posting UserLoggedIn notification from RegisterView... done")
+                        NotificationCenter.default.post(name: Notification.Name("UserLoggedIn"), object: nil)
+                    }
                 } else {
                     // Başarısız kayıt
                     if let error = error {
@@ -497,7 +542,7 @@ struct RegisterView: View {
             Spacer()
             
             Button(action: {
-                showStrongPasswordInfo = false
+                showingPasswordInfo = false
             }) {
                 Text("Anladım")
                     .fontWeight(.semibold)

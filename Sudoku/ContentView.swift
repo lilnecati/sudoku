@@ -7,6 +7,7 @@
 import SwiftUI
 import CoreData
 import Combine
+import FirebaseAuth
 
 // Navigasyon sayfalarını enum olarak tanımla
 enum AppPage: Int, CaseIterable, Identifiable {
@@ -125,11 +126,21 @@ struct ContentView: View {
     
     // MARK: - Initialization
     init() {
-        // TabBar ayarları
-        let appearance = UITabBarAppearance()
-        appearance.configureWithDefaultBackground()
-        UITabBar.appearance().scrollEdgeAppearance = appearance
-        UITabBar.appearance().standardAppearance = appearance
+        // ThemeManager singleton'ını al
+        let themeManager = ThemeManager.shared
+        
+        // TabBar ayarları - ThemeManager'a bırakıyoruz
+        if themeManager.bejMode {
+            // Bej mod ise zaten ThemeManager tarafından yapılandırılacak
+            logInfo("ContentView: TabBar bej mod için ThemeManager tarafından yapılandırılacak")
+        } else {
+            // Standart mod
+            let appearance = UITabBarAppearance()
+            appearance.configureWithDefaultBackground()
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+            UITabBar.appearance().standardAppearance = appearance
+            logInfo("ContentView: TabBar standart mod için yapılandırıldı")
+        }
     }
     
     // MARK: - Setup ve bildirim ayarları
@@ -585,30 +596,9 @@ struct ContentView: View {
     // MARK: - Main Content View
     var mainContentView: some View {
         ZStack {
-            // Bej mod için özel arka plan, normal mod için ızgara arka planı
-            if isBejMode {
-                ThemeManager.BejThemeColors.background
-                    .edgesIgnoringSafeArea(.all)
-                    .overlay(
-                        // Bej mod için hafif desen
-                        VStack(spacing: 20) {
-                            ForEach(0..<20) { i in
-                                HStack(spacing: 20) {
-                                    ForEach(0..<10) { j in
-                                        Circle()
-                                            .fill(ThemeManager.BejThemeColors.accent.opacity(0.03))
-                                            .frame(width: 8, height: 8)
-                                    }
-                                }
-                                .offset(x: i % 2 == 0 ? 10 : 0)
-                            }
-                        }
-                    )
-            } else {
-                // Normal mod için ızgara arka planı
-                GridBackgroundView()
-                    .edgesIgnoringSafeArea(.all)
-            }
+            // Arka plan kontrolü kaldırıldı, her zaman GridBackgroundView kullanılacak
+            GridBackgroundView()
+                .edgesIgnoringSafeArea(.all)
             
             // Yükleme/hata durumları veya ana içerik
             if isLoading {
@@ -749,6 +739,18 @@ struct ContentView: View {
             
             // Cihaz bilgilerini göster
             logInfo("ContentView onAppear - Device: \(UIDevice.current.model), \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)")
+
+            // --- YENİ: Başlangıçta Kullanıcı Giriş Durumu Kontrolü --- 
+            logInfo("[ContentView.onAppear] Checking initial user login state...")
+            if Auth.auth().currentUser != nil {
+                logInfo("[ContentView.onAppear] User is already logged in. Triggering achievement load.")
+                AchievementManager.shared.loadAchievementsFromFirebase { success in
+                    logInfo("[ContentView.onAppear] Initial achievement load completed. Success: \(success)")
+                }
+            } else {
+                logInfo("[ContentView.onAppear] User is not logged in initially.")
+            }
+            // --- KONTROL SONU ---
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))) { _ in
             // Dil değiştiğinde tüm görünümü yenile
