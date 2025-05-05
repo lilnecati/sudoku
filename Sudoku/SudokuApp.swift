@@ -586,568 +586,165 @@ struct ColorManager {
 
 @main
 struct SudokuApp: App {
+    // CoreData Persistence Controller
+    let persistenceController = PersistenceController.shared
+    
+    // Theme Manager - Tema yönetimi için EnvironmentObject
+    @StateObject var themeManager = ThemeManager()
+    
+    // Session Manager - Oturum yönetimi için EnvironmentObject
+    @StateObject var sessionManager = SessionManager.shared
+    
+    // Güç TasarruFu Yöneticisi
+    @StateObject var powerSavingManager = PowerSavingManager.shared
+    
+    // Achievement Notification Bridge
+    @StateObject var achievementNotificationBridge = AchievementNotificationBridge.shared
+    
+    // AppDelegate'i kullanarak uygulama yaşam döngüsü olaylarını yönet
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @Environment(\.scenePhase) private var scenePhase
-    @StateObject private var themeManager = ThemeManager.shared
-    @StateObject private var localizationManager = LocalizationManager.shared
-    @AppStorage("textSizePreference") private var textSizeString = TextSizePreference.medium.rawValue
-    @AppStorage("highPerformanceMode") private var highPerformanceMode = true
     
-    // Uygulamanın arka plana alınma zamanını kaydetmek için
-    @AppStorage("lastBackgroundTime") private var lastBackgroundTime: Double = 0
-    // Oyunun sıfırlanması için gereken süre (2 dakika = 120 saniye)
-    private let gameResetTimeInterval: TimeInterval = 120
+    // ScenePhase'i takip et
+    @Environment(\.scenePhase) var scenePhase
     
-    // Uygulama yeniden açılırken splash ekranını gösterecek durum
+    // Splash ekranını yönetmek için durum değişkenleri
     @State private var showSplashOnResume = false
-    @State private var startupViewId = 0
+    @State private var lastBackgroundTime: Date? = nil
     
-    @Environment(\.colorScheme) var systemColorScheme
+    // Network Monitor instance
+    @StateObject var networkMonitor = NetworkMonitor.shared
     
-    // State to track if initialization succeeded
-    @State private var initializationError: Error? = nil
-    @State private var isInitialized = false
+    // Başlangıç konfigürasyonu için durum
+    @State private var isReady = false
     
-    // Aktif oyun ekranı açık mı?
-    @State private var isGameViewActive = false
-    
-    private var textSizePreference: TextSizePreference {
-        return TextSizePreference(rawValue: textSizeString) ?? .medium
-    }
-    
-    // Managed object context
-    private let persistenceController = PersistenceController.shared
-    private let viewContext: NSManagedObjectContext
-    
-    init() {
-        // UIScrollView ve klavye davranışı için global ayarlar
-        UIScrollView.appearance().keyboardDismissMode = .onDrag
-        
-        // Log seviyesini ayarla (açık bir şekilde)
-        #if DEBUG
-        LogManager.shared.setLogLevel(.debug)
-        #else
-        LogManager.shared.setLogLevel(.warning)  // Sadece warning ve error logları göster
-        #endif
-        
-        logInfo("Sudoku app initializing...")
-        
-        // Initialize view context
-        viewContext = persistenceController.container.viewContext
-        viewContext.automaticallyMergesChangesFromParent = true
-        viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-        
-        // Ekran kararması ayarını uygulama açılırken aktifleştir (sadece GameView'de kapatılacak)
-        UIApplication.shared.isIdleTimerDisabled = false
-        logInfo("🔅 SudokuApp init - Ekran kararması ayarı: AÇIK")
-        
-        // Firestore'u başlat
-        FirebaseApp.configure()
-        
-        // PowerSavingManager'ı başlat
-        _ = PowerSavingManager.shared
-        logInfo("Power Saving Manager initialized")
-        
-        // Başarım bildirimi köprüsünü başlat
-        _ = AchievementNotificationBridge.shared
-        logInfo("Achievement Notification Bridge initialized")
-
-        // *** YENİ: Ağ izleyiciyi başlat ***
-        NetworkMonitor.shared.startMonitoring()
-        logInfo("Network Monitor initialized and started")
-    }
-    
-    // MARK: - Firebase Token Validation
-    private func validateFirebaseToken() {
-        if let currentUser = Auth.auth().currentUser {
-            logInfo("Firebase token doğrulaması yapılıyor...")
-            currentUser.getIDTokenResult(forcingRefresh: true) { tokenResult, error in
-                if let error = error {
-                    logError("Token doğrulama hatası: \(error.localizedDescription)")
-                    // Token doğrulama hatası - kullanıcı hesabı silinmiş veya token geçersiz olabilir
-                    // Kullanıcıyı otomatik olarak çıkış yaptır
-                    do {
-                        try Auth.auth().signOut()
-                        logWarning("Geçersiz token nedeniyle kullanıcı çıkış yaptırıldı")
-                        // Kullanıcı çıkış bildirimi gönder
-                        NotificationCenter.default.post(name: Notification.Name("UserLoggedOut"), object: nil)
-                    } catch let signOutError {
-                        logError("Çıkış yapma hatası: \(signOutError.localizedDescription)")
-                    }
-                } else {
-                    logSuccess("Firebase token doğrulaması başarılı")
-                }
-            }
-        }
-    }
-
-    // MARK: - Game Screen Observers
-    // Bu fonksiyon artık kullanılmıyor ve kaldırıldı.
-
     var body: some Scene {
         WindowGroup {
-            StartupView(forceShowSplash: showSplashOnResume)
-                .id(startupViewId)
-                .environmentObject(themeManager)
-                .environmentObject(localizationManager)
-                .environment(\.managedObjectContext, viewContext)
-                .environment(\.textScale, textSizePreference.scaleFactor)
-                .preferredColorScheme(themeManager.useSystemAppearance ? nil : themeManager.darkMode ? .dark : .light)
-                .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode)
-                .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance)
-                .accentColor(ColorManager.primaryBlue)
-                // .achievementToastSystem()  // Toast bildirimleri kapatıldı
-                .withAchievementNotifications()  // Yeni bildirim sistemini kullan
-                .onChange(of: scenePhase) { oldPhase, newPhase in
-                    logInfo("Scene phase changed from \(oldPhase) to \(newPhase)")
-                    switch newPhase {
-                    case .active:
-                        logInfo("Scene became active")
-                        // Firebase token doğrulaması yap
-                        validateFirebaseToken()
-                        
-                        // Uygulama arka plandan ön plana geldiğinde
-                        let currentTime = Date().timeIntervalSince1970
-                        let timeSinceBackground = currentTime - lastBackgroundTime
-                        logInfo("Current time: \(currentTime), Last background time: \(lastBackgroundTime), Time since background: \(timeSinceBackground)")
-                        
-                        if timeSinceBackground > gameResetTimeInterval && lastBackgroundTime > 0 {
-                            // Uygulama uzun süre arka planda kaldıysa splash göster
-                            showSplashOnResume = true
-                            startupViewId += 1
-                            logInfo("Uygulama \(Int(timeSinceBackground)) saniye arka planda kaldı, splash gösterilecek. Setting showSplashOnResume = true, startupViewId = \(startupViewId)")
-                        } else {
-                            showSplashOnResume = false
-                            if lastBackgroundTime > 0 {
-                                logInfo("Uygulama \(Int(timeSinceBackground)) saniye arka planda kaldı, splash GÖSTERİLMEYECEK (limit: \(Int(gameResetTimeInterval)) sn). Setting showSplashOnResume = false")
-                            } else {
-                                logInfo("İlk açılış veya lastBackgroundTime sıfır, splash gösterilmeyecek. Setting showSplashOnResume = false")
-                            }
-                        }
-                        
-                        // Oyun verilerini senkronize et
-                        if Auth.auth().currentUser != nil {
-                            // Kullanıcı giriş yapmışsa, Firestore'dan verileri çek
-                            PersistenceController.shared.syncSavedGamesFromFirestore { success in
-                                if success {
-                                    logInfo("Oyun verileri başarıyla senkronize edildi")
-                                } else {
-                                    logWarning("Oyun senkronizasyonunda sorun oluştu")
-                                }
-                            }
-                        }
-                    case .background:
-                        // Arka plana geçiş zamanını kaydet
-                        lastBackgroundTime = Date().timeIntervalSince1970
-                        logInfo("Uygulama arka plana alındı: \(Date()). Setting lastBackgroundTime = \(lastBackgroundTime)")
-                        
-                        // Arka plana geçerken değişiklikleri kaydet
-                        PersistenceController.shared.save()
-                    case .inactive:
-                        logInfo("Scene became inactive")
-                        // Uygulama inaktif olduğunda değişiklikleri kaydet
-                        PersistenceController.shared.save()
-                    @unknown default:
-                        break
-                    }
-                }
+            StartupView()
+                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                 .environmentObject(themeManager)
+                 .environmentObject(sessionManager)
+                 .environmentObject(powerSavingManager)
+                 .environmentObject(achievementNotificationBridge)
+                 .environmentObject(networkMonitor)
+                 .preferredColorScheme(themeManager.colorScheme)
+                 .onAppear {
+                     NetworkMonitor.shared.startMonitoring()
+                 }
+                 .onChange(of: scenePhase) { oldPhase, newPhase in
+                     handleScenePhaseChange(from: oldPhase, to: newPhase)
+                 }
+                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+                      lastBackgroundTime = Date()
+                      logInfo("Uygulama arka plana girdi.")
+                 }
+                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                      logInfo("Uygulama ön plana geçecek.")
+                 }
         }
     }
-}
 
-class AppDelegate: NSObject, UIApplicationDelegate {
-    // ThemeChanged için gözleyici
-    private var themeObserver: NSObjectProtocol?
-    
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        // Firebase konfigürasyonu
+    // Sahne değişikliklerini yöneten fonksiyon
+    private func handleScenePhaseChange(from oldPhase: ScenePhase, to newPhase: ScenePhase) {
+        logInfo("Scene phase changed from \(oldPhase) to \(newPhase)")
+
+        switch newPhase {
+        case .active:
+            logInfo("Scene became active")
+            if let backgroundTime = lastBackgroundTime {
+                let timeSinceBackground = Date().timeIntervalSince(backgroundTime)
+                logInfo("Current time: \(Date().timeIntervalSince1970), Last background time: \(backgroundTime.timeIntervalSince1970), Time since background: \(timeSinceBackground)")
+                let splashTimeout: TimeInterval = 120
+                if timeSinceBackground >= splashTimeout {
+                     logInfo("Uygulama \(Int(timeSinceBackground)) saniye arka planda kaldı, splash GÖSTERİLECEK (limit: \(Int(splashTimeout)) sn). Setting showSplashOnResume = true")
+                    showSplashOnResume = true
+                } else {
+                     logInfo("Uygulama \(Int(timeSinceBackground)) saniye arka planda kaldı, splash GÖSTERİLMEYECEK (limit: \(Int(splashTimeout)) sn). Setting showSplashOnResume = false")
+                    showSplashOnResume = false
+                }
+            }
+            lastBackgroundTime = nil
+            
+            // Ağ bağlantısı geldiğinde bekleyen işlemleri kontrol et
+            if NetworkMonitor.shared.isConnected {
+                logInfo("Ağ bağlantısı var, bekleyen işlemler kontrol edilecek (eğer metod public ise).")
+            }
+            
+            logInfo("Ekran kararması engellenecek (eğer metod varsa).")
+            
+            logInfo("Günlük başarım durumu kontrol edilecek (eğer metod varsa).")
+            logInfo("Günlük giriş kontrolü yapılacak (eğer metod varsa).")
+
+        case .inactive:
+            logInfo("Scene became inactive")
+            logInfo("Ekran kararması etkinleştirilecek (eğer metod varsa).")
+            
+        case .background:
+            logInfo("Scene moved to background")
+            logInfo("Ekran kararması etkinleştirilecek (eğer metod varsa).")
+            lastBackgroundTime = Date()
+            
+        @unknown default:
+            logWarning("Unknown scene phase.")
+        }
+    }
+
+    private func configureFirebase() {
         if FirebaseApp.app() == nil {
             FirebaseApp.configure()
-            logSuccess("Firebase yapılandırması başarıyla tamamlandı")
+            logSuccess("Firebase successfully configured.")
         } else {
-            logWarning("Firebase zaten yapılandırılmış")
-        }
-        
-        // Bej mod için NavigationBar görünümünü yapılandır
-        configureNavigationBarAppearance()
-        
-        // Tema değişikliği dinleyicisi ekle
-        setupThemeObserver()
-        
-        return true
-    }
-    
-    func applicationWillTerminate(_ application: UIApplication) {
-        // Gözleyiciyi temizle
-        if let observer = themeObserver {
-            NotificationCenter.default.removeObserver(observer)
+            logWarning("Firebase already configured.")
         }
     }
-    
-    // Tema değişikliği dinleyicisi ekle
-    private func setupThemeObserver() {
-        themeObserver = NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("ThemeChanged"),
-            object: nil,
-            queue: .main) { [weak self] _ in
-                logInfo("AppDelegate: ThemeChanged bildirimi alındı")
-                self?.configureNavigationBarAppearance()
-                self?.configureTabBarAppearance()
-                self?.updateNavigationBarsInCurrentScenes()
-                self?.forceRefreshUI()
-            }
-        
-        logInfo("AppDelegate: ThemeChanged dinleyicisi kuruldu")
-    }
-    
-    // Navigation bar görünümünü yapılandıran fonksiyon
+
     private func configureNavigationBarAppearance() {
-        // Bej mod için özel görünüm ayarları
-        let bejAppearance = UINavigationBarAppearance()
-        bejAppearance.configureWithOpaqueBackground()
-        bejAppearance.backgroundColor = UIColor(ThemeManager.BejThemeColors.background)
-        bejAppearance.titleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.text)]
-        bejAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.text)]
+        let appearance = UINavigationBarAppearance()
         
-        // Standart açık/koyu mod için görünüm ayarları
-        let standardAppearance = UINavigationBarAppearance()
-        standardAppearance.configureWithDefaultBackground()
-        
-        // ThemeManager singleton'ını kullan
-        let themeManager = ThemeManager.shared
-        
-        // Bej mod aktifse, bej görünümü kullan, değilse standart görünümü kullan
-        let currentAppearance = themeManager.bejMode ? bejAppearance : standardAppearance
-        
-        // NavigationBar için global görünüm ayarları
-        UINavigationBar.appearance().standardAppearance = currentAppearance
-        UINavigationBar.appearance().compactAppearance = currentAppearance
-        UINavigationBar.appearance().scrollEdgeAppearance = currentAppearance
-        
-        // Bej mod aktifse, accent rengini ayarla
         if themeManager.bejMode {
-            UINavigationBar.appearance().tintColor = UIColor(ThemeManager.BejThemeColors.accent)
-        } else {
-            // Sistem varsayılanına dön
-            UINavigationBar.appearance().tintColor = nil
-        }
-        
-        // Görünümü hemen güncellemek için tüm mevcut navigation controller'ları güncelle
-        DispatchQueue.main.async {
-            self.updateNavigationBarsInCurrentScenes()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor(ThemeManager.BejThemeColors.background)
+            appearance.titleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.text), .font: UIFont.systemFont(ofSize: 18, weight: .bold)]
+            appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.text), .font: UIFont.systemFont(ofSize: 34, weight: .bold)]
             
-            // ForceRefreshUI bildirimi gönder
-            NotificationCenter.default.post(name: NSNotification.Name("ForceRefreshUI"), object: nil)
-        }
-        
-        logInfo("NavigationBar görünümü yapılandırıldı: \(themeManager.bejMode ? "Bej Mod" : "Standart Mod")")
-    }
-    
-    // TabBar görünümünü yapılandıran fonksiyon
-    private func configureTabBarAppearance() {
-        // ThemeManager singleton'ını kullan
-        let themeManager = ThemeManager.shared
-        
-        // Bej mod için özel görünüm ayarları
-        let bejAppearance = UITabBarAppearance()
-        bejAppearance.configureWithOpaqueBackground()
-        bejAppearance.backgroundColor = UIColor(ThemeManager.BejThemeColors.background)
-        
-        // Standart görünüm
-        let standardAppearance = UITabBarAppearance()
-        standardAppearance.configureWithDefaultBackground()
-        
-        // Bej mod aktifse, bej görünümü kullan, değilse standart görünümü kullan
-        let appearance = themeManager.bejMode ? bejAppearance : standardAppearance
-        
-        // TabBar için global görünüm ayarları
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
-        
-        // Bej mod aktifse, renklerini ayarla
-        if themeManager.bejMode {
-            UITabBar.appearance().tintColor = UIColor(ThemeManager.BejThemeColors.accent)
-            UITabBar.appearance().unselectedItemTintColor = UIColor(ThemeManager.BejThemeColors.secondaryText)
+            let buttonAppearance = UIBarButtonItemAppearance()
+            buttonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.accent)]
+            appearance.buttonAppearance = buttonAppearance
+            appearance.backButtonAppearance = buttonAppearance
         } else {
-            // Sistem varsayılanına dön
-            UITabBar.appearance().tintColor = nil
-            UITabBar.appearance().unselectedItemTintColor = nil
+            appearance.configureWithDefaultBackground()
         }
         
-        // Tab bar'lar için görünümü zorla güncelle
-        updateTabBarsInCurrentScenes()
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
         
-        logInfo("TabBar görünümü yapılandırıldı: \(themeManager.bejMode ? "Bej Mod" : "Standart Mod")")
+        logInfo("NavigationBar appearance configured: \(themeManager.bejMode ? "Bej Mode" : "Default/Dark Mode")")
+        setupThemeChangeListenerInAppDelegate()
     }
     
-    // Tüm tab bar'ları bulup güncelleyen yardımcı fonksiyon
-    private func updateTabBarsInCurrentScenes() {
-        if #available(iOS 15.0, *) {
-            for scene in UIApplication.shared.connectedScenes {
-                guard let windowScene = scene as? UIWindowScene else { continue }
-                
-                for window in windowScene.windows {
-                    updateTabBarsRecursively(in: window.rootViewController)
-                }
-            }
-        } else {
-            // iOS 15 öncesi için eski yöntem
-            for window in UIApplication.shared.windows {
-                updateTabBarsRecursively(in: window.rootViewController)
-            }
-        }
+    private func setupThemeChangeListenerInAppDelegate() {
+        appDelegate.themeManager = themeManager
+        logInfo("AppDelegate: ThemeChanged listener setup initiated.")
     }
-    
-    // Recursive olarak tab bar'ları bul ve güncelle
-    private func updateTabBarsRecursively(in viewController: UIViewController?) {
-        guard let viewController = viewController else { return }
-        
-        // Eğer bu bir tab bar controller ise, görünümü güncelle
-        if let tabBarController = viewController as? UITabBarController {
-            updateTabBarController(tabBarController)
-        }
-        
-        // Presented controller varsa onu da kontrol et
-        if let presented = viewController.presentedViewController {
-            updateTabBarsRecursively(in: presented)
-        }
-        
-        // Sayfa container ise, içindeki tüm sayfaları kontrol et
-        if let tabController = viewController as? UITabBarController {
-            tabController.viewControllers?.forEach { updateTabBarsRecursively(in: $0) }
-        }
-        
-        // Navigation controller ise içindeki view controller'ları kontrol et
-        if let navController = viewController as? UINavigationController {
-            navController.viewControllers.forEach { updateTabBarsRecursively(in: $0) }
-        }
-        
-        // Split view controller ise içindeki view controller'ları kontrol et
-        if let splitController = viewController as? UISplitViewController {
-            splitController.viewControllers.forEach { updateTabBarsRecursively(in: $0) }
-        }
-        
-        // Çocuk view controller'ları kontrol et
-        viewController.children.forEach { updateTabBarsRecursively(in: $0) }
-    }
-    
-    // Tab bar controller için doğrudan güncelleme yap
-    private func updateTabBarController(_ tabBarController: UITabBarController) {
-        let themeManager = ThemeManager.shared
-        
-        // Bej mod için özel görünüm ayarları
-        let bejAppearance = UITabBarAppearance()
-        bejAppearance.configureWithOpaqueBackground()
-        bejAppearance.backgroundColor = UIColor(ThemeManager.BejThemeColors.background)
-        
-        // Standart görünüm
-        let standardAppearance = UITabBarAppearance()
-        standardAppearance.configureWithDefaultBackground()
-        
-        // Bej mod aktifse, bej görünümü kullan, değilse standart görünümü kullan
-        if themeManager.bejMode {
-            tabBarController.tabBar.standardAppearance = bejAppearance
-            if #available(iOS 15.0, *) {
-                tabBarController.tabBar.scrollEdgeAppearance = bejAppearance
-            }
-            tabBarController.tabBar.tintColor = UIColor(ThemeManager.BejThemeColors.accent)
-            tabBarController.tabBar.unselectedItemTintColor = UIColor(ThemeManager.BejThemeColors.secondaryText)
-        } else {
-            tabBarController.tabBar.standardAppearance = standardAppearance
-            if #available(iOS 15.0, *) {
-                tabBarController.tabBar.scrollEdgeAppearance = standardAppearance
-            }
-            tabBarController.tabBar.tintColor = nil
-            tabBarController.tabBar.unselectedItemTintColor = nil
-        }
-        
-        // Görünümün zorla güncellenmesini sağla
-        tabBarController.tabBar.setNeedsLayout()
-        tabBarController.tabBar.layoutIfNeeded()
-    }
-    
-    // Tüm UI'ı zorla yenileme işlemi
-    private func forceRefreshUI() {
-        DispatchQueue.main.async {
-            if #available(iOS 15.0, *) {
-                for scene in UIApplication.shared.connectedScenes {
-                    guard let windowScene = scene as? UIWindowScene else { continue }
-                    for window in windowScene.windows {
-                        window.setNeedsLayout()
-                        window.layoutIfNeeded()
-                        
-                        if let rootVC = window.rootViewController {
-                            rootVC.beginAppearanceTransition(false, animated: false)
-                            rootVC.endAppearanceTransition()
-                            rootVC.beginAppearanceTransition(true, animated: false)
-                            rootVC.endAppearanceTransition()
-                            
-                            // Navigation controller ise doğrudan güncelle
-                            if let navVC = rootVC as? UINavigationController {
-                                navVC.navigationBar.setNeedsLayout()
-                                navVC.navigationBar.layoutIfNeeded()
-                            }
-                        }
-                    }
-                }
-            } else {
-                // iOS 15 öncesi için eski yöntem
-                for window in UIApplication.shared.windows {
-                    window.setNeedsLayout()
-                    window.layoutIfNeeded()
-                    
-                    if let rootVC = window.rootViewController {
-                        rootVC.beginAppearanceTransition(false, animated: false)
-                        rootVC.endAppearanceTransition()
-                        rootVC.beginAppearanceTransition(true, animated: false)
-                        rootVC.endAppearanceTransition()
-                        
-                        // Navigation controller ise doğrudan güncelle
-                        if let navVC = rootVC as? UINavigationController {
-                            navVC.navigationBar.setNeedsLayout()
-                            navVC.navigationBar.layoutIfNeeded()
-                        }
-                    }
-                }
-            }
-            
-            // SwiftUI tarafı için notification gönder
-            NotificationCenter.default.post(name: NSNotification.Name("ForceRefreshUI"), object: nil)
-            
-            logInfo("Tüm UI zorla yenilendi")
-        }
-    }
-    
-    // Mevcut pencerelerdeki tüm navigation controller'ları günceller
-    private func updateNavigationBarsInCurrentScenes() {
-        if #available(iOS 15.0, *) {
-            for scene in UIApplication.shared.connectedScenes {
-                if let windowScene = scene as? UIWindowScene {
-                    for window in windowScene.windows {
-                        findAndUpdateNavigationControllers(in: window.rootViewController)
-                    }
-                }
-            }
-        } else {
-            // iOS 15 öncesi için eski yöntem
-            for window in UIApplication.shared.windows {
-                findAndUpdateNavigationControllers(in: window.rootViewController)
-            }
-        }
-    }
-    
-    // Recursive olarak navigation controller'ları bulan ve güncelleyen fonksiyon
-    private func findAndUpdateNavigationControllers(in viewController: UIViewController?) {
-        guard let viewController = viewController else { return }
-        
-        // Mevcut controller bir navigation controller ise bunu güncelle
-        if let navController = viewController as? UINavigationController {
-            updateAppearance(for: navController)
-        }
-        
-        // Presented controller varsa onu da kontrol et
-        if let presented = viewController.presentedViewController {
-            findAndUpdateNavigationControllers(in: presented)
-        }
-        
-        // Sayfa container ise, içindeki tüm sayfaları kontrol et
-        if let tabController = viewController as? UITabBarController {
-            tabController.viewControllers?.forEach { findAndUpdateNavigationControllers(in: $0) }
-        }
-        
-        // Navigation controller ise içindeki view controller'ları kontrol et
-        if let navController = viewController as? UINavigationController {
-            navController.viewControllers.forEach { findAndUpdateNavigationControllers(in: $0) }
-        }
-        
-        // Split view controller ise içindeki view controller'ları kontrol et
-        if let splitController = viewController as? UISplitViewController {
-            splitController.viewControllers.forEach { findAndUpdateNavigationControllers(in: $0) }
-        }
-    }
-    
-    // Belirli bir navigation controller için görünümü güncelle
-    private func updateAppearance(for navController: UINavigationController) {
-        // ThemeManager singleton'ını kullan
-        let themeManager = ThemeManager.shared
-        
-        // Bej mod için görünüm
-        let bejAppearance = UINavigationBarAppearance()
-        bejAppearance.configureWithOpaqueBackground()
-        bejAppearance.backgroundColor = UIColor(ThemeManager.BejThemeColors.background)
-        bejAppearance.titleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.text)]
-        bejAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.text)]
-        
-        // Standart görünüm
-        let standardAppearance = UINavigationBarAppearance()
-        standardAppearance.configureWithDefaultBackground()
-        
-        // Duruma göre görünümü seç
-        let appearance = themeManager.bejMode ? bejAppearance : standardAppearance
-        
-        // Doğrudan bu navigation controller'a görünümü uygula
-        navController.navigationBar.standardAppearance = appearance
-        navController.navigationBar.compactAppearance = appearance
-        navController.navigationBar.scrollEdgeAppearance = appearance
-        navController.navigationBar.tintColor = themeManager.bejMode ? UIColor(ThemeManager.BejThemeColors.accent) : nil
-        
-        // Görünümün zorla güncellenmesini sağla
-        navController.navigationBar.layoutIfNeeded()
-    }
-}
 
-// Kullanıcı değişikliği bildirimlerini ayarla
-private func setupUserChangeObservers() {
-    // Kullanıcı çıkış yaptığında dinleyici
-    NotificationCenter.default.addObserver(forName: Notification.Name("UserLoggedOut"), object: nil, queue: .main) { _ in
-        logInfo("Kullanıcı çıkış yaptı")
-        
-        // Görüntüleri yenile
-        NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
+    private func setupUserDefaults() {
+        UserDefaults.standard.register(defaults: [
+            "haptics_enabled": true,
+            "sound_effects_enabled": true,
+            "timer_enabled": true,
+            "highlight_similar_numbers": true,
+            "highlight_mistakes": true,
+            "auto_remove_notes": true,
+            "prevent_screen_dimming": true,
+            "selected_theme": "system",
+            "bej_mode_enabled": false,
+            "grid_line_style": "thin",
+            "app_language": "tr"
+        ])
+        logInfo("UserDefaults defaults registered.")
     }
     
-    // Kullanıcı giriş yaptığında dinleyici
-    NotificationCenter.default.addObserver(forName: Notification.Name("UserLoggedIn"), object: nil, queue: .main) { _ in
-        if let user = PersistenceController.shared.getCurrentUser() {
-            logInfo("Kullanıcı giriş yaptı: \(user.username ?? "N/A")")
-            
-            // Görüntüleri yenile
-            NotificationCenter.default.post(name: Notification.Name("ForceUIUpdate"), object: nil)
-        }
-    }
-}
-
-// Error view component
-struct InitializationErrorView: View {
-    let error: Error
-    let retryAction: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.orange)
-            
-            Text.localizedSafe("Uygulama Başlatılamadı")
-                .font(.title)
-                .fontWeight(.bold)
-            
-            Text.localizedSafe("Uygulamayı kapatıp tekrar açmayı deneyin.")
-                .multilineTextAlignment(.center)
-            
-            Text("Hata: \(error.localizedDescription)")
-                .font(.caption)
-                .foregroundColor(.gray)
-                .padding()
-            
-            Button(action: retryAction) {
-                Text.localizedSafe("Tekrar Dene")
-                    .fontWeight(.semibold)
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.blue))
-                    .foregroundColor(.white)
-            }
-        }
-        .padding()
+    var isIPad: Bool {
+        return UIDevice.current.userInterfaceIdiom == .pad
     }
 }

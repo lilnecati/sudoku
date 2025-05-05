@@ -4151,6 +4151,7 @@
       }
     },
     "Hata: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

@@ -4,6 +4,7 @@ import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 import Network // NetworkMonitor için eklendi
+import Combine // Combine ekleyelim
 // Şimdilik Firestore'u kaldırdık
 // import FirebaseFirestore
 
@@ -16,6 +17,12 @@ class PersistenceController {
     private var savedGamesListener: ListenerRegistration?
     private var deletedGamesListener: ListenerRegistration?
     
+    // Firebase Auth state listener handle
+    private var authStateHandle: AuthStateDidChangeListenerHandle?
+    
+    // SessionManager aboneliklerini tutmak için
+    private var sessionCancellables = Set<AnyCancellable>() // <-- ADDED
+
     // Lazy loading ile Firestore başlatmayı geciktir
     lazy var db: Firestore = {
         // Firebase'in başlatıldığından emin ol
@@ -37,21 +44,24 @@ class PersistenceController {
             if let error = error {
                 logError("CoreData yüklenemedi: \(error.localizedDescription)")
             } else {
-                logInfo("CoreData yüklendi, Firebase dinleyicileri kullanıcı giriş yaptığında başlatılacak.") // Log mesajı güncellendi
-                // CoreData yüklendikten hemen sonra Firebase dinleyicilerini başlatma
-                // Bunun yerine UserLoggedIn bildirimini bekleyeceğiz.
-                // DispatchQueue.main.async { [weak self] in
-                //     self?.setupDeletedGamesListener()
-                // }
+                logInfo("CoreData yüklendi, Firebase özellikleri AppDelegate'de etkinleştirilecek.") // Log mesajı güncellendi
+                // Firebase dinleyicileri artık burada BAŞLATILMIYOR.
             }
         }
         
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
-        // NotificationCenter'dan gelen oturum açma/çıkma ve ağ durumu bildirimlerini dinle
-        setupNotificationObservers() // Bu fonksiyon zaten var, içine ekleme yapacağız
-    } // <<< PASTE THE BLOCK HERE, AFTER THIS CLOSING BRACE
+        // NotificationCenter ve Auth state dinleyicileri ARTIK BURADA AYARLANMIYOR.
+        // setupListeners() // <-- ÇAĞRI KALDIRILDI
+    }
+    
+    // Yeni metod: Firebase özellikleri etkinleştirildikten sonra çağrılır
+    public func activateFirebaseFeatures() {
+        logInfo("Activating Firebase features in PersistenceController...")
+        // Dinleyicileri burada ayarla
+        setupListeners()
+    }
     
     // MARK: - Pending Operations Processing (MOVED HERE - CLASS SCOPE)
     
@@ -345,70 +355,106 @@ class PersistenceController {
     
     // MARK: - Firebase & Notification Listeners
     
-    private func setupNotificationObservers() {
-        // Kullanıcı giriş/çıkış bildirimlerini dinle
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleUserLoggedIn),
-            name: Notification.Name("UserLoggedIn"),
-            object: nil
-        )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleUserLoggedOut),
-            name: Notification.Name("UserLoggedOut"),
-            object: nil
-        )
-        
-        // *** YENİ: Ağ bağlantısı bildirimini dinle ***
-        // Remove comments for NetworkMonitor listener
+    // Auth state ve Notification dinleyicilerini ayarla
+    private func setupListeners() {
+        // 1. Firebase Auth State Listener'ı ayarla (Bu SessionManager'ı günceller)
+        authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] (auth, user) in
+            guard let _ = self else { return }
+            SessionManager.shared.updateUserState(user)
+        }
+
+        // 2. SessionManager Publisher'larına abone ol
+        SessionManager.shared.sessionDidBecomeActivePublisher
+            .sink { [weak self] in
+                logInfo("PersistenceController: sessionDidBecomeActivePublisher alındı. Kurulum ve senkronizasyon başlıyor...")
+                self?.performLoginTasks()
+            }
+            .store(in: &sessionCancellables)
+            
+        SessionManager.shared.sessionDidBecomeInactivePublisher
+            .sink { [weak self] in
+                logInfo("PersistenceController: sessionDidBecomeInactivePublisher alındı. Dinleyiciler durduruluyor...")
+                self?.performLogoutTasks()
+            }
+            .store(in: &sessionCancellables)
+
+        // 3. Ağ Bağlantısı Bildirimini Dinle
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleNetworkConnected),
-            name: NetworkMonitor.NetworkConnectedNotification, // Use actual notification name
+            name: NetworkMonitor.NetworkConnectedNotification,
             object: nil
         )
+
+        // Eski UserLoggedIn ve UserLoggedOut observer'ları kaldırıldı.
+        // NotificationCenter.default.addObserver(
+        //     self,
+        //     selector: #selector(handleUserLoggedIn),
+        //     name: Notification.Name("UserLoggedIn"),
+        //     object: nil
+        // )
+        //
+        // NotificationCenter.default.addObserver(
+        //     self,
+        //     selector: #selector(handleUserLoggedOut),
+        //     name: Notification.Name("UserLoggedOut"),
+        //     object: nil
+        // )
     }
     
-    @objc private func handleUserLoggedIn() {
-        logInfo("Kullanıcı giriş bildirimi alındı - Senkronizasyon ve bekleyen işlemler başlatılıyor")
+    // Dinleyicileri kaldırmak için
+    deinit {
+        if let handle = authStateHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+            logInfo("Auth State Listener kaldırıldı.")
+        }
+        // SessionManager aboneliklerini de iptal et
+        sessionCancellables.forEach { $0.cancel() }
+        logInfo("SessionManager abonelikleri iptal edildi.")
+    }
+
+    // Giriş yapıldığında yapılacak işlemler
+    private func performLoginTasks() {
+        logInfo("performLoginTasks: Kurulum ve senkronizasyon başlatılıyor...")
         
-        // Setup listeners first
-        setupDeletedGamesListener()
+        // Önce dinleyicileri kur
+        setupDeletedGamesListener() // Bu fonksiyon kullanıcı kontrolü yapmalı veya Auth state'e güvenmeli
         
-        // Then sync data from Firestore
-        syncSavedGamesFromFirestore { _ in
-             logInfo("Kayıtlı oyunlar senkronizasyonu tamamlandı.")
-             // Optionally trigger UI refresh if needed after sync
-        }
-        syncHighScoresFromFirestore { _ in 
-            logInfo("Yüksek skorlar senkronizasyonu tamamlandı.")
-            // Optionally trigger UI refresh if needed after sync
-        }
-        syncCompletedGamesFromFirestore { _ in 
-             logInfo("Tamamlanmış oyun istatistikleri senkronizasyonu tamamlandı.")
-             // Optionally trigger UI refresh if needed after sync
-        }
-        syncProfileImage { _ in
-             logInfo("Profil resmi senkronizasyonu tamamlandı.")
-             // Optionally trigger UI refresh if needed after sync
-        }
+        // Sonra verileri Firestore'dan senkronize et
+        syncSavedGamesFromFirestore { _ in logInfo("Kayıtlı oyunlar senkronizasyonu tamamlandı.") }
+        syncHighScoresFromFirestore { _ in logInfo("Yüksek skorlar senkronizasyonu tamamlandı.") }
+        syncCompletedGamesFromFirestore { _ in logInfo("Tamamlanmış oyun istatistikleri senkronizasyonu tamamlandı.") }
+        syncProfileImage { _ in logInfo("Profil resmi senkronizasyonu tamamlandı.") }
         
-        // Finally, process any pending operations
-        processPendingOperations()
+        // Son olarak bekleyen işlemleri işle
+        processPendingOperations() // Bu fonksiyon da Auth state'e güvenmeli
     }
     
-    @objc private func handleUserLoggedOut() {
-        logInfo("Kullanıcı çıkış bildirimi alındı - Firebase dinleyicileri durdurulacak")
+    // Çıkış yapıldığında yapılacak işlemler
+    private func performLogoutTasks() {
+        logInfo("performLogoutTasks: Firebase dinleyicileri durduruluyor...")
         deletedGamesListener?.remove()
         deletedGamesListener = nil
         savedGamesListener?.remove()
         savedGamesListener = nil
-        // Kullanıcı çıkış yaptığında bekleyen işlemleri işlemeye gerek yok
+        // Kullanıcı çıkış yaptığında bekleyen işlemleri işlemeye genellikle gerek yok,
+        // çünkü işlemler kullanıcıya özeldir.
+    }
+
+    // handleUserLoggedIn ve handleUserLoggedOut fonksiyonları artık kullanılmıyor.
+    /*
+    @objc private func handleUserLoggedIn() {
+        logInfo("Kullanıcı giriş bildirimi alındı (veya Auth State Listener tetiklendi) - Senkronizasyon ve bekleyen işlemler başlatılıyor")
+        // ... eski içerik ...
     }
     
-    // *** YENİ: Ağ bağlantısı geldiğinde çağrılacak fonksiyon ***
+    @objc private func handleUserLoggedOut() {
+        logInfo("Kullanıcı çıkış bildirimi alındı (veya Auth State Listener tetiklendi) - Firebase dinleyicileri durdurulacak")
+        // ... eski içerik ...
+    }
+    */
+    
+    // Ağ bağlantısı geldiğinde bekleyen işlemleri işle
     @objc private func handleNetworkConnected() {
         logInfo("Ağ bağlantısı bildirimi alındı - Bekleyen işlemler kontrol ediliyor")
         processPendingOperations() // Ensure this function is defined at class scope
@@ -505,7 +551,7 @@ class PersistenceController {
         // Üst kısımda eski işlem mantığı kalmıştı, kaldırıldı.
     }
     
-    // YÜKSEK ÖNCELİKLİ ÇÖZÜM: SAVEDGAMES DİNLEYİCİSİ - HER ANİ VE TÜM DEĞİŞİKLİKLERİ DİNLER
+    // YÜKSEK ÖNCELİKLİ ÇÖZÜM: SAVEDGAMES DİNLEYİCİSİ - HER ANİ VE TÜM DEĞİŞİKLERİ DİNLER
     private func setupContinuousDeleteListener() {
         // Kullanıcı giriş yapmamışsa geri dön
         guard let currentUser = Auth.auth().currentUser else { return }
@@ -1797,21 +1843,33 @@ class PersistenceController {
         do {
             // Önce tüm oyunları getir
             let allGames = try context.fetch(fetchRequest)
+            logInfo("Yerel veritabanından silinecek oyun sayısı: \\(allGames.count)")
             
-            // Her bir oyunu tek tek sil
+            // Her bir oyunu yerelden tek tek sil
             for game in allGames {
                 context.delete(game)
             }
             
-            // Değişiklikleri kaydet
+            // Değişiklikleri yerel veritabanına kaydet
             try context.save()
             logSuccess("Tüm kaydedilmiş oyunlar yerel veritabanından silindi")
             
-            // Firestore'dan kullanıcıya ait tüm oyunları sil
-            deleteAllUserGamesFromFirestore()
+            // Kullanıcı giriş yapmışsa Firestore'dan kullanıcıya ait tüm oyunları sil
+            if Auth.auth().currentUser != nil {
+                 logInfo("Kullanıcı giriş yapmış, Firestore'daki oyunlar da silinecek.")
+                 deleteAllUserGamesFromFirestore()
+            } else {
+                 logInfo("Kullanıcı giriş yapmamış, Firestore silme işlemi atlanıyor.")
+            }
+            
+            // UI güncellemesi için bildirim gönder (yerel silme sonrası)
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+                logInfo("deleteAllSavedGames sonrası UI yenileme bildirimi gönderildi.")
+            }
             
         } catch {
-            logError("Kaydedilmiş oyunlar silinemedi: \(error)")
+            logError("Yerel kaydedilmiş oyunlar silinemedi: \\(error)")
         }
     }
     
@@ -2397,7 +2455,18 @@ class PersistenceController {
             return
         }
         
-        logSuccess("Firebase girişi başarılı: \(user.uid)")
+        // Firestore'da kullanıcının giriş durumunu güncelle
+// Firestore'da kullanıcının giriş durumunu güncelle
+db.collection("users").document(user.uid).setData([
+    "isLoggedIn": true,
+    "lastLoginDate": FieldValue.serverTimestamp()
+], merge: true) { error in
+    if let error = error {
+        logWarning("Firestore giriş durumu güncellenemedi: \(error.localizedDescription)")
+    } else {
+        logSuccess("Firestore'da kullanıcı durumu güncellendi: isLoggedIn = true")
+    }
+}
         
         // Firestore'dan kullanıcı verilerini çek
         db.collection("users").document(user.uid).getDocument { [weak self] document, error in

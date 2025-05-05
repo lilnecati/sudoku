@@ -554,11 +554,11 @@ struct GameView: View {
             VStack(spacing: 10) {
                 Text("Zorluk Seviyesi Seçin")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .foregroundColor(colorScheme == .dark ? .white : .black)
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : (colorScheme == .dark ? .white : .black))
                 
                 Text("Kendinize uygun bir zorluk seviyesi belirleyin")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                     .multilineTextAlignment(.center)
             }
             .padding(.top, 20)
@@ -588,12 +588,12 @@ struct GameView: View {
             } label: {
                 Text("İptal")
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(ColorManager.primaryRed)
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.boardColors.red : ColorManager.primaryRed)
                     .padding(.vertical, 15)
                     .frame(maxWidth: .infinity)
                     .background(
                         Capsule()
-                            .stroke(ColorManager.primaryRed, lineWidth: 1)
+                            .stroke(themeManager.bejMode ? ThemeManager.BejThemeColors.boardColors.red : ColorManager.primaryRed, lineWidth: 1)
                     )
             }
             .padding(.horizontal, 30)
@@ -601,7 +601,7 @@ struct GameView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(.systemGray6) : Color.white))
                 .shadow(color: Color.black.opacity(0.15), radius: 15, x: 0, y: 5)
         )
         .frame(maxHeight: 550)
@@ -702,13 +702,19 @@ struct GameView: View {
                 // Tebrikler ekranını kapat
                 showingGameComplete = false
                 
-                // Yeni bir oyun başlat
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                // Önce hata ekranını kapat, sonra zorluk seçiciyi aç
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    // Oyun durumunu sıfırla (hata ekranını kapat)
+                    viewModel.gameState = .ready
+                }
+                
+                // Kısa bir gecikme ile zorluk seçiciyi göster
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     showDifficultyPicker = true
                 }
             }) {
                 HStack {
-                    Image(systemName: "plus.circle.fill")
+                    Image(systemName: "arrow.clockwise.circle.fill")
                     Text("Yeni Oyun")
                         .fontWeight(.bold)
                 }
@@ -716,32 +722,13 @@ struct GameView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(
-                                LinearGradient(
-                                    colors: [ColorManager.primaryGreen, ColorManager.primaryBlue],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                        
-                        // Parlak üst kenar
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [.white.opacity(0.6), .clear],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ),
-                                lineWidth: 1.5
-                            )
-                    }
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.boardColors.red : Color.red)
                 )
-                .foregroundColor(.white)
-                .shadow(color: ColorManager.primaryBlue.opacity(0.4), radius: 5, x: 0, y: 3)
+                .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.background : .white)
             }
-            .padding(.top, 10)
+            .padding(.top, 15)
+            .padding(.horizontal, 20)
             
             // Anasayfaya Dön Butonu
             Button(action: {
@@ -835,77 +822,96 @@ struct GameView: View {
     
     // Kaybedildi ekranı
     private var gameOverView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "xmark.circle.fill")
-                .font(.system(size: 75))
-                .foregroundColor(.red)
-                .shadow(color: .red.opacity(0.3), radius: 10, x: 0, y: 5)
-            
-            Text("Oyun Bitti!")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundColor(colorScheme == .dark ? .white : .black)
-            
-            Text("3 hata yaptınız ve Sudoku oyununu kaybettiniz.")
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            
-            Text("Süre: \(timeString(from: viewModel.elapsedTime))")
-                .font(.subheadline)
+        ScrollView {
+            VStack(spacing: 15) {
+                // Üst kısım - Hata ikonu
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 70))
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.boardColors.red : .red)
+                    .shadow(color: (themeManager.bejMode ? ThemeManager.BejThemeColors.boardColors.red : .red).opacity(0.4), radius: 12, x: 0, y: 6)
+                    .padding(.top, 10)
+                
+                // Başlık
+                Text("Oyun Bitti!")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : (colorScheme == .dark ? .white : .black))
+                
+                // Açıklama
+                Text("3 hata yaptınız ve Sudoku oyununu kaybettiniz.")
+                    .font(.headline)
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                // Süre bilgisi
+                Text("Süre: \(timeString(from: viewModel.elapsedTime))")
+                    .font(.subheadline)
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                    .padding(.top, 2)
+                
+                // Yeni Oyun Butonu
+                Button(action: {
+                    // Önce hata ekranını kapat, sonra zorluk seçiciyi aç
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        // Oyun durumunu sıfırla (hata ekranını kapat)
+                        viewModel.gameState = .ready
+                    }
+                    
+                    // Kısa bir gecikme ile zorluk seçiciyi göster
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showDifficultyPicker = true
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.clockwise.circle.fill")
+                        Text("Yeni Oyun")
+                            .fontWeight(.bold)
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.boardColors.red : Color.red)
+                    )
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.background : .white)
+                }
+                .padding(.top, 15)
+                .padding(.horizontal, 20)
+                
+                // Anasayfaya Dön Butonu
+                Button(action: {
+                    // Önce ekranı kapatalım
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        dismiss()
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "house.fill")
+                        Text("Anasayfaya Dön")
+                            .fontWeight(.medium)
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(themeManager.bejMode ? ThemeManager.BejThemeColors.text.opacity(0.3) : Color.gray, lineWidth: 1.5)
+                    )
+                    .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : .primary)
+                }
                 .padding(.top, 5)
-            
-            Button(action: {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    showDifficultyPicker = true
-                }
-            }) {
-                HStack {
-                    Image(systemName: "arrow.clockwise.circle.fill")
-                    Text("Yeni Oyun")
-                        .fontWeight(.bold)
-                }
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.red)
-                )
-                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 10)
             }
-            .padding(.top, 20)
-            .padding(.horizontal, 40)
-            
-            // Anasayfaya Dön Butonu
-            Button(action: {
-                // Önce ekranı kapatalım
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    dismiss()
-                }
-            }) {
-                HStack {
-                    Image(systemName: "house.fill")
-                    Text("Anasayfaya Dön")
-                        .fontWeight(.medium)
-                }
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray, lineWidth: 1)
-                )
-                .foregroundColor(.primary)
-            }
-            .padding(.top, 5)
-            .padding(.horizontal, 40)
+            .padding(25)
         }
-        .padding(30)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: 10)
+            RoundedRectangle(cornerRadius: 24)
+                .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(.systemGray6) : Color.white))
+                .shadow(color: Color.black.opacity(0.25), radius: 20, x: 0, y: 12)
         )
+        .frame(maxHeight: 450)
         .padding(20)
         .transition(.scale.combined(with: .opacity))
         .zIndex(100)
@@ -1024,6 +1030,7 @@ struct DifficultyButton: View {
     
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.textScale) var textScale
+    @EnvironmentObject var themeManager: ThemeManager
     
     // Temel boyutlar
     private var titleBaseSize: CGFloat = 18
@@ -1056,12 +1063,12 @@ struct DifficultyButton: View {
                     // Başlık
                     Text(title)
                         .font(.system(size: titleBaseSize * textScale, weight: .medium))
-                        .foregroundColor(colorScheme == .dark ? .white : .black)
+                        .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : (colorScheme == .dark ? .white : .black))
                     
                     // Açıklama
                     Text(description)
                         .font(.system(size: descriptionBaseSize * textScale))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                         .lineLimit(1)
                 }
                 
@@ -1076,7 +1083,7 @@ struct DifficultyButton: View {
             .padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+                    .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.background.opacity(0.5) : (colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)))
             )
             .contentShape(Rectangle())
         }

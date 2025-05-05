@@ -83,6 +83,7 @@ struct SudokuCellView: View {
             // Temel arka plan rengi
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(baseBackgroundColor)
+                .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: 1)
 
             // Vurgulama arka planı (varsa)
             if let bgColor = highlightBackgroundColor {
@@ -92,12 +93,16 @@ struct SudokuCellView: View {
 
             // Kenarlık
             RoundedRectangle(cornerRadius: cornerRadius)
-                .strokeBorder(highlightBorderColor ?? standardBorderColor, lineWidth: highlightBorderColor != nil ? 2.5 : 1.5) // Vurguluysa daha kalın
+                .strokeBorder(
+                    highlightBorderColor ?? standardBorderColor, 
+                    lineWidth: highlightBorderColor != nil ? 2.0 : 1.0,
+                    antialiased: true
+                )
 
             // Hedef Hücre Parlama Animasyonu
             if interactionType == .target {
                 TargetHighlightGlow(color: getHighlightBorderColor(for: .target) ?? .orange)
-                    .cornerRadius(cornerRadius) // Köşeleri yuvarlat
+                    .cornerRadius(cornerRadius)
             }
         }
     }
@@ -108,14 +113,15 @@ struct SudokuCellView: View {
             // Değer gösterimi
             if let value = value {
                 Text("\(value)")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: 28, weight: .medium, design: .rounded))
                     .foregroundColor(getTextColor())
+                    .shadow(color: Color.black.opacity(0.05), radius: 0.5, x: 0, y: 0.5)
             }
             
             // Pencil marks - sadece varsa çiz
             else if !pencilMarks.isEmpty {
                 PencilMarksViewOptimized(pencilMarks: pencilMarks)
-                    .frame(width: cellDimension * 0.85, height: cellDimension * 0.85)
+                    .frame(width: cellDimension * 0.9, height: cellDimension * 0.9)
                     .clipped()
             }
         }
@@ -365,74 +371,53 @@ struct SudokuCellView_Previews: PreviewProvider {
     }
 }
 
-// Optimize edilmiş pencil marks görünümü
-struct PencilMarksViewOptimized: View {
-    let pencilMarks: Set<Int>
-    
-    var body: some View {
-        GeometryReader { geometry in
-            let cellWidth = geometry.size.width / 3
-            let cellHeight = geometry.size.height / 3
-            
-            // Tek bir ZStack içinde tüm rakamları çiz
-            ZStack(alignment: .topLeading) {
-                // Arka plan çerçevesi - pencil marks olduğunu belirtmek için
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-                    .background(Color.blue.opacity(0.05))
-                    .cornerRadius(4)
-                
-                ForEach(Array(pencilMarks).sorted(), id: \.self) { mark in
-                    // Hücre içinde doğru konumlandırmak için indeks hesapla
-                    let index = mark - 1
-                    let row = index / 3
-                    let col = index % 3
-                    
-                    Text("\(mark)")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .frame(width: cellWidth, height: cellHeight)
-                        .background(Color.clear)
-                        .position(
-                            x: cellWidth * CGFloat(col) + cellWidth / 2,
-                            y: cellHeight * CGFloat(row) + cellHeight / 2
-                        )
-                }
-            }
-            // Metal hızlandırması (canlılık için opaque false)
-            .drawingGroup(opaque: false, colorMode: .linear)
-        }
-    }
-}
-
-// Yeni: Hedef hücre parlama animasyonu
-struct TargetHighlightGlow: View {
-    let color: Color
-    @State private var isAnimating = false
-    @StateObject private var powerManager = PowerSavingManager.shared // PowerManager eklendi
-
-    var body: some View {
-        RoundedRectangle(cornerRadius: 8) // Ana ZStack'teki ile aynı cornerRadius olmalı
-            .stroke(color, lineWidth: 3)
-            .scaleEffect(isAnimating ? 1.2 : 1.0)
-            .opacity(isAnimating ? 0.0 : 0.6)
-            .animation(
-                Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true),
-                value: isAnimating
-            )
-            .onAppear {
-                // Güç tasarrufu modu kontrolü
-                if !powerManager.isPowerSavingEnabled {
-                     isAnimating = true
-                }
-            }
-            // Güç tasarrufu modu değiştiğinde animasyonu durdur/başlat
-            .onChange(of: powerManager.isPowerSavingEnabled) { _, newValue in
-                 if newValue {
-                     isAnimating = false // Durdur
-                 } else {
-                     isAnimating = true // Başlat
-                 }
-            }
-    }
-}
+// Yeni: Hedef hücre parlama animasyonu - ayrı dosyada tanımlandı
+// struct TargetHighlightGlow: View {
+//    let color: Color
+//    @State private var isAnimating = false
+//    @State private var pulse = false
+//    @StateObject private var powerManager = PowerSavingManager.shared // PowerManager eklendi
+//
+//    var body: some View {
+//        ZStack {
+//            // Ana parlama efekti
+//            RoundedRectangle(cornerRadius: 16) // Ana ZStack'teki ile aynı cornerRadius olmalı
+//                .stroke(color, lineWidth: 3.5)
+//                .scaleEffect(isAnimating ? 1.2 : 1.0)
+//                .opacity(isAnimating ? 0.0 : 0.7)
+//                .blur(radius: isAnimating ? 6 : 0)
+//                .animation(
+//                    Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true),
+//                    value: isAnimating
+//                )
+//            
+//            // İkincil nabız efekti
+//            RoundedRectangle(cornerRadius: 16)
+//                .stroke(color, lineWidth: 2.5)
+//                .scaleEffect(pulse ? 1.1 : 0.97)
+//                .opacity(pulse ? 0.4 : 0.8)
+//                .blur(radius: pulse ? 3 : 0)
+//                .animation(
+//                    Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+//                    value: pulse
+//                )
+//        }
+//        .onAppear {
+//            // Güç tasarrufu modu kontrolü
+//            if !powerManager.isPowerSavingEnabled {
+//                 isAnimating = true
+//                 pulse = true
+//            }
+//        }
+//        // Güç tasarrufu modu değiştiğinde animasyonu durdur/başlat
+//        .onChange(of: powerManager.isPowerSavingEnabled) { _, newValue in
+//             if newValue {
+//                 isAnimating = false // Durdur
+//                 pulse = false
+//             } else {
+//                 isAnimating = true // Başlat
+//                 pulse = true
+//             }
+//        }
+//    }
+//}

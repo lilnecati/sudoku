@@ -1,40 +1,60 @@
 import SwiftUI
 
+// Bu dosyadaki AchievementNotificationBridge sınıf tanımı kaldırıldı.
+// Bu modifier artık Utils/AchievementNotificationBridge.swift dosyasındaki
+// gerçek singleton örneğini kullanacak.
+
 // Başarım bildirimlerini tüm sayfalarda göstermek için ViewModifier
 struct AchievementNotificationViewModifier: ViewModifier {
-    @ObservedObject var notificationManager = AchievementNotificationManager.shared
-    
+    // Manager'ı ObservedObject olarak takip etmemiz yeterli olabilir,
+    // ancak @StateObject genellikle daha güvenlidir.
+    @StateObject private var notificationManager = AchievementNotificationManager.shared
+
     func body(content: Content) -> some View {
-        ZStack {
-            // Ana içerik
-            content
-            
-            // Başarım bildirimi
-            AchievementNotificationView()
-                .zIndex(999) // En üstte göster
+        ZStack(alignment: .top) { // ZStack hizalamasını üste alalım
+            content // Ana içerik
+
+            // Sadece gösterilecek bir bildirim varsa göster
+            if notificationManager.shouldShowNotification {
+                AchievementNotificationView() // Parametresiz çağrı
+                    // .padding(.top, safeAreaInsetsTop()) // Üst güvenli alanı dikkate al
+                    // Not: AchievementNotificationView kendi padding'ini yönetebilir.
+                    // Gerekirse bu satır eklenebilir veya view içinde düzenlenebilir.
+                    .transition(.move(edge: .top).combined(with: .opacity)) // Geçiş efekti
+                    .animation(.spring(), value: notificationManager.shouldShowNotification) // Animasyon ekle
+                    .zIndex(1) // Diğer içeriklerin üzerinde kalmasını sağla
+            }
         }
+        // Modifier'ın kendisi alt güvenli alanı dikkate almasına gerek yok,
+        // ZStack tüm alanı kaplayacak ve AchievementNotificationView kendi konumunu yönetecek.
     }
+
+    /*
+    // Alt güvenli alan boşluğunu almak için yardımcı fonksiyon (Artık gerekli değil)
+    private func safeAreaInsetsBottom() -> CGFloat {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return 0
+        }
+        return window.safeAreaInsets.bottom
+    }
+    */
+
+    /*
+    // Üst güvenli alan boşluğunu almak için yardımcı fonksiyon (Gerekirse)
+    private func safeAreaInsetsTop() -> CGFloat {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return 0
+        }
+        return window.safeAreaInsets.top
+    }
+    */
 }
 
 // View uzantısı - kolay kullanım için
 extension View {
-    func withAchievementNotifications() -> some View {
+    func achievementNotifications() -> some View {
         self.modifier(AchievementNotificationViewModifier())
-    }
-}
-
-// NotificationCenter ile AchievementToastSystem ve AchievementNotificationManager arasında köprü
-class AchievementNotificationBridge {
-    static let shared = AchievementNotificationBridge()
-    
-    private init() {
-        // Köprü devre dışı bırakıldı
-        // Eski bildirim sistemi (AchievementToastSystem) zaten NotificationCenter üzerinden
-        // doğrudan bildirim alıyor, bu yüzden köprüye gerek yok
-    }
-    
-    private func setupBridge() {
-        // Yeni bildirim sistemi devre dışı bırakıldı
-        // Bildirimler sadece eski sisteme (AchievementToastSystem) gidecek
     }
 }

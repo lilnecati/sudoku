@@ -73,10 +73,10 @@ struct SudokuBoardView: View {
                 
                 // Sadece oyun tahtasını içine alan konteyner
                 ZStack {
-                    // Tablo arkaplanı - Bej mod için özel arka plan
-                    RoundedRectangle(cornerRadius: 12)
+                    // Tablo arkaplanı - Minimal tasarım
+                    RoundedRectangle(cornerRadius: 4)
                         .fill(getTableBackgroundColor())
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                        .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 2)
                         .aspectRatio(1, contentMode: .fit)
                     
                     // 9x9 hücre gridi - sabit boyutlu hücreler
@@ -188,7 +188,7 @@ struct SudokuBoardView: View {
                     path.addLine(to: CGPoint(x: gridSize, y: yPosition))
                 }
             }
-            .stroke(gridLinesColor, lineWidth: normalLineWidth)
+            .stroke(gridLinesColor, lineWidth: 0.8)
             
             // Tüm dikey ince çizgiler - tek bir Path içinde birleştir
             Path { path in
@@ -198,7 +198,7 @@ struct SudokuBoardView: View {
                     path.addLine(to: CGPoint(x: xPosition, y: gridSize))
                 }
             }
-            .stroke(gridLinesColor, lineWidth: normalLineWidth)
+            .stroke(gridLinesColor, lineWidth: 0.8)
         }
     }
     
@@ -213,7 +213,7 @@ struct SudokuBoardView: View {
                     path.addLine(to: CGPoint(x: gridSize, y: yPosition))
                 }
             }
-            .stroke(gridColor, lineWidth: boldLineWidth)
+            .stroke(gridColor, lineWidth: 2.0)
             
             // Tüm dikey kalın çizgiler - tek bir Path içinde birleştir
             Path { path in
@@ -223,11 +223,11 @@ struct SudokuBoardView: View {
                     path.addLine(to: CGPoint(x: xPosition, y: gridSize))
                 }
             }
-            .stroke(gridColor, lineWidth: boldLineWidth)
+            .stroke(gridColor, lineWidth: 2.0)
             
-            // Dış çerçeve
-            Rectangle()
-                .stroke(gridColor, lineWidth: boldLineWidth)
+            // Dış çerçeve - minimal tasarım için hafif yuvarlatılmış köşeler
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(gridColor, lineWidth: 2.5)
         }
     }
     
