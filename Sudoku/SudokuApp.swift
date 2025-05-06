@@ -41,12 +41,20 @@ class ThemeManager: ObservableObject {
                     bejMode = false
                 }
                 
-                // Tema değişikliği bildirimi gönder
+                // Tema değişikliği bildirimi gönder - daha yumuşak geçiş için eğri eklenmiş
+                withAnimation(.easeInOut(duration: 0.5)) {
                 NotificationCenter.default.post(
                     name: NSNotification.Name("ThemeChanged"), 
                     object: nil, 
                     userInfo: ["isDarkMode": darkMode]
                 )
+                }
+                
+                // Kesin çözüm: NavigationBar ve TabBar görünümünü hemen güncelle
+                DispatchQueue.main.async {
+                    self.updateNavigationBarAppearance()
+                    self.updateTabBarAppearance()
+                }
                 
                 // Log mesajı
                 logInfo("Tema değiştirildi: \(oldValue ? "Koyu" : "Açık") -> \(darkMode ? "Koyu" : "Açık")")
@@ -66,12 +74,20 @@ class ThemeManager: ObservableObject {
                     bejMode = false
                 }
                 
-                // Tema değişikliği bildirimi gönder
+                // Tema değişikliği bildirimi gönder - daha yumuşak geçiş için eğri eklenmiş
+                withAnimation(.easeInOut(duration: 0.5)) {
                 NotificationCenter.default.post(
                     name: NSNotification.Name("ThemeChanged"), 
                     object: nil, 
                     userInfo: ["useSystemAppearance": useSystemAppearance]
                 )
+                }
+                
+                // Kesin çözüm: NavigationBar ve TabBar görünümünü hemen güncelle
+                DispatchQueue.main.async {
+                    self.updateNavigationBarAppearance()
+                    self.updateTabBarAppearance()
+                }
                 
                 // Log mesajı
                 logInfo("Sistem teması kullanımı değiştirildi: \(oldValue) -> \(useSystemAppearance)")
@@ -94,14 +110,22 @@ class ThemeManager: ObservableObject {
                     }
                 }
                 
-                // Doğrudan colorScheme güncellemesi
+                // Doğrudan colorScheme güncellemesi - daha hızlı güncellenme için önce yap
                 colorScheme = bejMode ? .light : (useSystemAppearance ? nil : (darkMode ? .dark : .light))
                 
-                // Tema değişikliği bildirimini gönder
-                self.notifyThemeChanged()
+                // UI güncellemesini zorlayıcı şekilde hemen gönder
+                objectWillChange.send()
                 
-                // Navigation bar görünümünü güncelle
+                // Tema değişikliği bildirimini gönder - daha yumuşak geçiş için eğri eklenmiş
+                withAnimation(.easeInOut(duration: 0.3)) {
+                self.notifyThemeChanged()
+                }
+                
+                // Kesin çözüm: NavigationBar görünümünü hemen ve garantili şekilde güncelle
+                DispatchQueue.main.async {
                 self.updateNavigationBarAppearance()
+                    self.updateTabBarAppearance() // TabBar'ı da güncelle
+                }
                 
                 // Log
                 logInfo("Bej mod değişti: \(bejMode)")
@@ -124,7 +148,8 @@ class ThemeManager: ObservableObject {
                 // Renk değiştiğinde bildirimi yayınla
                 objectWillChange.send()
                 
-                // Hızlı güncelleme için bildirim gönder
+                // Hızlı güncelleme için bildirim gönder - daha yumuşak geçiş için animasyon eklendi
+                withAnimation(.easeInOut(duration: 0.5)) {
                 NotificationCenter.default.post(
                     name: NSNotification.Name("BoardColorChanged"), 
                     object: nil, 
@@ -133,6 +158,7 @@ class ThemeManager: ObservableObject {
                 
                 // Ayrıca genel tema değişikliği bildirimi
                 NotificationCenter.default.post(name: NSNotification.Name("ThemeChanged"), object: nil)
+                }
                 
                 logInfo("Tahta rengi değiştirildi: \(oldValue) -> \(sudokuBoardColor)")
             }
@@ -386,153 +412,244 @@ class ThemeManager: ObservableObject {
     // Navigation Bar görünümünü tema değişikliklerine göre günceller
     func updateNavigationBarAppearance() {
         DispatchQueue.main.async {
-            // Bej mod için özel görünüm ayarları
-            let bejAppearance = UINavigationBarAppearance()
-            bejAppearance.configureWithOpaqueBackground()
-            bejAppearance.backgroundColor = UIColor(BejThemeColors.background)
-            bejAppearance.titleTextAttributes = [.foregroundColor: UIColor(BejThemeColors.text)]
-            bejAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor(BejThemeColors.text)]
+            // NavigationBar appearance'ını her değişiklikte sıfırla
+            let navBarAppearance = UINavigationBarAppearance()
             
-            // Standart açık/koyu mod için görünüm ayarları
-            let standardAppearance = UINavigationBarAppearance()
-            standardAppearance.configureWithDefaultBackground()
-            
-            // Bej mod aktifse, bej görünümü kullan, değilse standart görünümü kullan
-            let currentAppearance = self.bejMode ? bejAppearance : standardAppearance
-            
-            // NavigationBar için global görünüm ayarları
-            UINavigationBar.appearance().standardAppearance = currentAppearance
-            UINavigationBar.appearance().compactAppearance = currentAppearance
-            UINavigationBar.appearance().scrollEdgeAppearance = currentAppearance
-            
-            // Bej mod aktifse, accent rengini ayarla
             if self.bejMode {
-                UINavigationBar.appearance().tintColor = UIColor(BejThemeColors.accent)
+                // Bej mod için tam RGB değerleriyle sabit renkler
+                navBarAppearance.configureWithOpaqueBackground()
+                navBarAppearance.backgroundColor = UIColor(red: 0.95, green: 0.92, blue: 0.85, alpha: 1.0) // F2EAD9
+                navBarAppearance.shadowColor = nil
+                
+                // Metin renkleri
+                let titleTextAttributes: [NSAttributedString.Key: Any] = [
+                    .foregroundColor: UIColor(red: 0.25, green: 0.20, blue: 0.15, alpha: 1.0), // 403326
+                    .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+                ]
+                navBarAppearance.titleTextAttributes = titleTextAttributes
+                navBarAppearance.largeTitleTextAttributes = [
+                    .foregroundColor: UIColor(red: 0.25, green: 0.20, blue: 0.15, alpha: 1.0),
+                    .font: UIFont.systemFont(ofSize: 34, weight: .bold)
+                ]
+            
+                // Buton görünümleri
+                let buttonAppearance = UIBarButtonItemAppearance()
+                buttonAppearance.normal.titleTextAttributes = [
+                    .foregroundColor: UIColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1.0) // 996633
+                ]
+                navBarAppearance.buttonAppearance = buttonAppearance
+                navBarAppearance.backButtonAppearance = buttonAppearance
+                navBarAppearance.doneButtonAppearance = buttonAppearance
             } else {
-                // Sistem varsayılanına dön
-                UINavigationBar.appearance().tintColor = nil
+                // Standart tema için sistem varsayılanları
+                navBarAppearance.configureWithDefaultBackground()
             }
             
-            // TabBar görünümünü de güncelle
+            // Her navigation bar tipini güncelle
+            UINavigationBar.appearance().standardAppearance = navBarAppearance
+            UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
+            UINavigationBar.appearance().compactAppearance = navBarAppearance
+            
+            // Renkler
+            if self.bejMode {
+                UINavigationBar.appearance().tintColor = UIColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1.0) // 996633
+                UINavigationBar.appearance().barTintColor = UIColor(red: 0.95, green: 0.92, blue: 0.85, alpha: 1.0) // F2EAD9
+                UINavigationBar.appearance().isTranslucent = false
+            } else {
+                UINavigationBar.appearance().tintColor = nil
+                UINavigationBar.appearance().barTintColor = nil
+                UINavigationBar.appearance().isTranslucent = true
+            }
+            
+            // Tüm aktif navigation controller'ları zorla güncelle
+            self.forceUpdateAllNavigationBars()
+            
+            // Otomatik olarak TabBar'ı da güncelle - uyumlu tasarım için
             self.updateTabBarAppearance()
             
-            // UINavigationController'ların doğrudan güncellenmesi için
-            self.updateAllActiveNavigationControllers()
-            
-            logInfo("NavigationBar görünümü güncellendi: \(self.bejMode ? "Bej Mod" : "Standart Mod")")
+            logInfo("NavigationBar görünümü doğrudan RGB değerleriyle güncellendi: \(self.bejMode ? "Bej Mod" : "Standart Mod")")
         }
     }
     
-    // TabBar görünümünü tema değişikliklerine göre günceller
-    private func updateTabBarAppearance() {
-        // Bej mod için özel görünüm ayarları
-        let bejAppearance = UITabBarAppearance()
-        bejAppearance.configureWithOpaqueBackground()
-        bejAppearance.backgroundColor = UIColor(BejThemeColors.background)
-        
-        // Standart görünüm
-        let standardAppearance = UITabBarAppearance()
-        standardAppearance.configureWithDefaultBackground()
-        
-        // Bej mod aktifse, bej görünümü kullan, değilse standart görünümü kullan
-        let appearance = self.bejMode ? bejAppearance : standardAppearance
-        
-        // TabBar için global görünüm ayarları
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
-        
-        // Bej mod aktifse, renklerini ayarla
-        if self.bejMode {
-            UITabBar.appearance().tintColor = UIColor(BejThemeColors.accent)
-            UITabBar.appearance().unselectedItemTintColor = UIColor(BejThemeColors.secondaryText)
+    // Tüm navigation bar'ları hemen ve zorla güncellemek için yeni metod
+    private func forceUpdateAllNavigationBars() {
+        if #available(iOS 15.0, *) {
+            for scene in UIApplication.shared.connectedScenes {
+                if let windowScene = scene as? UIWindowScene {
+                    for window in windowScene.windows {
+                        for vc in window.rootViewController?.children ?? [] {
+                            if let navVC = vc as? UINavigationController {
+                                self.forceUpdateSingleNavigationBar(navVC)
+                            }
+                            
+                            for childVC in vc.children {
+                                if let navVC = childVC as? UINavigationController {
+                                    self.forceUpdateSingleNavigationBar(navVC)
+                                }
+                            }
+                        }
+                        
+                        if let tabBarController = window.rootViewController as? UITabBarController {
+                            for vc in tabBarController.viewControllers ?? [] {
+                                if let navVC = vc as? UINavigationController {
+                                    self.forceUpdateSingleNavigationBar(navVC)
+                                }
+                            }
+                        }
+                        
+                        if let navVC = window.rootViewController as? UINavigationController {
+                            self.forceUpdateSingleNavigationBar(navVC)
+                        }
+                    }
+                }
+            }
         } else {
-            // Sistem varsayılanına dön
+            for window in UIApplication.shared.windows {
+                for vc in window.rootViewController?.children ?? [] {
+                    if let navVC = vc as? UINavigationController {
+                        self.forceUpdateSingleNavigationBar(navVC)
+                    }
+                }
+                
+                if let navVC = window.rootViewController as? UINavigationController {
+                    self.forceUpdateSingleNavigationBar(navVC)
+                }
+            }
+        }
+    }
+    
+    // Tek bir navigation bar'ı doğrudan güncelle 
+    private func forceUpdateSingleNavigationBar(_ navController: UINavigationController) {
+        let navAppearance = UINavigationBarAppearance()
+        
+        if self.bejMode {
+            navAppearance.configureWithOpaqueBackground()
+            navAppearance.backgroundColor = UIColor(red: 0.95, green: 0.92, blue: 0.85, alpha: 1.0)
+            navAppearance.shadowColor = nil
+            
+            let titleAttributes: [NSAttributedString.Key: Any] = [
+                .foregroundColor: UIColor(red: 0.25, green: 0.20, blue: 0.15, alpha: 1.0),
+                .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+            ]
+            
+            navAppearance.titleTextAttributes = titleAttributes
+            navAppearance.largeTitleTextAttributes = [
+                .foregroundColor: UIColor(red: 0.25, green: 0.20, blue: 0.15, alpha: 1.0),
+                .font: UIFont.systemFont(ofSize: 34, weight: .bold)
+            ]
+            
+            navController.navigationBar.tintColor = UIColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1.0)
+            navController.navigationBar.barTintColor = UIColor(red: 0.95, green: 0.92, blue: 0.85, alpha: 1.0)
+            navController.navigationBar.isTranslucent = false
+        } else {
+            navAppearance.configureWithDefaultBackground()
+            navController.navigationBar.tintColor = nil
+            navController.navigationBar.barTintColor = nil
+            navController.navigationBar.isTranslucent = true
+        }
+        
+        navController.navigationBar.standardAppearance = navAppearance
+        navController.navigationBar.scrollEdgeAppearance = navAppearance
+        navController.navigationBar.compactAppearance = navAppearance
+        
+        // Zorla yeniden çizilmesini sağla
+        navController.navigationBar.setNeedsLayout()
+        navController.navigationBar.layoutIfNeeded()
+    }
+    
+    // TabBar görünümünü tema değişikliklerine göre günceller - Yeni metot
+    func updateTabBarAppearance() {
+        DispatchQueue.main.async {
+            // TabBar appearance'ını her değişiklikte sıfırla
+            let tabBarAppearance = UITabBarAppearance()
+            
+            if self.bejMode {
+                // Bej mod için sabit RGB renkleri
+                tabBarAppearance.configureWithOpaqueBackground()
+                tabBarAppearance.backgroundColor = UIColor(red: 0.95, green: 0.92, blue: 0.85, alpha: 1.0) // F2EAD9
+                tabBarAppearance.shadowColor = nil
+                
+                // TabBar için sabit renkleri ayarla
+                UITabBar.appearance().tintColor = UIColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1.0) // 996633
+                UITabBar.appearance().unselectedItemTintColor = UIColor(red: 0.4, green: 0.35, blue: 0.3, alpha: 1.0) // 665A4D
+                UITabBar.appearance().isTranslucent = false
+            } else {
+                // Standart tema için sistem varsayılanları
+                tabBarAppearance.configureWithDefaultBackground()
             UITabBar.appearance().tintColor = nil
             UITabBar.appearance().unselectedItemTintColor = nil
+                UITabBar.appearance().isTranslucent = true
+            }
+            
+            // Global görünüm ayarları
+            UITabBar.appearance().standardAppearance = tabBarAppearance
+            UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+            
+            // Tüm aktif TabBar'ları zorla güncelle
+            self.forceUpdateAllTabBars()
+            
+            logInfo("TabBar görünümü doğrudan RGB değerleriyle güncellendi: \(self.bejMode ? "Bej Mod" : "Standart Mod")")
         }
-        
-        logInfo("TabBar görünümü güncellendi: \(self.bejMode ? "Bej Mod" : "Standart Mod")")
     }
     
-    // Tüm aktif navigation controller'ları bulan ve güncelleyen yardımcı metod
-    private func updateAllActiveNavigationControllers() {
+    // Tüm TabBar'ları hemen ve zorla güncellemek için yeni metot
+    private func forceUpdateAllTabBars() {
         if #available(iOS 15.0, *) {
-            UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .forEach { window in
-                    if let rootVC = window.rootViewController {
-                        self.updateNavigationControllersRecursively(in: rootVC)
+            for scene in UIApplication.shared.connectedScenes {
+                if let windowScene = scene as? UIWindowScene {
+                    for window in windowScene.windows {
+                        if let tabBarController = window.rootViewController as? UITabBarController {
+                            self.forceUpdateSingleTabBar(tabBarController)
+                        }
+                        
+                        for vc in window.rootViewController?.children ?? [] {
+                            if let tabBarController = vc as? UITabBarController {
+                                self.forceUpdateSingleTabBar(tabBarController)
+                            }
+                        }
+                    }
                     }
                 }
         } else {
-            // iOS 15 öncesi için eski yöntem
-            UIApplication.shared.windows.forEach { window in
-                if let rootVC = window.rootViewController {
-                    self.updateNavigationControllersRecursively(in: rootVC)
+            for window in UIApplication.shared.windows {
+                if let tabBarController = window.rootViewController as? UITabBarController {
+                    self.forceUpdateSingleTabBar(tabBarController)
+                }
+                
+                for vc in window.rootViewController?.children ?? [] {
+                    if let tabBarController = vc as? UITabBarController {
+                        self.forceUpdateSingleTabBar(tabBarController)
+                    }
                 }
             }
         }
-    }
-    
-    // Recursive olarak tüm navigation controller'ları bulan ve güncelleyen fonksiyon
-    private func updateNavigationControllersRecursively(in viewController: UIViewController) {
-        // Eğer bu VC bir navigation controller ise görünümünü güncelle
-        if let navController = viewController as? UINavigationController {
-            self.applyNavigationBarAppearance(to: navController)
+        }
+        
+    // Tek bir TabBar'ı doğrudan güncelle
+    private func forceUpdateSingleTabBar(_ tabController: UITabBarController) {
+        let tabAppearance = UITabBarAppearance()
+        
+        if self.bejMode {
+            tabAppearance.configureWithOpaqueBackground()
+            tabAppearance.backgroundColor = UIColor(red: 0.95, green: 0.92, blue: 0.85, alpha: 1.0)
+            tabAppearance.shadowColor = nil
             
-            // Alt view controller'ları için de kontrol et
-            navController.viewControllers.forEach { self.updateNavigationControllersRecursively(in: $0) }
+            tabController.tabBar.tintColor = UIColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1.0)
+            tabController.tabBar.unselectedItemTintColor = UIColor(red: 0.4, green: 0.35, blue: 0.3, alpha: 1.0)
+            tabController.tabBar.isTranslucent = false
+        } else {
+            tabAppearance.configureWithDefaultBackground()
+            tabController.tabBar.tintColor = nil
+            tabController.tabBar.unselectedItemTintColor = nil
+            tabController.tabBar.isTranslucent = true
         }
         
-        // Gösterilen (presented) view controller varsa o da kontrol edilir
-        if let presentedVC = viewController.presentedViewController {
-            self.updateNavigationControllersRecursively(in: presentedVC)
-        }
+        tabController.tabBar.standardAppearance = tabAppearance
+        tabController.tabBar.scrollEdgeAppearance = tabAppearance
         
-        // Tab bar controller için tüm tab'leri kontrol et
-        if let tabController = viewController as? UITabBarController {
-            tabController.viewControllers?.forEach { self.updateNavigationControllersRecursively(in: $0) }
-        }
-        
-        // Split view controller için view controller'ları kontrol et
-        if let splitController = viewController as? UISplitViewController {
-            splitController.viewControllers.forEach { self.updateNavigationControllersRecursively(in: $0) }
-        }
-        
-        // Çocuk view controller'lar varsa onları da kontrol et
-        viewController.children.forEach { self.updateNavigationControllersRecursively(in: $0) }
-    }
-    
-    // Navigation controller'ın görünümünü doğrudan güncelle
-    private func applyNavigationBarAppearance(to navController: UINavigationController) {
-        // Bej mod için görünüm
-        let bejAppearance = UINavigationBarAppearance()
-        bejAppearance.configureWithOpaqueBackground()
-        bejAppearance.backgroundColor = UIColor(BejThemeColors.background)
-        bejAppearance.titleTextAttributes = [.foregroundColor: UIColor(BejThemeColors.text)]
-        bejAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor(BejThemeColors.text)]
-        
-        // Standart görünüm
-        let standardAppearance = UINavigationBarAppearance()
-        standardAppearance.configureWithDefaultBackground()
-        
-        // Duruma göre görünümü seç
-        let appearance = self.bejMode ? bejAppearance : standardAppearance
-        
-        // Navigation bar görünümünü uygula
-        navController.navigationBar.standardAppearance = appearance
-        navController.navigationBar.compactAppearance = appearance
-        navController.navigationBar.scrollEdgeAppearance = appearance
-        
-        // Tint color ayarla
-        navController.navigationBar.tintColor = self.bejMode ? UIColor(BejThemeColors.accent) : nil
-        
-        // Görünümün hemen güncellenmesini sağla
-        navController.navigationBar.layoutIfNeeded()
-        
-        // Değişiklikleri uygula
-        navController.setNeedsStatusBarAppearanceUpdate()
+        // Zorla yeniden çizilmesini sağla
+        tabController.tabBar.setNeedsLayout()
+        tabController.tabBar.layoutIfNeeded()
     }
 }
 
@@ -702,12 +819,13 @@ struct SudokuApp: App {
         
         if themeManager.bejMode {
             appearance.configureWithOpaqueBackground()
-            appearance.backgroundColor = UIColor(ThemeManager.BejThemeColors.background)
-            appearance.titleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.text), .font: UIFont.systemFont(ofSize: 18, weight: .bold)]
-            appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.text), .font: UIFont.systemFont(ofSize: 34, weight: .bold)]
+            // Doğrudan UIColor kullan, daha güvenilir
+            appearance.backgroundColor = UIColor(red: 0.95, green: 0.92, blue: 0.85, alpha: 1.0)
+            appearance.titleTextAttributes = [.foregroundColor: UIColor(red: 0.25, green: 0.20, blue: 0.15, alpha: 1.0), .font: UIFont.systemFont(ofSize: 18, weight: .bold)]
+            appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(red: 0.25, green: 0.20, blue: 0.15, alpha: 1.0), .font: UIFont.systemFont(ofSize: 34, weight: .bold)]
             
             let buttonAppearance = UIBarButtonItemAppearance()
-            buttonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(ThemeManager.BejThemeColors.accent)]
+            buttonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1.0)]
             appearance.buttonAppearance = buttonAppearance
             appearance.backButtonAppearance = buttonAppearance
         } else {
@@ -717,6 +835,11 @@ struct SudokuApp: App {
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
+        
+        if themeManager.bejMode {
+            UINavigationBar.appearance().barTintColor = UIColor(red: 0.95, green: 0.92, blue: 0.85, alpha: 1.0)
+            UINavigationBar.appearance().tintColor = UIColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1.0)
+        }
         
         logInfo("NavigationBar appearance configured: \(themeManager.bejMode ? "Bej Mode" : "Default/Dark Mode")")
         setupThemeChangeListenerInAppDelegate()

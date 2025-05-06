@@ -1552,8 +1552,9 @@ class PersistenceController {
             let documentID = gameID.uuidString.uppercased()
             logInfo("Firebase'den silinecek döküman ID: \(documentID)")
             
-            // Önce dökümanı kontrol et
-            db.collection("savedGames").document(documentID).getDocument { [weak self] (document, error) in
+            // Önce dökümanı kontrol et - Doğru koleksiyon yolunu kullan
+            let collectionPath = "userGames/\(currentUser.uid)/savedGames"
+            db.collection(collectionPath).document(documentID).getDocument { [weak self] (document, error) in
                 guard let self = self else { return }
                 
                 if let error = error {
@@ -1579,15 +1580,15 @@ class PersistenceController {
                     }
                 }
                 
-                // Silme işlemini gerçekleştir
-                self.db.collection("savedGames").document(documentID).delete { error in
+                // Silme işlemini gerçekleştir - Aynı koleksiyon yolunu kullan
+                self.db.collection(collectionPath).document(documentID).delete { error in
                     if let error = error {
                         logError("Firestore'dan oyun silme hatası: \(error.localizedDescription)")
                     } else {
                         logSuccess("Oyun Firestore'dan silindi: \(documentID)")
                         
-                        // Silme işlemini doğrula
-                        self.db.collection("savedGames").document(documentID).getDocument { (document, _) in
+                        // Silme işlemini doğrula - Aynı koleksiyon yolunu kullan
+                        self.db.collection(collectionPath).document(documentID).getDocument { (document, _) in
                             if let document = document, document.exists {
                                 logWarning("Dikkat: Döküman hala Firebase'de mevcut!")
                             } else {
@@ -1677,11 +1678,13 @@ class PersistenceController {
             // Should we queue this if user is logged out? Probably not.
             return
         }
+        
+        // Koleksiyon yolunu saveGameToFirestore ile aynı şekilde kullan
         let collectionPath = "userGames/\(userID)/savedGames"
         
         // Simplified logic: Directly attempt delete and queue on failure/offline
         // The 'deletedGames' collection logic might need re-evaluation separately
-        logInfo("Firestore'dan oyun silme işlemi deneniyor: \(documentID)")
+        logInfo("Firestore'dan oyun silme işlemi deneniyor: \(documentID) - Yol: \(collectionPath)/\(documentID)")
         
         // Check network status
         guard NetworkMonitor.shared.isConnected else {

@@ -52,6 +52,7 @@ struct SudokuCellView: View {
                 
                 // Sayı veya Notlar (cellDimension geçirildi)
                 cellContentView(cellDimension: cellDimension)
+                    .modifier(ShakeEffect(animatableData: isInvalid ? 1 : 0))
             }
             .aspectRatio(1, contentMode: .fit)
             .onTapGesture {
@@ -113,9 +114,9 @@ struct SudokuCellView: View {
             // Değer gösterimi
             if let value = value {
                 Text("\(value)")
-                    .font(.system(size: 28, weight: .medium, design: .rounded))
+                    .font(.system(size: 28, weight: .bold, design: .default))
                     .foregroundColor(getTextColor())
-                    .shadow(color: Color.black.opacity(0.05), radius: 0.5, x: 0, y: 0.5)
+                    .shadow(color: Color.black.opacity(0.08), radius: 0.8, x: 0, y: 0.5)
             }
             
             // Pencil marks - sadece varsa çiz
@@ -186,7 +187,8 @@ struct SudokuCellView: View {
             opacity = isBejMode ? (type == .highlight ? 0.20 : 0.15) : (effectiveColorScheme == .dark ? (type == .highlight ? 0.40 : 0.30) : (type == .highlight ? 0.20 : 0.15))
         case .conflict:
             colorName = "red" // Kırmızı
-            opacity = isBejMode ? 0.25 : (effectiveColorScheme == .dark ? 0.40 : 0.25)
+            // Yanlış girişi daha belirgin yap
+            opacity = isBejMode ? 0.35 : (effectiveColorScheme == .dark ? 0.50 : 0.35)
         case .candidate:
             colorName = "green" // Yeşil
              opacity = isBejMode ? 0.15 : (effectiveColorScheme == .dark ? 0.30 : 0.15)
@@ -221,7 +223,8 @@ struct SudokuCellView: View {
         case .highlight:
             return themeManager.getBoardColor().opacity(opacity)
         case .conflict:
-            return (isBejMode ? ThemeManager.BejThemeColors.boardColors.red : Color.red).opacity(opacity)
+            // Hata durumunda daha parlak ve belirgin bir kenarlık
+            return (isBejMode ? ThemeManager.BejThemeColors.boardColors.red : Color.red).opacity(1.0)
         case .candidate:
             return (isBejMode ? ThemeManager.BejThemeColors.boardColors.green : Color.green).opacity(opacity)
         case .elimination:
@@ -249,39 +252,48 @@ struct SudokuCellView: View {
         if isBejMode {
             // Hatalı giriş için kırmızı metin (bej uyumlu)
             if isInvalid {
-                return Color(red: 0.75, green: 0.30, blue: 0.20) // Bej uyumlu kırmızı
-            } else if isFixed {
-                // Sabit sayılar
-                return ThemeManager.BejThemeColors.text
-            } else if isUserEntered {
-                // İpucu ile girilmişse farklı renk
-                if isHintEntered {
-                    // Ana tema renginin daha parlak veya farklı bir tonu
-                    return themeColor.opacity(1.0) // Tam opaklık veya Color.cyan gibi farklı bir renk
-                } else {
-                    // Normal kullanıcı girişi
-                    return themeColor
-                }
-            } else {
-                // Diğer metinler
-                return ThemeManager.BejThemeColors.secondaryText
+                return ThemeManager.BejThemeColors.boardColors.red
             }
+            
+            // Sabit değer (tahta tarafından üretilen)
+            if isFixed {
+                return ThemeManager.BejThemeColors.text
+            }
+            
+            // Kullanıcı tarafından girilen değer
+            if isUserEntered {
+                // İpucu olarak girilen değer için özel renk
+                if isHintEntered {
+                    return ThemeManager.BejThemeColors.boardColors.green
+                }
+                return ThemeManager.BejThemeColors.text.opacity(0.8)
+            }
+            
+            // Herhangi bir durum belirtilmemiş
+            return ThemeManager.BejThemeColors.text
         } else {
-            // Normal tema renkleri (mevcut kod)
+            // Normal tema:
             // Hatalı giriş için kırmızı metin
             if isInvalid {
-                return effectiveColorScheme == .dark ? Color.red : Color.red
+                return Color.red
             }
-            else if isFixed {
-                // Sabit sayılar - standart siyah/beyaz (maksimum okunabilirlik)
-                return effectiveColorScheme == .dark ? Color.white.opacity(0.85) : Color.black.opacity(0.85) // Biraz daha soluk
-            } else if isUserEntered {
-                // Kullanıcı girişleri - daha belirgin tema rengi
-                return effectiveColorScheme == .dark ? themeColor.opacity(0.95) : themeColor.opacity(0.90)
-            } else {
-                // Diğer metinler - gri (Boş hücreler için varsayılan)
-                return effectiveColorScheme == .dark ? Color.gray.opacity(0.6) : Color.gray.opacity(0.6)
+            
+            // Sabit değer (tahta tarafından üretilen)
+            if isFixed {
+                return effectiveColorScheme == .dark ? .white : .black
             }
+            
+            // Kullanıcı tarafından girilen değer
+            if isUserEntered {
+                // İpucu olarak girilen değer için özel renk
+                if isHintEntered {
+                    return Color.green
+                }
+                return themeColor
+            }
+            
+            // Herhangi bir durum belirtilmemiş
+            return effectiveColorScheme == .dark ? .white : .black
         }
     }
 
@@ -315,6 +327,21 @@ struct SudokuCellView: View {
             label += " (Hatalı)"
         }
         return label
+    }
+
+    // Titreşim animasyonu için modifier
+    struct ShakeEffect: GeometryEffect {
+        var animatableData: CGFloat
+        
+        func effectValue(size: CGSize) -> ProjectionTransform {
+            guard animatableData > 0 else { return ProjectionTransform(.identity) }
+            
+            let angle = CGFloat.pi * 2 * animatableData
+            let shakeMagnitude: CGFloat = 3
+            
+            let translation = CGAffineTransform(translationX: sin(angle * 8) * shakeMagnitude, y: 0)
+            return ProjectionTransform(translation)
+        }
     }
 }
 

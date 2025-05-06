@@ -8,9 +8,15 @@ struct AchievementNotificationView: View {
     @State private var isDragging: Bool = false
     @State private var isAppearing: Bool = false
     @Namespace private var animation
+    @EnvironmentObject var themeManager: ThemeManager
     
     init(notificationManager: AchievementNotificationManager = AchievementNotificationManager.shared) {
         self.notificationManager = notificationManager
+    }
+    
+    // Bej mod kontrolü
+    private var isBejMode: Bool {
+        return themeManager.bejMode
     }
     
     // Bildirim süresi
@@ -122,12 +128,12 @@ struct AchievementNotificationView: View {
             HStack(spacing: 4) {
                 Text("\(notificationManager.achievementQueue.count + 1) bildirim")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text.opacity(0.8) : .white.opacity(0.8))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
                     .background(
                         Capsule()
-                            .fill(Color.black.opacity(0.3))
+                            .fill(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.3) : Color.black.opacity(0.3))
                     )
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
@@ -140,11 +146,14 @@ struct AchievementNotificationView: View {
         HStack(spacing: 12) {
             // İkon ve parıltı efekti
             ZStack {
-                // Arka plan daire
+                // Arka plan daire - bej moduna uyarla
                 Circle()
                     .fill(
                         RadialGradient(
-                            gradient: Gradient(colors: [.white.opacity(0.8), .white.opacity(0.1)]),
+                            gradient: Gradient(colors: [
+                                isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.8) : .white.opacity(0.8),
+                                isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.1) : .white.opacity(0.1)
+                            ]),
                             center: .center,
                             startRadius: 5,
                             endRadius: 25
@@ -152,15 +161,15 @@ struct AchievementNotificationView: View {
                     )
                     .frame(width: 50, height: 50)
                 
-                // Parıltı efekti
+                // Parıltı efekti - bej moduna uyarla
                 Circle()
-                    .stroke(Color.white.opacity(0.6), lineWidth: 1.5)
+                    .stroke(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.6) : Color.white.opacity(0.6), lineWidth: 1.5)
                     .frame(width: 50, height: 50)
                     .blur(radius: 0.5)
                 
-                // İkon
+                // İkon - bej moduna uyarla
                 Image(systemName: achievement.iconName)
-                    .foregroundColor(.yellow)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .yellow)
                     .font(.system(size: 30, weight: .bold))
                     .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
             }
@@ -169,25 +178,25 @@ struct AchievementNotificationView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Yeni Başarım!")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .white)
 
                 Text(achievement.title)
                     .font(.subheadline)
-                    .foregroundColor(.white)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .white)
 
                 Text(achievement.description)
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text.opacity(0.9) : .white.opacity(0.9))
                     .lineLimit(1)
 
                 HStack(spacing: 2) {
                     Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .yellow)
                         .font(.system(size: 12))
 
                     Text("+\(achievement.pointValue) puan")
                         .font(.caption2)
-                        .foregroundColor(.yellow)
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .yellow)
                 }
                 .padding(.top, 2)
             }
@@ -197,11 +206,11 @@ struct AchievementNotificationView: View {
             if notificationManager.achievementQueue.count > 0 {
                 VStack(spacing: 2) {
                     Image(systemName: "chevron.compact.down")
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text.opacity(0.7) : .white.opacity(0.7))
                         .font(.system(size: 14))
                     Text("Kaydır")
                         .font(.caption2)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text.opacity(0.7) : .white.opacity(0.7))
                 }
                 .padding(.trailing, 4)
             }
@@ -209,39 +218,48 @@ struct AchievementNotificationView: View {
         .padding()
         .background(
             ZStack {
-                // Arka plan gradyent
+                // Arka plan gradyent - bej moduna uyarla
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            gradient: Gradient(colors: [achievement.colorCode, achievement.colorCode.opacity(0.8)]),
+                            gradient: Gradient(colors: [
+                                isBejMode ? ThemeManager.BejThemeColors.cardBackground : achievement.colorCode,
+                                isBejMode ? ThemeManager.BejThemeColors.cardBackground.opacity(0.8) : achievement.colorCode.opacity(0.8)
+                            ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                 
-                // Parıltı efekti
+                // Parıltı efekti - bej moduna uyarla
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         RadialGradient(
-                            gradient: Gradient(colors: [.white.opacity(0.3), .clear]),
+                            gradient: Gradient(colors: [
+                                isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.3) : .white.opacity(0.3),
+                                .clear
+                            ]),
                             center: .topLeading,
                             startRadius: 0,
                             endRadius: 150
                         )
                     )
                 
-                // İnce kenarlık
+                // İnce kenarlık - bej moduna uyarla
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
-                            gradient: Gradient(colors: [.white.opacity(0.6), .white.opacity(0.1)]),
+                            gradient: Gradient(colors: [
+                                isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.6) : .white.opacity(0.6),
+                                isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.1) : .white.opacity(0.1)
+                            ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 1
                     )
             }
-            .shadow(color: achievement.colorCode.opacity(0.5), radius: 10, x: 0, y: 5)
+            .shadow(color: isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.5) : achievement.colorCode.opacity(0.5), radius: 10, x: 0, y: 5)
         )
         .matchedGeometryEffect(id: "achievementCard", in: animation)
         .padding(.horizontal)

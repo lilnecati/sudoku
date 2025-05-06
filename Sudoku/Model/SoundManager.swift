@@ -933,4 +933,55 @@ class SoundManager: ObservableObject {
         // Global logError fonksiyonunu çağır, kendi kendini çağırmayı engelle
         Sudoku.logError("SoundManager Hatası: \(message)")
     }
+    
+    // MARK: - Ses Çalma Fonksiyonları
+    
+    /// Sesi çal
+    private func playSound(player: AVAudioPlayer?, volume: Float = 1.0) {
+        guard let soundPlayer = player else {
+            log("⚠️ Çalınacak ses bulunamadı (player nil)")
+            return
+        }
+        
+        if !canPlaySound() {
+            log("⚠️ Ses kapalı, çalma işlemi iptal edildi")
+            return
+        }
+        
+        // Hızlı tepki vermesi için async olarak ana thread'de çalıştır
+        DispatchQueue.main.async {
+            // Ses seviyesini ayarla
+            soundPlayer.volume = volume
+            
+            // Ses baştan başlasın
+            soundPlayer.currentTime = 0
+            
+            // Ses çal
+            soundPlayer.play()
+        }
+    }
+
+    /// Duraklatma sesi çalar
+    func playPauseSound() {
+        if canPlaySound() {
+            if tapPlayer == nil {
+                tapPlayer = loadSound(named: "tap", ofType: "wav")
+            }
+            
+            // Duraklatma için hafif bir tap sesi kullan
+            playSound(player: tapPlayer, volume: 0.6)
+        }
+    }
+    
+    /// Devam ettirme sesi çalar
+    func playResumeSound() {
+        if canPlaySound() {
+            if correctPlayer == nil {
+                correctPlayer = loadSound(named: "correct", ofType: "mp3") ?? loadSound(named: "correct", ofType: "wav")
+            }
+            
+            // Devam ettirme için hafif bir doğru sesi kullan
+            playSound(player: correctPlayer, volume: 0.5)
+        }
+    }
 } 

@@ -198,14 +198,24 @@ struct GameView: View {
                         congratulationsView
                             .zIndex(10)
                             .alignmentGuide(.bottom) { $0[.bottom] }
+                            .achievementNotifications()
                     }
 
                     // Oyun Bitti Ekranı (Ortada)
                     if viewModel.gameState == .failed {
+                        // Karartma efekti kaldırıldı
+                        gameOverView
+                            .zIndex(10)
+                            .alignmentGuide(.bottom) { $0[.bottom] }
+                            .achievementNotifications()
+                    }
+                    
+                    // YENİ: Duraklatma Ekranı (Ortada)
+                    if viewModel.gameState == .paused {
                         Color.black.opacity(0.7)
                             .edgesIgnoringSafeArea(.all)
                             .zIndex(5)
-                        gameOverView
+                        pauseView
                             .zIndex(10)
                             .alignmentGuide(.bottom) { $0[.bottom] }
                     }
@@ -232,6 +242,7 @@ struct GameView: View {
                 .animation(.easeInOut, value: showingGameComplete) // Tebrik animasyonu
                 .animation(.easeInOut, value: viewModel.gameState == .failed) // Oyun Bitti animasyonu
                 .animation(.easeInOut, value: showDifficultyPicker) // Zorluk seçici animasyonu
+                .animation(.easeInOut, value: viewModel.gameState == .paused) // Duraklatma ekranı animasyonu
             }
         }
         // SafeArea hesaplaması ekleyerek çalışması sağlandı
@@ -247,6 +258,13 @@ struct GameView: View {
         .onAppear {
             setupInitialAnimations()
             setupTimerUpdater()
+            
+            // NavBar görünümünü zorla güncelleyerek bej mod geçişlerinin doğru çalışmasını sağla
+            DispatchQueue.main.async {
+                // Kesin çözüm: Tüm NavigationBar'ları zorla güncelle
+                themeManager.updateNavigationBarAppearance()
+                logInfo("🎨 GameView onAppear - NavBar güncellendi (Kesin çözüm)")
+            }
             
             // Ekranın kapanmasını engelle
             UIApplication.shared.isIdleTimerDisabled = true
@@ -280,14 +298,53 @@ struct GameView: View {
         .onChange(of: themeManager.darkMode) { _, _ in
             // Tema değiştiğinde tahtayı zorla yenile
             boardKey = UUID().uuidString
+            
+            // NavBar görünümünü zorla güncelle - Hemen ve garantili şekilde
+            DispatchQueue.main.async {
+                themeManager.updateNavigationBarAppearance()
+                logInfo("📱 Dark Mode değişti - NavBar güncellendi")
+            }
         }
         .onChange(of: themeManager.useSystemAppearance) { _, _ in
             // Sistem görünümü değiştiğinde tahtayı zorla yenile
             boardKey = UUID().uuidString
+            
+            // NavBar görünümünü zorla güncelle - Hemen ve garantili şekilde
+            DispatchQueue.main.async {
+                themeManager.updateNavigationBarAppearance()
+                logInfo("📱 System Appearance değişti - NavBar güncellendi")
+            }
+        }
+        .onChange(of: themeManager.bejMode) { _, _ in
+            // Bej mod değiştiğinde tahtayı zorla yenile
+            boardKey = UUID().uuidString
+            
+            // NavBar görünümünü zorla güncelle - Hemen ve garantili şekilde
+            DispatchQueue.main.async {
+                themeManager.updateNavigationBarAppearance()
+                logInfo("📱 Bej mode değişti - NavBar güncellendi")
+            }
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
                 .environmentObject(themeManager)
+                .onDisappear {
+                    // Ayarlar ekranı kapandığında, oyun hala duraklatılmış durumdaysa otomatik devam ettirme seçeneği
+                    if viewModel.gameState == .paused {
+                        // Daha hızlı tepki için gecikmeyi azaltalım ve ana thread'de çalıştıralım 
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            withAnimation(.spring(response: 0.2)) {
+                                viewModel.togglePause()
+                                
+                                // Başlama sesi çal
+                                SoundManager.shared.playResumeSound()
+                                
+                                // Ekranı hemen güncelle
+                                updateTimeDisplay()
+                            }
+                        }
+                    }
+                }
         }
         // Onay iletişim kutusuna gerek yok, otomatik kayıt var
     }
@@ -324,6 +381,10 @@ struct GameView: View {
                 
                 // Ayarlar butonu
                 Button {
+                    // Ayarlar açılmadan önce oyunu duraklatalım
+                    if viewModel.gameState == .playing {
+                        viewModel.togglePause()
+                    }
                     showSettings = true
                 } label: {
                     Image(systemName: "gearshape.fill")
@@ -367,15 +428,36 @@ struct GameView: View {
                 
                 Spacer()
                 
-                // İpuçları
-                statView(
-                    icon: "lightbulb.fill",
-                    text: "\(viewModel.remainingHints)",
-                    color: .orange
+                // Duraklatma/Devam ettirme butonu (İpucu yerine)
+                Button {
+                    // Hızlı yanıt için ana thread'de çalıştır
+                    DispatchQueue.main.async {
+                        withAnimation(.spring(response: 0.2)) {
+                            viewModel.togglePause()
+                            
+                            // Başlama sesi çal
+                            SoundManager.shared.playResumeSound()
+                            
+                            // Ekranı hemen güncelle
+                            updateTimeDisplay()
+                        }
+                    }
+                } label: {
+                    Image(systemName: viewModel.gameState == .playing ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(viewModel.gameState == .playing ? .orange : .green)
+                }
+                .padding(8)
+                .background(
+                    Capsule()
+                        .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.cardBackground : 
+                              (colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6)))
                 )
             }
             .padding(.top, 8)
         }
+        // Her tema değişikliğinde zorla güncelleme için bir id ekleyelim
+        .id("header_\(themeManager.bejMode)_\(colorScheme == .dark)_\(themeManager.useSystemAppearance)")
     }
     
     // Kontrol alanı - performans için önbelleklenmiş
@@ -468,6 +550,12 @@ struct GameView: View {
     
     // Başlangıç animasyonlarını ayarla
     private func setupInitialAnimations() {
+        // Oyun durumu playing değilse başlat (yeni oyun)
+        if viewModel.gameState != .playing {
+            viewModel.gameState = .playing
+            viewModel.startTimer() // Zamanlayıcıyı hemen başlat
+        }
+        
         // Sıralı görünürlük animasyonları
         withAnimation(.easeOut(duration: 0.3)) {
             isHeaderVisible = true
@@ -492,16 +580,21 @@ struct GameView: View {
         // İlk değeri hemen ayarla
         updateTimeDisplay()
         
-        // Timer'ı düzenli güncelleme için ayarla
-        Timer.scheduledTimer(withTimeInterval: timerUpdateInterval, repeats: true) { _ in
-            if viewModel.gameState == .playing {
-                updateTimeDisplay()
+        // Timer'ı daha sık güncelleme için ayarla (100 ms aralıklarla)
+        // Bu hem daha yumuşak güncelleme sağlar hem de işlem hızlıdır
+        let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            if self.viewModel.gameState == .playing {
+                self.updateTimeDisplay()
             }
         }
+        
+        // Timer'ın her koşulda çalışmasını sağla
+        RunLoop.main.add(timer, forMode: .common)
     }
     
     // Zaman gösterimini güncelle
     private func updateTimeDisplay() {
+        // Daha verimli ve hızlı güncelleme için elapsedTime direkt ViewModel'den alınıyor
         timeDisplay = timeString(from: viewModel.elapsedTime)
     }
     
@@ -825,32 +918,32 @@ struct GameView: View {
         ScrollView {
             VStack(spacing: 15) {
                 // Üst kısım - Hata ikonu
-                Image(systemName: "xmark.circle.fill")
+            Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 70))
                     .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.boardColors.red : .red)
                     .shadow(color: (themeManager.bejMode ? ThemeManager.BejThemeColors.boardColors.red : .red).opacity(0.4), radius: 12, x: 0, y: 6)
                     .padding(.top, 10)
-                
+            
                 // Başlık
-                Text("Oyun Bitti!")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+            Text("Oyun Bitti!")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : (colorScheme == .dark ? .white : .black))
-                
+            
                 // Açıklama
-                Text("3 hata yaptınız ve Sudoku oyununu kaybettiniz.")
-                    .font(.headline)
+            Text("3 hata yaptınız ve Sudoku oyununu kaybettiniz.")
+                .font(.headline)
                     .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
                 // Süre bilgisi
-                Text("Süre: \(timeString(from: viewModel.elapsedTime))")
-                    .font(.subheadline)
+            Text("Süre: \(timeString(from: viewModel.elapsedTime))")
+                .font(.subheadline)
                     .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                     .padding(.top, 2)
-                
+            
                 // Yeni Oyun Butonu
-                Button(action: {
+            Button(action: {
                     // Önce hata ekranını kapat, sonra zorluk seçiciyi aç
                     withAnimation(.easeInOut(duration: 0.2)) {
                         // Oyun durumunu sıfırla (hata ekranını kapat)
@@ -858,52 +951,52 @@ struct GameView: View {
                     }
                     
                     // Kısa bir gecikme ile zorluk seçiciyi göster
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showDifficultyPicker = true
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.clockwise.circle.fill")
-                        Text("Yeni Oyun")
-                            .fontWeight(.bold)
-                    }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    showDifficultyPicker = true
+                }
+            }) {
+                HStack {
+                    Image(systemName: "arrow.clockwise.circle.fill")
+                    Text("Yeni Oyun")
+                        .fontWeight(.bold)
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
                         RoundedRectangle(cornerRadius: 16)
                             .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.boardColors.red : Color.red)
-                    )
+                )
                     .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.background : .white)
-                }
+            }
                 .padding(.top, 15)
                 .padding(.horizontal, 20)
-                
-                // Anasayfaya Dön Butonu
-                Button(action: {
-                    // Önce ekranı kapatalım
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        dismiss()
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "house.fill")
-                        Text("Anasayfaya Dön")
-                            .fontWeight(.medium)
-                    }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
+            
+            // Anasayfaya Dön Butonu
+            Button(action: {
+                // Önce ekranı kapatalım
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    dismiss()
+                }
+            }) {
+                HStack {
+                    Image(systemName: "house.fill")
+                    Text("Anasayfaya Dön")
+                        .fontWeight(.medium)
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(themeManager.bejMode ? ThemeManager.BejThemeColors.text.opacity(0.3) : Color.gray, lineWidth: 1.5)
-                    )
+                )
                     .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : .primary)
-                }
-                .padding(.top, 5)
+            }
+            .padding(.top, 5)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 10)
-            }
+        }
             .padding(25)
         }
         .background(
@@ -921,6 +1014,163 @@ struct GameView: View {
         let currentScore = viewModel.calculatePerformanceScore()
         let bestScore = ScoreManager.shared.getBestScore(for: viewModel.board.difficulty)
         return currentScore > bestScore
+    }
+    
+    // MARK: - Duraklatma Ekranı
+    private var pauseView: some View {
+        VStack(spacing: 20) {
+            // Üst kısım - Duraklatma ikonu
+            Image(systemName: "pause.circle.fill")
+                .font(.system(size: 70))
+                .foregroundColor(.orange)
+                .shadow(color: .orange.opacity(0.4), radius: 12, x: 0, y: 6)
+                .padding(.top, 10)
+            
+            // Başlık
+            Text("Oyun Duraklatıldı")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.text : (colorScheme == .dark ? .white : .black))
+            
+            // Süre bilgisi
+            Text("Süre: \(timeString(from: viewModel.elapsedTime))")
+                .font(.headline)
+                .foregroundColor(themeManager.bejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                .padding(.top, 2)
+            
+            // İstatistikler
+            HStack(spacing: 20) {
+                // Zorluk
+                statBadge(
+                    title: "Zorluk",
+                    value: viewModel.board.difficulty.localizedName,
+                    icon: "speedometer",
+                    color: difficultyColors[viewModel.board.difficulty] ?? .blue
+                )
+                
+                // Hatalar
+                statBadge(
+                    title: "Hatalar",
+                    value: "\(viewModel.errorCount)/3",
+                    icon: "xmark.circle",
+                    color: viewModel.errorCount >= 3 ? .red : (viewModel.errorCount >= 2 ? .orange : .gray)
+                )
+                
+                // İpuçları
+                statBadge(
+                    title: "İpuçları",
+                    value: "\(viewModel.remainingHints)",
+                    icon: "lightbulb.fill",
+                    color: .orange
+                )
+            }
+            .padding(.vertical, 10)
+            
+            // Devam Et Butonu
+            Button(action: {
+                // Hızlı yanıt için ana thread'de çalıştır
+                DispatchQueue.main.async {
+                    withAnimation(.spring(response: 0.2)) {
+                        viewModel.togglePause() // Oyuna devam et
+                        
+                        // Başlama sesi çal
+                        SoundManager.shared.playResumeSound()
+                        
+                        // Ekranı hemen güncelle
+                        updateTimeDisplay()
+                    }
+                }
+            }) {
+                HStack {
+                    Image(systemName: "play.fill")
+                    Text("Devam Et")
+                        .fontWeight(.bold)
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.green)
+                )
+                .foregroundColor(.white)
+            }
+            .padding(.top, 15)
+            
+            // Yeni Oyun Butonu
+            Button(action: {
+                // Önce durumu oynama durumu yap, sonra zorluk seçici aç
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    viewModel.gameState = .ready
+                }
+                
+                // Kısa bir gecikme ile zorluk seçiciyi göster
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showDifficultyPicker = true
+                }
+            }) {
+                HStack {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                    Text("Yeni Oyun")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.blue)
+                )
+                .foregroundColor(.white)
+            }
+            .padding(.top, 5)
+            
+            // Ana Menü Butonu
+            Button(action: {
+                dismiss()
+            }) {
+                HStack {
+                    Image(systemName: "house.fill")
+                    Text("Ana Menü")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.gray, lineWidth: 1.5)
+                )
+                .foregroundColor(.primary)
+            }
+            .padding(.top, 5)
+        }
+        .padding(25)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(themeManager.bejMode ? ThemeManager.BejThemeColors.cardBackground : (colorScheme == .dark ? Color(.systemGray6) : Color.white))
+                .shadow(color: Color.black.opacity(0.25), radius: 20, x: 0, y: 12)
+        )
+        .padding(20)
+    }
+    
+    // İstatistik rozeti
+    private func statBadge(title: String, value: String, icon: String, color: Color) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.primary)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(width: 80, height: 80)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray6))
+        )
     }
 }
 

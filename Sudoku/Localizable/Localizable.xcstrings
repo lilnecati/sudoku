@@ -2956,6 +2956,9 @@
         }
       }
     },
+    "Ana Menü" : {
+
+    },
     "Ana Sayfa" : {
       "localizations" : {
         "en" : {
@@ -3450,7 +3453,6 @@
       }
     },
     "Devam Et" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5384,6 +5386,9 @@
           }
         }
       }
+    },
+    "Oyun Duraklatıldı" : {
+
     },
     "Oyun içi ses efektlerini aç/kapa" : {
       "extractionState" : "stale",

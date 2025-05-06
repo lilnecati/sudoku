@@ -95,12 +95,18 @@ struct GridBackgroundView: View {
     // Izgara desenini oluşturan görünüm - colorScheme'e göre değişir
     private var gridPattern: some View {
         Canvas { context, size in
-            // Koşul kaldırıldı, her zaman Açık Mod ızgarasını çiz
-            drawLightModeGrid(context: context, size: size)
+            // Theme'e göre uygun ızgara desenini çiz
+            if isBejMode {
+                drawBejModeGrid(context: context, size: size)
+            } else if colorScheme == .dark {
+                drawDarkModeGrid(context: context, size: size)
+            } else {
+                drawLightModeGrid(context: context, size: size)
+            }
         }
         .drawingGroup() // Metal hızlandırması için
-        .blur(radius: 0) // Sabit blur (Açık Mod değeri)
-        .blendMode(.multiply) // Sabit blend modu (Açık Mod/Bej Mod değeri)
+        .blur(radius: isBejMode || colorScheme == .light ? 0 : 0.5) // Tema'ya göre blur
+        .blendMode(isBejMode || colorScheme == .light ? .multiply : .plusLighter) // Tema'ya göre blend modu
     }
     
     // Bej mod ızgara çizgileri

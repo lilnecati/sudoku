@@ -63,6 +63,7 @@ struct StartupView: View {
             if isReady {
                 // isReady true ise HER ZAMAN ContentView göster
                 ContentView()
+                    .achievementNotifications() // Başarım bildirimlerini aktifleştir
             } else {
                 // isReady false ise HER ZAMAN Splash ZStack'ini göster
                 ZStack {

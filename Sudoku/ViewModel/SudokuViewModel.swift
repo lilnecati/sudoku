@@ -2158,8 +2158,19 @@ class SudokuViewModel: ObservableObject {
     func startTimer() {
         if timer == nil {
             startTime = Date()
-            timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-                self?.updateElapsedTime()
+            // Hemen mevcut zamanı güncelle
+            updateElapsedTime()
+            
+            // Ana thread'de çalışmasını sağlayarak daha hızlı yanıt ver
+            DispatchQueue.main.async {
+                self.timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+                    self?.updateElapsedTime()
+                }
+                
+                // Zamanlayıcının düzgün çalışması için run loop'a ekle
+                if let timer = self.timer {
+                    RunLoop.main.add(timer, forMode: .common)
+                }
             }
         }
     }
@@ -2168,6 +2179,9 @@ class SudokuViewModel: ObservableObject {
     func updateElapsedTime() {
         if let startTime = startTime {
             elapsedTime = pausedElapsedTime + Date().timeIntervalSince(startTime)
+            
+            // Değişikliği bildir
+            objectWillChange.send()
         }
     }
     
@@ -2184,11 +2198,17 @@ class SudokuViewModel: ObservableObject {
             pausedElapsedTime = elapsedTime
             gameState = .paused
             stopTimer()
+            
+            // Değişiklikleri hemen bildir
+            objectWillChange.send()
         } else if gameState == .paused {
             gameState = .playing
             // Zaman geçmiş süreyi koruyarak başlatılır
             startTime = Date()
             startTimer()
+            
+            // Değişiklikleri hemen bildir
+            objectWillChange.send()
         }
     }
     

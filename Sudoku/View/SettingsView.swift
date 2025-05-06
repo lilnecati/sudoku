@@ -634,8 +634,8 @@ struct SettingsView: View {
                 // Sol taraftaki simge
                 ZStack {
                     Circle()
-                        .fill(isBejMode ? 
-                             ThemeManager.BejThemeColors.accent.opacity(0.15) : 
+                        .fill(isBejMode ?
+                             ThemeManager.BejThemeColors.accent.opacity(0.15) :
                              Color.blue.opacity(0.15))
                         .frame(width: 36, height: 36)
                     
