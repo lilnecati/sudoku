@@ -32,6 +32,11 @@ struct SudokuCellView: View {
     @State private var animateValue = false
     @State private var refreshID = UUID() // Yenileme için benzersiz ID
     
+    // Yeni animasyon durumları
+    @State private var shakeAmount = 0.0
+    @State private var lastInvalidState = false
+    @State private var highlightOpacity = 0.0  // Renk vurgu animasyonu için
+    
     // Bej mod kontrolü eklendi
     private var isBejMode: Bool {
         themeManager.bejMode
@@ -50,11 +55,18 @@ struct SudokuCellView: View {
                 // Arka Plan ve Kenarlık (Yeni sistem)
                 backgroundAndBorderView
                 
+                // Hatalı giriş renk vurgusu (pulse)
+                if isInvalid {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(isBejMode ? ThemeManager.BejThemeColors.boardColors.red : Color.red)
+                        .opacity(highlightOpacity)
+                }
+                
                 // Sayı veya Notlar (cellDimension geçirildi)
                 cellContentView(cellDimension: cellDimension)
-                    .modifier(ShakeEffect(animatableData: isInvalid ? 1 : 0))
             }
             .aspectRatio(1, contentMode: .fit)
+            .modifier(ShakeEffect(animatableData: shakeAmount))
             .onTapGesture {
                 onCellTapped()
                 
@@ -66,6 +78,50 @@ struct SudokuCellView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(accessibilityLabel)
+            .onAppear(perform: checkInvalid)
+            .onChange(of: isInvalid) { _, newValue in
+                if newValue && !lastInvalidState {
+                    lastInvalidState = true
+                    triggerShakeAnimation()
+                } else if !newValue {
+                    lastInvalidState = false
+                }
+            }
+        }
+    }
+    
+    // Animasyon tetikleme
+    private func triggerShakeAnimation() {
+        // Hatalı giriş için fiziksel titreşim
+        if enableHapticFeedback {
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.error)
+        }
+        
+        // Renk vurgu (pulse) animasyonu
+        withAnimation(.easeInOut(duration: 0.3).repeatCount(3, autoreverses: true)) {
+            highlightOpacity = 0.5
+        }
+        
+        // Daha yumuşak ve akıcı sallama animasyonu
+        withAnimation(.spring(response: 0.2, dampingFraction: 0.2, blendDuration: 0.2)) {
+            shakeAmount = 1.0
+        }
+        
+        // Animasyonu sıfırla
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            withAnimation(.easeOut(duration: 0.2)) {
+                shakeAmount = 0.0
+                highlightOpacity = 0.0
+            }
+        }
+    }
+    
+    // İlk yüklenmede de kontrol et
+    private func checkInvalid() {
+        if isInvalid {
+            lastInvalidState = true
+            triggerShakeAnimation()
         }
     }
     
@@ -114,9 +170,18 @@ struct SudokuCellView: View {
             // Değer gösterimi
             if let value = value {
                 Text("\(value)")
-                    .font(.system(size: 28, weight: .bold, design: .default))
+                    .font(.system(
+                        size: isInvalid ? 32 : 28, // Hatalı ise daha büyük
+                        weight: isInvalid ? .heavy : .bold, // Hatalı ise daha kalın
+                        design: .default
+                    ))
                     .foregroundColor(getTextColor())
-                    .shadow(color: Color.black.opacity(0.08), radius: 0.8, x: 0, y: 0.5)
+                    .shadow(
+                        color: isInvalid ? Color.black.opacity(0.2) : Color.black.opacity(0.08), // Hatalı ise daha belirgin gölge
+                        radius: isInvalid ? 1.2 : 0.8, // Hatalı ise daha büyük gölge
+                        x: 0, 
+                        y: isInvalid ? 1.0 : 0.5 // Hatalı ise daha uzun gölge
+                    )
             }
             
             // Pencil marks - sadece varsa çiz
@@ -252,7 +317,7 @@ struct SudokuCellView: View {
         if isBejMode {
             // Hatalı giriş için kırmızı metin (bej uyumlu)
             if isInvalid {
-                return ThemeManager.BejThemeColors.boardColors.red
+                return ThemeManager.BejThemeColors.boardColors.red.opacity(1.0) // Tam opak, daha parlak
             }
             
             // Sabit değer (tahta tarafından üretilen)
@@ -275,7 +340,7 @@ struct SudokuCellView: View {
             // Normal tema:
             // Hatalı giriş için kırmızı metin
             if isInvalid {
-                return Color.red
+                return Color.red.opacity(1.0) // Tam opak, daha parlak
             }
             
             // Sabit değer (tahta tarafından üretilen)
@@ -327,21 +392,6 @@ struct SudokuCellView: View {
             label += " (Hatalı)"
         }
         return label
-    }
-
-    // Titreşim animasyonu için modifier
-    struct ShakeEffect: GeometryEffect {
-        var animatableData: CGFloat
-        
-        func effectValue(size: CGSize) -> ProjectionTransform {
-            guard animatableData > 0 else { return ProjectionTransform(.identity) }
-            
-            let angle = CGFloat.pi * 2 * animatableData
-            let shakeMagnitude: CGFloat = 3
-            
-            let translation = CGAffineTransform(translationX: sin(angle * 8) * shakeMagnitude, y: 0)
-            return ProjectionTransform(translation)
-        }
     }
 }
 
@@ -395,6 +445,29 @@ struct SudokuCellView_Previews: PreviewProvider {
         .previewLayout(.sizeThatFits)
         .environmentObject(themeManager) // ThemeManager'ı ekle
         .environmentObject(configuredViewModel) // Önceden yapılandırılmış ViewModel'i ekle
+    }
+}
+
+// Sallama efekti için yapı
+struct ShakeEffect: GeometryEffect {
+    var animatableData: Double
+    
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        // Eğer animasyon verisi 0 ise, herhangi bir efekt uygulamayalım
+        guard animatableData > 0 else { 
+            return ProjectionTransform(.identity)
+        }
+        
+        // Daha doğal ve yumuşak bir sallanma eğrisi
+        let wiggleX = sin(animatableData * .pi * 2.5) * max(0, (1 - animatableData))
+        
+        // Şiddet - akıcı hissi için daha küçük bir değer
+        let magnitude: CGFloat = 7
+        
+        // Yatay sallamayı hesapla
+        let translation = CGAffineTransform(translationX: wiggleX * magnitude, y: 0)
+        
+        return ProjectionTransform(translation)
     }
 }
 
