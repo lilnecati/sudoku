@@ -448,6 +448,10 @@ struct SettingsView: View {
                 selectedLanguage: $selectedLanguage,
                 localizationManager: localizationManager
             )
+            .environmentObject(themeManager)
+            .onAppear {
+                selectedLanguage = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+            }
             .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showAchievementsSheet) {
@@ -1038,51 +1042,101 @@ struct SettingsView: View {
     
     // Görünüm ayarları görünümü için fonksiyon
     private func appearanceSettingsView() -> some View {
-        Button(action: {
-            showBoardColorSheet = true
-        }) {
-            HStack(spacing: 15) {
-                // İkon
-                ZStack {
-                    Circle()
+        VStack(spacing: 15) {
+            // Görünüm ayarları butonu
+            Button(action: {
+                showBoardColorSheet = true
+            }) {
+                HStack(spacing: 15) {
+                    // İkon
+                    ZStack {
+                        Circle()
+                            .fill(isBejMode ? 
+                                 ThemeManager.BejThemeColors.accent.opacity(0.15) : 
+                                 Color.purple.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        
+                        Image(systemName: "paintbrush.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .purple)
+                    }
+                    
+                    // Başlık ve açıklama
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Görünüm Ayarları")
+                            .scaledFont(size: 16, weight: .semibold)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                        
+                        Text("Temalar ve renk seçenekleri")
+                            .scaledFont(size: 13)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.gray)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
                         .fill(isBejMode ? 
-                             ThemeManager.BejThemeColors.accent.opacity(0.15) : 
-                             Color.purple.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    
-                    Image(systemName: "paintbrush.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .purple)
-                }
-                
-                // Başlık ve açıklama
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Görünüm Ayarları")
-                        .scaledFont(size: 16, weight: .semibold)
-                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
-                    
-                    Text("Temalar ve renk seçenekleri")
-                        .scaledFont(size: 13)
-                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
-                        .lineLimit(1)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.gray)
+                             ThemeManager.BejThemeColors.cardBackground : 
+                             (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                )
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isBejMode ? 
-                         ThemeManager.BejThemeColors.cardBackground : 
-                         (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-            )
+            .buttonStyle(PlainButtonStyle())
+            
+            // Dil seçimi butonu
+            Button(action: {
+                showLanguageSheet = true
+            }) {
+                HStack(spacing: 15) {
+                    // İkon
+                    ZStack {
+                        Circle()
+                            .fill(isBejMode ? 
+                                 ThemeManager.BejThemeColors.accent.opacity(0.15) : 
+                                 Color.blue.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        
+                        Image(systemName: "globe")
+                            .font(.system(size: 16))
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
+                    }
+                    
+                    // Başlık ve açıklama
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Dil")
+                            .scaledFont(size: 16, weight: .semibold)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
+                        
+                        Text("Uygulama dilini değiştirin")
+                            .scaledFont(size: 13)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.gray)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isBejMode ? 
+                             ThemeManager.BejThemeColors.cardBackground : 
+                             (colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white))
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
         }
-        .buttonStyle(PlainButtonStyle())
         .padding(.horizontal, 8)
     }
     
@@ -1628,8 +1682,14 @@ struct ToggleSettingRow: View {
 struct LanguageSelectionSheet: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var themeManager: ThemeManager
     @Binding var selectedLanguage: String
     @ObservedObject var localizationManager: LocalizationManager
+    
+    // Bej mod kontrolü için hesaplama
+    private var isBejMode: Bool {
+        return themeManager.bejMode
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -1641,7 +1701,7 @@ struct LanguageSelectionSheet: View {
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(.gray)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .gray)
                     }
                     .padding(.leading)
                     
@@ -1650,14 +1710,18 @@ struct LanguageSelectionSheet: View {
                 
                 Text.localizedSafe("language.selection")
                     .scaledFont(size: 17, weight: .bold)
+                    .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                     .padding()
             }
             .padding(.top, 8)
             .background(
-                colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground)
+                isBejMode ? 
+                ThemeManager.BejThemeColors.cardBackground : 
+                (colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground))
             )
             
             Divider()
+                .background(isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.2) : Color.gray.opacity(0.2))
             
             // Dil listesi
             ScrollView {
@@ -1707,7 +1771,7 @@ struct LanguageSelectionSheet: View {
                     Group {
                         Text.localizedSafe("coming.soon.languages")
                             .scaledFont(size: 12)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                             .padding(.horizontal)
                             .padding(.top, 20)
                             .padding(.bottom, 10)
@@ -1742,8 +1806,15 @@ struct LanguageSelectionSheet: View {
                 .padding(.horizontal, 16)
             }
         }
-        .background(colorScheme == .dark ? Color(.systemBackground) : Color(.systemGroupedBackground))
+        .background(
+            isBejMode ? 
+            ThemeManager.BejThemeColors.background : 
+            (colorScheme == .dark ? Color(.systemBackground) : Color(.systemGroupedBackground))
+        )
         .edgesIgnoringSafeArea(.bottom)
+        .preferredColorScheme(themeManager.colorScheme)
+        .animation(.easeInOut(duration: 0.3), value: themeManager.darkMode)
+        .animation(.easeInOut(duration: 0.3), value: themeManager.useSystemAppearance)
     }
 }
 

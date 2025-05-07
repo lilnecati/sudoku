@@ -3491,6 +3491,9 @@
         }
       }
     },
+    "Dil" : {
+
+    },
     "dk" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -7919,6 +7922,9 @@
           }
         }
       }
+    },
+    "Uygulama dilini değiştirin" : {
+
     },
     "Uygulama Teması" : {
 
