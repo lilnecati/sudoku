@@ -338,7 +338,7 @@ struct SettingsView: View {
                 
                 // İçerik ScrollView'ı
                 ScrollView {
-                    VStack(spacing: 15) { 
+                    LazyVStack(spacing: 15) { 
                         // Profil ve hesap ayarları bölümü - başlık olmadan
                         self.profileSettingsView()
 
@@ -1606,23 +1606,17 @@ struct ToggleSettingRow: View {
     
     var body: some View {
         Button(action: {
-            // Titreşim kontrolü - özellikle titreşim açık/kapalı düğmesi için
             if title == "Titreşim Geri Bildirimi" {
-                // Titreşim düğmesi için, bu tuşu yönetiyoruz
-                // Titreşim vermeden sadece ses çal
                 SoundManager.shared.playNavigationSoundOnly()
             } else if enableHapticFeedback {
-                // Diğer tüm düğmeler için, titreşim ayarı açıksa titreşimli ses çal
                 SoundManager.shared.playNavigationSound()
             } else {
-                // Titreşim kapalıysa, sadece ses çal
                 SoundManager.shared.playNavigationSoundOnly()
             }
             
             isOn.toggle()
         }) {
             HStack(spacing: 15) {
-                // Sol taraftaki simge
                 ZStack {
                     Circle()
                         .fill(color.opacity(0.15))
@@ -1633,7 +1627,6 @@ struct ToggleSettingRow: View {
                         .foregroundColor(color)
                 }
                 
-                // Başlık ve açıklama
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .scaledFont(size: 16, weight: .semibold)
@@ -1647,7 +1640,6 @@ struct ToggleSettingRow: View {
                 
                 Spacer()
                 
-                // Toggle butonu
                 ZStack {
                     Capsule()
                         .fill(isOn ? color : Color.gray.opacity(0.3))

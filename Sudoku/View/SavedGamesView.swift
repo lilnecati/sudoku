@@ -10,6 +10,149 @@ import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 
+struct SavedGameDisplayItem: Identifiable {
+    let id: UUID
+    let originalGame: SavedGame
+
+    let difficulty: String
+    let difficultyIconName: String
+    let difficultyColor: Color
+    let dateCreatedFormatted: String
+    let miniBoardState: [String: Any]
+    let gameProgress: Double
+    let elapsedTimeFormatted: String
+    let errorCount: Int
+    let remainingHints: Int
+    let isCompleted: Bool
+
+    let elapsedTimeInSeconds: Int
+
+    init(game: SavedGame, themeManager: ThemeManager?) { // themeManager eklendi
+        self.id = game.id ?? UUID()
+        self.originalGame = game
+
+        self.difficulty = game.difficulty ?? "Bilinmeyen"
+        
+        let boardStateJSON = SavedGameDisplayItem.parseBoardState(from: game.boardState)
+
+        self.isCompleted = boardStateJSON["isCompleted"] as? Bool ?? false
+        
+        // elapsedTime önceliği: JSON, sonra CoreData'daki ana game.elapsedTime
+        if let jsonElapsedTime = boardStateJSON["elapsedTime"] as? Int {
+            self.elapsedTimeInSeconds = jsonElapsedTime
+        } else if let jsonElapsedTimeDouble = boardStateJSON["elapsedTime"] as? Double {
+            self.elapsedTimeInSeconds = Int(jsonElapsedTimeDouble)
+        } else {
+            self.elapsedTimeInSeconds = Int(game.elapsedTime)
+        }
+        
+        self.errorCount = boardStateJSON["errorCount"] as? Int ?? 0
+        self.remainingHints = boardStateJSON["remainingHints"] as? Int ?? 3
+        
+        if let progress = boardStateJSON["completionPercentage"] as? Double {
+            self.gameProgress = progress
+        } else if let progressInt = boardStateJSON["completionPercentage"] as? Int {
+            self.gameProgress = Double(progressInt) / 100.0
+        } else {
+            // Eğer completionPercentage JSON'da yoksa, SudokuViewModel'den hesaplamayı deneyebiliriz.
+            // Ancak bu init'i karmaşıklaştırır. Şimdilik 0.0 varsayalım veya başka bir mantık geliştirelim.
+            // Örneğin, dolu hücre sayısına göre basit bir hesaplama yapılabilir.
+            // Şimdilik, eğer JSON'da yoksa ve oyun tamamlanmamışsa %5 gibi bir minimum değer gösterilebilir.
+            self.gameProgress = self.isCompleted ? 1.0 : (boardStateJSON.isEmpty ? 0.05 : 0.05) // JSON boşsa veya veri yoksa %5
+        }
+
+
+        self.dateCreatedFormatted = SavedGameDisplayItem.formatDate(game.dateCreated ?? Date())
+        self.elapsedTimeFormatted = SavedGameDisplayItem.formatTime(Double(self.elapsedTimeInSeconds))
+        
+        self.difficultyIconName = SavedGameDisplayItem.getDifficultyIconName(difficulty: self.difficulty)
+        self.difficultyColor = SavedGameDisplayItem.getDifficultyColor(difficulty: self.difficulty, themeManager: themeManager)
+
+        self.miniBoardState = boardStateJSON
+    }
+
+    static func parseBoardState(from data: Data?) -> [String: Any] {
+        guard let boardData = data else { return [:] }
+        do {
+            if let dict = try JSONSerialization.jsonObject(with: boardData, options: []) as? [String: Any] {
+                return dict
+            }
+        } catch {
+            print("SavedGameDisplayItem: JSON ayrıştırma hatası: \\(error)")
+        }
+        return [:]
+    }
+
+    static func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM yyyy HH:mm"
+        formatter.locale = Locale(identifier: UserDefaults.standard.string(forKey: "app_language") ?? "tr")
+        return formatter.string(from: date)
+    }
+
+    static func formatTime(_ timeInterval: TimeInterval) -> String {
+        let totalSeconds = Int(timeInterval)
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        if minutes > 0 {
+             return String(format: "%d dk %02d sn", minutes, seconds)
+        } else {
+             return String(format: "%d sn", seconds)
+        }
+    }
+    
+    static func getDifficultyIconName(difficulty: String) -> String {
+        let currentLanguage = UserDefaults.standard.string(forKey: "app_language") ?? "tr"
+        let lowercasedDifficulty = difficulty.lowercased()
+
+        if currentLanguage == "en" {
+            switch lowercasedDifficulty {
+                case "easy": return "leaf.fill"
+                case "medium": return "flame.fill"
+                case "hard": return "bolt.fill"
+                case "expert": return "star.fill"
+                default: return "questionmark.circle.fill"
+            }
+        } else if currentLanguage == "fr" {
+            switch lowercasedDifficulty {
+                case "facile": return "leaf.fill"
+                case "moyen": return "flame.fill"
+                case "difficile": return "bolt.fill"
+                case "expert": return "star.fill"
+                default: return "questionmark.circle.fill"
+            }
+        } else { // Türkçe
+            switch difficulty { // Türkçe için büyük/küçük harf duyarlı olabilir, orijinalini kullanalım
+                case "Kolay": return "leaf.fill"
+                case "Orta": return "flame.fill"
+                case "Zor": return "bolt.fill"
+                case "Uzman": return "star.fill"
+                default: return "questionmark.circle.fill"
+            }
+        }
+    }
+
+    static func getDifficultyColor(difficulty: String, themeManager: ThemeManager?) -> Color {
+        let isBejMode = themeManager?.bejMode ?? false
+        let lowercasedDifficulty = difficulty.lowercased() // Karşılaştırmalar için küçük harf
+
+        // Renkleri bej moda ve normal moda göre ayır
+        if isBejMode {
+            if ["kolay", "easy", "facile"].contains(lowercasedDifficulty) { return Color(red: 0.4, green: 0.6, blue: 0.3) }
+            if ["orta", "medium", "moyen"].contains(lowercasedDifficulty) { return Color(red: 0.7, green: 0.5, blue: 0.2) }
+            if ["zor", "hard", "difficile"].contains(lowercasedDifficulty) { return Color(red: 0.7, green: 0.3, blue: 0.2) }
+            if ["uzman", "expert"].contains(lowercasedDifficulty) { return Color(red: 0.5, green: 0.3, blue: 0.5) }
+            return .gray
+        } else {
+            if ["kolay", "easy", "facile"].contains(lowercasedDifficulty) { return .green }
+            if ["orta", "medium", "moyen"].contains(lowercasedDifficulty) { return .blue }
+            if ["zor", "hard", "difficile"].contains(lowercasedDifficulty) { return .orange }
+            if ["uzman", "expert"].contains(lowercasedDifficulty) { return .red }
+            return .gray
+        }
+    }
+}
+
 struct SavedGamesView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.colorScheme) var colorScheme
@@ -21,20 +164,13 @@ struct SavedGamesView: View {
         return themeManager.bejMode
     }
     
-    // FetchRequest'i kaldırıp State değişkenine geçiyoruz
-    //@FetchRequest(
-    //    sortDescriptors: [NSSortDescriptor(keyPath: \SavedGame.dateCreated, ascending: false)],
-    //    animation: .default)
-    //private var savedGames: FetchedResults<SavedGame>
-    
-    // Verileri manuel olarak tutacak değişken 
-    @State private var savedGames: [SavedGame] = [] {
-        didSet {
-            // savedGames değiştiğinde filtrelemeyi otomatik olarak çağır
-            filterGames()
-        }
-    }
-    @State private var filteredGames: [SavedGame] = []  // Filtrelenmiş oyunları saklayacak yeni değişken
+    // @State private var savedGames: [SavedGame] = [] { // Eski state
+    //     didSet {
+    //         filterGames()
+    //     }
+    // }
+    @State private var allDisplayItems: [SavedGameDisplayItem] = [] // Ham, filtrelenmemiş display item'lar
+    @State private var filteredGames: [SavedGameDisplayItem] = []  // Filtrelenmiş oyunları saklayacak yeni değişken
     
     @ObservedObject var viewModel: SudokuViewModel
     @State private var gameToDelete: SavedGame? = nil
@@ -67,46 +203,21 @@ struct SavedGamesView: View {
     
     // Oyunları filtreleyen fonksiyon
     private func filterGames() {
-        logInfo("Filtreleme başladı: \(savedGames.count) oyun mevcut")
+        logInfo("Filtreleme başladı: \(allDisplayItems.count) oyun mevcut")
         
-        // Önce tamamlanmamış oyunları filtrele (isCompleted == false veya nil)
-        let uncompleted = savedGames.filter { savedGame in
-            // Önce oyun verilerine eriş
-            guard let boardStateData = savedGame.boardState else { 
-                logWarning("Oyun verisi (boardState) bulunamadı: \(savedGame.id?.uuidString ?? "ID yok")")
-                return true 
-            }
-            
-            do {
-                // JSON veriyi ayrıştır
-                if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
-                    // isCompleted anahtarını kontrol et
-                    if let isCompleted = dict["isCompleted"] as? Bool, isCompleted {
-                        // Tamamlanmış oyunları gösterme
-                        logInfo("Tamamlanmış oyun filtrelendi: \(savedGame.id?.uuidString ?? "ID yok")")
-                        return false
-                    }
-                    return true
-                } else {
-                    logWarning("JSON ayrıştırma başarılı fakat dictionary değil: \(savedGame.id?.uuidString ?? "ID yok")")
-                    return true
-                }
-            } catch {
-                logError("JSON ayrıştırma hatası: \(error), Oyun ID: \(savedGame.id?.uuidString ?? "ID yok")")
-                return true
-            }
-        }
+        // Önce tamamlanmamış oyunları filtrele (isCompleted == false)
+        let uncompleted = allDisplayItems.filter { !$0.isCompleted }
         
         logInfo("Tamamlanmamış oyun sayısı: \(uncompleted.count)")
         
         // Ardından zorluk seviyesine göre filtrele
         if selectedDifficulty == "Tümü" || selectedDifficulty == "All" || selectedDifficulty == "Tous" {
             logInfo("Tüm zorluk seviyeleri gösteriliyor. Toplam oyun sayısı: \(uncompleted.count)")
-            filteredGames = Array(uncompleted)
+            filteredGames = uncompleted.sorted { $0.originalGame.dateCreated ?? Date.distantPast > $1.originalGame.dateCreated ?? Date.distantPast }
         } else {
             let filtered = uncompleted.filter { $0.difficulty == selectedDifficulty }
             logInfo("'\(selectedDifficulty)' zorluk seviyesine göre filtreleniyor. Oyun sayısı: \(filtered.count)")
-            filteredGames = filtered
+            filteredGames = filtered.sorted { $0.originalGame.dateCreated ?? Date.distantPast > $1.originalGame.dateCreated ?? Date.distantPast }
         }
         
         logInfo("UI güncellendi: \(filteredGames.count) oyun gösteriliyor")
@@ -262,14 +373,14 @@ struct SavedGamesView: View {
                     // Kaydedilmiş oyun listesi
                     ScrollView {
                         LazyVStack(spacing: 16) {
-                            ForEach(filteredGames) { game in
-                                SavedGameCard(game: game, viewModel: viewModel) {
+                            ForEach(filteredGames) { item in
+                                SavedGameCard(displayItem: item, viewModel: viewModel) {
                                     // Oyun seçimi ve ekranı kapat
-                                    gameSelected(game)
+                                    gameSelected(item.originalGame)
                                     presentationMode.wrappedValue.dismiss()
                                 } onDelete: {
                                     // Oyun silme işlemi
-                                    gameToDelete = game
+                                    gameToDelete = item.originalGame
                                     showingDeleteAlert = true
                                 }
                             }
@@ -755,25 +866,29 @@ struct SavedGamesView: View {
     
     // Manuel olarak kayıtlı oyunları yükleme fonksiyonu
     private func loadSavedGames() {
-        DispatchQueue.main.async {
+        DispatchQueue.global(qos: .userInitiated).async { // Arka planda çalıştır
             let fetchedGames = PersistenceController.shared.getAllSavedGames()
-            // Tarih sırasına göre sıralayalım
-            let sortedGames = fetchedGames.sorted { 
-                let date1 = $0.dateCreated ?? Date.distantPast
-                let date2 = $1.dateCreated ?? Date.distantPast
-                return date1 > date2
+            // Tarih sırasına göre sıralamaya gerek yok, çünkü filterGames içinde yapılacak.
+            // Ancak burada yapmak da performansı etkilemez.
+            // let sortedGames = fetchedGames.sorted { 
+            //     let date1 = $0.dateCreated ?? Date.distantPast
+            //     let date2 = $1.dateCreated ?? Date.distantPast
+            //     return date1 > date2
+            // }
+            
+            // SavedGame nesnelerini SavedGameDisplayItem nesnelerine dönüştür
+            // Bu dönüşüm sırasında JSON parse etme işlemi yapılacak.
+            // themeManager'ı yakalamak için [weak self] veya [unowned self] gerekebilir, 
+            // ama themeManager bir EnvironmentObject olduğu için genellikle sorun olmaz.
+            let items = fetchedGames.map { game in
+                SavedGameDisplayItem(game: game, themeManager: self.themeManager)
             }
             
-            logInfo("Oyun yükleme: \(sortedGames.count) oyun bulundu")
-            
-            // Log oyun ID'lerini
-            for (index, game) in sortedGames.enumerated() {
-                logDebug("Oyun \(index+1): ID = \(game.id?.uuidString ?? "ID yok"), difficulty = \(game.difficulty ?? "Bilinmeyen")")
+            DispatchQueue.main.async {
+                logInfo("Oyun yükleme: \(items.count) display item oluşturuldu")
+                self.allDisplayItems = items
+                self.filterGames() // Filtrelemeyi çağır
             }
-            
-            // UI güncellemesi
-            self.savedGames = sortedGames
-            self.filterGames()
         }
     }
     
@@ -791,7 +906,7 @@ struct SavedGamesView: View {
 }
 
 struct SavedGameCard: View {
-    let game: SavedGame
+    let displayItem: SavedGameDisplayItem
     let viewModel: SudokuViewModel
     let onSelect: () -> Void
     let onDelete: () -> Void
@@ -800,45 +915,38 @@ struct SavedGameCard: View {
     @Environment(\.textScale) var textScale
     @EnvironmentObject var themeManager: ThemeManager
     
-    // Bej mod kontrolü için hesaplama
     private var isBejMode: Bool {
         return themeManager.bejMode
     }
     
     var body: some View {
         Button(action: onSelect) {
-            // Kart görünümü
             VStack(spacing: 0) {
-                // Üst bilgi kısmı
                 HStack {
-                    // Sol kısım: Zorluk seviyesi
                     HStack(spacing: 5) {
-                        Image(systemName: getDifficultyIcon(difficulty: game.difficulty ?? "Kolay"))
+                        Image(systemName: displayItem.difficultyIconName)
                             .font(.system(size: 14))
                         
-                        Text(game.difficulty ?? "Kolay")
+                        Text(displayItem.difficulty)
                             .font(.system(size: 14 * textScale, weight: .medium))
                     }
-                    .foregroundColor(getDifficultyColor(difficulty: game.difficulty ?? "Kolay"))
+                    .foregroundColor(displayItem.difficultyColor)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(getDifficultyColor(difficulty: game.difficulty ?? "Kolay").opacity(0.15))
+                            .fill(displayItem.difficultyColor.opacity(0.15))
                             .overlay(
                                 Capsule()
-                                    .stroke(getDifficultyColor(difficulty: game.difficulty ?? "Kolay").opacity(0.3), lineWidth: 1)
+                                    .stroke(displayItem.difficultyColor.opacity(0.3), lineWidth: 1)
                             )
                     )
                     
                     Spacer()
                     
-                    // Sağ kısım: Tarih
-                    if let date = game.dateCreated {
-                        Text(formatDate(date))
-                            .font(.system(size: 12 * textScale))
-                            .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
-                    }
+                    Text(displayItem.dateCreatedFormatted)
+                        .font(.system(size: 12 * textScale))
+                        .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.secondaryText : .secondary)
                 }
                 .padding(.horizontal, 15)
                 .padding(.top, 15)
@@ -847,9 +955,7 @@ struct SavedGameCard: View {
                 Divider()
                     .padding(.horizontal, 15)
                 
-                // Oyun bilgileri
                 HStack(alignment: .center, spacing: 15) {
-                    // Sol kısım - Küçük sudoku tahtası görselleştirmesi
                     ZStack {
                         RoundedRectangle(cornerRadius: 8)
                             .fill(isBejMode ? 
@@ -857,35 +963,30 @@ struct SavedGameCard: View {
                                  (colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6)))
                             .frame(width: 80, height: 80)
                         
-                        // Basit sudoku tahtası gösterimi
-                        MiniSudokuBoard(boardState: getBoardState(from: game))
+                        MiniSudokuBoard(boardState: displayItem.miniBoardState)
+                            .drawingGroup()
                             .frame(width: 70, height: 70)
                     }
                     .padding(.leading, 15)
                     
-                    // Sağ kısım - Oyun bilgileri
                     VStack(alignment: .leading, spacing: 8) {
-                        // İlerleme
-                        ProgressView(value: getGameProgress(), total: 1.0)
+                        ProgressView(value: displayItem.gameProgress, total: 1.0)
                             .progressViewStyle(LinearProgressViewStyle(tint: isBejMode ? ThemeManager.BejThemeColors.accent : .blue))
                             .frame(maxWidth: .infinity)
                         
                         HStack(spacing: 16) {
-                            // İstatistikler - İlk satır
                             VStack(alignment: .leading, spacing: 4) {
-                                // Oyun süresi
                                 HStack(spacing: 5) {
                                     Image(systemName: "clock.fill")
                                         .font(.system(size: 12))
                                         .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .orange)
                                     
-                                    Text(formatTime(getElapsedTime()))
+                                    Text(displayItem.elapsedTimeFormatted)
                                         .font(.system(size: 12 * textScale, weight: .medium))
                                         .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                                         .lineLimit(1)
                                 }
                                 
-                                // Hatalar
                                 HStack(spacing: 5) {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.system(size: 12))
@@ -893,16 +994,14 @@ struct SavedGameCard: View {
                                                        Color(red: 0.7, green: 0.3, blue: 0.2) : 
                                                        .red)
                                     
-                                    Text("\(getErrorCount()) Hata")
+                                    Text("\(displayItem.errorCount) Hata")
                                         .font(.system(size: 12 * textScale, weight: .medium))
                                         .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                                         .lineLimit(1)
                                 }
                             }
                             
-                            // İstatistikler - İkinci satır
                             VStack(alignment: .leading, spacing: 4) {
-                                // Kalan İpucu
                                 HStack(spacing: 5) {
                                     Image(systemName: "lightbulb.fill")
                                         .font(.system(size: 12))
@@ -910,19 +1009,18 @@ struct SavedGameCard: View {
                                                        Color(red: 0.7, green: 0.6, blue: 0.2) : 
                                                        .yellow)
                                     
-                                    Text("\(getRemainingHints()) İpucu")
+                                    Text("\(displayItem.remainingHints) İpucu")
                                         .font(.system(size: 12 * textScale, weight: .medium))
                                         .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                                         .lineLimit(1)
                                 }
                                 
-                                // Doluluk oranı
                                 HStack(spacing: 5) {
                                     Image(systemName: "chart.bar.fill")
                                         .font(.system(size: 12))
                                         .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.accent : .blue)
                                     
-                                    Text("\(Int(getGameProgress() * 100))% Tamamlandı")
+                                    Text("\(Int(displayItem.gameProgress * 100))% Tamamlandı")
                                         .font(.system(size: 12 * textScale, weight: .medium))
                                         .foregroundColor(isBejMode ? ThemeManager.BejThemeColors.text : .primary)
                                         .lineLimit(1)
@@ -932,7 +1030,6 @@ struct SavedGameCard: View {
                     }
                     .padding(.horizontal, 10)
                     
-                    // Sil butonu
                     Button(action: onDelete) {
                         Image(systemName: "trash.fill")
                             .font(.system(size: 16))
@@ -958,172 +1055,6 @@ struct SavedGameCard: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
-    }
-    
-    // Zorluk seviyesi ikonu
-    private func getDifficultyIcon(difficulty: String) -> String {
-        switch difficulty {
-        case "Kolay", "Easy", "Facile":
-            return "leaf.fill"
-        case "Orta", "Medium", "Moyen":
-            return "flame.fill"
-        case "Zor", "Hard", "Difficile":
-            return "bolt.fill"
-        case "Uzman", "Expert":
-            return "star.fill"
-        default:
-            return "questionmark"
-        }
-    }
-    
-    // Zorluk seviyesi rengi
-    private func getDifficultyColor(difficulty: String) -> Color {
-        if isBejMode {
-            switch difficulty {
-            case "Kolay", "Easy", "Facile":
-                return Color(red: 0.4, green: 0.6, blue: 0.3) // Bej uyumlu yeşil
-            case "Orta", "Medium", "Moyen":
-                return Color(red: 0.7, green: 0.5, blue: 0.2) // Bej uyumlu turuncu
-            case "Zor", "Hard", "Difficile":
-                return Color(red: 0.7, green: 0.3, blue: 0.2) // Bej uyumlu kırmızı
-            case "Uzman", "Expert":
-                return Color(red: 0.5, green: 0.3, blue: 0.5) // Bej uyumlu mor
-            default:
-                return ThemeManager.BejThemeColors.accent
-            }
-        } else {
-            switch difficulty {
-            case "Kolay", "Easy", "Facile":
-                return .green
-            case "Orta", "Medium", "Moyen":
-                return .orange
-            case "Zor", "Hard", "Difficile":
-                return .red
-            case "Uzman", "Expert":
-                return .purple
-            default:
-                return .blue
-            }
-        }
-    }
-    
-    // Tarih formatı
-    private func formatDate(_ date: Date) -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "d MMM yyyy HH:mm"
-        return dateFormatter.string(from: date)
-    }
-    
-    // Süre formatı
-    private func formatTime(_ seconds: Int) -> String {
-        let minutes = seconds / 60
-        let remainingSeconds = seconds % 60
-        return "\(minutes)m \(remainingSeconds)s"
-    }
-    
-    // Hata sayısı
-    private func getErrorCount() -> Int {
-        // Gerçek hata sayısını döndür
-        guard let boardStateData = game.boardState else { return 0 }
-        
-        do {
-            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
-                return dict["errorCount"] as? Int ?? 0 // Veri yoksa 0 döndür
-            }
-        } catch {
-            logError("Hata sayısı alınamadı: \(error)")
-        }
-        
-        return 0 // Hata durumunda 0 döndür
-    }
-    
-    // Kalan ipucu sayısı
-    private func getRemainingHints() -> Int {
-        // Gerçek ipucu sayısını döndür
-        guard let boardStateData = game.boardState else { return 3 } // Varsayılan olarak 3 ipucu
-        
-        do {
-            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
-                return dict["remainingHints"] as? Int ?? 3 // Veri yoksa varsayılan 3 ipucu
-            }
-        } catch {
-            logError("İpucu sayısı alınamadı: \(error)")
-        }
-        
-        return 3 // Hata durumunda varsayılan 3 ipucu
-    }
-    
-    // Oyun ilerleme yüzdesi
-    private func getGameProgress() -> Double {
-        // Zorluk seviyesine göre varsayılan ilerleme
-        let defaultProgress: Double
-        switch game.difficulty {
-        case "Kolay", "Easy", "Facile":
-            defaultProgress = 0.35
-        case "Orta", "Medium", "Moyen":
-            defaultProgress = 0.25
-        case "Zor", "Hard", "Difficile":
-            defaultProgress = 0.15
-        case "Uzman", "Expert":
-            defaultProgress = 0.1
-        default:
-            defaultProgress = 0.2
-        }
-        
-        // Gerçek ilerleme yüzdesini döndür
-        guard let boardStateData = game.boardState else { return defaultProgress }
-        
-        do {
-            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
-                if let progress = dict["completionPercentage"] as? Double {
-                    return progress
-                }
-                // Veri yoksa zorluk seviyesine göre varsayılan ilerleme
-                return defaultProgress
-            }
-        } catch {
-            logError("İlerleme yüzdesi alınamadı: \(error)")
-        }
-        
-        return defaultProgress // Hata durumunda zorluk seviyesine göre varsayılan ilerleme
-    }
-    
-    // Oyun süresi
-    private func getElapsedTime() -> Int {
-        // Gerçek oyun süresini döndür
-        let defaultTime = Int(game.elapsedTime)
-        if defaultTime > 0 {
-            return defaultTime
-        }
-        
-        guard let boardStateData = game.boardState else { return 0 }
-        
-        do {
-            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
-                return dict["elapsedTime"] as? Int ?? 0 // Veri yoksa 0 saniye
-            }
-        } catch {
-            logError("Oyun süresi alınamadı: \(error)")
-        }
-        
-        return 0 // Hata durumunda 0 saniye
-    }
-    
-    // Kaydetilen oyun verisinden board state'i güvenli şekilde çıkarmak için yardımcı fonksiyon
-    private func getBoardState(from game: SavedGame) -> [String: Any] {
-        guard let boardStateData = game.boardState else {
-            return [:]
-        }
-        
-        do {
-            if let dict = try JSONSerialization.jsonObject(with: boardStateData, options: []) as? [String: Any] {
-                return dict
-            }
-        } catch {
-            logError("Oyun verisi ayrıştırma hatası: \(error)")
-        }
-        
-        return [:]
     }
 }
 

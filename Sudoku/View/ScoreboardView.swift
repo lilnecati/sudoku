@@ -73,11 +73,9 @@ struct ScoreboardView: View {
                         
                         // Oyun istatistik kartları
                         gameStatsView(textScale: textScale)
-                            .drawingGroup() // Metal hızlandırma ekleyelim
                         
                         // Son oyunlar
                         recentGamesView(textScale: textScale)
-                            .drawingGroup() // Metal hızlandırma ekleyelim
                     }
                     .padding(.bottom)
                 }
@@ -351,6 +349,7 @@ struct ScoreboardView: View {
                         
                         VStack {
                             scoreCard(for: currentScore)
+                                .drawingGroup()
                             
                             if index < min(recentScores.count, 5) - 1 {
                                 Divider()

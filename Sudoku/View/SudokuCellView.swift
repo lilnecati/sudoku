@@ -90,25 +90,20 @@ struct SudokuCellView: View {
         }
     }
     
-    // Animasyon tetikleme
     private func triggerShakeAnimation() {
-        // Hatalı giriş için fiziksel titreşim
         if enableHapticFeedback {
             let generator = UINotificationFeedbackGenerator()
             generator.notificationOccurred(.error)
         }
         
-        // Renk vurgu (pulse) animasyonu
         withAnimation(.easeInOut(duration: 0.3).repeatCount(3, autoreverses: true)) {
             highlightOpacity = 0.5
         }
         
-        // Daha yumuşak ve akıcı sallama animasyonu
         withAnimation(.spring(response: 0.2, dampingFraction: 0.2, blendDuration: 0.2)) {
             shakeAmount = 1.0
         }
         
-        // Animasyonu sıfırla
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
             withAnimation(.easeOut(duration: 0.2)) {
                 shakeAmount = 0.0
@@ -117,7 +112,6 @@ struct SudokuCellView: View {
         }
     }
     
-    // İlk yüklenmede de kontrol et
     private func checkInvalid() {
         if isInvalid {
             lastInvalidState = true
@@ -152,7 +146,8 @@ struct SudokuCellView: View {
             RoundedRectangle(cornerRadius: cornerRadius)
                 .strokeBorder(
                     highlightBorderColor ?? standardBorderColor, 
-                    lineWidth: highlightBorderColor != nil ? 2.0 : 1.0,
+                    lineWidth: highlightBorderColor != nil ? 
+                               (interactionType == .highlight || isMatchingValue ? 3.0 : 2.0) : 1.0,
                     antialiased: true
                 )
 
@@ -171,16 +166,16 @@ struct SudokuCellView: View {
             if let value = value {
                 Text("\(value)")
                     .font(.system(
-                        size: isInvalid ? 32 : 28, // Hatalı ise daha büyük
-                        weight: isInvalid ? .heavy : .bold, // Hatalı ise daha kalın
+                        size: isUserEntered ? 28 : (isInvalid ? 30 : 26), // Kullanıcı girişlerini biraz küçülttük
+                        weight: isUserEntered ? .bold : (isInvalid ? .heavy : .semibold), // Kullanıcı girişlerinin kalınlığını azalttık
                         design: .default
                     ))
                     .foregroundColor(getTextColor())
                     .shadow(
-                        color: isInvalid ? Color.black.opacity(0.2) : Color.black.opacity(0.08), // Hatalı ise daha belirgin gölge
-                        radius: isInvalid ? 1.2 : 0.8, // Hatalı ise daha büyük gölge
+                        color: isInvalid ? Color.black.opacity(0.2) : (isUserEntered ? Color.black.opacity(0.15) : Color.black.opacity(0.08)), 
+                        radius: isInvalid ? 1.2 : (isUserEntered ? 1.0 : 0.8),
                         x: 0, 
-                        y: isInvalid ? 1.0 : 0.5 // Hatalı ise daha uzun gölge
+                        y: isInvalid ? 1.0 : (isUserEntered ? 0.8 : 0.5)
                     )
             }
             
@@ -249,7 +244,8 @@ struct SudokuCellView: View {
             opacity = isBejMode ? 0.25 : (effectiveColorScheme == .dark ? 0.45 : 0.25)
         case .related, .highlight: // related ve highlight için aynı renk
             colorName = themeManager.sudokuBoardColor // Ana tahta rengini kullan (String olarak)
-            opacity = isBejMode ? (type == .highlight ? 0.20 : 0.15) : (effectiveColorScheme == .dark ? (type == .highlight ? 0.40 : 0.30) : (type == .highlight ? 0.20 : 0.15))
+            // Koyu mod için de renkleri açık hale getir
+            opacity = isBejMode ? (type == .highlight ? 0.30 : 0.18) : (effectiveColorScheme == .dark ? (type == .highlight ? 0.25 : 0.15) : (type == .highlight ? 0.30 : 0.18))
         case .conflict:
             colorName = "red" // Kırmızı
             // Yanlış girişi daha belirgin yap
@@ -267,7 +263,7 @@ struct SudokuCellView: View {
         case "orange": color = isBejMode ? ThemeManager.BejThemeColors.boardColors.orange : Color.orange
         case "red": color = isBejMode ? ThemeManager.BejThemeColors.boardColors.red : Color.red
         case "green": color = isBejMode ? ThemeManager.BejThemeColors.boardColors.green : Color.green
-        // related ve highlight için themeManager.sudokuBoardColor kullanılıyordu,
+        // related ve highlight için themeManager.sudokuBoardColor kullanılıordu,
         // bu yüzden getBoardColor() çağrısını kullanıyoruz.
         default: color = themeManager.getBoardColor() 
         }
@@ -284,7 +280,7 @@ struct SudokuCellView: View {
         case .target:
             return (isBejMode ? ThemeManager.BejThemeColors.boardColors.orange : Color.orange).opacity(opacity)
         case .related:
-            return themeManager.getBoardColor().opacity(opacity)
+            return themeManager.getBoardColor().opacity(opacity * 0.9)
         case .highlight:
             return themeManager.getBoardColor().opacity(opacity)
         case .conflict:
@@ -331,7 +327,7 @@ struct SudokuCellView: View {
                 if isHintEntered {
                     return ThemeManager.BejThemeColors.boardColors.green
                 }
-                return ThemeManager.BejThemeColors.text.opacity(0.8)
+                return themeColor
             }
             
             // Herhangi bir durum belirtilmemiş
