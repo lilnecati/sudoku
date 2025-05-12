@@ -26,7 +26,7 @@ struct AchievementNotificationViewModifier: ViewModifier {
                     // Gerekirse bu satır eklenebilir veya view içinde düzenlenebilir.
                     .transition(.move(edge: .top).combined(with: .opacity)) // Geçiş efekti
                     .animation(.spring(), value: notificationManager.shouldShowNotification) // Animasyon ekle
-                    .zIndex(100) // Diğer içeriklerin üzerinde kalmasını sağla - zIndex değerini artırdım
+                    .zIndex(999) // Diğer içeriklerin üzerinde kalmasını sağla - zIndex değerini artırdım
             }
         }
         // Modifier'ın kendisi alt güvenli alanı dikkate almasına gerek yok,

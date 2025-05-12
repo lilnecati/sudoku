@@ -633,14 +633,93 @@ class PersistenceController {
                         if let oyunID = oyun.id?.uuidString.uppercased(), !firebaseOyunIDs.contains(oyunID) {
                             logInfo("Firebase'de bulunmayan yerel oyun tespit edildi: \(oyunID)")
                             
-                            // Firebase'de yoksa yerel veritabanından sil
+                            // Firebase'de yoksa yerel veritabanından silmek yerine Firebase'e yüklemeyi dene
+                            if let uuid = UUID(uuidString: oyunID) {
+                                // Gereken verileri al
+                                let difficultyStr = oyun.difficulty ?? "Kolay"
+                                let elapsedTime = oyun.elapsedTime
+                                let boardData = oyun.boardState
+                                
+                                // Eğer board state verisi varsa
+                                if let boardData = boardData {
+                                    // Firebase'e yükle
+                                    let collectionPath = "savedGames"
+                                    guard let currentUser = Auth.auth().currentUser else {
+                                        logWarning("Kullanıcı giriş yapmamış, oyun yüklenemiyor: \(oyunID)")
+                                        continue
+                                    }
+                                    
+                                    // Basit veri
+                                    var firestoreData: [String: Any] = [
+                                        "userID": currentUser.uid,
+                                        "difficulty": difficultyStr,
+                                        "elapsedTime": elapsedTime,
+                                        "dateCreated": FieldValue.serverTimestamp(),
+                                        "lastUpdated": FieldValue.serverTimestamp()
+                                    ]
+                                    
+                                    // JSON veriyi ayrıştırmayı dene
+                                    if let jsonDict = try? JSONSerialization.jsonObject(with: boardData) as? [String: Any] {
+                                        // Önce 2D dizileri kontrol et ve düzleştir
+                                        if let board = jsonDict["board"] as? [[Int]] {
+                                            // 2D Sudoku tahtasını düzleştir
+                                            let flatBoard = board.flatMap { $0 }
+                                            firestoreData["boardFlat"] = flatBoard
+                                            firestoreData["boardWidth"] = board.count
+                                            firestoreData["boardHeight"] = board.first?.count ?? board.count
+                                            // Orijinal board alanını EKLEME (nested array hatası verir)
+                                        } else if let flatBoard = jsonDict["board"] as? [Int] {
+                                            // Zaten düz formatsa doğrudan ekle
+                                            firestoreData["boardFlat"] = flatBoard
+                                            firestoreData["board  Width"] = jsonDict["boardWidth"] as? Int ?? 9
+                                            firestoreData["boardHeight"] = jsonDict["boardHeight"] as? Int ?? 9
+                                        }
+                                        
+                                        // Diğer verileri dikkatli şekilde ekle (nested array olmadığından emin ol)
+                                        for (key, value) in jsonDict {
+                                            // "board" gibi nested array içerebilecek anahtarları atla
+                                            if key != "board" && key != "solution" && key != "fixedCells" && key != "userEnteredValues" {
+                                                // Sadece düz veri türlerini ekle
+                                                if !(value is [[Any]]) {
+                                                    firestoreData[key] = value
+                                                } else if let nestedArray = value as? [[Any]] {
+                                                    // İç içe diziyi düzleştir ve yeni bir anahtar adıyla ekle
+                                                    let flatArray = nestedArray.flatMap { $0 }
+                                                    firestoreData[key + "Flat"] = flatArray
+                                                }
+                                            }
+                                        }
+                                        
+                                        // Solution, fixedCells ve userEnteredValues için özel işleme
+                                        if let solution = jsonDict["solution"] as? [[Int]] {
+                                            firestoreData["solutionFlat"] = solution.flatMap { $0 }
+                                        }
+                                        if let fixedCells = jsonDict["fixedCells"] as? [[Bool]] {
+                                            firestoreData["fixedCellsFlat"] = fixedCells.flatMap { $0 }
+                                        }
+                                        if let userEnteredValues = jsonDict["userEnteredValues"] as? [[Bool]] {
+                                            firestoreData["userEnteredValuesFlat"] = userEnteredValues.flatMap { $0 }
+                                        }
+                                    }
+                                    
+                                    // Firebase'e kaydet
+                                    self.db.collection("userGames").document(currentUser.uid).collection("savedGames")
+                                        .document(oyunID).setData(firestoreData) { error in
+                                            if let error = error {
+                                                logError("Yerel oyun Firebase'e kaydedilemedi: \(error.localizedDescription)")
+                                            } else {
+                                                logSuccess("Yerel oyun başarıyla Firebase'e kaydedildi: \(oyunID)")
+                                            }
+                                        }
+                                    
+                                    logInfo("Yerel oyun Firebase'e yüklemeye çalışılıyor: \(oyunID)")
+                                } else {
+                                    logWarning("Oyunun tahta verisi yok, silinemez: \(oyunID)")
+                                    // Tahta verisi olmayan oyunları sil
                             self.container.viewContext.delete(oyun)
                             try self.container.viewContext.save()
-                            logSuccess("Firebase'de olmayan oyun yerel veritabanından silindi: \(oyunID)")
-                            
-                            // UI güncelleme bildirimi
-                            DispatchQueue.main.async {
-                                NotificationCenter.default.post(name: NSNotification.Name("RefreshSavedGames"), object: nil)
+                                    logWarning("Tahta verisi olmayan oyun silindi: \(oyunID)")
+                                }
                             }
                         }
                     }
@@ -975,51 +1054,119 @@ class PersistenceController {
         let documentID = gameID.uuidString.uppercased()
         let collectionPath = "userGames/\(userID)/savedGames"
 
-        // Prepare data for Firestore write (including timestamps)
-        let flatBoard = board.flatMap { $0 }
-        let isCompleted = !flatBoard.contains(0)
-        var firestoreData: [String: Any] = [ // Firestore'a gidecek veri
-            "userID": userID,
-            "difficulty": difficulty,
-            "elapsedTime": elapsedTime,
-            "dateCreated": FieldValue.serverTimestamp(), // Timestamp burada
-            "board": flatBoard, // Düzleştirilmiş tahta
-            "size": board.count,
-            "isCompleted": isCompleted,
-            "lastUpdated": FieldValue.serverTimestamp() // Timestamp burada
-        ]
-        // Optionally add detailed board state from jsonData if available
+        // JSON veriyi parse et veya yeni bir Firebase yapısı oluştur
+        var firestoreData: [String: Any]
+        
         if let jsonData = jsonData {
-             // Attempt to decode jsonData and add relevant parts to firestoreData
-             // Example: Add 'userEnteredValues', 'stats' etc. if they exist in jsonData
-             if let jsonDict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
-                 // ---> DÜZELTME BURADA <---
-                 if let userValuesNested = jsonDict["userEnteredValues"] as? [[Bool]] { // userValues [[Bool]] tipinde
-                    // [[Bool]] dizisini [Bool] dizisine düzleştir
-                    let userValuesFlat = userValuesNested.flatMap { $0 }
-                    firestoreData["userEnteredValuesFlat"] = userValuesFlat // Düzleştirilmiş halini kaydet
-                    logDebug("userEnteredValues düzleştirildi ve firestoreData'ya eklendi.")
-                 } else {
-                    logWarning("jsonData içinden userEnteredValues [[Bool]] olarak okunamadı.")
-                 }
-                 // ---> Düzeltme Sonu <---
-                 if let stats = jsonDict["stats"] { firestoreData["stats"] = stats }
-                 // Add other fields from jsonData as needed, ensure they are Firestore compatible
-                 // Be careful not to add complex nested objects that might cause issues later
-                 // For example, pencil marks might need specific handling/serialization if added
-             }
+            // Eğer tam JSON verisi hazır şekilde gelirse (SudokuViewModel'den) onu kullan
+            if let parsedJson = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                // Firebase yapısını tam JSON'dan oluştur ama nested array'leri düzleştir
+                var processedJson = [String: Any]()
+                
+                // Firebase için nested array'leri filtreleme
+                for (key, value) in parsedJson {
+                    // Eğer değer bir dizi ise içinde başka bir dizi var mı kontrol et
+                    if let arrayValue = value as? [[Any]] {
+                        // İç içe dizi - düzleştirilmiş versiyonunu kullan
+                        if key == "board" {
+                            // Düzleştirilmiş versiyon var mı kontrol et
+                            if let flatValue = parsedJson["boardFlat"] {
+                                processedJson[key] = flatValue
+                            } else {
+                                // Yoksa düzleştir
+                                processedJson[key] = arrayValue.flatMap { $0 }
+                            }
+                        } else if key == "solution" {
+                            if let flatValue = parsedJson["solutionFlat"] {
+                                processedJson[key] = flatValue
+                            } else {
+                                processedJson[key] = arrayValue.flatMap { $0 }
+                            }
+                        } else if key == "fixedCells" {
+                            if let flatValue = parsedJson["fixedCellsFlat"] {
+                                processedJson[key] = flatValue
+                            } else {
+                                processedJson[key] = arrayValue.flatMap { $0 }
+                            }
+                        } else if key == "userEnteredValues" {
+                            if let flatValue = parsedJson["userEnteredValuesFlat"] {
+                                processedJson[key] = flatValue
+                            } else {
+                                processedJson[key] = arrayValue.flatMap { $0 }
+                            }
+                        } else {
+                            // Başka bir iç içe dizi - düzleştir
+                            processedJson[key] = arrayValue.flatMap { $0 }
+                        }
+                    } else if key.hasSuffix("Flat") {
+                        // Düzleştirilmiş versiyonlar zaten kullanıldı, atlayabilirsiniz
+                        continue
+                    } else {
+                        // Standart değer, doğrudan ekle
+                        processedJson[key] = value
+                    }
+                }
+                
+                // Firebase yapısını işlenmiş JSON'dan oluştur
+                firestoreData = processedJson
+                
+                // Firebase için gerekli ek alanları ekle
+                firestoreData["userID"] = userID
+                firestoreData["dateCreated"] = FieldValue.serverTimestamp()
+                firestoreData["lastUpdated"] = FieldValue.serverTimestamp()
+                
+                logDebug("İşlenmiş JSON verisi Firestore'a gönderiliyor - İç içe diziler filtrelendi.")
+            } else {
+                logWarning("JSON verisi ayrıştırılamadı, basit formata geçiliyor.")
+                
+                // JSON parse edilemezse basit formata düş
+                let flatBoard = board.flatMap { $0 }
+                let isCompleted = board.allSatisfy { row in row.allSatisfy { $0 != 0 } }
+                
+                // Basit format Firebase verisi
+                firestoreData = [
+                    "userID": userID,
+                    "difficulty": difficulty,
+                    "elapsedTime": elapsedTime,
+                    "dateCreated": FieldValue.serverTimestamp(),
+                    "board": flatBoard, // Düzleştirilmiş 1D dizi kullan
+                    "size": board.count,
+                    "isCompleted": isCompleted,
+                    "lastUpdated": FieldValue.serverTimestamp(),
+                    "boardWidth": board.count, // Tahta genişliği (yeniden oluşturabilmek için)
+                    "boardHeight": board.first?.count ?? board.count // Tahta yüksekliği
+                ]
+            }
+        } else {
+            // Hiç JSON verisi gelmezse - minimum zorunlu yapıyı oluştur
+            // ÖNEMLİ: 2D array DESTEKLENMEZ - düzleştirilmiş dizi kullan!
+            let isCompleted = board.allSatisfy { row in row.allSatisfy { $0 != 0 } }
+            let flatBoard = board.flatMap { $0 } // 2D diziyi düzleştir
+            
+            firestoreData = [
+                "userID": userID,
+                "difficulty": difficulty,
+                "elapsedTime": elapsedTime,
+                "dateCreated": FieldValue.serverTimestamp(),
+                "board": flatBoard, // Düzleştirilmiş 1D dizi kullan
+                "solution": [Int](), // Boş çözüm dizisi (düz)
+                "fixedCells": Array(repeating: false, count: 81), // Düzleştirilmiş hücreler
+                "userEnteredValues": Array(repeating: false, count: 81), // Düzleştirilmiş kullanıcı girişleri
+                "size": board.count,
+                "isCompleted": isCompleted,
+                "lastUpdated": FieldValue.serverTimestamp(),
+                "boardWidth": board.count, // Tahta genişliği (yeniden oluşturabilmek için)
+                "boardHeight": board.first?.count ?? board.count // Tahta yüksekliği
+            ]
         }
 
-
-        // Prepare data for Offline Payload (NO timestamps)
-        var payloadData = firestoreData // Start with a copy
-        payloadData.removeValue(forKey: "dateCreated") // Remove timestamp
-        payloadData.removeValue(forKey: "lastUpdated") // Remove timestamp
-        // NOTE: Ensure the nested userEnteredValues is removed from payloadData
-        payloadData.removeValue(forKey: "userEnteredValues") // Explicitly remove nested version if present
-        // Ensure other non-serializable Firebase types are also removed if added later
-
+        // Offline destek için payloadu hazırla
         var payload: Data?
+        let payloadData = firestoreData.filter { key, _ in
+            // Timestamp alanlarını payloaddan çıkar
+            return key != "dateCreated" && key != "lastUpdated"
+        }
+
         do {
             // ---> Şimdi payloadData'yı (timestampsız) JSON'a çeviriyoruz <---
             payload = try JSONSerialization.data(withJSONObject: payloadData, options: [])
@@ -1063,7 +1210,7 @@ class PersistenceController {
                 }
             } else {
                 logSuccess("Oyun Firebase Firestore'a kaydedildi/güncellendi: \(documentID)")
-                if isCompleted {
+                if let isCompleted = firestoreData["isCompleted"] as? Bool, isCompleted {
                     logSuccess("Oyun tamamlandı olarak işaretlendi!") // This log might be misleading if called from updateSavedGame
                 }
             }
@@ -1089,10 +1236,13 @@ class PersistenceController {
                     existingGame.boardState = jsonData
                 } else {
                     // Veri güncellemesi
+                    let flatBoard = board.flatMap { $0 } // 2D diziyi düzleştir
                     let boardDict: [String: Any] = [
-                        "board": board,
+                        "board": flatBoard, // Düzleştirilmiş 1D dizi kullan
                         "difficulty": difficulty,
-                        "isCompleted": false  // Güncellenmiş oyunlar tamamlanmamış olarak işaretlenir
+                        "isCompleted": false,  // Güncellenmiş oyunlar tamamlanmamış olarak işaretlenir
+                        "boardWidth": board.count, // Tahta genişliği
+                        "boardHeight": board.first?.count ?? board.count // Tahta yüksekliği
                     ]
                     
                     existingGame.boardState = try? JSONSerialization.data(withJSONObject: boardDict)

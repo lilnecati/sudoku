@@ -115,7 +115,6 @@ struct GameCompletionView: View {
             ScoreboardView()
         }
         .onAppear {
-            // Ekran kararması yönetimi SudokuApp'a devredildi
             logInfo("GameCompletionView onAppear - Ekran kararması ETKİNLEŞTİRİLDİ (ekran kararabilir)")
         }
     }
@@ -152,20 +151,16 @@ struct StatisticRow: View {
 }
 
 #Preview {
-    ZStack {
-        Color.gray.opacity(0.2)
-            .ignoresSafeArea()
-        
-        GameCompletionView(
-            difficulty: .medium,
-            timeElapsed: 725,
-            errorCount: 2,
-            hintCount: 1,
-            score: 2850,
-            isNewHighScore: true,
-            onNewGame: {},
-            onDismiss: {}
-        )
-        .padding()
-    }
-} 
+    GameCompletionView(
+        difficulty: .medium,
+        timeElapsed: 725,
+        errorCount: 2,
+        hintCount: 1,
+        score: 2850,
+        isNewHighScore: true,
+        onNewGame: {},
+        onDismiss: {}
+    )
+    .environmentObject(ThemeManager())
+}
+

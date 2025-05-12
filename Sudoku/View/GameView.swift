@@ -194,11 +194,11 @@ struct GameView: View {
                     if showingGameComplete {
                         Color.black.opacity(0.7)
                             .edgesIgnoringSafeArea(.all)
+                            .allowsHitTesting(false) // Dokunmatik olayları alttaki bileşenlere geçecek
                             .zIndex(5)
                         congratulationsView
-                            .zIndex(10)
+                            .zIndex(50) // z-index değerini artırdım
                             .alignmentGuide(.bottom) { $0[.bottom] }
-                            .achievementNotifications()
                     }
 
                     // Oyun Bitti Ekranı (Ortada)
@@ -207,7 +207,7 @@ struct GameView: View {
                         gameOverView
                             .zIndex(10)
                             .alignmentGuide(.bottom) { $0[.bottom] }
-                            .achievementNotifications()
+                            //.achievementNotifications()
                     }
                     
                     // YENİ: Duraklatma Ekranı (Ortada)
@@ -245,6 +245,8 @@ struct GameView: View {
                 .animation(.easeInOut, value: viewModel.gameState == .paused) // Duraklatma ekranı animasyonu
             }
         }
+        // Başarım bildirimlerini en üst seviyede ekleyerek her şeyin üzerinde görünmesini sağlayalım
+        .achievementNotifications()
         // SafeArea hesaplaması ekleyerek çalışması sağlandı
         .background(
             GeometryReader { proxy in
@@ -322,7 +324,7 @@ struct GameView: View {
             // NavBar görünümünü zorla güncelle - Hemen ve garantili şekilde
             DispatchQueue.main.async {
                 themeManager.updateNavigationBarAppearance()
-                logInfo("📱 Bej mode değişti - NavBar güncellendi")
+                logInfo("�� Bej mode değişti - NavBar güncellendi")
             }
         }
         .sheet(isPresented: $showSettings) {

@@ -230,6 +230,7 @@ struct AchievementNotificationView: View {
                             endPoint: .bottomTrailing
                         )
                     )
+                    .opacity(0.95)
                 
                 // Parıltı efekti - bej moduna uyarla
                 RoundedRectangle(cornerRadius: 16)
@@ -259,7 +260,7 @@ struct AchievementNotificationView: View {
                         lineWidth: 1
                     )
             }
-            .shadow(color: isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.5) : achievement.colorCode.opacity(0.5), radius: 10, x: 0, y: 5)
+            .shadow(color: isBejMode ? ThemeManager.BejThemeColors.accent.opacity(0.5) : Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
         )
         .matchedGeometryEffect(id: "achievementCard", in: animation)
         .padding(.horizontal)

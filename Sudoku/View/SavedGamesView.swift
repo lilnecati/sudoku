@@ -26,10 +26,12 @@ struct SavedGameDisplayItem: Identifiable {
     let isCompleted: Bool
 
     let elapsedTimeInSeconds: Int
+    let calculatedProgress: Double
 
-    init(game: SavedGame, themeManager: ThemeManager?) { // themeManager eklendi
+    init(game: SavedGame, themeManager: ThemeManager?, calculatedProgress: Double) {
         self.id = game.id ?? UUID()
         self.originalGame = game
+        self.calculatedProgress = calculatedProgress
 
         self.difficulty = game.difficulty ?? "Bilinmeyen"
         
@@ -48,19 +50,9 @@ struct SavedGameDisplayItem: Identifiable {
         
         self.errorCount = boardStateJSON["errorCount"] as? Int ?? 0
         self.remainingHints = boardStateJSON["remainingHints"] as? Int ?? 3
-        
-        if let progress = boardStateJSON["completionPercentage"] as? Double {
-            self.gameProgress = progress
-        } else if let progressInt = boardStateJSON["completionPercentage"] as? Int {
-            self.gameProgress = Double(progressInt) / 100.0
-        } else {
-            // Eğer completionPercentage JSON'da yoksa, SudokuViewModel'den hesaplamayı deneyebiliriz.
-            // Ancak bu init'i karmaşıklaştırır. Şimdilik 0.0 varsayalım veya başka bir mantık geliştirelim.
-            // Örneğin, dolu hücre sayısına göre basit bir hesaplama yapılabilir.
-            // Şimdilik, eğer JSON'da yoksa ve oyun tamamlanmamışsa %5 gibi bir minimum değer gösterilebilir.
-            self.gameProgress = self.isCompleted ? 1.0 : (boardStateJSON.isEmpty ? 0.05 : 0.05) // JSON boşsa veya veri yoksa %5
-        }
 
+        // gameProgress artık doğrudan calculatedProgress'ten geliyor
+        self.gameProgress = calculatedProgress
 
         self.dateCreatedFormatted = SavedGameDisplayItem.formatDate(game.dateCreated ?? Date())
         self.elapsedTimeFormatted = SavedGameDisplayItem.formatTime(Double(self.elapsedTimeInSeconds))
@@ -392,7 +384,7 @@ struct SavedGamesView: View {
             }
             .onAppear {
                 // CloudKit senkronizasyonunu burada değil, ViewModel veya AppDelegate'de yapacağız
-                loadSavedGames()
+                loadAndPrepareDisplayItems()
             }
             .onChange(of: selectedDifficulty) { oldValue, newValue in
                 // Değişiklik filtreleme fonksiyonunda zaten ele alınıyor
@@ -401,7 +393,7 @@ struct SavedGamesView: View {
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshSavedGames"))) { _ in
                 // Bildirim alındığında verileri yeniden yükle
                 logInfo("SavedGamesView: RefreshSavedGames bildirimi alındı")
-                loadSavedGames()
+                loadAndPrepareDisplayItems()
             }
             // Silme için uyarı
             .alert(isPresented: $showingDeleteAlert) {
@@ -865,29 +857,25 @@ struct SavedGamesView: View {
     }
     
     // Manuel olarak kayıtlı oyunları yükleme fonksiyonu
-    private func loadSavedGames() {
-        DispatchQueue.global(qos: .userInitiated).async { // Arka planda çalıştır
-            let fetchedGames = PersistenceController.shared.getAllSavedGames()
-            // Tarih sırasına göre sıralamaya gerek yok, çünkü filterGames içinde yapılacak.
-            // Ancak burada yapmak da performansı etkilemez.
-            // let sortedGames = fetchedGames.sorted { 
-            //     let date1 = $0.dateCreated ?? Date.distantPast
-            //     let date2 = $1.dateCreated ?? Date.distantPast
-            //     return date1 > date2
-            // }
-            
-            // SavedGame nesnelerini SavedGameDisplayItem nesnelerine dönüştür
-            // Bu dönüşüm sırasında JSON parse etme işlemi yapılacak.
-            // themeManager'ı yakalamak için [weak self] veya [unowned self] gerekebilir, 
-            // ama themeManager bir EnvironmentObject olduğu için genellikle sorun olmaz.
-            let items = fetchedGames.map { game in
-                SavedGameDisplayItem(game: game, themeManager: self.themeManager)
+    private func loadAndPrepareDisplayItems() {
+        let fetchedGames = PersistenceController.shared.getAllSavedGames()
+        logInfo("Toplam \(fetchedGames.count) kayıtlı oyun yüklendi")
+        
+        // SavedGame nesnelerini SavedGameDisplayItem nesnelerine dönüştür
+        // Bu aşamada getCompletionPercentage çağrılıyor
+        DispatchQueue.global(qos: .userInitiated).async {
+            let items = fetchedGames.map { game -> SavedGameDisplayItem in
+                // Her oyun için ilerlemeyi hesapla
+                let progress = self.viewModel.getCompletionPercentage(for: game)
+                // Hesaplanan progress ile DisplayItem oluştur
+                return SavedGameDisplayItem(game: game, themeManager: self.themeManager, calculatedProgress: progress)
             }
             
+            // Ana thread'e dönüp UI'ı güncelle
             DispatchQueue.main.async {
-                logInfo("Oyun yükleme: \(items.count) display item oluşturuldu")
                 self.allDisplayItems = items
-                self.filterGames() // Filtrelemeyi çağır
+                logInfo("\(items.count) adet DisplayItem oluşturuldu")
+                self.filterGames() // Başlangıç filtresini uygula
             }
         }
     }
@@ -898,7 +886,7 @@ struct SavedGamesView: View {
         PersistenceController.shared.deleteSavedGame(game)
         
         // UI'ı yenile
-        loadSavedGames()
+        loadAndPrepareDisplayItems()
         
         // gameToDelete'i temizle
         gameToDelete = nil

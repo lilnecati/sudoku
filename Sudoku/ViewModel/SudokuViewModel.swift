@@ -1601,6 +1601,10 @@ class SudokuViewModel: ObservableObject {
         // Tahtanın mevcut durumunu board dizisine dönüştür
         let boardArray = currentBoard.getBoardArray()
         jsonDict["board"] = boardArray
+        // Firebase için düzleştirilmiş versiyon da ekle
+        jsonDict["boardFlat"] = boardArray.flatMap { $0 }
+        jsonDict["boardWidth"] = boardArray.count
+        jsonDict["boardHeight"] = boardArray.first?.count ?? boardArray.count
         
         // Çözüm dizisini ekle
         var solutionArray = Array(repeating: Array(repeating: 0, count: 9), count: 9)
@@ -1610,6 +1614,8 @@ class SudokuViewModel: ObservableObject {
             }
         }
         jsonDict["solution"] = solutionArray
+        // Firebase için düzleştirilmiş versiyon da ekle
+        jsonDict["solutionFlat"] = solutionArray.flatMap { $0 }
         
         // Sabit hücreler bilgisini ekle
         var fixedCells = Array(repeating: Array(repeating: false, count: 9), count: 9)
@@ -1619,6 +1625,8 @@ class SudokuViewModel: ObservableObject {
             }
         }
         jsonDict["fixedCells"] = fixedCells
+        // Firebase için düzleştirilmiş versiyon da ekle
+        jsonDict["fixedCellsFlat"] = fixedCells.flatMap { $0 }
         
         // Zorluk bilgisini kaydet
         jsonDict["difficulty"] = currentBoard.difficulty.rawValue
@@ -1640,6 +1648,8 @@ class SudokuViewModel: ObservableObject {
             }
         }
         jsonDict["userEnteredValues"] = cleanUserEnteredValues
+        // Firebase için düzleştirilmiş versiyon da ekle
+        jsonDict["userEnteredValuesFlat"] = cleanUserEnteredValues.flatMap { $0 }
                 
         // Veriyi json formatına dönüştür
         do {
@@ -1876,190 +1886,204 @@ class SudokuViewModel: ObservableObject {
     
     // Veri objesinden SudokuBoard ve kullanıcı tarafından girilen değerleri oluştur
     private func loadBoardFromData(_ data: Data) -> (board: SudokuBoard, userValues: [[Bool]])? {
-        logInfo("KAYDEDILMIŞ OYUN YÜKLEME BAŞLADI")
+        logInfo("KAYDEDILMIŞ OYUN YÜKLEME BAŞLADI (Firebase Uyumlu Versiyon)")
         logDebug("Veri boyutu: \(data.count) byte")
-        
-        // 1. Ana Json veri yapısını çözümlemeyi dene
+
         do {
-            // Önce JSON'u dictionary'ye çevir
             guard let jsonDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 logError("JSON veri biçimi geçersiz")
                 return nil
             }
+
+            // --- Temel Alanları Oku (Her zaman olmalı) ---
+            var boardDataArray: [[Int]]? = nil
             
-            // Farklı anahtar biçimlerini dene
-            var boardArray: [[Int]]? = nil
-            var solutionArray: [[Int]]? = nil
-            var fixedCells: [[Bool]]? = nil
-            var difficultyString: String? = nil
-            
-            // Zorluk değerini bul
-            if let diff = jsonDict["difficulty"] as? String {
-                difficultyString = diff
-            } else if let diff = jsonDict["difficultyLevel"] as? String {
-                difficultyString = diff
+            // 1. İlk olarak 2D tahta dizisi okuma denemeleri
+            if let board = jsonDict["board"] as? [[Int]] { 
+                boardDataArray = board
+                logInfo("2D tahta dizisi 'board' anahtarından yüklendi")
+            }
+            else if let board = jsonDict["boardState"] as? [[Int]] { 
+                boardDataArray = board
+                logInfo("2D tahta dizisi 'boardState' anahtarından yüklendi")
+            }
+            // 2. Daha eski format - string içindeki JSON
+            else if let boardString = jsonDict["boardState"] as? String,
+                      let boardStateData = boardString.data(using: .utf8),
+                      let board = try? JSONSerialization.jsonObject(with: boardStateData) as? [[Int]] {
+                boardDataArray = board
+                logInfo("2D tahta dizisi string içindeki JSON'dan yüklendi")
+            }
+            // 3. Düzleştirilmiş format kontrolü (Firebase'den gelen eski format)
+            else if let flatBoard = jsonDict["board"] as? [Int], 
+                     let size = jsonDict["size"] as? Int, size > 0 {
+                // Düz diziyi 2D'ye çevir
+                boardDataArray = []
+                for i in stride(from: 0, to: flatBoard.count, by: size) {
+                    let endIndex = min(i + size, flatBoard.count)
+                    if endIndex > i {
+                        let row = Array(flatBoard[i..<endIndex])
+                        boardDataArray?.append(row)
+                    }
+                }
+                logInfo("Düzleştirilmiş tahta dizisi (1D -> 2D) dönüştürüldü, boyut: \(size)")
             }
             
-            // Tahta durumunu bul
-            if let board = jsonDict["boardState"] as? [[Int]] {
-                boardArray = board
-            } else if let board = jsonDict["board"] as? [[Int]] {
-                boardArray = board
-            } else if let boardString = jsonDict["boardState"] as? String,
-                      let boardData = boardString.data(using: .utf8),
-                      let board = try? JSONSerialization.jsonObject(with: boardData) as? [[Int]] {
-                boardArray = board
-            }
-            
-            // Çözümü bul
-            if let solution = jsonDict["solution"] as? [[Int]] {
-                solutionArray = solution
-                logSuccess("JSON'dan çözüm dizisi başarıyla yüklendi")
-            } else if let solution = jsonDict["solutionBoard"] as? [[Int]] {
-                solutionArray = solution
-                print("✅ JSON'dan solutionBoard başarıyla yüklendi")
-            }
-            
-            // Sabit hücreleri bul
-            if let fixed = jsonDict["fixedCells"] as? [[Bool]] {
-                fixedCells = fixed
-                print("✅ JSON'dan sabit hücreler başarıyla yüklendi")
-            }
-            
-            // Gerekli tüm verilerin mevcut olduğundan emin ol
-            guard let boardData = boardArray,
-                  let difficulty = difficultyString else {
-                print("❌ Oyun verileri eksik: Board veya zorluk seviyesi bulunamadı")
+            guard let loadedBoardData = boardDataArray else {
+                logError("Oyun verileri eksik: Tahta (board/boardState) bulunamadı")
                 return nil
             }
-            
-            // Sabit hücreler yoksa, boş bir dizi oluştur
-            if fixedCells == nil {
-                fixedCells = Array(repeating: Array(repeating: false, count: 9), count: 9)
-                
-                // Eğer tahta dizisi varsa, sabit hücreleri tahmin et
-                // (değeri 0'dan büyük olan hücreler sabit kabul edilir)
-                if let board = boardArray {
-                    for row in 0..<9 {
-                        for col in 0..<9 {
-                            if board[row][col] > 0 {
-                                fixedCells?[row][col] = true
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Zorluk seviyesini Difficulty enum değerine çevir
-            let difficultyValue5: SudokuBoard.Difficulty
-            switch difficulty {
 
-            case "Kolay": difficultyValue5 = .easy
-            case "Orta": difficultyValue5 = .medium
-            case "Zor": difficultyValue5 = .hard
-            case "Uzman": difficultyValue5 = .expert
-            default: difficultyValue5 = .easy
+            var difficultyString: String? = nil
+            if let diff = jsonDict["difficulty"] as? String { difficultyString = diff }
+            else if let diff = jsonDict["difficultyLevel"] as? String { difficultyString = diff } // Geriye uyumluluk
+            guard let difficultyStr = difficultyString else {
+                logError("Oyun verileri eksik: Zorluk seviyesi bulunamadı")
+                return nil
             }
-            
-            print("✅ Zorluk seviyesi: \(difficulty)")
-            
-            // Eğer çözüm verisi yoksa, önceden oynanmış tahtayı göstermek için kendi çözümümüzü oluşturalım
-            if solutionArray == nil {
-                print("⚠️ Çözüm verisi bulunamadı, önce orijinal tahtayı kurtarmayı deniyorum")
-                
-                // Önceki tahtayı tamamen korumak için 9x9 tahta çözüm dizisi oluştur
-                var solutionMatrix = Array(repeating: Array(repeating: 0, count: 9), count: 9)
-                
-                // Mevcut tahtadan verileri çözüm dizisine kopyala
-                for row in 0..<min(9, boardData.count) {
-                    for col in 0..<min(9, boardData[row].count) {
-                        solutionMatrix[row][col] = boardData[row][col] > 0 ? boardData[row][col] : 0
-                    }
+            let difficultyValue = SudokuBoard.Difficulty(rawValue: difficultyStr) ?? .easy
+            logInfo("Zorluk seviyesi: \(difficultyStr)")
+
+            // Tahtayı [[Int?]] formatına çevir
+            var boardValues = Array(repeating: Array(repeating: nil as Int?, count: 9), count: 9)
+            for r in 0..<min(9, loadedBoardData.count) {
+                for c in 0..<min(9, loadedBoardData[r].count) {
+                    let val = loadedBoardData[r][c]
+                    boardValues[r][c] = (val > 0) ? val : nil
                 }
-                
-                // SudokuSolver sınıfı bulunamadığı için, çözümü kendi tahmin ediyoruz
-                print("✅ Kayıtlı oyun için tahmini çözüm oluşturuluyor")
-                solutionArray = solutionMatrix
-                
-                // Basitçe tüm boş hücreler için 1-9 arası değer koyuyoruz
-                // Not: Bu çözüm doğru olmayabilir ama en azından uygulama çalışacak
+            }
+
+            // --- Her alan için ayrı kontrol et ---
+            
+            // 1. Solution: Çözüm dizisi
+            var solutionArray: [[Int]] = Array(repeating: Array(repeating: 0, count: 9), count: 9)
+            var hasSolution = false
+            if let sol = jsonDict["solution"] as? [[Int]] {
+                solutionArray = sol
+                hasSolution = true
+                logInfo("Çözüm verisi başarıyla yüklendi.")
+            }
+            // Düzleştirilmiş çözüm formatını kontrol et
+            else if let flatSolution = jsonDict["solution"] as? [Int], flatSolution.count >= 81 {
+                // Düz diziyi 2D diziye dönüştür
                 for row in 0..<9 {
                     for col in 0..<9 {
-                        if solutionArray![row][col] == 0 {
-                            // Boş hücreyse 1 ile doldur (gerçek oyunlar için daha iyi bir çözüm gerekir)
-                            solutionArray![row][col] = 1
+                        let index = row * 9 + col
+                        if index < flatSolution.count {
+                            solutionArray[row][col] = flatSolution[index]
                         }
                     }
                 }
-            }
-            
-            // Bu değişkeni board oluştururken kullanacağız
-            let boardDifficultyEnum2 = difficultyValue5
-            
-            // Boşlukları doldurulabilir, başlangıç değerleri sabit diye işaretle
-            var fixed = Array(repeating: Array(repeating: false, count: 9), count: 9)
-            var boardValues = Array(repeating: Array(repeating: nil as Int?, count: 9), count: 9)
-            
-            // fixedValues JSON'dan alınabilecek sabitleri saklamak için
-            var fixedValues: [[Bool]]? = nil
-            
-            // Önce fixed hücreleri belirlemek için meta verileri kontrol et
-            if let originalBoard = jsonDict["originalBoard"] as? [[Int]] {
-                fixedValues = Array(repeating: Array(repeating: false, count: 9), count: 9)
-                for row in 0..<min(9, originalBoard.count) {
-                    for col in 0..<min(9, originalBoard[row].count) {
-                        fixedValues?[row][col] = originalBoard[row][col] > 0
-                    }
-                }
-                print("✅ OriginalBoard verisi bulundu")
-            } else if let fixedCells = jsonDict["fixedCells"] as? [[Bool]] {
-                fixedValues = fixedCells
-                print("✅ FixedCells verisi bulundu")
+                hasSolution = true
+                logInfo("Düzleştirilmiş çözüm verisi (1D) 2D'ye çevrilerek yüklendi")
             } else {
-                print("⚠️ Sabit hücreler belirtilmemiş, tahmin edilecek")
+                logWarning("JSON'da çözüm verisi bulunamadı, varsayılan boş çözüm kullanılıyor.")
             }
             
-            // Board'u ve fixed hücreleri doldur
-            for row in 0..<min(9, boardData.count) {
-                for col in 0..<min(9, boardData[row].count) {
-                    let value = boardData[row][col]
-                    boardValues[row][col] = value > 0 ? value : nil
-                    
-                    // Sabit hücreleri belirle
-                    if let fixedArray = fixedValues, row < fixedArray.count, col < fixedArray[row].count {
-                        fixed[row][col] = fixedArray[row][col]
-                    } else if let solution = solutionArray, row < solution.count, col < solution[row].count {
-                        // Sabit hücreler belirtilmemişse, tahta ve çözüme bakarak tahmin et
-                        if value > 0 && value == solution[row][col] {
-                            fixed[row][col] = true
+            // 2. FixedCells: Sabit hücreler
+            var fixedCellsArray: [[Bool]] = Array(repeating: Array(repeating: false, count: 9), count: 9)
+            var hasFixedCells = false
+            if let fixed = jsonDict["fixedCells"] as? [[Bool]] {
+                fixedCellsArray = fixed
+                hasFixedCells = true
+                logInfo("Sabit hücreler verisi başarıyla yüklendi.")
+            }
+            // Düzleştirilmiş sabit hücreler
+            else if let flatFixed = jsonDict["fixedCellsFlat"] as? [Bool], flatFixed.count >= 81 {
+                // Düz diziyi 2D diziye dönüştür
+                for row in 0..<9 {
+                    for col in 0..<9 {
+                        let index = row * 9 + col
+                        if index < flatFixed.count {
+                            fixedCellsArray[row][col] = flatFixed[index]
+                        }
+                    }
+                }
+                hasFixedCells = true
+                logInfo("Düzleştirilmiş sabit hücreler verisi (1D) 2D'ye çevrilerek yüklendi")
+            } else {
+                logWarning("JSON'da sabit hücreler verisi bulunamadı, tahtadan tahmin ediliyor...")
+                // Tahtadan sabit hücreleri tahmin et
+                for r in 0..<9 {
+                    for c in 0..<9 {
+                        if let val = boardValues[r][c], val > 0 {
+                            fixedCellsArray[r][c] = true // Başlangıçta dolu olanlar sabit kabul edilir
                         }
                     }
                 }
             }
             
-            print("✅ Yüklenen tahta: \(boardValues.flatMap { $0.compactMap { $0 } }.count) dolu hücre")
-            print("✅ Sabit hücreler: \(fixed.flatMap { $0.filter { $0 } }.count) adet")
+            // 3. UserEnteredValues: Kullanıcı tarafından girilen değerler
+            var userEnteredArray: [[Bool]] = Array(repeating: Array(repeating: false, count: 9), count: 9)
+            var hasUserEnteredValues = false
             
-            // Yeni bir SudokuBoard oluştur
-            let newBoard = SudokuBoard(board: boardValues, 
-                                        solution: solutionArray!, 
-                                        fixed: fixed, 
-                                        difficulty: boardDifficultyEnum2)
+            if let userEntered = jsonDict["userEnteredValues"] as? [[Bool]] {
+                userEnteredArray = userEntered
+                hasUserEnteredValues = true
+                logInfo("Kullanıcı girdileri verisi başarıyla yüklendi (2D format).")
+            } else if let userEnteredFlat = jsonDict["userEnteredValuesFlat"] as? [Bool], userEnteredFlat.count >= 81 {
+                // Düzleştirilmiş 1D dizisini 2D'ye çevir
+                for row in 0..<9 {
+                    for col in 0..<9 {
+                        let index = row * 9 + col
+                        if index < userEnteredFlat.count {
+                            userEnteredArray[row][col] = userEnteredFlat[index]
+                        }
+                    }
+                }
+                hasUserEnteredValues = true
+                logInfo("Kullanıcı girdileri verisi başarıyla yüklendi (1D düzleştirilmiş format).")
+            } else {
+                logWarning("JSON'da kullanıcı girdileri verisi bulunamadı, tahtadan tahmin ediliyor...")
+                // Tahtadan kullanıcı girdilerini tahmin et (sabit olmayan dolu hücreler)
+                for r in 0..<9 {
+                    for c in 0..<9 {
+                        if boardValues[r][c] != nil && !fixedCellsArray[r][c] {
+                            userEnteredArray[r][c] = true
+                        }
+                    }
+                }
+            }
             
-            // Kullanıcı tarafından girilen değerler bilgisini JSON'dan al
-            let userEntered = jsonDict["userEnteredValues"] as? [[Bool]] ?? Array(repeating: Array(repeating: false, count: 9), count: 9)
+            // 4. Colors: Renkler (opsiyonel)
+            var colorsArray: [[String?]]? = nil
+            if let colorsRaw = jsonDict["colors"] as? [[[String: Any]]] {
+                colorsArray = decodeColors(colorsRaw: colorsRaw)
+                logInfo("Renk verisi başarıyla yüklendi.")
+            } else if let colorsStringArray = jsonDict["colors"] as? [[String?]] {
+                colorsArray = colorsStringArray
+                logInfo("Renk verisi başarıyla yüklendi (String array formatı).")
+            }
             
-            // Başarılı mesajı yazdır
-            print("✅ Kaydedilmiş verilerden board ve userEnteredValues başarıyla oluşturuldu")
+            // Log format tipini, alabildiklerimizi sayarak
+            var formatComponents = 0
+            if hasSolution { formatComponents += 1 }
+            if hasFixedCells { formatComponents += 1 }
+            if hasUserEnteredValues { formatComponents += 1 }
+            if colorsArray != nil { formatComponents += 1 }
             
-            // Tuple olarak (tahta, kullanıcı değerleri) döndür
-            return (board: newBoard, userValues: userEntered)
+            logInfo("Veri format tipi: \(formatComponents)/4 alan mevcut")
+            
+            // --- SudokuBoard Nesnesini Oluştur ---
+            let newBoard = SudokuBoard(board: boardValues,
+                                        solution: solutionArray,
+                                        fixed: fixedCellsArray,
+                                        difficulty: difficultyValue)
+            
+            // Sabit ve kullanıcı girdisi hücre sayılarını logla
+            let fixedCount = fixedCellsArray.flatMap { $0.filter { $0 } }.count
+            let userEnteredCount = userEnteredArray.flatMap { $0.filter { $0 } }.count
+            logInfo("Sabit hücre sayısı: \(fixedCount), Kullanıcı girdisi sayısı: \(userEnteredCount)")
+            
+            logSuccess("Kaydedilmiş verilerden SudokuBoard başarıyla oluşturuldu.")
+            return (board: newBoard, userValues: userEnteredArray)
+
         } catch {
-            print("❌ JSON işleme hatası: \(error)")
-            return nil as (board: SudokuBoard, userValues: [[Bool]])?
+            logError("JSON işleme veya SudokuBoard oluşturma hatası: \(error)")
+            return nil
         }
     }
-    
+
     // Kaydedilmiş oyunu sil
     func deleteSavedGame(_ game: NSManagedObject) {
         if let savedGame = game as? SavedGame {
@@ -2099,58 +2123,160 @@ class SudokuViewModel: ObservableObject {
     
     func getCompletionPercentage(for savedGame: NSManagedObject) -> Double {
         guard let boardData = savedGame.getData(key: "boardState") else {
+            logError("getCompletionPercentage: boardState verisi alınamadı.")
             return 0.0
         }
-        
-        // Tahta verilerini çözmeyi dene
+
         do {
-            if let json = try JSONSerialization.jsonObject(with: boardData) as? [String: Any],
-               let _ = json["board"] as? String,
-               let fixedCellsString = json["fixedCells"] as? String,
-               let userValuesString = json["userEnteredValues"] as? String {
-                
-                // Sabit hücreleri sayan dizi
-                let fixedCellsData = fixedCellsString.data(using: .utf8)!
-                let fixedCells = try JSONDecoder().decode([[Bool]].self, from: fixedCellsData)
-                
-                // Kullanıcı girdilerini çözelim
-                let userValuesData = userValuesString.data(using: .utf8)!
-                let userValues = try JSONDecoder().decode([[Int?]].self, from: userValuesData)
-                
-                var filledCount = 0
-                let totalCells = 81 // 9x9 sudoku tahtası
-                
-                // Sabit hücreleri ve kullanıcının doğru girdiği değerleri say
+            // JSON verisini doğrudan dictionary'ye çevir
+            guard let jsonDict = try JSONSerialization.jsonObject(with: boardData) as? [String: Any] else {
+                logError("getCompletionPercentage: JSON veri biçimi geçersiz.")
+                // Doğrudan yedek yönteme gitmek yerine hata durumu olarak ele alıp 0 dönelim.
+                return 0.0
+            }
+
+            // 1. Tahta durumunu al (board veya boardState anahtarı) - Sadece varlığını kontrol etmek için değil, saymak için lazım.
+            var boardArrayForCheck: [[Int?]]? = nil
+            
+            // 1.a İlk olarak 2D tahta dizisi okuma denemeleri
+            if let boardValues = jsonDict["board"] as? [[Int]] {
+                boardArrayForCheck = Array(repeating: Array(repeating: nil, count: 9), count: 9)
+                for r in 0..<9 { for c in 0..<9 { boardArrayForCheck?[r][c] = boardValues[r][c] > 0 ? boardValues[r][c] : nil } }
+            } 
+            else if let boardValues = jsonDict["boardState"] as? [[Int]] { // Eski uyumluluk
+                boardArrayForCheck = Array(repeating: Array(repeating: nil, count: 9), count: 9)
+                for r in 0..<9 { for c in 0..<9 { boardArrayForCheck?[r][c] = boardValues[r][c] > 0 ? boardValues[r][c] : nil } }
+            }
+            // 1.b Düzleştirilmiş tahta formatı
+            else if let flatBoard = jsonDict["board"] as? [Int], 
+                   let size = jsonDict["size"] as? Int, size > 0 {
+                // Düz diziyi 2D'ye çevir
+                boardArrayForCheck = Array(repeating: Array(repeating: nil, count: 9), count: 9)
+                for i in 0..<min(flatBoard.count, 81) {
+                    let row = i / size
+                    let col = i % size
+                    if row < 9 && col < 9 {
+                        boardArrayForCheck?[row][col] = flatBoard[i] > 0 ? flatBoard[i] : nil
+                    }
+                }
+                logDebug("getCompletionPercentage: Düzleştirilmiş tahta dizisi (1D -> 2D) dönüştürüldü")
+            }
+
+            // Tahta verisi yoksa ilerleme hesaplanamaz.
+             guard boardArrayForCheck != nil else {
+                 logError("getCompletionPercentage: JSON içinde 'board' veya 'boardState' bulunamadı.")
+                 throw NSError(domain: "DataError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Board data missing"])
+             }
+
+
+            // 2. Sabit hücreleri al (fixedCells anahtarı)
+            var fixedCells: [[Bool]] = Array(repeating: Array(repeating: false, count: 9), count: 9)
+            
+            // 2.a 2D sabit hücreler dizisi
+            if let fixedValues = jsonDict["fixedCells"] as? [[Bool]] {
+                fixedCells = fixedValues
+                logDebug("getCompletionPercentage: fixedCells [[Bool]] olarak JSON'dan yüklendi.")
+            }
+            // 2.b Düzleştirilmiş sabit hücreler
+            else if let flatFixed = jsonDict["fixedCellsFlat"] as? [Bool], flatFixed.count >= 81 {
+                // Düz diziyi 2D diziye dönüştür
                 for row in 0..<9 {
                     for col in 0..<9 {
-                        if fixedCells[row][col] || userValues[row][col] != nil {
-                            filledCount += 1
+                        let index = row * 9 + col
+                        if index < flatFixed.count {
+                            fixedCells[row][col] = flatFixed[index]
                         }
                     }
                 }
-                
-                // Sonucu [0.0, 1.0] aralığında döndür
-                return Double(filledCount) / Double(totalCells)
+                logDebug("getCompletionPercentage: fixedCellsFlat [Bool] olarak JSON'dan yüklendi, 2D'ye çevriliyor.")
+            } else {
+                logWarning("getCompletionPercentage: JSON içinde 'fixedCells' [[Bool]] olarak bulunamadı. Tahta üzerinden tahmin ediliyor...")
+                // Tahmin etme: boardArrayForCheck'teki dolu hücreler sabit kabul edilir
+                 if let boardToCheck = boardArrayForCheck {
+                     for r in 0..<9 {
+                         for c in 0..<9 {
+                             if boardToCheck[r][c] != nil { // Nil olmayanlar başlangıçta doluydu varsayımı
+                                 fixedCells[r][c] = true
+                             }
+                         }
+                     }
+                 }
             }
-        } catch {
-            print("⚠️ Oyunun tamamlanma yüzdesi hesaplanırken hata: \(error)")
-        }
-        
-        // Hata durumunda eski yöntemi dene
-        guard let board = SudokuBoard.loadFromSavedState(boardData) else {
-            return 0.0
-        }
-        
-        var filledCount = 0
-        for row in 0..<9 {
-            for col in 0..<9 {
-                if board.getValue(at: row, col: col) != nil {
-                    filledCount += 1
+
+            // 3. Kullanıcı tarafından girilen değerleri al (userEnteredValues veya userEnteredValuesFlat)
+            var userEntered: [[Bool]] = Array(repeating: Array(repeating: false, count: 9), count: 9)
+            
+            // 3.a 2D kullanıcı girdileri
+            if let userValuesNested = jsonDict["userEnteredValues"] as? [[Bool]] {
+                userEntered = userValuesNested
+                logDebug("getCompletionPercentage: userEnteredValues [[Bool]] olarak JSON'dan yüklendi.")
+            } 
+            // 3.b Düzleştirilmiş kullanıcı girdileri
+            else if let userValuesFlat = jsonDict["userEnteredValuesFlat"] as? [Bool], userValuesFlat.count >= 81 {
+                logDebug("getCompletionPercentage: userEnteredValuesFlat [Bool] olarak JSON'dan yüklendi, 2D'ye çevriliyor.")
+                for row in 0..<9 {
+                    for col in 0..<9 {
+                        let index = row * 9 + col
+                        if index < userValuesFlat.count {
+                            userEntered[row][col] = userValuesFlat[index]
+                        }
+                    }
+                }
+            } else {
+                logWarning("getCompletionPercentage: userEnteredValues [[Bool]] veya userEnteredValuesFlat [Bool] bulunamadı. Tahtadaki dolu ve sabit olmayan hücrelerden hesaplanıyor...")
+                // Eğer userEntered bilgisi yoksa, tahtadaki dolu ama sabit olmayan hücreleri kullanıcı girmiş say
+                 if let boardToCheck = boardArrayForCheck {
+                     for r in 0..<9 {
+                         for c in 0..<9 {
+                             if boardToCheck[r][c] != nil && !fixedCells[r][c] {
+                                 userEntered[r][c] = true
+                             }
+                         }
+                     }
+                 }
+            }
+
+            // 4. Dolu hücreleri say
+            var filledCount = 0
+            let totalCells = 81
+
+            for row in 0..<9 {
+                for col in 0..<9 {
+                    // Bir hücrenin "dolu" sayılması için ya sabit olmalı ya da kullanıcı tarafından doldurulmuş olmalı.
+                    if fixedCells[row][col] || userEntered[row][col] {
+                        filledCount += 1
+                    }
                 }
             }
+
+            // Yüzdelik oranı hesapla ve döndür
+            let percentage = Double(filledCount) / Double(totalCells)
+            // Düzeltilmiş log satırı:
+            logDebug("getCompletionPercentage: Hesaplanan yüzde: \(percentage * 100)% (\(filledCount)/\(totalCells))")
+            return percentage
+
+        } catch {
+            logError("getCompletionPercentage: JSON işleme hatası veya veri eksikliği: \(error). Yedek yöntem deneniyor...")
+            // Hata durumunda veya veri eksikse eski yöntemi dene
+            guard let board = SudokuBoard.loadFromSavedState(boardData) else {
+                 logError("getCompletionPercentage (Yedek): SudokuBoard.loadFromSavedState başarısız oldu.")
+                return 0.0
+            }
+
+            var filledCount = 0
+            for row in 0..<9 {
+                for col in 0..<9 {
+                    // Yedek yöntemde sadece tahtada değer olup olmadığına bakıyoruz.
+                    if board.getValue(at: row, col: col) != nil {
+                        filledCount += 1
+                    }
+                }
+            }
+            let percentage = Double(filledCount) / 81.0
+            // Düzeltilmiş log satırı:
+            logDebug("getCompletionPercentage (Yedek): Hesaplanan yüzde: \(percentage * 100)% (\(filledCount)/81)")
+            return percentage
         }
-        
-        return Double(filledCount) / 81.0
     }
     
     // MARK: - Zamanlayıcı Kontrolleri
@@ -2881,6 +3007,19 @@ class SudokuViewModel: ObservableObject {
         } else {
             logWarning("İpucu değeri yerleştirilemedi: Hedef hücre (\(hint.row), \(hint.column)) zaten dolu.")
         }
+    }
+
+    // Eğer bu fonksiyon zaten varsa, bu kısmı atla
+    private func decodeColors(colorsRaw: [[[String: Any]]]) -> [[String?]] {
+        var decoded: [[String?]] = Array(repeating: Array(repeating: nil, count: 9), count: 9)
+        for r in 0..<min(9, colorsRaw.count) {
+            for c in 0..<min(9, colorsRaw[r].count) {
+                if let colorDict = colorsRaw[r][c] as? [String: String], let hex = colorDict["hex"] {
+                    decoded[r][c] = hex
+                } 
+            }
+        }
+        return decoded
     }
 } 
 
