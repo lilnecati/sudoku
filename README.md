@@ -10,7 +10,7 @@
 <p align="center">Bu uygulama, SwiftUI kullanılarak iOS platformu için geliştirilmiş kapsamlı bir Sudoku oyunudur. Bu doküman, uygulamanın yapısını, bileşenlerini ve özelliklerini detaylı olarak anlatmaktadır.</p>
 
 <div align="center">
-  <img src="screenshots/anasayfa.png" width="800" alt="Sudoku Screenshots"/>
+  <img src="screenshots/anasayfa.PNG" width="800" alt="Sudoku Screenshots"/>
 </div>
 
 ## 📱 Uygulama Özellikleri
@@ -405,11 +405,11 @@ Katılımdan önce lütfen [katkıda bulunma kılavuzumuzu](CONTRIBUTING.md) oku
 ## 📱 Ekran Görüntüleri
 
 <div align="center">
-  <img src="screenshots/anasayfa.png" width="200" alt="Ana Menü"/>
-  <img src="screenshots/oyunekranı.png" width="200" alt="Oyun Ekranı"/>
-  <img src="screenshots/skor.png" width="200" alt="Skor Tablosu"/>
-  <img src="screenshots/kayıtlı.png" width="200" alt="Kayıtlı Oyunlar"/>
-  <img src="screenshots/ayarlar.png" width="200" alt="Ayarlar"/>
+  <img src="screenshots/anasayfa.PNG" width="200" alt="Ana Menü"/>
+  <img src="screenshots/oyunekranı.PNG" width="200" alt="Oyun Ekranı"/>
+  <img src="screenshots/skor.PNG" width="200" alt="Skor Tablosu"/>
+  <img src="screenshots/kayıtlı.PNG" width="200" alt="Kayıtlı Oyunlar"/>
+  <img src="screenshots/ayarlar.PNG" width="200" alt="Ayarlar"/>
 </div>
 
 ## 📝 Lisans
